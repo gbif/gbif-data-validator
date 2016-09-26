@@ -16,6 +16,8 @@ public class DataFile {
 
   private Integer numOfLines;
 
+  private Integer fileLineOffset;
+
   private boolean hasHeaders;
 
   public Character getDelimiterChar() {
@@ -51,6 +53,19 @@ public class DataFile {
     this.numOfLines = numOfLines;
   }
 
+  /**
+   * If this {@link DataFile} represents a part of a bigger file, the offset of lines relative to the
+   * source file.
+   * @return
+   */
+  public Integer getFileLineOffset() {
+    return fileLineOffset;
+  }
+
+  public void setFileLineOffset(Integer fileLineOffset) {
+    this.fileLineOffset = fileLineOffset;
+  }
+
   public boolean isHasHeaders() {
     return hasHeaders;
   }
@@ -70,6 +85,7 @@ public class DataFile {
            ", columns=" + Arrays.toString(columns) +
            ", fileName='" + fileName + '\'' +
            ", numOfLines=" + numOfLines +
+           ", lineOffset=" + fileLineOffset +
            ", hasHeaders=" + hasHeaders +
            '}';
   }
@@ -83,12 +99,13 @@ public class DataFile {
            Objects.equals(delimiterChar, dataFile.delimiterChar) &&
            Arrays.equals(columns, dataFile.columns) &&
            Objects.equals(fileName, dataFile.fileName) &&
-           Objects.equals(numOfLines, dataFile.numOfLines);
+           Objects.equals(numOfLines, dataFile.numOfLines) &&
+           Objects.equals(fileLineOffset, dataFile.fileLineOffset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(delimiterChar, columns, fileName, numOfLines, hasHeaders);
+    return Objects.hash(delimiterChar, columns, fileName, numOfLines, fileLineOffset, hasHeaders);
   }
 
   /**

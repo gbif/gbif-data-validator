@@ -81,7 +81,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         String outDirPath = outDir.getAbsolutePath();
         String[] splits = FileBashUtilities.splitFile(dataFile.getFileName(), numOfInputRecords / splitSize, outDirPath);
         numOfActors = splits.length;
-        ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class,recordProcessorFactory.create())), "dataFileRouter");
+        ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class, recordProcessorFactory.create())), "dataFileRouter");
         results =  new HashSet<DataWorkResult>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
@@ -91,6 +91,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           dataInputSplitFile.setFileName(splitFile.getAbsolutePath());
           dataInputSplitFile.setColumns(dataFile.getColumns());
           dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
+          dataInputSplitFile.setFileLineOffset(i*FILE_SPLIT_SIZE);
 
           workerRouter.tell(dataInputSplitFile, self());
         }
