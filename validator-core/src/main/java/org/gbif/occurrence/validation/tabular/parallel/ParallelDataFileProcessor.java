@@ -22,8 +22,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.actor.UntypedActor;
-import akka.actor.UntypedActorFactory;
-import akka.routing.RoundRobinRouter;
+import akka.routing.RoundRobinPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,8 +81,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         String outDirPath = outDir.getAbsolutePath();
         String[] splits = FileBashUtilities.splitFile(dataFile.getFileName(), numOfInputRecords / splitSize, outDirPath);
         numOfActors = splits.length;
-        ActorRef workerRouter = getContext().actorOf(new Props(new SingleFileReaderFactory(recordProcessorFactory))
-                                                       .withRouter(new RoundRobinRouter(numOfActors)), "dataFileRouter");
+        ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class,recordProcessorFactory.create())), "dataFileRouter");
         results =  new HashSet<DataWorkResult>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
@@ -114,15 +112,11 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     // Create an Akka system
 
     // create the master
-    final ActorRef master = system.actorOf(new Props(new UntypedActorFactory() {
-      public UntypedActor create() {
-        return new ParallelDataFileProcessorMaster(validationCollector,
-                                                   new OccurrenceLineProcessorFactory(apiUrl));
-      }
-    }), "DataFileProcessor");
+    final ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessor.class,validationCollector,
+                                                   new OccurrenceLineProcessorFactory(apiUrl)), "DataFileProcessor");
     try {
       // start the calculation
-      master.tell(dataFile);
+      master.tell(dataFile,ActorRef.noSender());
       while (!master.isTerminated()) {
         try {
           Thread.sleep(SLEEP_TIME_BEFORE_TERMINATION);

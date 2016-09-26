@@ -7,7 +7,7 @@ import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
-import org.gbif.occurrence.validation.util.TempTermsUtils;
+import static org.gbif.occurrence.validation.util.TempTermsUtils.buildTermMapping;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,26 +41,26 @@ public class SingleFileReaderActor extends UntypedActor {
     pipe(future(new Callable<DataWorkResult>() {
       @Override
       public DataWorkResult call() throws Exception {
-        try( RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
-                                                                           dataFile.getDelimiterChar(), dataFile.isHasHeaders(),
-                                                                           TempTermsUtils.buildTermMapping(dataFile.getColumns()))){
-
-          RecordInterpretionBasedEvaluationResult result;
-
-          Map<Term, String> record;
-          while ((record = recordSource.read()) != null) {
-            result = recordProcessor.process(record);
-            getSender().tell(result);
-          }
-
-
-          //add reader aggregated result to the DataWorkResult
-          return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS);
-        } catch (Exception ex) {
-          return new DataWorkResult(dataFile, DataWorkResult.Result.FAILED);
-        }
+        return processDataFile(dataFile);
       }
-    }, getContext().dispatcher())).to(getSender());
+    }, getContext().dispatcher()),getContext().dispatcher()).to(getSender());
+  }
+
+  private DataWorkResult processDataFile(DataFile dataFile) throws IOException {
+    try( RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
+                                                                       dataFile.getDelimiterChar(),
+                                                                       dataFile.isHasHeaders(),
+                                                                       buildTermMapping(dataFile.getColumns()))) {
+      Map<Term, String> record;
+      while ((record = recordSource.read()) != null) {
+        getSender().tell(recordProcessor.process(record),getSelf());
+      }
+
+      //add reader aggregated result to the DataWorkResult
+      return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS);
+    } catch (Exception ex) {
+      return new DataWorkResult(dataFile, DataWorkResult.Result.FAILED);
+    }
   }
 
   /**

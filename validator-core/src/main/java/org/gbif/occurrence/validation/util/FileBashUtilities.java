@@ -55,7 +55,6 @@ public class FileBashUtilities {
         out.add(line);
       }
       while(process.isAlive()){
-        System.out.print("waiting");
         try {
           Thread.sleep(1000);
         } catch (InterruptedException ex){
