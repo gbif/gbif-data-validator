@@ -68,11 +68,7 @@
       <artifactId>scala-library</artifactId>
       <version>${scala-library.version}</version>
     </dependency>
-    <dependency>
-      <groupId>com.typesafe</groupId>
-      <artifactId>config</artifactId>
-      <version>${typesafe-config.version}</version>
-    </dependency>
+
 
   </dependencies>
 </project>

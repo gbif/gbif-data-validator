@@ -113,7 +113,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     // Create an Akka system
 
     // create the master
-    final ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessor.class,validationCollector,
+    final ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class,validationCollector,
                                                    new OccurrenceLineProcessorFactory(apiUrl)), "DataFileProcessor");
     try {
       // start the calculation
