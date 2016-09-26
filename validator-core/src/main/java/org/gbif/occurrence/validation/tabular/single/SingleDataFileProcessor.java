@@ -7,6 +7,7 @@ import org.gbif.occurrence.validation.api.DataFileValidationResult;
 import org.gbif.occurrence.validation.api.RecordProcessor;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
+import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 import org.gbif.occurrence.validation.util.TempTermsUtils;
 
@@ -29,12 +30,20 @@ public class SingleDataFileProcessor implements DataFileProcessor {
     try( RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()), dataFile.getDelimiterChar(),
             dataFile.isHasHeaders(), TempTermsUtils.buildTermMapping(dataFile.getColumns()))){
       RecordInterpretionBasedEvaluationResult result;
+      int expectedNumberOfColumn = dataFile.getColumns().length;
       Map<Term, String> record;
+      long line=0;
       while ((record = recordSource.read()) != null) {
         result = recordProcessor.process(record);
         collector.accumulate(result);
+
+        if(record.size() != expectedNumberOfColumn){
+          collector.accumulate(new RecordStructureEvaluationResult(Long.toString(line), "contains " + record.size() +
+                  " columns, expected " + expectedNumberOfColumn + " columns"));
+        }
+        line++;
       }
-      return new DataFileValidationResult(collector.getAggregatedResult());
+      return new DataFileValidationResult(collector.getAggregatedResult(), collector.getRecordStructureEvaluationResult());
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

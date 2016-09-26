@@ -3,7 +3,9 @@ package org.gbif.occurrence.validation.tabular.parallel;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
+import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
@@ -20,11 +22,21 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
   }
 
   @Override
+  public void accumulate(RecordStructureEvaluationResult result) {
+
+  }
+
+  @Override
   public void accumulate(RecordInterpretionBasedEvaluationResult result) {
     recordCount.increment();
     result.getDetails().forEach(
             details -> issuesCounter.computeIfAbsent(details.getIssueFlag(), k -> new LongAdder()).increment()
     );
+  }
+
+  @Override
+  public List<RecordStructureEvaluationResult> getRecordStructureEvaluationResult() {
+    return null;
   }
 
   @Override
