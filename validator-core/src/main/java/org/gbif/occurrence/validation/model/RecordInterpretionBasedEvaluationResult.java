@@ -3,10 +3,10 @@ package org.gbif.occurrence.validation.model;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.Term;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.Lists;
 
 /**
  *
@@ -33,7 +33,7 @@ public class RecordInterpretionBasedEvaluationResult extends RecordEvaluationRes
 
     public Builder addDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData){
       if(details == null){
-        details = Lists.newArrayList();
+        details = new ArrayList<Details>();
       }
       details.add(new Details(issueFlag, relatedData));
       return this;
