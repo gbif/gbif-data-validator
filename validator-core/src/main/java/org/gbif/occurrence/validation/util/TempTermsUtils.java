@@ -8,6 +8,13 @@ import org.gbif.dwc.terms.TermFactory;
  */
 public class TempTermsUtils {
 
+  /**
+   * Private constructor.
+   */
+  private TempTermsUtils() {
+    //empty constructor
+  }
+
   public static Term[] buildTermMapping(String[] columns) {
 
     TermFactory TERM_FACTORY = TermFactory.instance();
