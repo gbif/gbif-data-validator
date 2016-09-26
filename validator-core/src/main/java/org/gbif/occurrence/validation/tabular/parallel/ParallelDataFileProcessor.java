@@ -12,6 +12,7 @@ import org.gbif.occurrence.validation.util.FileBashUtilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -23,7 +24,6 @@ import akka.actor.Props;
 import akka.actor.UntypedActor;
 import akka.actor.UntypedActorFactory;
 import akka.routing.RoundRobinRouter;
-import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         numOfActors = splits.length;
         ActorRef workerRouter = getContext().actorOf(new Props(new SingleFileReaderFactory(recordProcessorFactory))
                                                        .withRouter(new RoundRobinRouter(numOfActors)), "dataFileRouter");
-        results = Sets.newHashSetWithExpectedSize(numOfActors);
+        results =  new HashSet<DataWorkResult>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
           DataFile dataInputSplitFile = new DataFile();
