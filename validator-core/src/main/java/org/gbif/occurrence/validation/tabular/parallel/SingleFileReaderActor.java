@@ -20,6 +20,9 @@ import static akka.pattern.Patterns.pipe;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
+/**
+ * Akka actor that processes a single occurrence data file.
+ */
 public class SingleFileReaderActor extends AbstractLoggingActor {
 
   public SingleFileReaderActor(RecordProcessor recordProcessor) {
@@ -67,11 +70,6 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
 
   /**
    * Creates a RecordStructureEvaluationResult instance for a column count mismatch.
-   *
-   * @param lineNumber
-   * @param expectedColumnCount
-   * @param actualColumnCount
-   * @return
    */
   private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(long lineNumber,
                                                                                        int expectedColumnCount,

@@ -7,13 +7,13 @@ package org.gbif.occurrence.validation.model;
  */
 public abstract class RecordEvaluationResult {
 
-  public enum EvaluationType {STRUCTURE_EVALUATION, INTERPRETATION_BASED_EVALUATION}
+  public enum EvaluationType { STRUCTURE_EVALUATION, INTERPRETATION_BASED_EVALUATION }
   //public enum EvaluationResult {SKIPPED, PASSED, WARNING, FAILED} //not sure we need result, maybe level ?
 
   private final String recordId;
   private final EvaluationType evaluationType;
 
-  public RecordEvaluationResult(String recordId, EvaluationType evaluationType){
+  public RecordEvaluationResult(String recordId, EvaluationType evaluationType) {
     this.recordId = recordId;
     this.evaluationType = evaluationType;
   }

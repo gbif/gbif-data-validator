@@ -19,7 +19,7 @@ public class RecordInterpretionBasedEvaluationResult extends RecordEvaluationRes
   private final List<Details> details;
 
   public RecordInterpretionBasedEvaluationResult(String recordId,
-                                                 List<Details> details){
+                                                 List<Details> details) {
     super(recordId, EvaluationType.INTERPRETATION_BASED_EVALUATION);
     this.details = details;
   }
@@ -31,7 +31,7 @@ public class RecordInterpretionBasedEvaluationResult extends RecordEvaluationRes
   public static class Builder {
     public List<Details> details;
 
-    public Builder addDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData){
+    public Builder addDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData) {
       if(details == null){
         details = new ArrayList<Details>();
       }
@@ -51,7 +51,7 @@ public class RecordInterpretionBasedEvaluationResult extends RecordEvaluationRes
     private final OccurrenceIssue issueFlag;
     private final Map<Term, String> relatedData;
 
-    public Details(OccurrenceIssue issueFlag, Map<Term, String> relatedData){
+    public Details(OccurrenceIssue issueFlag, Map<Term, String> relatedData) {
       this.issueFlag = issueFlag;
       this.relatedData = relatedData;
     }

@@ -15,11 +15,17 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-
+/**
+ * Class to process one text line that represents a occurrence record.
+ */
 public class OccurrenceLineProcessor implements RecordProcessor {
 
   private final OccurrenceInterpreter interpreter;
 
+  /**
+   * Default constructor, builds an instance using a OccurrenceInterpreter class.
+   * @param interpreter occurrence interpreter
+   */
   public OccurrenceLineProcessor(OccurrenceInterpreter interpreter) {
     this.interpreter = interpreter;
   }
@@ -33,14 +39,14 @@ public class OccurrenceLineProcessor implements RecordProcessor {
     if (datasetKey != null) {
       verbatimOccurrence.setDatasetKey(UUID.fromString(datasetKey));
     }
-    return toEvaluationResult("id", interpreter.interpret(verbatimOccurrence));
+    return toEvaluationResult(interpreter.interpret(verbatimOccurrence));
   }
 
   /**
    *
    * Creates a RecordInterpretionBasedEvaluationResult from an OccurrenceInterpretationResult.
    */
-  private static RecordInterpretionBasedEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
+  private static RecordInterpretionBasedEvaluationResult toEvaluationResult(OccurrenceInterpretationResult result) {
 
     RecordInterpretionBasedEvaluationResult.Builder builder = new RecordInterpretionBasedEvaluationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();

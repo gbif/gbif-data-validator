@@ -1,6 +1,5 @@
 package org.gbif.occurrence.validation.tabular.processor;
 
-import org.gbif.dwc.terms.TermFactory;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
@@ -18,11 +17,14 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
+/**
+ * Creates instances of RecordProcessor.
+ */
 public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
 
   private final String apiUrl;
 
-  private static ApacheHttpClient httpClient;
+  private static ApacheHttpClient httpClient = createHttpClient();
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
 
@@ -31,27 +33,29 @@ public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
   }
 
   public RecordProcessor create() {
-    return new OccurrenceLineProcessor(buidlOccurrenceInterpreter());
+    return new OccurrenceLineProcessor(buildOccurrenceInterpreter());
   }
 
   /**
    * Creates an HTTP client.
    */
-  private ApacheHttpClient createHttpClient() {
-    if (httpClient == null) {
-      ClientConfig cc = new DefaultClientConfig();
-      cc.getClasses().add(JacksonJsonContextResolver.class);
-      cc.getClasses().add(JacksonJsonProvider.class);
-      cc.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, true);
-      cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, CLIENT_TO);
-      JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
-      httpClient = ApacheHttpClient.create(cc);
-    }
+  private static ApacheHttpClient createHttpClient() {
+
+    ClientConfig cc = new DefaultClientConfig();
+    cc.getClasses().add(JacksonJsonContextResolver.class);
+    cc.getClasses().add(JacksonJsonProvider.class);
+    cc.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, true);
+    cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, CLIENT_TO);
+    JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
+
     return httpClient;
   }
 
-  private OccurrenceInterpreter buidlOccurrenceInterpreter() {
-    WebResource webResource = createHttpClient().resource(apiUrl);
+  /**
+   * Builds an OccurrenceInterpreter using the current HttpClient instance.
+   */
+  private OccurrenceInterpreter buildOccurrenceInterpreter() {
+    WebResource webResource = httpClient.resource(apiUrl);
     DatasetInfoInterpreter datasetInfoInterpreter = new DatasetInfoInterpreter(webResource);
     TaxonomyInterpreter taxonomyInterpreter = new TaxonomyInterpreter(webResource);
     LocationInterpreter locationInterpreter = new LocationInterpreter(new CoordinateInterpreter(webResource));

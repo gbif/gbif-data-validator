@@ -7,7 +7,7 @@ public class RecordStructureEvaluationResult extends RecordEvaluationResult {
 
   private final String details;
 
-  public RecordStructureEvaluationResult(String recordId, String details){
+  public RecordStructureEvaluationResult(String recordId, String details) {
     super(recordId, EvaluationType.STRUCTURE_EVALUATION);
     this.details = details;
   }
