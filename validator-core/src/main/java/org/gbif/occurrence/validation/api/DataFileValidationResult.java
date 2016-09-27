@@ -34,7 +34,7 @@ public class DataFileValidationResult {
             "issues=" + issues;
 
     //temporary code, will be replaced by json serialisation
-    if(!recordStructureIssue.isEmpty()){
+    if(recordStructureIssue != null && !recordStructureIssue.isEmpty()){
       toString += ", recordStructureIssue{[";
       for(RecordStructureEvaluationResult result : recordStructureIssue){
         toString += "{lineNumber:"+result.getRecordId() + ", " + result.getDetails()+"}, ";
