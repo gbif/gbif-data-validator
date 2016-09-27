@@ -6,13 +6,15 @@ import org.gbif.occurrence.validation.api.RecordProcessor;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
-import static org.gbif.occurrence.validation.util.TempTermsUtils.buildTermMapping;
 
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.Map;
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
+
+import static org.gbif.occurrence.validation.util.TempTermsUtils.buildTermMapping;
+
 import static akka.dispatch.Futures.future;
 import static akka.pattern.Patterns.pipe;
 
@@ -25,11 +27,11 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
       match(DataFile.class, dataFile -> {
         pipe(
           future( () -> processDataFile(dataFile, recordProcessor, sender()), getContext().dispatcher()),
-                  getContext().dispatcher()
+          getContext().dispatcher()
         ).to(sender());
       })
-      .matchAny(this::unhandled)
-      .build()
+        .matchAny(this::unhandled)
+        .build()
     );
   }
 
@@ -42,8 +44,17 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
                                                                        dataFile.getDelimiterChar(),
                                                                        dataFile.isHasHeaders(),
                                                                        buildTermMapping(dataFile.getColumns()))) {
+      long line = dataFile.isHasHeaders() ? 1 : 0;
+      line += dataFile.getFileLineOffset();
+
+      int expectedNumberOfColumn = dataFile.getColumns().length;
       Map<Term, String> record;
+
       while ((record = recordSource.read()) != null) {
+        line++;
+        if(record.size() != expectedNumberOfColumn){
+          sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
+        }
         sender.tell(recordProcessor.process(record), self());
       }
 
@@ -55,16 +66,17 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
   }
 
   /**
-   * WORK-IN-PROGRESS
+   * Creates a RecordStructureEvaluationResult instance for a column count mismatch.
    *
    * @param lineNumber
    * @param expectedColumnCount
    * @param actualColumnCount
    * @return
    */
-  private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(int lineNumber, int expectedColumnCount,
+  private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(long lineNumber,
+                                                                                       int expectedColumnCount,
                                                                                        int actualColumnCount) {
-    return new RecordStructureEvaluationResult(Integer.toString(lineNumber),
+    return new RecordStructureEvaluationResult(Long.toString(lineNumber),
                                                MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
                                                                     expectedColumnCount, actualColumnCount));
   }
