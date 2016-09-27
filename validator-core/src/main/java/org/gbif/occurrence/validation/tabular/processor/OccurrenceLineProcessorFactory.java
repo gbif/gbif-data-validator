@@ -26,8 +26,6 @@ public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
 
-  private static final TermFactory TERM_FACTORY = TermFactory.instance();
-
   public OccurrenceLineProcessorFactory(String apiUrl) {
     this.apiUrl = apiUrl;
   }

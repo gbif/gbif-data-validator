@@ -52,7 +52,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
 
       while ((record = recordSource.read()) != null) {
         line++;
-        if(record.size() != expectedNumberOfColumn){
+        if (record.size() != expectedNumberOfColumn) {
           sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
         }
         sender.tell(recordProcessor.process(record), self());

@@ -14,5 +14,6 @@ public interface ResultsCollector<R> {
   void accumulate(RecordEvaluationResult result);
 
   List<RecordStructureEvaluationResult> getRecordStructureEvaluationResult();
+
   R getAggregatedResult();
 }

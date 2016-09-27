@@ -39,32 +39,21 @@ public class OccurrenceLineProcessor implements RecordProcessor {
   /**
    *
    * Creates a RecordInterpretionBasedEvaluationResult from an OccurrenceInterpretationResult.
-   *
-   * @param id
-   * @param result
-   *
-   * @return
    */
-  private RecordInterpretionBasedEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
-
-    //should we avoid creating an object (return null) or return an empty object?
-    if(result.getUpdated().getIssues().isEmpty()){
-      return null;
-    }
+  private static RecordInterpretionBasedEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
 
     RecordInterpretionBasedEvaluationResult.Builder builder = new RecordInterpretionBasedEvaluationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
-    Map<Term, String> relatedData;
 
-    for (OccurrenceIssue issue : result.getUpdated().getIssues()) {
+    result.getUpdated().getIssues().forEach( issue -> {
       if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue)) {
-        relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
+        Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
           .stream()
           .filter(t -> verbatimFields.get(t) != null)
           .collect(Collectors.toMap(Function.identity(), t -> verbatimFields.get(t)));
         builder.addDetail(issue, relatedData);
       }
-    }
+    });
     return builder.build();
   }
 }

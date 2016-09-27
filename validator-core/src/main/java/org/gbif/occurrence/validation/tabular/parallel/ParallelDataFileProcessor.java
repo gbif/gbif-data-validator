@@ -80,7 +80,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           dataInputSplitFile.setFileName(splitFile.getAbsolutePath());
           dataInputSplitFile.setColumns(dataFile.getColumns());
           dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
-          dataInputSplitFile.setFileLineOffset(i*FILE_SPLIT_SIZE);
+          dataInputSplitFile.setFileLineOffset(i * FILE_SPLIT_SIZE);
 
           workerRouter.tell(dataInputSplitFile, self());
         }
