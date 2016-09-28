@@ -16,7 +16,6 @@ public interface ResultsCollector<R> {
 
   void accumulate(EvaluationResult result);
 
-
   Map<EvaluationType, Map<EvaluationDetailType, Long>> getAggregatedCounts();
 
   Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> getSamples();

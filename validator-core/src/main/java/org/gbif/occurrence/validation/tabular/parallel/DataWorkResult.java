@@ -2,8 +2,14 @@ package org.gbif.occurrence.validation.tabular.parallel;
 
 import org.gbif.occurrence.validation.api.DataFile;
 
+/**
+ * This class encapsulates the result of processing a file by an Akk actor.
+ */
 public class DataWorkResult {
 
+  /**
+   * Represents the result status of processing a file.
+   */
   public enum Result {
     SUCCESS, FAILED;
   }
@@ -12,15 +18,26 @@ public class DataWorkResult {
 
   private Result result;
 
-
+  /**
+   * Empty constructor.
+   * Required by data serialization.
+   */
   public DataWorkResult() {
-
+    //empty block
   }
+
+  /**
+   * Full constructor.
+   * Builds an instance using a dataFile and a result.
+   */
   public DataWorkResult(DataFile dataFile, Result result) {
     this.dataFile = dataFile;
     this.result = result;
   }
 
+  /**
+   * Data file processed.
+   */
   public DataFile getDataFile() {
     return dataFile;
   }
@@ -29,6 +46,9 @@ public class DataWorkResult {
     this.dataFile = dataFile;
   }
 
+  /**
+   * Status result of processing a data file.
+   */
   public Result getResult() {
     return result;
   }

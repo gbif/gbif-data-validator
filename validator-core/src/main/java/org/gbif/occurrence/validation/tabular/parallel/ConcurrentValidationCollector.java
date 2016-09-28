@@ -16,6 +16,9 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
 import javax.annotation.concurrent.ThreadSafe;
 
+/**
+ * Collects results of data validations produced from a multi-threaded processing.
+ */
 @ThreadSafe
 public class ConcurrentValidationCollector implements ResultsCollector<Map<OccurrenceIssue, Long>> {
 
@@ -30,9 +33,9 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
 
   private final LongAdder recordCount;
 
-  public ConcurrentValidationCollector(){
-    issuesCounter = new ConcurrentHashMap(OccurrenceIssue.values().length);
-    recordStructureEvaluationIssue = new ConcurrentLinkedQueue();
+  public ConcurrentValidationCollector() {
+    issuesCounter = new ConcurrentHashMap<>(OccurrenceIssue.values().length);
+    recordStructureEvaluationIssue = new ConcurrentLinkedQueue<>();
 
     recordStructureIssueCount = new LongAdder();
     recordCount = new LongAdder();

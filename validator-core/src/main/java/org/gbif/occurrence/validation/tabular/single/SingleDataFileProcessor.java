@@ -31,14 +31,12 @@ public class SingleDataFileProcessor implements DataFileProcessor {
 
     try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()), dataFile.getDelimiterChar(),
             dataFile.isHasHeaders(), TempTermsUtils.buildTermMapping(dataFile.getColumns()))) {
-      RecordInterpretionBasedEvaluationResult result;
       int expectedNumberOfColumn = dataFile.getColumns().length;
       Map<Term, String> record;
       long line = dataFile.isHasHeaders() ? 1 : 0;
       while ((record = recordSource.read()) != null) {
         line++;
-        result = recordProcessor.process(Long.toString(line), record);
-        collector.accumulate(result);
+        collector.accumulate(recordProcessor.process(Long.toString(line), record));
 
         if (record.size() != expectedNumberOfColumn) {
           collector.accumulate(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()));

@@ -44,7 +44,7 @@ public class RecordInterpretionBasedEvaluationResult extends EvaluationResult {
       return this;
     }
 
-    public Builder addDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData){
+    public Builder addDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData) {
       if(details == null){
         details = new ArrayList<>();
       }
@@ -64,7 +64,7 @@ public class RecordInterpretionBasedEvaluationResult extends EvaluationResult {
     private final OccurrenceIssue issueFlag;
     private final Map<Term, String> relatedData;
 
-    public Details(OccurrenceIssue issueFlag, Map<Term, String> relatedData){
+    public Details(OccurrenceIssue issueFlag, Map<Term, String> relatedData) {
       this.issueFlag = issueFlag;
       this.relatedData = relatedData;
     }

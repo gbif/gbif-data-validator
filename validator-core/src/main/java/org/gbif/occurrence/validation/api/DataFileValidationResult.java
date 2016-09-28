@@ -11,12 +11,7 @@ import java.util.Map;
 
 public class DataFileValidationResult {
 
-//  private List<RecordStructureEvaluationResult> recordStructureIssue;
-//  private Map<OccurrenceIssue, Long> issues;
 
-//  private Map<EvaluationType, Map<? super Enum, Long>> issueCounter;
-//  private Map<EvaluationType, Map<? super Enum, List<EvaluationResultDetails<? extends Enum>>>> issueSampling;
-//
   private Map<EvaluationType, List<DateFileValidationElement>> results = new HashMap<>();
 
   public DataFileValidationResult(Map<EvaluationType, Map<EvaluationDetailType, Long>> issueCounter,

@@ -17,11 +17,11 @@ public class TempTermsUtils {
 
   public static Term[] buildTermMapping(String[] columns) {
 
-    TermFactory TERM_FACTORY = TermFactory.instance();
+    TermFactory termFactory = TermFactory.instance();
 
     Term[] columnMapping = new Term[columns.length];
     for (int i = 0; i < columns.length; i++) {
-      columnMapping[i] = TERM_FACTORY.findTerm(columns[i]);
+      columnMapping[i] = termFactory.findTerm(columns[i]);
     }
     return columnMapping;
   }

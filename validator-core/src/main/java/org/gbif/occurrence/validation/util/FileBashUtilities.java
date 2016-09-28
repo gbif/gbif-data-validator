@@ -18,7 +18,7 @@ public class FileBashUtilities {
   }
 
   public static int countLines(String fileName) throws IOException {
-    String[] out = executeSimpleCmd(String.format("wc -l %s | awk '{print $1;}'",fileName));
+    String[] out = executeSimpleCmd(String.format("wc -l %s | awk '{print $1;}'", fileName));
     return Integer.parseInt(out[0]);
   }
 
@@ -35,7 +35,7 @@ public class FileBashUtilities {
     }
 
     executeSimpleCmd(String.format("split -l %s %s %s", Integer.toString(splitSize), fileName,
-                                   Paths.get(outputDir,inFile.getName())));
+                                   Paths.get(outputDir, inFile.getName())));
     return outDir.list();
   }
 
@@ -46,24 +46,24 @@ public class FileBashUtilities {
   }
 
   private static String[] executeSimpleCmd(String bashCmd) throws  IOException {
-    String[] cmd = { "/bin/sh", "-c", bashCmd};
+    String[] cmd = { "/bin/sh", "-c", bashCmd };
     Process process = Runtime.getRuntime().exec(cmd);
-    try(BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
       String line;
       List<String> out = new ArrayList<String>();
-      while((line = in.readLine()) != null) {
+      while ((line = in.readLine()) != null) {
         out.add(line);
       }
-      while(process.isAlive()){
+      while (process.isAlive()) {
         try {
           Thread.sleep(1000);
-        } catch (InterruptedException ex){
+        } catch (InterruptedException ex) {
 
         }
       }
-      return out.toArray(new String[]{});
+      return out.toArray(new String[out.size()]);
     } finally {
-      if(process.isAlive()) {
+      if (process.isAlive()) {
         process.destroy();
       }
     }

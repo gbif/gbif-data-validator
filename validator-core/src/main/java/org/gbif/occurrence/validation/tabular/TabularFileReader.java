@@ -13,7 +13,7 @@ import java.util.Map;
  */
 public class TabularFileReader implements RecordSource {
 
-  private MappedTabularDataFileReader<Term> wrapped;
+  private final MappedTabularDataFileReader<Term> wrapped;
 
   public TabularFileReader(MappedTabularDataFileReader<Term> wrapped){
     this.wrapped = wrapped;
