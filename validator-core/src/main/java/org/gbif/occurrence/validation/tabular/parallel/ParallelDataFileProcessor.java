@@ -5,7 +5,7 @@ import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.DataFileValidationResult;
 import org.gbif.occurrence.validation.api.RecordProcessorFactory;
 import org.gbif.occurrence.validation.api.ResultsCollector;
-import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
+import org.gbif.occurrence.validation.model.EvaluationResult;
 import org.gbif.occurrence.validation.tabular.processor.OccurrenceLineProcessorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
 
@@ -23,7 +23,7 @@ import akka.routing.RoundRobinPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import  static  akka.japi.pf.ReceiveBuilder.match;
+import static akka.japi.pf.ReceiveBuilder.match;
 
 public class ParallelDataFileProcessor implements DataFileProcessor {
 
@@ -49,7 +49,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           this.dataFile = dataFile;
           processDataFile(recordProcessorFactory);
         })
-        .match(RecordInterpretionBasedEvaluationResult.class, result -> {
+        .match(EvaluationResult.class, result -> {
           collector.accumulate(result);
         })
         .match(DataWorkResult.class, dataWorkResult -> {
@@ -57,7 +57,6 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         }).build()
       );
     }
-
 
     private void processDataFile(RecordProcessorFactory recordProcessorFactory) {
       try {
@@ -79,7 +78,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           dataInputSplitFile.setFileName(splitFile.getAbsolutePath());
           dataInputSplitFile.setColumns(dataFile.getColumns());
           dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
-          dataInputSplitFile.setFileLineOffset(i * FILE_SPLIT_SIZE);
+          dataInputSplitFile.setFileLineOffset((i * FILE_SPLIT_SIZE) + (dataFile.isHasHeaders() ? 1 : 0) );
 
           workerRouter.tell(dataInputSplitFile, self());
         }
@@ -94,7 +93,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       if (results.size() == numOfActors) {
         getContext().stop(self());
         getContext().system().shutdown();
-        LOG.info("# of records processed: " + dataFile.getNumOfLines());
+        LOG.info("# of lines in the file: " + dataFile.getNumOfLines());
         LOG.info("Results: " + collector);
       }
     }
@@ -130,6 +129,6 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       system.shutdown();
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
-    return new DataFileValidationResult(validationCollector.getAggregatedCounts(), null);
+    return new DataFileValidationResult(validationCollector.getAggregatedCounts(), validationCollector.getSamples());
   }
 }

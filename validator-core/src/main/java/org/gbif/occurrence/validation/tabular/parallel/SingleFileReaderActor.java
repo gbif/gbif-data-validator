@@ -11,7 +11,6 @@ import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.Map;
-import javax.ws.rs.HEAD;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
@@ -49,8 +48,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
                                                                        dataFile.getDelimiterChar(),
                                                                        dataFile.isHasHeaders(),
                                                                        buildTermMapping(dataFile.getColumns()))) {
-      long line = dataFile.isHasHeaders() ? 1 : 0;
-      line += dataFile.getFileLineOffset();
+      long line = dataFile.getFileLineOffset();
 
       int expectedNumberOfColumn = dataFile.getColumns().length;
       Map<Term, String> record;

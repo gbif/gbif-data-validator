@@ -9,6 +9,8 @@ import org.gbif.occurrence.validation.model.EvaluationResultDetails;
 import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,26 +24,28 @@ import javax.annotation.concurrent.ThreadSafe;
 @ThreadSafe
 public class ConcurrentValidationCollector implements ResultsCollector<Map<OccurrenceIssue, Long>> {
 
-  private final ConcurrentHashMap<EvaluationDetailType, LongAdder> issuesCounter;
+  private static final int MAX_SAMPLE_SIZE = 10;
 
-  private final ConcurrentLinkedQueue<RecordStructureEvaluationResult> recordStructureEvaluationIssue;
-
-  //private ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, Long>> issueCounter = new HashMap<>();
-  //private ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>>> issueSampling = new HashMap<>();
-
-  private final LongAdder recordStructureIssueCount;
+  private final ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, LongAdder>> issueCounter;
+  private ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>>> issueSampling;
 
   private final LongAdder recordCount;
 
   public ConcurrentValidationCollector() {
-    issuesCounter = new ConcurrentHashMap<>(OccurrenceIssue.values().length);
-    recordStructureEvaluationIssue = new ConcurrentLinkedQueue<>();
+    issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
+    issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
 
-    recordStructureIssueCount = new LongAdder();
     recordCount = new LongAdder();
   }
 
   public void accumulate(EvaluationResult result) {
+
+    issueCounter.putIfAbsent(result.getEvaluationType(), new ConcurrentHashMap<>());
+    issueSampling.putIfAbsent(result.getEvaluationType(), new ConcurrentHashMap<>());
+
+    collectData(result.getDetails(), issueCounter.get(result.getEvaluationType()),
+            issueSampling.get(result.getEvaluationType()));
+
     switch (result.getEvaluationType()) {
       case STRUCTURE_EVALUATION: accumulate((RecordStructureEvaluationResult)result);
         break;
@@ -50,36 +54,74 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
     }
   }
 
+  /**
+   * @return a copy of the inter aggregated counts.
+   */
   @Override
   public Map<EvaluationType, Map<EvaluationDetailType, Long>> getAggregatedCounts() {
-    //TODO C.G. not implemented
-    return null;
+
+    Map<EvaluationType, Map<EvaluationDetailType, Long>> copy = new HashMap<>();
+
+    issueCounter.entrySet().forEach( rec -> {
+              copy.put(rec.getKey(), new HashMap<>());
+              rec.getValue().entrySet().forEach(entry ->
+                        copy.get(rec.getKey()).put(entry.getKey(), entry.getValue().longValue()));
+            }
+    );
+
+    return copy;
   }
 
+  /**
+   *
+   * @return a copy of the internal evaluation samples.
+   */
   @Override
   public Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> getSamples() {
-    //TODO C.G. not implemented
-    return null;
+    Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> copy = new HashMap<>();
+
+    issueSampling.entrySet().forEach( rec -> {
+              copy.put(rec.getKey(), new HashMap<>());
+              rec.getValue().entrySet().forEach(entry ->
+                      copy.get(rec.getKey()).put(entry.getKey(),
+                              new ArrayList<>(entry.getValue())));
+            }
+    );
+
+    return copy;
   }
 
 
   public void accumulate(RecordInterpretionBasedEvaluationResult result) {
     recordCount.increment();
-    result.getDetails().forEach(
-            details -> issuesCounter.computeIfAbsent(details.getEvaluationDetailType(), k -> new LongAdder()).increment()
-    );
   }
 
   public void accumulate(RecordStructureEvaluationResult result) {
-    recordStructureIssueCount.increment();
-    recordStructureEvaluationIssue.add(result);
+
+  }
+
+  private void collectData(List<EvaluationResultDetails> details,
+                                ConcurrentHashMap<EvaluationDetailType, LongAdder> counter,
+                                ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>> samples){
+    details.forEach(
+            detail -> {
+              counter.computeIfAbsent(detail.getEvaluationDetailType(), k -> new LongAdder()).increment();
+
+              samples.putIfAbsent(detail.getEvaluationDetailType(), new ConcurrentLinkedQueue<>());
+              samples.compute(detail.getEvaluationDetailType(), (type, queue) -> {
+                        if(queue.size() < MAX_SAMPLE_SIZE){
+                          samples.get(type).add(detail);
+                        }
+                        return queue;
+              });
+            }
+    );
   }
 
   @Override
   public String toString() {
     return "ConcurrentValidationCollector{" +
-           "issuesCounter=" + issuesCounter +
-           ", recordCount=" + recordCount +
+           "recordCount=" + recordCount +
            '}';
   }
 }
