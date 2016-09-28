@@ -130,6 +130,6 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       system.shutdown();
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
-    return new DataFileValidationResult(validationCollector.getAggregatedResult(), null);
+    return new DataFileValidationResult(validationCollector.getAggregatedCounts(), null);
   }
 }

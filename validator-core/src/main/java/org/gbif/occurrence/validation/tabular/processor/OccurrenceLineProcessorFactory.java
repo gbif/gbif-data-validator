@@ -48,7 +48,7 @@ public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
     cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, CLIENT_TO);
     JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
 
-    return httpClient;
+    return ApacheHttpClient.create(cc);
   }
 
   /**

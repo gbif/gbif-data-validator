@@ -8,6 +8,8 @@ import org.gbif.occurrence.validation.util.FileBashUtilities;
 
 import java.io.IOException;
 
+import org.codehaus.jackson.map.ObjectMapper;
+
 public class OccurrenceValidationApp {
 
   public static void main(String[] args) throws IOException {
@@ -21,6 +23,8 @@ public class OccurrenceValidationApp {
     OccurrenceDataFileProcessorFactory dataFileProcessorFactory = new OccurrenceDataFileProcessorFactory(args[1]);
     DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile);
     DataFileValidationResult result = dataFileProcessor.process(dataFile);
-    System.out.println(result.toString());
+
+    ObjectMapper om = new ObjectMapper();
+    System.out.println(om.writeValueAsString(result));
   }
 }

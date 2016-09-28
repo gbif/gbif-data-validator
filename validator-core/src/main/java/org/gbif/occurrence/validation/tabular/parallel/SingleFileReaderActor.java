@@ -5,20 +5,22 @@ import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.RecordProcessor;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
+import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
 import java.text.MessageFormat;
 import java.util.Map;
+import javax.ws.rs.HEAD;
+
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 
 import static org.gbif.occurrence.validation.util.TempTermsUtils.buildTermMapping;
 
 import static akka.dispatch.Futures.future;
-import static akka.pattern.Patterns.pipe;
-
 import static akka.japi.pf.ReceiveBuilder.match;
+import static akka.pattern.Patterns.pipe;
 
 /**
  * Akka actor that processes a single occurrence data file.
@@ -27,14 +29,14 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
 
   public SingleFileReaderActor(RecordProcessor recordProcessor) {
     receive(
-      match(DataFile.class, dataFile -> {
-        pipe(
-          future( () -> processDataFile(dataFile, recordProcessor, sender()), getContext().dispatcher()),
-          getContext().dispatcher()
-        ).to(sender());
-      })
-        .matchAny(this::unhandled)
-        .build()
+            match(DataFile.class, dataFile -> {
+              pipe(
+                      future(() -> processDataFile(dataFile, recordProcessor, sender()), getContext().dispatcher()),
+                      getContext().dispatcher()
+              ).to(sender());
+            })
+                    .matchAny(this::unhandled)
+                    .build()
     );
   }
 
@@ -58,7 +60,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
         if (record.size() != expectedNumberOfColumn) {
           sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
         }
-        sender.tell(recordProcessor.process(record), self());
+        sender.tell(recordProcessor.process(Long.toString(line), record), self());
       }
 
       //add reader aggregated result to the DataWorkResult
@@ -74,10 +76,10 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
   private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(long lineNumber,
                                                                                        int expectedColumnCount,
                                                                                        int actualColumnCount) {
-    return new RecordStructureEvaluationResult(Long.toString(lineNumber),
-                                               MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
-                                                                    expectedColumnCount, actualColumnCount));
+    //FIXME record line number
+    return new RecordStructureEvaluationResult.Builder().addDetail(StructureEvaluationDetailType.RECORD_STRUCTURE,
+            MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
+                    expectedColumnCount, actualColumnCount)).build();
   }
-
 
 }
