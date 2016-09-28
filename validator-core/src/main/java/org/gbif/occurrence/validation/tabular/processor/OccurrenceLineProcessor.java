@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 
 public class OccurrenceLineProcessor implements RecordProcessor {
@@ -25,7 +26,7 @@ public class OccurrenceLineProcessor implements RecordProcessor {
   }
 
   @Override
-  public RecordInterpretionBasedEvaluationResult process(Map<Term, String> record) {
+  public RecordInterpretionBasedEvaluationResult process(@Nullable String id, Map<Term, String> record) {
     //TODO maybe we should copy the fields?
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     verbatimOccurrence.setVerbatimFields(record);
@@ -33,7 +34,7 @@ public class OccurrenceLineProcessor implements RecordProcessor {
     if (datasetKey != null) {
       verbatimOccurrence.setDatasetKey(UUID.fromString(datasetKey));
     }
-    return toEvaluationResult("id", interpreter.interpret(verbatimOccurrence));
+    return toEvaluationResult(id, interpreter.interpret(verbatimOccurrence));
   }
 
   /**
@@ -56,6 +57,7 @@ public class OccurrenceLineProcessor implements RecordProcessor {
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
     Map<Term, String> relatedData;
 
+    builder.withIdentifier(id);
     for (OccurrenceIssue issue : result.getUpdated().getIssues()) {
       if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue)) {
         relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)

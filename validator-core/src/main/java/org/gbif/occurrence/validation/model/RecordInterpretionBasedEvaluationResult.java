@@ -1,5 +1,7 @@
 package org.gbif.occurrence.validation.model;
 
+import org.gbif.api.vocabulary.EvaluationDetailType;
+import org.gbif.api.vocabulary.EvaluationType;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.Term;
 
@@ -10,44 +12,55 @@ import java.util.Map;
 
 /**
  *
- * WORK-IN-PROGRESS
- *
  * Result of an Interpretation Based Evaluation
  */
-public class RecordInterpretionBasedEvaluationResult extends RecordEvaluationResult {
+public class RecordInterpretionBasedEvaluationResult extends EvaluationResult {
 
-  private final List<Details> details;
+  private final List<EvaluationResultDetails> details;
 
-  public RecordInterpretionBasedEvaluationResult(String recordId,
-                                                 List<Details> details){
+  /**
+   * Private constructor, use builder.
+   *
+   * @param recordId
+   * @param details
+   */
+  private RecordInterpretionBasedEvaluationResult(String recordId,
+                                                 List<EvaluationResultDetails> details){
     super(recordId, EvaluationType.INTERPRETATION_BASED_EVALUATION);
     this.details = details;
   }
 
-  public List<Details> getDetails() {
+  @Override
+  public List<EvaluationResultDetails> getDetails() {
     return details;
   }
 
   public static class Builder {
-    public List<Details> details;
+    public String id;
+    public List<EvaluationResultDetails> details;
+
+    public Builder withIdentifier(String id){
+      this.id = id;
+      return this;
+    }
 
     public Builder addDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData){
       if(details == null){
-        details = new ArrayList<Details>();
+        details = new ArrayList<>();
       }
       details.add(new Details(issueFlag, relatedData));
       return this;
     }
 
     public RecordInterpretionBasedEvaluationResult build(){
-      return new RecordInterpretionBasedEvaluationResult("", details);
+      return new RecordInterpretionBasedEvaluationResult(id, details);
     }
   }
 
   /**
    * Contains details of a RecordInterpretionBasedEvaluationResult.
    */
-  public static class Details {
+  public static class Details implements EvaluationResultDetails {
     private final OccurrenceIssue issueFlag;
     private final Map<Term, String> relatedData;
 
@@ -62,6 +75,12 @@ public class RecordInterpretionBasedEvaluationResult extends RecordEvaluationRes
 
     public Map<Term, String> getRelatedData() {
       return relatedData;
+    }
+
+
+    @Override
+    public EvaluationDetailType getEvaluationDetailType() {
+      return issueFlag;
     }
   }
 }

@@ -1,8 +1,11 @@
 package org.gbif.occurrence.validation.tabular.single;
 
+import org.gbif.api.vocabulary.EvaluationDetailType;
+import org.gbif.api.vocabulary.EvaluationType;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.occurrence.validation.api.ResultsCollector;
-import org.gbif.occurrence.validation.model.RecordEvaluationResult;
+import org.gbif.occurrence.validation.model.EvaluationResult;
+import org.gbif.occurrence.validation.model.EvaluationResultDetails;
 import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 
@@ -18,17 +21,19 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public class SimpleValidationCollector implements ResultsCollector<Map<OccurrenceIssue, Long>> {
 
-  private List<RecordStructureEvaluationResult> recordStructureIssuesSample = new ArrayList<>();
-  private List<RecordInterpretionBasedEvaluationResult> recordInterpretationBasedIssuesSample = new ArrayList<>();
+  private static final int MAX_SAMPLE_SIZE = 10;
 
-  private HashMap<OccurrenceIssue, Long> issuesCounter = new HashMap(OccurrenceIssue.values().length);
+  //collect counts
+  private Map<EvaluationType, Map<EvaluationDetailType, Long>> issueCounter = new HashMap<>();
+  private Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> issueSampling = new HashMap<>();
 
-  private long recordStructureIssueCount;
   private long recordCount;
 
-
   @Override
-  public void accumulate(RecordEvaluationResult result) {
+  public void accumulate(EvaluationResult result) {
+    issueSampling.putIfAbsent(result.getEvaluationType(), new HashMap<>());
+    issueCounter.putIfAbsent(result.getEvaluationType(), new HashMap<>());
+
     switch (result.getEvaluationType()) {
       case STRUCTURE_EVALUATION: accumulate((RecordStructureEvaluationResult)result);
         break;
@@ -37,32 +42,48 @@ public class SimpleValidationCollector implements ResultsCollector<Map<Occurrenc
     }
   }
 
+  @Override
+  public Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> getSamples() {
+    return issueSampling;
+  }
+
+  @Override
+  public Map<EvaluationType, Map<EvaluationDetailType, Long>> getAggregatedCounts() {
+    return issueCounter;
+  }
+
+  //TODO C.G. not DRY
   private void accumulate(RecordStructureEvaluationResult result) {
-    recordStructureIssueCount++;
 
-    recordStructureIssuesSample.add(result);
+    Map<EvaluationDetailType, List<EvaluationResultDetails>> currentSample = issueSampling.get(result.getEvaluationType());
+    for(EvaluationResultDetails detail : result.getDetails()){
+      currentSample.putIfAbsent(detail.getEvaluationDetailType(), new ArrayList<>());
+      if(currentSample.get(detail.getEvaluationDetailType()).size() < MAX_SAMPLE_SIZE){
+        currentSample.get(detail.getEvaluationDetailType()).add(detail);
+      }
+      issueCounter.get(result.getEvaluationType()).compute(detail.getEvaluationDetailType(), (k,v) -> (v == null) ? 1 : ++v);
+    }
   }
 
+  //TODO C.G. not DRY
   private void accumulate(RecordInterpretionBasedEvaluationResult result) {
+
+    Map<EvaluationDetailType, List<EvaluationResultDetails>> currentSample = issueSampling.get(result.getEvaluationType());
+    for(EvaluationResultDetails detail : result.getDetails()){
+      currentSample.putIfAbsent(detail.getEvaluationDetailType(), new ArrayList<>());
+      if(currentSample.get(detail.getEvaluationDetailType()).size() < MAX_SAMPLE_SIZE){
+        currentSample.get(detail.getEvaluationDetailType()).add(detail);
+      }
+      issueCounter.get(result.getEvaluationType()).compute(detail.getEvaluationDetailType(), (k,v) -> (v == null) ? 1 : ++v);
+    }
+
     recordCount += 1;
-    result.getDetails().forEach(
-      detail -> issuesCounter.compute(detail.getIssueFlag(), (k,v) -> (v == null) ? 1 : ++v)
-    );
   }
 
-  @Override
-  public List<RecordStructureEvaluationResult> getRecordStructureEvaluationResult() {
-    return recordStructureIssuesSample;
-  }
-
-  @Override
-  public Map<OccurrenceIssue, Long> getAggregatedResult(){
-    return issuesCounter;
-  }
 
   @Override
   public String toString() {
-    return "Record count: " + recordCount + " Issues: " + issuesCounter.toString();
+    return "Record count: " + recordCount;// + " Issues: " + issuesCounter.toString();
   }
 
 }

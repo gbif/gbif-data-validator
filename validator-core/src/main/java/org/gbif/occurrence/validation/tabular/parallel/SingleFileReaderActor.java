@@ -5,6 +5,7 @@ import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.RecordProcessor;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
+import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
@@ -62,7 +63,7 @@ public class SingleFileReaderActor extends UntypedActor {
         if(record.size() != expectedNumberOfColumn){
           getSender().tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), getSelf());
         }
-        getSender().tell(recordProcessor.process(record), getSelf());
+        getSender().tell(recordProcessor.process(Long.toString(line), record), getSelf());
       }
 
       //add reader aggregated result to the DataWorkResult
@@ -82,10 +83,10 @@ public class SingleFileReaderActor extends UntypedActor {
    */
   private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(long lineNumber, int expectedColumnCount,
                                                                                        int actualColumnCount) {
-    return new RecordStructureEvaluationResult(Long.toString(lineNumber),
+    //FIXME record line number
+    return new RecordStructureEvaluationResult.Builder().addDetail(StructureEvaluationDetailType.RECORD_STRUCTURE,
             MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
-                    expectedColumnCount, actualColumnCount));
+                    expectedColumnCount, actualColumnCount)).build();
   }
-
 
 }
