@@ -1,7 +1,6 @@
 package org.gbif.validation.ws;
 
 import org.gbif.occurrence.validation.api.DataFile;
-import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.DataFileValidationResult;
 import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
@@ -19,9 +18,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 
-import com.codahale.metrics.annotation.Timed;
-import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
-import org.glassfish.jersey.media.multipart.FormDataParam;
+import com.google.inject.Inject;
+import com.sun.jersey.core.header.FormDataContentDisposition;
+import com.sun.jersey.multipart.FormDataParam;
+import org.eclipse.jetty.server.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,16 +31,19 @@ public class ValidationResource {
 
   private final ValidationConfiguration configuration;
 
+  private final OccurrenceDataFileProcessorFactory dataFileProcessorFactory;
+
   static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
+  @Inject
   public ValidationResource(ValidationConfiguration configuration) {
     this.configuration = configuration;
+    dataFileProcessorFactory = new OccurrenceDataFileProcessorFactory(configuration.getApiUrl());
   }
 
 
 
   @POST
-  @Timed
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
@@ -54,7 +57,7 @@ public class ValidationResource {
       Files.copy(stream, dataFilePath, StandardCopyOption.REPLACE_EXISTING);
       return processFile(dataFilePath).toString();
     } catch (IOException  ex) {
-      throw  new WebApplicationException("Error uploading file");
+      throw  new WebApplicationException(Response.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
@@ -65,8 +68,6 @@ public class ValidationResource {
     dataFile.setDelimiterChar('\t');
     dataFile.setHasHeaders(true);
     dataFile.loadHeaders();
-    OccurrenceDataFileProcessorFactory dataFileProcessorFactory = new OccurrenceDataFileProcessorFactory(configuration.getApiUrl());
-    DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile.getNumOfLines());
-    return dataFileProcessor.process(dataFile);
+    return dataFileProcessorFactory.create(dataFile.getNumOfLines()).process(dataFile);
   }
 }

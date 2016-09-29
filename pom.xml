@@ -34,6 +34,7 @@
   <modules>
     <module>validator-core</module>
     <module>validator-dropwizard-ws</module>
+    <module>validator-ws</module>
   </modules>
 
   <properties>

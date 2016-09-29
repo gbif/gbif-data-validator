@@ -28,10 +28,10 @@ public class OccurrenceDataFileProcessorFactory {
    * Creates a DataFileProcessor instance analyzing the size of the input file.
    * If the file exceeds certain size it's processed in parallel otherwise a single thread processor it's used.
    */
-  public DataFileProcessor create(DataFile dataFile) {
+  public DataFileProcessor create(int fileSize) {
     RecordProcessorFactory factory = new OccurrenceLineProcessorFactory(apiUrl);
 
-    if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
+    if (fileSize <= FILE_SPLIT_SIZE) {
       return new SingleDataFileProcessor(factory.create());
     }
     return new ParallelDataFileProcessor(apiUrl);
