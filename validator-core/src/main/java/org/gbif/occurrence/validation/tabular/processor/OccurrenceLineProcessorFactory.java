@@ -32,6 +32,11 @@ public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
     this.apiUrl = apiUrl;
   }
 
+  /**
+   * Create an OccurrenceLineProcessor.
+   *
+   * @return new instance
+   */
   public RecordProcessor create() {
     return new OccurrenceLineProcessor(buildOccurrenceInterpreter());
   }

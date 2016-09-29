@@ -106,13 +106,13 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   @Override
   public DataFileValidationResult process(DataFile dataFile) {
-    ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector();
+    ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
     final ActorSystem system = ActorSystem.create("DataFileProcessorSystem");
     // Create an Akka system
 
     // create the master
-    final ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class,validationCollector,
-                                                   new OccurrenceLineProcessorFactory(apiUrl)), "DataFileProcessor");
+    final ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,
+            new OccurrenceLineProcessorFactory(apiUrl)), "DataFileProcessor");
     try {
       // start the calculation
       master.tell(dataFile,master);

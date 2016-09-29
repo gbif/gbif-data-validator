@@ -2,7 +2,6 @@ package org.gbif.occurrence.validation.tabular.parallel;
 
 import org.gbif.api.vocabulary.EvaluationDetailType;
 import org.gbif.api.vocabulary.EvaluationType;
-import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.EvaluationResult;
 import org.gbif.occurrence.validation.model.EvaluationResultDetails;
@@ -16,28 +15,36 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
-import javax.annotation.concurrent.ThreadSafe;
 
 /**
  * Collects results of data validations produced from a multi-threaded processing.
+ *
+ * The accumulate method is thread-safe, getAggregatedCounts and getSamples are NOT thread-safe.
  */
-@ThreadSafe
-public class ConcurrentValidationCollector implements ResultsCollector<Map<OccurrenceIssue, Long>> {
+public class ConcurrentValidationCollector implements ResultsCollector {
 
-  private static final int MAX_SAMPLE_SIZE = 10;
+  private final int maxNumberOfSample;
 
   private final ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, LongAdder>> issueCounter;
-  private ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>>> issueSampling;
+  private final ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>>> issueSampling;
 
   private final LongAdder recordCount;
 
-  public ConcurrentValidationCollector() {
+  /**
+   *
+   * @param maxNumberOfSample maximum number of sample to take per {@link EvaluationDetailType}
+   */
+  public ConcurrentValidationCollector(Integer maxNumberOfSample) {
+
+    this.maxNumberOfSample = (maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE);
+
     issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
     issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
 
     recordCount = new LongAdder();
   }
 
+  @Override
   public void accumulate(EvaluationResult result) {
 
     issueCounter.putIfAbsent(result.getEvaluationType(), new ConcurrentHashMap<>());
@@ -54,6 +61,14 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
     }
   }
 
+  private void accumulate(RecordInterpretionBasedEvaluationResult result) {
+    recordCount.increment();
+  }
+
+  private void accumulate(RecordStructureEvaluationResult result) {
+
+  }
+
   /**
    * @return a copy of the inter aggregated counts.
    */
@@ -68,7 +83,6 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
                         copy.get(rec.getKey()).put(entry.getKey(), entry.getValue().longValue()));
             }
     );
-
     return copy;
   }
 
@@ -87,19 +101,17 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
                               new ArrayList<>(entry.getValue())));
             }
     );
-
     return copy;
   }
 
 
-  public void accumulate(RecordInterpretionBasedEvaluationResult result) {
-    recordCount.increment();
-  }
-
-  public void accumulate(RecordStructureEvaluationResult result) {
-
-  }
-
+  /**
+   * Function used to collect data from a list of {@link EvaluationResultDetails}.
+   *
+   * @param details
+   * @param counter
+   * @param samples
+   */
   private void collectData(List<EvaluationResultDetails> details,
                                 ConcurrentHashMap<EvaluationDetailType, LongAdder> counter,
                                 ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>> samples){
@@ -109,7 +121,7 @@ public class ConcurrentValidationCollector implements ResultsCollector<Map<Occur
 
               samples.putIfAbsent(detail.getEvaluationDetailType(), new ConcurrentLinkedQueue<>());
               samples.compute(detail.getEvaluationDetailType(), (type, queue) -> {
-                        if(queue.size() < MAX_SAMPLE_SIZE){
+                        if(queue.size() < maxNumberOfSample){
                           samples.get(type).add(detail);
                         }
                         return queue;

@@ -6,7 +6,7 @@ import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.DataFileValidationResult;
 import org.gbif.occurrence.validation.api.RecordProcessor;
 import org.gbif.occurrence.validation.api.RecordSource;
-import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
+import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
@@ -23,7 +23,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
 
   public SingleDataFileProcessor(RecordProcessor recordProcessor) {
     this.recordProcessor = recordProcessor;
-    collector = new SimpleValidationCollector();
+    collector = new SimpleValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
   }
 
   @Override

@@ -10,9 +10,10 @@ import java.util.Map;
 
 /**
  * Interface defining the collector of results.
- * @param <R>
  */
-public interface ResultsCollector<R> {
+public interface ResultsCollector {
+
+  int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
 
   void accumulate(EvaluationResult result);
 

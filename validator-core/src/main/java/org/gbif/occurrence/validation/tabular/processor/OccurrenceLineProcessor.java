@@ -1,7 +1,6 @@
 package org.gbif.occurrence.validation.tabular.processor;
 
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
-import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition;
@@ -44,8 +43,9 @@ public class OccurrenceLineProcessor implements RecordProcessor {
   }
 
   /**
-   *
    * Creates a RecordInterpretionBasedEvaluationResult from an OccurrenceInterpretationResult.
+   * Responsible to to put the related data (e.g. field + current value) into the RecordInterpretionBasedEvaluationResult
+   * instance.
    */
   private static RecordInterpretionBasedEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
 

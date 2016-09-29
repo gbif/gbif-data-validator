@@ -2,12 +2,9 @@ package org.gbif.occurrence.validation.tabular.single;
 
 import org.gbif.api.vocabulary.EvaluationDetailType;
 import org.gbif.api.vocabulary.EvaluationType;
-import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.EvaluationResult;
 import org.gbif.occurrence.validation.model.EvaluationResultDetails;
-import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
-import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,27 +16,36 @@ import javax.annotation.concurrent.NotThreadSafe;
  * Basic implementation of a {@link ResultsCollector}.
  */
 @NotThreadSafe
-public class SimpleValidationCollector implements ResultsCollector<Map<OccurrenceIssue, Long>> {
+public class SimpleValidationCollector implements ResultsCollector {
 
-  private static final int MAX_SAMPLE_SIZE = 10;
+  private final int maxNumberOfSample;
 
-  //collect counts
-  private Map<EvaluationType, Map<EvaluationDetailType, Long>> issueCounter = new HashMap<>();
-  private Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> issueSampling = new HashMap<>();
+  private final Map<EvaluationType, Map<EvaluationDetailType, Long>> issueCounter;
+  private final Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> issueSampling;
 
   private long recordCount;
+
+  public SimpleValidationCollector(Integer maxNumberOfSample) {
+    this.maxNumberOfSample = (maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE);
+
+    issueCounter = new HashMap<>(EvaluationType.values().length);
+    issueSampling = new HashMap<>(EvaluationType.values().length);
+  }
 
   @Override
   public void accumulate(EvaluationResult result) {
     issueSampling.putIfAbsent(result.getEvaluationType(), new HashMap<>());
     issueCounter.putIfAbsent(result.getEvaluationType(), new HashMap<>());
 
-    switch (result.getEvaluationType()) {
-      case STRUCTURE_EVALUATION: accumulate((RecordStructureEvaluationResult)result);
-        break;
-      case INTERPRETATION_BASED_EVALUATION: accumulate((RecordInterpretionBasedEvaluationResult)result);
-        break;
-    }
+    collectData(result.getDetails(), issueCounter.get(result.getEvaluationType()),
+            issueSampling.get(result.getEvaluationType()));
+
+//    switch (result.getEvaluationType()) {
+//      case STRUCTURE_EVALUATION: accumulate((RecordStructureEvaluationResult)result);
+//        break;
+//      case INTERPRETATION_BASED_EVALUATION: accumulate((RecordInterpretionBasedEvaluationResult)result);
+//        break;
+//    }
   }
 
   @Override
@@ -52,32 +58,30 @@ public class SimpleValidationCollector implements ResultsCollector<Map<Occurrenc
     return issueCounter;
   }
 
-  //TODO C.G. not DRY
-  private void accumulate(RecordStructureEvaluationResult result) {
 
-    Map<EvaluationDetailType, List<EvaluationResultDetails>> currentSample = issueSampling.get(result.getEvaluationType());
-    for(EvaluationResultDetails detail : result.getDetails()){
-      currentSample.putIfAbsent(detail.getEvaluationDetailType(), new ArrayList<>());
-      if(currentSample.get(detail.getEvaluationDetailType()).size() < MAX_SAMPLE_SIZE){
-        currentSample.get(detail.getEvaluationDetailType()).add(detail);
-      }
-      issueCounter.get(result.getEvaluationType()).compute(detail.getEvaluationDetailType(), (k,v) -> (v == null) ? 1 : ++v);
-    }
-  }
+  /**
+   * Function used to collect data from a list of {@link EvaluationResultDetails}.
+   *
+   * @param details
+   * @param counter
+   * @param samples
+   */
+  private void collectData(List<EvaluationResultDetails> details,
+                           Map<EvaluationDetailType, Long> counter,
+                           Map<EvaluationDetailType, List<EvaluationResultDetails>> samples){
+    details.forEach(
+            detail -> {
+              counter.compute(detail.getEvaluationDetailType(), (k, v) -> (v == null) ? 1 : ++v);
 
-  //TODO C.G. not DRY
-  private void accumulate(RecordInterpretionBasedEvaluationResult result) {
-
-    Map<EvaluationDetailType, List<EvaluationResultDetails>> currentSample = issueSampling.get(result.getEvaluationType());
-    for(EvaluationResultDetails detail : result.getDetails()){
-      currentSample.putIfAbsent(detail.getEvaluationDetailType(), new ArrayList<>());
-      if(currentSample.get(detail.getEvaluationDetailType()).size() < MAX_SAMPLE_SIZE){
-        currentSample.get(detail.getEvaluationDetailType()).add(detail);
-      }
-      issueCounter.get(result.getEvaluationType()).compute(detail.getEvaluationDetailType(), (k,v) -> (v == null) ? 1 : ++v);
-    }
-
-    recordCount += 1;
+              samples.putIfAbsent(detail.getEvaluationDetailType(), new ArrayList<>());
+              samples.compute(detail.getEvaluationDetailType(), (type, queue) -> {
+                if(queue.size() < maxNumberOfSample){
+                  samples.get(type).add(detail);
+                }
+                return queue;
+              });
+            }
+    );
   }
 
 
