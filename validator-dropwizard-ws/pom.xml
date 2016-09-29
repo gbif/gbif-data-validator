@@ -9,7 +9,7 @@
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>validator-ws</artifactId>
+  <artifactId>validator-dropwizard-ws</artifactId>
 
   <properties>
     <dropwizard.version>1.0.2</dropwizard.version>
