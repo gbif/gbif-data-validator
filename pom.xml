@@ -33,7 +33,7 @@
 
   <modules>
     <module>validator-core</module>
-    <module>validator-ws</module>
+    <module>validator-dropwizard-ws</module>
   </modules>
 
   <properties>
