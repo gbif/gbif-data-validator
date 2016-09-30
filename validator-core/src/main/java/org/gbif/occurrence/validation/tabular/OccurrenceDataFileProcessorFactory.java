@@ -4,7 +4,7 @@ import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.RecordProcessorFactory;
 import org.gbif.occurrence.validation.tabular.parallel.ParallelDataFileProcessor;
-import org.gbif.occurrence.validation.tabular.processor.OccurrenceLineProcessorFactory;
+import org.gbif.occurrence.validation.processor.OccurrenceLineProcessorFactory;
 import org.gbif.occurrence.validation.tabular.single.SingleDataFileProcessor;
 
 /**

@@ -1,4 +1,4 @@
-package org.gbif.occurrence.validation.tabular.processor;
+package org.gbif.occurrence.validation.processor;
 
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;

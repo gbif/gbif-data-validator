@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/**
+ * Contains the result of a DataFile validation
+ */
 public class DataFileValidationResult {
 
 
@@ -32,27 +36,6 @@ public class DataFileValidationResult {
     return results;
   }
 
-//  @Override
-//  public String toString() {
-//
-//    String toString = "DataFileValidationResult{" +
-//            "issues=" + issues;
-//
-//    //temporary code, will be replaced by json serialisation
-//    if(recordStructureIssue !=null && !recordStructureIssue.isEmpty()){
-//      toString += ", recordStructureIssue{[";
-//      for(RecordStructureEvaluationResult result : recordStructureIssue){
-//        toString += "{lineNumber:"+result.getId() + ", " + result.getDetails()+"}, ";
-//      }
-//
-//      toString = StringUtils.removeEnd(toString, ",");
-//      toString += "]}";
-//    }
-//
-//    toString += '}';
-//
-//    return toString;
-//  }
 
   private static class DateFileValidationElement {
 

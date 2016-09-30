@@ -6,7 +6,7 @@ import org.gbif.occurrence.validation.api.DataFileValidationResult;
 import org.gbif.occurrence.validation.api.RecordProcessorFactory;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.EvaluationResult;
-import org.gbif.occurrence.validation.tabular.processor.OccurrenceLineProcessorFactory;
+import org.gbif.occurrence.validation.processor.OccurrenceLineProcessorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
 
 import java.io.File;
