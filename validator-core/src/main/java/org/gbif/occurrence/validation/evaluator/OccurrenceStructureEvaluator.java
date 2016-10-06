@@ -2,14 +2,14 @@ package org.gbif.occurrence.validation.evaluator;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
-import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
-import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
+import org.gbif.occurrence.validation.api.model.EvaluationType;
+import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import java.text.MessageFormat;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public class OccurrenceStructureEvaluator implements RecordEvaluator<RecordStructureEvaluationResult> {
+public class OccurrenceStructureEvaluator implements RecordEvaluator {
 
   private String[] fields;
 
@@ -18,14 +18,13 @@ public class OccurrenceStructureEvaluator implements RecordEvaluator<RecordStruc
   }
 
   @Override
-  public RecordStructureEvaluationResult process(
-    @Nullable String id, Map<Term, String> record
-  ) {
+  public RecordEvaluationResult process(
+          @Nullable String id, Map<Term, String> record) {
     int expectedColumnCount = getFields().length;
     if (record.size() != expectedColumnCount) {
       return toColumnCountMismatchResult(id, expectedColumnCount, record.size());
     }
-    return  null;
+    return null;
   }
 
   @Override
@@ -41,11 +40,11 @@ public class OccurrenceStructureEvaluator implements RecordEvaluator<RecordStruc
    * @param actualColumnCount
    * @return
    */
-  private static RecordStructureEvaluationResult toColumnCountMismatchResult(String lineId, int expectedColumnCount,
+  private static RecordEvaluationResult toColumnCountMismatchResult(String lineId, int expectedColumnCount,
                                                                              int actualColumnCount) {
-    //FIXME record line number
-    return new RecordStructureEvaluationResult.Builder().addDetail(StructureEvaluationDetailType.RECORD_STRUCTURE,
-                                                                   MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
-                                                                                        expectedColumnCount, actualColumnCount)).build();
+    return new RecordEvaluationResult.Builder()
+            .withIdentifier(lineId)
+            .addDescription(EvaluationType.COLUMN_MISMATCH, MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
+                    expectedColumnCount, actualColumnCount)).build();
   }
 }

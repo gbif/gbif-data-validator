@@ -1,11 +1,8 @@
 package org.gbif.occurrence.validation.api.model;
 
 import org.gbif.api.vocabulary.EvaluationDetailType;
-import org.gbif.api.vocabulary.EvaluationType;
-import org.gbif.occurrence.validation.model.EvaluationResultDetails;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,25 +12,28 @@ import java.util.Map;
  */
 public class DataFileValidationResult {
 
+  public enum Status {OK, FAILED};
 
-  private Map<EvaluationType, List<DateFileValidationElement>> results = new HashMap<>();
+  private Status status;
+  private boolean indexeable;
 
-  public DataFileValidationResult(Map<EvaluationType, Map<EvaluationDetailType, Long>> issueCounter,
-                                  Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> issueSampling) {
+  //only used in case of general error with the input file
+  private String error;
 
+  private List<DateFileValidationElement> issues = new ArrayList<>();
+
+
+  public DataFileValidationResult(Map<EvaluationDetailType, Long> issueCounter,
+                                  Map<EvaluationDetailType, List<EvaluationResultDetails>> issueSampling) {
     issueCounter.forEach(
-            (k,v) -> {
-              results.putIfAbsent(k, new ArrayList<>());
-              v.forEach(
-                    (k1, v1) -> results.get(k).add(new DateFileValidationElement(k1, v1, issueSampling.get(k).get(k1)))
-              );
-            }
+            (k, v) ->
+                    issues.add(new DateFileValidationElement(k, v, issueSampling.get(k)))
     );
   }
 
 
-  public Map<EvaluationType, List<DateFileValidationElement>> getResults(){
-    return results;
+  public List<DateFileValidationElement> getIssues(){
+    return issues;
   }
 
 
@@ -61,4 +61,5 @@ public class DataFileValidationResult {
       return sample;
     }
   }
+
 }

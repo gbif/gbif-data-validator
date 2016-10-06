@@ -4,12 +4,9 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.RecordSource;
-import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
-import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
-import java.text.MessageFormat;
 import java.util.Map;
 
 import akka.actor.AbstractLoggingActor;
@@ -56,7 +53,8 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
       while ((record = recordSource.read()) != null) {
         line++;
         if (record.size() != expectedNumberOfColumn) {
-          sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
+          //TODO get a list of recordEvaluators
+          //sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
         }
         sender.tell(recordEvaluator.process(Long.toString(line), record), self());
       }
@@ -66,18 +64,6 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
     } catch (Exception ex) {
       return new DataWorkResult(dataFile, DataWorkResult.Result.FAILED);
     }
-  }
-
-  /**
-   * Creates a RecordStructureEvaluationResult instance for a column count mismatch.
-   */
-  private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(long lineNumber,
-                                                                                       int expectedColumnCount,
-                                                                                       int actualColumnCount) {
-    //FIXME record line number
-    return new RecordStructureEvaluationResult.Builder().addDetail(StructureEvaluationDetailType.RECORD_STRUCTURE,
-            MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
-                    expectedColumnCount, actualColumnCount)).build();
   }
 
 }

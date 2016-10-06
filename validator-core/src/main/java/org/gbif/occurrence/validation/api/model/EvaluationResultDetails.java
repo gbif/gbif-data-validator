@@ -1,13 +1,10 @@
-package org.gbif.occurrence.validation.model;
+package org.gbif.occurrence.validation.api.model;
 
 import org.gbif.api.vocabulary.EvaluationDetailType;
 
 /**
- * Details of an EvaluationResult.
+ *
  */
 public interface EvaluationResultDetails {
-
   EvaluationDetailType getEvaluationDetailType();
-
 }
-

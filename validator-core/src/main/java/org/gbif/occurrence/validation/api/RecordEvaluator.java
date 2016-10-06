@@ -1,15 +1,15 @@
 package org.gbif.occurrence.validation.api;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.occurrence.validation.model.EvaluationResult;
+import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * C.G. I would rename this class RecordEvaluator
+ * Evaluator is responsible to take a record and produce an {@link RecordEvaluationResult}.
  */
-public interface RecordEvaluator<T extends EvaluationResult> {
+public interface RecordEvaluator {
 
   /**
    *
@@ -17,7 +17,7 @@ public interface RecordEvaluator<T extends EvaluationResult> {
    * @param record
    * @return
    */
-  T process(@Nullable String id, Map<Term, String> record);
+  RecordEvaluationResult process(@Nullable String id, Map<Term, String> record);
 
   String[] getFields();
 

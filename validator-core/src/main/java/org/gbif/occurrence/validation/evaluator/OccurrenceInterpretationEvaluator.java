@@ -7,11 +7,8 @@ import org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
-import org.gbif.occurrence.validation.model.RecordInterpretationResult;
-import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
-import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
+import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
-import java.text.MessageFormat;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -21,7 +18,7 @@ import javax.annotation.Nullable;
 /**
  * Class to process one text line that represents a occurrence record.
  */
-public class OccurrenceInterpretationEvaluator implements RecordEvaluator<RecordInterpretationResult> {
+public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private final OccurrenceInterpreter interpreter;
   private final String[] fields;
@@ -36,7 +33,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator<Record
   }
 
   @Override
-  public RecordInterpretationResult process(@Nullable String id, Map<Term, String> record) {
+  public RecordEvaluationResult process(@Nullable String id, Map<Term, String> record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     verbatimOccurrence.setVerbatimFields(record);
     String datasetKey = verbatimOccurrence.getVerbatimField(GbifTerm.datasetKey);
@@ -56,9 +53,9 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator<Record
    * Responsible to to put the related data (e.g. field + current value) into the RecordInterpretionBasedEvaluationResult
    * instance.
    */
-  private static RecordInterpretationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
+  private static RecordEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
 
-    RecordInterpretationResult.Builder builder = new RecordInterpretationResult.Builder();
+    RecordEvaluationResult.Builder builder = new RecordEvaluationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
 
     builder.withIdentifier(id);
@@ -68,7 +65,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator<Record
           .stream()
           .filter(t -> verbatimFields.get(t) != null)
           .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
-        builder.addDetail(issue, relatedData);
+        builder.addInterpretationDetail(issue, relatedData);
       }
     });
     return builder.build();
