@@ -1,7 +1,7 @@
 package org.gbif.ws.server.provider;
 
-import org.gbif.occurrence.validation.api.DataFileDescriptor;
-import org.gbif.occurrence.validation.api.FileFormat;
+import org.gbif.occurrence.validation.api.model.DataFileDescriptor;
+import org.gbif.occurrence.validation.api.model.FileFormat;
 import org.gbif.validation.ws.WsValidationParams;
 
 import java.nio.charset.Charset;

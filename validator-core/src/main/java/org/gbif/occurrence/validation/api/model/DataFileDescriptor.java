@@ -1,4 +1,4 @@
-package org.gbif.occurrence.validation.api;
+package org.gbif.occurrence.validation.api.model;
 
 import java.nio.charset.Charset;
 

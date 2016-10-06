@@ -1,6 +1,6 @@
 package org.gbif.validation.ws;
 
-import org.gbif.occurrence.validation.api.FileFormat;
+import org.gbif.occurrence.validation.api.model.FileFormat;
 
 import java.nio.charset.Charset;
 

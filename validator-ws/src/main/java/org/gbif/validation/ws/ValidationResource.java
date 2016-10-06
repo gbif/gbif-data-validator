@@ -4,7 +4,7 @@ import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileValidationResult;
 import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
-import org.gbif.occurrence.validation.api.DataFileDescriptor;
+import org.gbif.occurrence.validation.api.model.DataFileDescriptor;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.IOException;
