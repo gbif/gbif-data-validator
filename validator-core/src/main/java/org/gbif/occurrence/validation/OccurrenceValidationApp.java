@@ -9,6 +9,7 @@ import org.gbif.occurrence.validation.util.FileBashUtilities;
 import java.io.IOException;
 
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 public class OccurrenceValidationApp {
 
@@ -25,6 +26,7 @@ public class OccurrenceValidationApp {
     DataFileValidationResult result = dataFileProcessor.process(dataFile);
 
     ObjectMapper om = new ObjectMapper();
+    om.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
     System.out.println(om.writeValueAsString(result));
   }
 }

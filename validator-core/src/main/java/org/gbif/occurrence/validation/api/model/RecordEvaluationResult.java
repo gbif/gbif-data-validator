@@ -24,11 +24,17 @@ public class RecordEvaluationResult {
   }
 
   public static class Builder {
-    public String id;
-    public List<EvaluationResultDetails> details;
+    private Long lineNumber;
+    private String recordId;
+    private List<EvaluationResultDetails> details;
 
-    public Builder withIdentifier(String id){
-      this.id = id;
+    public Builder withLineNumber(long lineNumber){
+      this.lineNumber = lineNumber;
+      return this;
+    }
+
+    public Builder withRecordId(String recordId){
+      this.recordId = recordId;
       return this;
     }
 
@@ -36,7 +42,7 @@ public class RecordEvaluationResult {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new RecordInterpretationResultDetails(issueFlag, relatedData));
+      details.add(new RecordInterpretationResultDetails(lineNumber, recordId, issueFlag, relatedData));
       return this;
     }
 
@@ -49,7 +55,7 @@ public class RecordEvaluationResult {
     }
 
     public RecordEvaluationResult build(){
-      return new RecordEvaluationResult(id, details);
+      return new RecordEvaluationResult(recordId, details);
     }
   }
 
@@ -57,12 +63,25 @@ public class RecordEvaluationResult {
    * Contains details of a RecordInterpretationResult.
    */
   public static class RecordInterpretationResultDetails implements EvaluationResultDetails {
+    private Long lineNumber;
+    private String recordId;
     private final EvaluationType issueFlag;
     private final Map<Term, String> relatedData;
 
-    public RecordInterpretationResultDetails(EvaluationType issueFlag, Map<Term, String> relatedData) {
+    public RecordInterpretationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
+                                             Map<Term, String> relatedData) {
+      this.lineNumber = lineNumber;
+      this.recordId = recordId;
       this.issueFlag = issueFlag;
       this.relatedData = relatedData;
+    }
+
+    public Long getLineNumber(){
+      return lineNumber;
+    }
+
+    public String getRecordId() {
+      return recordId;
     }
 
     public EvaluationType getIssueFlag() {

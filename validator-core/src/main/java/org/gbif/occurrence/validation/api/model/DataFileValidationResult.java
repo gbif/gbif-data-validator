@@ -29,26 +29,24 @@ public class DataFileValidationResult {
     );
   }
 
-
   public List<DateFileValidationElement> getIssues(){
     return issues;
   }
 
-
   private static class DateFileValidationElement {
 
-    private EvaluationType evaluationSubType;
+    private EvaluationType issue;
     private long count;
     private List<EvaluationResultDetails> sample;
 
-    public DateFileValidationElement(EvaluationType evaluationSubType, long count, List<EvaluationResultDetails> sample){
-      this.evaluationSubType = evaluationSubType;
+    public DateFileValidationElement(EvaluationType issue, long count, List<EvaluationResultDetails> sample){
+      this.issue = issue;
       this.count = count;
       this.sample = sample;
     }
 
-    public EvaluationType getEvaluationSubType() {
-      return evaluationSubType;
+    public EvaluationType getIssue() {
+      return issue;
     }
 
     public long getCount() {

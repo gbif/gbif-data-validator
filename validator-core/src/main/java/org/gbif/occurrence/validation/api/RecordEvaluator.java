@@ -13,11 +13,11 @@ public interface RecordEvaluator {
 
   /**
    *
-   * @param id identifier for the record within the context
+   * @param lineNumber number of the line within the context, can be null
    * @param record
    * @return
    */
-  RecordEvaluationResult process(@Nullable String id, Map<Term, String> record);
+  RecordEvaluationResult process(@Nullable Long lineNumber, Map<Term, String> record);
 
   String[] getFields();
 

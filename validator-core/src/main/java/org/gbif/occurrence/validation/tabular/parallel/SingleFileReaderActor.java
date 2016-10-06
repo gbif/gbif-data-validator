@@ -56,7 +56,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
           //TODO get a list of recordEvaluators
           //sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
         }
-        sender.tell(recordEvaluator.process(Long.toString(line), record), self());
+        sender.tell(recordEvaluator.process(line, record), self());
       }
 
       //add reader aggregated result to the DataWorkResult

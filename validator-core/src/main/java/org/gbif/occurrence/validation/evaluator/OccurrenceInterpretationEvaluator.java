@@ -33,14 +33,14 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   }
 
   @Override
-  public RecordEvaluationResult process(@Nullable String id, Map<Term, String> record) {
+  public RecordEvaluationResult process(@Nullable Long lineNumber, Map<Term, String> record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     verbatimOccurrence.setVerbatimFields(record);
     String datasetKey = verbatimOccurrence.getVerbatimField(GbifTerm.datasetKey);
     if (datasetKey != null) {
       verbatimOccurrence.setDatasetKey(UUID.fromString(datasetKey));
     }
-    return toEvaluationResult(id, interpreter.interpret(verbatimOccurrence));
+    return toEvaluationResult(lineNumber, interpreter.interpret(verbatimOccurrence));
   }
 
   @Override
@@ -53,12 +53,12 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * Responsible to to put the related data (e.g. field + current value) into the RecordInterpretionBasedEvaluationResult
    * instance.
    */
-  private static RecordEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
+  private static RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
 
     RecordEvaluationResult.Builder builder = new RecordEvaluationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
 
-    builder.withIdentifier(id);
+    builder.withLineNumber(lineNumber);
     result.getUpdated().getIssues().forEach( issue -> {
       if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue) &&
               OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.containsKey(issue)) {

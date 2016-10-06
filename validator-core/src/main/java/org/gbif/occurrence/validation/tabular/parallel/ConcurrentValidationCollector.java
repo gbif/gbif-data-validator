@@ -1,6 +1,5 @@
 package org.gbif.occurrence.validation.tabular.parallel;
 
-import org.gbif.api.vocabulary.EvaluationDetailType;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.api.model.EvaluationResultDetails;
 import org.gbif.occurrence.validation.api.model.EvaluationType;
@@ -28,7 +27,7 @@ public class ConcurrentValidationCollector implements ResultsCollector {
 
   /**
    *
-   * @param maxNumberOfSample maximum number of sample to take per {@link EvaluationDetailType}
+   * @param maxNumberOfSample maximum number of sample to take per {@link EvaluationType}
    */
   public ConcurrentValidationCollector(Integer maxNumberOfSample) {
 
