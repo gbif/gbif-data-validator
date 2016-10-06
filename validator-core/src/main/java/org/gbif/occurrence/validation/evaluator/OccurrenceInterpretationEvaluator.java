@@ -1,4 +1,4 @@
-package org.gbif.occurrence.validation.processor;
+package org.gbif.occurrence.validation.evaluator;
 
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.dwc.terms.GbifTerm;
@@ -6,9 +6,12 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
-import org.gbif.occurrence.validation.api.RecordProcessor;
-import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
+import org.gbif.occurrence.validation.api.RecordEvaluator;
+import org.gbif.occurrence.validation.model.RecordInterpretationResult;
+import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
+import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
 
+import java.text.MessageFormat;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -18,21 +21,22 @@ import javax.annotation.Nullable;
 /**
  * Class to process one text line that represents a occurrence record.
  */
-public class OccurrenceLineProcessor implements RecordProcessor {
+public class OccurrenceInterpretationEvaluator implements RecordEvaluator<RecordInterpretationResult> {
 
   private final OccurrenceInterpreter interpreter;
+  private final String[] fields;
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
    * @param interpreter occurrence interpreter
    */
-  public OccurrenceLineProcessor(OccurrenceInterpreter interpreter) {
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, String[] fields) {
     this.interpreter = interpreter;
+    this.fields = fields;
   }
 
   @Override
-  public RecordInterpretionBasedEvaluationResult process(@Nullable String id, Map<Term, String> record) {
-    //TODO maybe we should copy the fields?
+  public RecordInterpretationResult process(@Nullable String id, Map<Term, String> record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     verbatimOccurrence.setVerbatimFields(record);
     String datasetKey = verbatimOccurrence.getVerbatimField(GbifTerm.datasetKey);
@@ -42,14 +46,19 @@ public class OccurrenceLineProcessor implements RecordProcessor {
     return toEvaluationResult(id, interpreter.interpret(verbatimOccurrence));
   }
 
+  @Override
+  public String[] getFields() {
+    return fields;
+  }
+
   /**
-   * Creates a RecordInterpretionBasedEvaluationResult from an OccurrenceInterpretationResult.
+   * Creates a RecordInterpretationResult from an OccurrenceInterpretationResult.
    * Responsible to to put the related data (e.g. field + current value) into the RecordInterpretionBasedEvaluationResult
    * instance.
    */
-  private static RecordInterpretionBasedEvaluationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
+  private static RecordInterpretationResult toEvaluationResult(String id, OccurrenceInterpretationResult result) {
 
-    RecordInterpretionBasedEvaluationResult.Builder builder = new RecordInterpretionBasedEvaluationResult.Builder();
+    RecordInterpretationResult.Builder builder = new RecordInterpretationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
 
     builder.withIdentifier(id);
@@ -58,10 +67,11 @@ public class OccurrenceLineProcessor implements RecordProcessor {
         Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
           .stream()
           .filter(t -> verbatimFields.get(t) != null)
-          .collect(Collectors.toMap(Function.identity(), t -> verbatimFields.get(t)));
+          .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
         builder.addDetail(issue, relatedData);
       }
     });
     return builder.build();
   }
+
 }

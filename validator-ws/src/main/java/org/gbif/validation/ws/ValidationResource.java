@@ -52,15 +52,15 @@ public class ValidationResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
-  public String validateFile(@FormDataParam(FILE_PARAM) final InputStream stream,
-                             @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
-                             FormDataMultiPart formDataMultiPart) {
+  public DataFileValidationResult validateFile(@FormDataParam(FILE_PARAM) final InputStream stream,
+                                               @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
+                                               FormDataMultiPart formDataMultiPart) {
     try {
       DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart);
       dataFileDescriptor.setFileName(header.getFileName());
       java.nio.file.Path dataFilePath = copyDataFile(stream, header);
-      return processFile(dataFilePath, dataFileDescriptor).toString();
-    } catch (IOException  ex) {
+      return processFile(dataFilePath, dataFileDescriptor);
+    } catch (Exception  ex) {
       throw  new WebApplicationException(Response.SC_INTERNAL_SERVER_ERROR);
     }
   }
@@ -89,6 +89,6 @@ public class ValidationResource {
     dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
     dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
     dataFile.loadHeaders();
-    return dataFileProcessorFactory.create(dataFile.getNumOfLines()).process(dataFile);
+    return dataFileProcessorFactory.create(dataFile).process(dataFile);
   }
 }

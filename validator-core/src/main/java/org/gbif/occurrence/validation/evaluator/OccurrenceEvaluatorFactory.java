@@ -1,12 +1,11 @@
-package org.gbif.occurrence.validation.processor;
+package org.gbif.occurrence.validation.evaluator;
 
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
-import org.gbif.occurrence.validation.api.RecordProcessor;
-import org.gbif.occurrence.validation.api.RecordProcessorFactory;
+import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
@@ -20,7 +19,7 @@ import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 /**
  * Creates instances of RecordProcessor.
  */
-public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
+public class OccurrenceEvaluatorFactory {
 
   private final String apiUrl;
 
@@ -28,7 +27,7 @@ public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
 
-  public OccurrenceLineProcessorFactory(String apiUrl) {
+  public OccurrenceEvaluatorFactory(String apiUrl) {
     this.apiUrl = apiUrl;
   }
 
@@ -37,8 +36,8 @@ public class OccurrenceLineProcessorFactory implements RecordProcessorFactory {
    *
    * @return new instance
    */
-  public RecordProcessor create() {
-    return new OccurrenceLineProcessor(buildOccurrenceInterpreter());
+  public RecordEvaluator create(String[] columns) {
+    return new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), columns);
   }
 
   /**

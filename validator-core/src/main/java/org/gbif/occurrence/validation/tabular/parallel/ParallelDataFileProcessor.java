@@ -3,10 +3,9 @@ package org.gbif.occurrence.validation.tabular.parallel;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.DataFileValidationResult;
-import org.gbif.occurrence.validation.api.RecordProcessorFactory;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.EvaluationResult;
-import org.gbif.occurrence.validation.processor.OccurrenceLineProcessorFactory;
+import org.gbif.occurrence.validation.evaluator.OccurrenceEvaluatorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
 
 import java.io.File;
@@ -43,22 +42,20 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     private DataFile dataFile;
 
 
-    public ParallelDataFileProcessorMaster(ResultsCollector collector, RecordProcessorFactory recordProcessorFactory) {
+    ParallelDataFileProcessorMaster(ResultsCollector collector, OccurrenceEvaluatorFactory occurrenceEvaluatorFactory) {
       receive(
         match(DataFile.class, dataFile  -> {
           this.dataFile = dataFile;
-          processDataFile(recordProcessorFactory);
+          processDataFile(occurrenceEvaluatorFactory);
         })
-        .match(EvaluationResult.class, result -> {
-          collector.accumulate(result);
-        })
+        .match(EvaluationResult.class, collector::accumulate)
         .match(DataWorkResult.class, dataWorkResult -> {
           processResults(dataWorkResult, collector);
         }).build()
       );
     }
 
-    private void processDataFile(RecordProcessorFactory recordProcessorFactory) {
+    private void processDataFile(OccurrenceEvaluatorFactory occurrenceEvaluatorFactory) {
       try {
         int numOfInputRecords = dataFile.getNumOfLines();
         int splitSize = numOfInputRecords > FILE_SPLIT_SIZE ?
@@ -68,8 +65,8 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         String outDirPath = outDir.getAbsolutePath();
         String[] splits = FileBashUtilities.splitFile(dataFile.getFileName(), numOfInputRecords / splitSize, outDirPath);
         numOfActors = splits.length;
-        ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class, recordProcessorFactory.create())), "dataFileRouter");
-        results =  new HashSet<DataWorkResult>(numOfActors);
+        ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class, occurrenceEvaluatorFactory.create(new String[]{""}))), "dataFileRouter");
+        results =  new HashSet<>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
           DataFile dataInputSplitFile = new DataFile();
@@ -93,8 +90,8 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       if (results.size() == numOfActors) {
         getContext().stop(self());
         getContext().system().shutdown();
-        LOG.info("# of lines in the file: " + dataFile.getNumOfLines());
-        LOG.info("Results: " + collector);
+        LOG.info("# of lines in the file: {} ", dataFile.getNumOfLines());
+        LOG.info("Results: {}", collector);
       }
     }
 
@@ -107,12 +104,12 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
   @Override
   public DataFileValidationResult process(DataFile dataFile) {
     ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
-    final ActorSystem system = ActorSystem.create("DataFileProcessorSystem");
     // Create an Akka system
+    ActorSystem system = ActorSystem.create("DataFileProcessorSystem");
 
     // create the master
-    final ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,
-            new OccurrenceLineProcessorFactory(apiUrl)), "DataFileProcessor");
+    ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,
+                                                  new OccurrenceEvaluatorFactory(apiUrl)), "DataFileProcessor");
     try {
       // start the calculation
       master.tell(dataFile,master);

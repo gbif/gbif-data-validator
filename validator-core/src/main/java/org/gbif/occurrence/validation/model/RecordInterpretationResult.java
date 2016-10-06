@@ -14,7 +14,7 @@ import java.util.Map;
  *
  * Result of an Interpretation Based Evaluation
  */
-public class RecordInterpretionBasedEvaluationResult extends EvaluationResult {
+public class RecordInterpretationResult extends EvaluationResult {
 
   private final List<EvaluationResultDetails> details;
 
@@ -24,8 +24,8 @@ public class RecordInterpretionBasedEvaluationResult extends EvaluationResult {
    * @param recordId
    * @param details
    */
-  private RecordInterpretionBasedEvaluationResult(String recordId,
-                                                 List<EvaluationResultDetails> details){
+  private RecordInterpretationResult(String recordId,
+                                     List<EvaluationResultDetails> details){
     super(recordId, EvaluationType.INTERPRETATION_BASED_EVALUATION);
     this.details = details;
   }
@@ -52,13 +52,13 @@ public class RecordInterpretionBasedEvaluationResult extends EvaluationResult {
       return this;
     }
 
-    public RecordInterpretionBasedEvaluationResult build(){
-      return new RecordInterpretionBasedEvaluationResult(id, details);
+    public RecordInterpretationResult build(){
+      return new RecordInterpretationResult(id, details);
     }
   }
 
   /**
-   * Contains details of a RecordInterpretionBasedEvaluationResult.
+   * Contains details of a RecordInterpretationResult.
    */
   public static class Details implements EvaluationResultDetails {
     private final OccurrenceIssue issueFlag;

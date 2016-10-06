@@ -17,11 +17,17 @@ public class FileBashUtilities {
     //empty constructor
   }
 
+  /**
+   * Counts the number of lines in a text file.
+   */
   public static int countLines(String fileName) throws IOException {
     String[] out = executeSimpleCmd(String.format("wc -l %s | awk '{print $1;}'", fileName));
     return Integer.parseInt(out[0]);
   }
 
+  /**
+   * Split a text file into pieces of size 'splitSize'.
+   */
   public static String[] splitFile(String fileName, int splitSize, String outputDir) throws IOException {
     File outDir = new File(outputDir);
     File inFile = new File(fileName);
@@ -39,12 +45,18 @@ public class FileBashUtilities {
     return outDir.list();
   }
 
+  /**
+   * Utility method to validate arguments.
+   */
   private static void checkArgument(Boolean expression, String message) {
     if (!expression) {
       throw new IllegalArgumentException(message);
     }
   }
 
+  /**
+   * Executes a bash command and collect its result in a string array.
+   */
   private static String[] executeSimpleCmd(String bashCmd) throws  IOException {
     String[] cmd = { "/bin/sh", "-c", bashCmd };
     Process process = Runtime.getRuntime().exec(cmd);

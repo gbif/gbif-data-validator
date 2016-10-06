@@ -4,7 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.DataFileValidationResult;
-import org.gbif.occurrence.validation.api.RecordProcessor;
+import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
@@ -18,11 +18,11 @@ import java.util.Map;
 
 public class SingleDataFileProcessor implements DataFileProcessor {
 
-  private final RecordProcessor recordProcessor;
+  private final RecordEvaluator recordEvaluator;
   private final SimpleValidationCollector collector;
 
-  public SingleDataFileProcessor(RecordProcessor recordProcessor) {
-    this.recordProcessor = recordProcessor;
+  public SingleDataFileProcessor(RecordEvaluator recordEvaluator) {
+    this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
   }
 
@@ -36,11 +36,9 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       long line = dataFile.isHasHeaders() ? 1 : 0;
       while ((record = recordSource.read()) != null) {
         line++;
-        collector.accumulate(recordProcessor.process(Long.toString(line), record));
+        collector.accumulate(recordEvaluator.process(Long.toString(line), record));
 
-        if (record.size() != expectedNumberOfColumn) {
-          collector.accumulate(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()));
-        }
+
       }
 
       return new DataFileValidationResult(collector.getAggregatedCounts(), collector.getSamples());
@@ -49,19 +47,5 @@ public class SingleDataFileProcessor implements DataFileProcessor {
     }
   }
 
-  /**
-   * Creates a RecordStructureEvaluationResult instance for a column count mismatch.
-   *
-   * @param lineNumber
-   * @param expectedColumnCount
-   * @param actualColumnCount
-   * @return
-   */
-  private static RecordStructureEvaluationResult toColumnCountMismatchEvaluationResult(long lineNumber, int expectedColumnCount,
-                                                                                       int actualColumnCount) {
-    //FIXME record line number
-    return new RecordStructureEvaluationResult.Builder().addDetail(StructureEvaluationDetailType.RECORD_STRUCTURE,
-            MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
-                    expectedColumnCount, actualColumnCount)).build();
-  }
+
 }

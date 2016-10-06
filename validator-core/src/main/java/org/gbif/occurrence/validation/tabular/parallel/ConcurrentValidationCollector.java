@@ -5,10 +5,11 @@ import org.gbif.api.vocabulary.EvaluationType;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.EvaluationResult;
 import org.gbif.occurrence.validation.model.EvaluationResultDetails;
-import org.gbif.occurrence.validation.model.RecordInterpretionBasedEvaluationResult;
+import org.gbif.occurrence.validation.model.RecordInterpretationResult;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +26,8 @@ public class ConcurrentValidationCollector implements ResultsCollector {
 
   private final int maxNumberOfSample;
 
-  private final ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, LongAdder>> issueCounter;
-  private final ConcurrentHashMap<EvaluationType, ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>>> issueSampling;
+  private final Map<EvaluationType, ConcurrentHashMap<EvaluationDetailType, LongAdder>> issueCounter;
+  private final Map<EvaluationType, ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>>> issueSampling;
 
   private final LongAdder recordCount;
 
@@ -36,7 +37,7 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    */
   public ConcurrentValidationCollector(Integer maxNumberOfSample) {
 
-    this.maxNumberOfSample = (maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE);
+    this.maxNumberOfSample = maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE;
 
     issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
     issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
@@ -56,12 +57,12 @@ public class ConcurrentValidationCollector implements ResultsCollector {
     switch (result.getEvaluationType()) {
       case STRUCTURE_EVALUATION: accumulate((RecordStructureEvaluationResult)result);
         break;
-      case INTERPRETATION_BASED_EVALUATION: accumulate((RecordInterpretionBasedEvaluationResult)result);
+      case INTERPRETATION_BASED_EVALUATION: accumulate((RecordInterpretationResult)result);
         break;
     }
   }
 
-  private void accumulate(RecordInterpretionBasedEvaluationResult result) {
+  private void accumulate(RecordInterpretationResult result) {
     recordCount.increment();
   }
 
@@ -75,7 +76,7 @@ public class ConcurrentValidationCollector implements ResultsCollector {
   @Override
   public Map<EvaluationType, Map<EvaluationDetailType, Long>> getAggregatedCounts() {
 
-    Map<EvaluationType, Map<EvaluationDetailType, Long>> copy = new HashMap<>();
+    Map<EvaluationType, Map<EvaluationDetailType, Long>> copy = new EnumMap<>(EvaluationType.class);
 
     issueCounter.entrySet().forEach( rec -> {
               copy.put(rec.getKey(), new HashMap<>());
@@ -92,7 +93,7 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    */
   @Override
   public Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> getSamples() {
-    Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> copy = new HashMap<>();
+    Map<EvaluationType, Map<EvaluationDetailType, List<EvaluationResultDetails>>> copy = new EnumMap<>(EvaluationType.class);
 
     issueSampling.entrySet().forEach( rec -> {
               copy.put(rec.getKey(), new HashMap<>());
@@ -107,14 +108,9 @@ public class ConcurrentValidationCollector implements ResultsCollector {
 
   /**
    * Function used to collect data from a list of {@link EvaluationResultDetails}.
-   *
-   * @param details
-   * @param counter
-   * @param samples
    */
-  private void collectData(List<EvaluationResultDetails> details,
-                                ConcurrentHashMap<EvaluationDetailType, LongAdder> counter,
-                                ConcurrentHashMap<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>> samples){
+  private void collectData(Iterable<EvaluationResultDetails> details, Map<EvaluationDetailType, LongAdder> counter,
+                           Map<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>> samples) {
     details.forEach(
             detail -> {
               counter.computeIfAbsent(detail.getEvaluationDetailType(), k -> new LongAdder()).increment();

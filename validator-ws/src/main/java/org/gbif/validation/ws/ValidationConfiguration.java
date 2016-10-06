@@ -1,6 +1,8 @@
 package org.gbif.validation.ws;
 
-
+/**
+ * Configuration settings required by the data validation web services.
+ */
 public class ValidationConfiguration {
 
   /**

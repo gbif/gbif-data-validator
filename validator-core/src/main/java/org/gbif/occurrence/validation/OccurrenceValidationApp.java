@@ -21,7 +21,7 @@ public class OccurrenceValidationApp {
     dataFile.setHasHeaders(true);
     dataFile.loadHeaders();
     OccurrenceDataFileProcessorFactory dataFileProcessorFactory = new OccurrenceDataFileProcessorFactory(args[1]);
-    DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile.getNumOfLines());
+    DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile);
     DataFileValidationResult result = dataFileProcessor.process(dataFile);
 
     ObjectMapper om = new ObjectMapper();

@@ -13,22 +13,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import com.google.inject.Injector;
 import com.google.inject.Module;
 
+/**
+ * Server listener. Contains
+ */
 public class ValidationWsListener extends GbifServletListener {
 
-
-
+  //Default configuration file
   private static final String APP_CONF_FILE = "validation.properties";
 
+  /**
+   * Private module that installs all the required settings and exposes the service configuration.
+   */
   private static class ValidationModule extends PrivateServiceModule {
 
     private static final String PROPERTIES_PREFIX = "validation.";
 
-    public ValidationModule(Properties properties) {
+    ValidationModule(Properties properties) {
       super(PROPERTIES_PREFIX,properties);
     }
 
@@ -47,12 +50,6 @@ public class ValidationWsListener extends GbifServletListener {
   }
 
   @Override
-  @VisibleForTesting
-  protected Injector getInjector() {
-    return super.getInjector();
-  }
-
-  @Override
   protected List<Module> getModules(Properties properties) {
     List<Module> modules = Lists.newArrayList();
     modules.add(new ValidationModule(properties));
@@ -61,6 +58,9 @@ public class ValidationWsListener extends GbifServletListener {
     return modules;
   }
 
+  /**
+   * Installs predefined mixins.
+   */
   @Override
   protected Map<Class<?>, Class<?>> getMixIns() {
     return Mixins.getPredefinedMixins();

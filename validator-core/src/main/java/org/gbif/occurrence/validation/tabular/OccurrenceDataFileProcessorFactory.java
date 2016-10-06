@@ -2,9 +2,8 @@ package org.gbif.occurrence.validation.tabular;
 
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
-import org.gbif.occurrence.validation.api.RecordProcessorFactory;
 import org.gbif.occurrence.validation.tabular.parallel.ParallelDataFileProcessor;
-import org.gbif.occurrence.validation.processor.OccurrenceLineProcessorFactory;
+import org.gbif.occurrence.validation.evaluator.OccurrenceEvaluatorFactory;
 import org.gbif.occurrence.validation.tabular.single.SingleDataFileProcessor;
 
 /**
@@ -28,11 +27,11 @@ public class OccurrenceDataFileProcessorFactory {
    * Creates a DataFileProcessor instance analyzing the size of the input file.
    * If the file exceeds certain size it's processed in parallel otherwise a single thread processor it's used.
    */
-  public DataFileProcessor create(int fileSize) {
-    RecordProcessorFactory factory = new OccurrenceLineProcessorFactory(apiUrl);
+  public DataFileProcessor create(DataFile dataFile) {
+    OccurrenceEvaluatorFactory factory = new OccurrenceEvaluatorFactory(apiUrl);
 
-    if (fileSize <= FILE_SPLIT_SIZE) {
-      return new SingleDataFileProcessor(factory.create());
+    if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
+      return new SingleDataFileProcessor(factory.create(dataFile.getColumns()));
     }
     return new ParallelDataFileProcessor(apiUrl);
   }

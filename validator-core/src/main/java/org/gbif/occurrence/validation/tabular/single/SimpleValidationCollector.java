@@ -7,6 +7,7 @@ import org.gbif.occurrence.validation.model.EvaluationResult;
 import org.gbif.occurrence.validation.model.EvaluationResultDetails;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,10 +27,10 @@ public class SimpleValidationCollector implements ResultsCollector {
   private long recordCount;
 
   public SimpleValidationCollector(Integer maxNumberOfSample) {
-    this.maxNumberOfSample = (maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE);
+    this.maxNumberOfSample = maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE;
 
-    issueCounter = new HashMap<>(EvaluationType.values().length);
-    issueSampling = new HashMap<>(EvaluationType.values().length);
+    issueCounter = new EnumMap<>(EvaluationType.class);
+    issueSampling = new EnumMap<>(EvaluationType.class);
   }
 
   @Override

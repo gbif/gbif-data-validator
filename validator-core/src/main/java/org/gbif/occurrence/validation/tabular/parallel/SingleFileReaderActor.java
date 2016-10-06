@@ -2,7 +2,7 @@ package org.gbif.occurrence.validation.tabular.parallel;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.DataFile;
-import org.gbif.occurrence.validation.api.RecordProcessor;
+import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
 import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
@@ -26,11 +26,11 @@ import static akka.pattern.Patterns.pipe;
  */
 public class SingleFileReaderActor extends AbstractLoggingActor {
 
-  public SingleFileReaderActor(RecordProcessor recordProcessor) {
+  public SingleFileReaderActor(RecordEvaluator recordEvaluator) {
     receive(
             match(DataFile.class, dataFile -> {
               pipe(
-                      future(() -> processDataFile(dataFile, recordProcessor, sender()), getContext().dispatcher()),
+                      future(() -> processDataFile(dataFile, recordEvaluator, sender()), getContext().dispatcher()),
                       getContext().dispatcher()
               ).to(sender());
             })
@@ -43,7 +43,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
    * Process a datafile using a record processor.
    * The sender is sent as parameter because the real sender is only known in the context of receiving messages.
    */
-  private DataWorkResult processDataFile(DataFile dataFile, RecordProcessor recordProcessor, ActorRef sender) {
+  private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, ActorRef sender) {
     try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
                                                                        dataFile.getDelimiterChar(),
                                                                        dataFile.isHasHeaders(),
@@ -58,7 +58,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
         if (record.size() != expectedNumberOfColumn) {
           sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
         }
-        sender.tell(recordProcessor.process(Long.toString(line), record), self());
+        sender.tell(recordEvaluator.process(Long.toString(line), record), self());
       }
 
       //add reader aggregated result to the DataWorkResult
