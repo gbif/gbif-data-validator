@@ -1,7 +1,5 @@
 package org.gbif.occurrence.validation.api.model;
 
-import org.gbif.api.vocabulary.EvaluationDetailType;
-import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.Term;
 
 import java.util.ArrayList;
@@ -21,7 +19,7 @@ public class RecordEvaluationResult {
     this.details = details;
   }
 
-  public  List<EvaluationResultDetails> getDetails(){
+  public List<EvaluationResultDetails> getDetails(){
     return details;
   }
 
@@ -34,7 +32,7 @@ public class RecordEvaluationResult {
       return this;
     }
 
-    public Builder addInterpretationDetail(OccurrenceIssue issueFlag, Map<Term, String> relatedData) {
+    public Builder addInterpretationDetail(EvaluationType issueFlag, Map<Term, String> relatedData) {
       if(details == null){
         details = new ArrayList<>();
       }
@@ -59,15 +57,15 @@ public class RecordEvaluationResult {
    * Contains details of a RecordInterpretationResult.
    */
   public static class RecordInterpretationResultDetails implements EvaluationResultDetails {
-    private final OccurrenceIssue issueFlag;
+    private final EvaluationType issueFlag;
     private final Map<Term, String> relatedData;
 
-    public RecordInterpretationResultDetails(OccurrenceIssue issueFlag, Map<Term, String> relatedData) {
+    public RecordInterpretationResultDetails(EvaluationType issueFlag, Map<Term, String> relatedData) {
       this.issueFlag = issueFlag;
       this.relatedData = relatedData;
     }
 
-    public OccurrenceIssue getIssueFlag() {
+    public EvaluationType getIssueFlag() {
       return issueFlag;
     }
 
@@ -75,9 +73,8 @@ public class RecordEvaluationResult {
       return relatedData;
     }
 
-
     @Override
-    public EvaluationDetailType getEvaluationDetailType() {
+    public EvaluationType getEvaluationDetailType() {
       return issueFlag;
     }
   }
@@ -97,7 +94,7 @@ public class RecordEvaluationResult {
     }
 
     @Override
-    public EvaluationDetailType getEvaluationDetailType() {
+    public EvaluationType getEvaluationDetailType() {
       return detailType;
     }
   }

@@ -1,8 +1,8 @@
 package org.gbif.occurrence.validation.tabular.single;
 
-import org.gbif.api.vocabulary.EvaluationDetailType;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.api.model.EvaluationResultDetails;
+import org.gbif.occurrence.validation.api.model.EvaluationType;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import java.util.ArrayList;
@@ -19,10 +19,8 @@ public class SimpleValidationCollector implements ResultsCollector {
 
   private final int maxNumberOfSample;
 
-  private final Map<EvaluationDetailType, Long> issueCounter;
-  private final Map<EvaluationDetailType, List<EvaluationResultDetails>> issueSampling;
-
-  private long recordCount;
+  private final Map<EvaluationType, Long> issueCounter;
+  private final Map<EvaluationType, List<EvaluationResultDetails>> issueSampling;
 
   public SimpleValidationCollector(Integer maxNumberOfSample) {
     this.maxNumberOfSample = maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE;
@@ -54,18 +52,14 @@ public class SimpleValidationCollector implements ResultsCollector {
   }
 
   @Override
-  public Map<EvaluationDetailType, List<EvaluationResultDetails>> getSamples() {
+  public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
     return issueSampling;
   }
 
   @Override
-  public Map<EvaluationDetailType, Long> getAggregatedCounts() {
+  public Map<EvaluationType, Long> getAggregatedCounts() {
     return issueCounter;
   }
 
-  @Override
-  public String toString() {
-    return "Record count: " + recordCount;// + " Issues: " + issuesCounter.toString();
-  }
 
 }

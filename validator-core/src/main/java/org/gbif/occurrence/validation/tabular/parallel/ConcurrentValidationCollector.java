@@ -1,9 +1,9 @@
 package org.gbif.occurrence.validation.tabular.parallel;
 
 import org.gbif.api.vocabulary.EvaluationDetailType;
-import org.gbif.api.vocabulary.EvaluationType;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.api.model.EvaluationResultDetails;
+import org.gbif.occurrence.validation.api.model.EvaluationType;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import java.util.ArrayList;
@@ -23,8 +23,8 @@ public class ConcurrentValidationCollector implements ResultsCollector {
 
   private final int maxNumberOfSample;
 
-  private final Map<EvaluationDetailType, LongAdder> issueCounter;
-  private final Map<EvaluationDetailType, ConcurrentLinkedQueue<EvaluationResultDetails>> issueSampling;
+  private final Map<EvaluationType, LongAdder> issueCounter;
+  private final Map<EvaluationType, ConcurrentLinkedQueue<EvaluationResultDetails>> issueSampling;
 
   /**
    *
@@ -64,9 +64,9 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    * @return a copy of the inter aggregated counts.
    */
   @Override
-  public Map<EvaluationDetailType, Long> getAggregatedCounts() {
+  public Map<EvaluationType, Long> getAggregatedCounts() {
 
-    Map<EvaluationDetailType, Long> copy = new HashMap<>();
+    Map<EvaluationType, Long> copy = new HashMap<>();
     issueCounter.entrySet().forEach(rec -> copy.put(rec.getKey(), rec.getValue().longValue()));
     return copy;
   }
@@ -76,8 +76,8 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    * @return a copy of the internal evaluation samples.
    */
   @Override
-  public Map<EvaluationDetailType, List<EvaluationResultDetails>> getSamples() {
-    Map<EvaluationDetailType, List<EvaluationResultDetails>> copy = new HashMap<>();
+  public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
+    Map<EvaluationType, List<EvaluationResultDetails>> copy = new HashMap<>();
 
     issueSampling.entrySet().forEach( rec -> copy.put(rec.getKey(),
                               new ArrayList<>(rec.getValue()))

@@ -60,12 +60,14 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
     builder.withIdentifier(id);
     result.getUpdated().getIssues().forEach( issue -> {
-      if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue)) {
+      if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue) &&
+              OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.containsKey(issue)) {
         Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
           .stream()
           .filter(t -> verbatimFields.get(t) != null)
           .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
-        builder.addInterpretationDetail(issue, relatedData);
+        builder.addInterpretationDetail(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.get(issue),
+                relatedData);
       }
     });
     return builder.build();

@@ -69,6 +69,11 @@
       <version>${scala-library.version}</version>
     </dependency>
 
+    <!-- TEST PIECES -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+    </dependency>
 
   </dependencies>
 </project>

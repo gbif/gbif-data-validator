@@ -1,7 +1,5 @@
 package org.gbif.occurrence.validation.api.model;
 
-import org.gbif.api.vocabulary.EvaluationDetailType;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,8 +21,8 @@ public class DataFileValidationResult {
   private List<DateFileValidationElement> issues = new ArrayList<>();
 
 
-  public DataFileValidationResult(Map<EvaluationDetailType, Long> issueCounter,
-                                  Map<EvaluationDetailType, List<EvaluationResultDetails>> issueSampling) {
+  public DataFileValidationResult(Map<EvaluationType, Long> issueCounter,
+                                  Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
     issueCounter.forEach(
             (k, v) ->
                     issues.add(new DateFileValidationElement(k, v, issueSampling.get(k)))
@@ -39,17 +37,17 @@ public class DataFileValidationResult {
 
   private static class DateFileValidationElement {
 
-    private EvaluationDetailType evaluationSubType;
+    private EvaluationType evaluationSubType;
     private long count;
     private List<EvaluationResultDetails> sample;
 
-    public DateFileValidationElement(EvaluationDetailType evaluationSubType, long count, List<EvaluationResultDetails> sample){
+    public DateFileValidationElement(EvaluationType evaluationSubType, long count, List<EvaluationResultDetails> sample){
       this.evaluationSubType = evaluationSubType;
       this.count = count;
       this.sample = sample;
     }
 
-    public EvaluationDetailType getEvaluationSubType() {
+    public EvaluationType getEvaluationSubType() {
       return evaluationSubType;
     }
 

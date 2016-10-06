@@ -1,7 +1,7 @@
 package org.gbif.occurrence.validation.api;
 
-import org.gbif.api.vocabulary.EvaluationDetailType;
 import org.gbif.occurrence.validation.api.model.EvaluationResultDetails;
+import org.gbif.occurrence.validation.api.model.EvaluationType;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import java.util.List;
@@ -16,8 +16,8 @@ public interface ResultsCollector {
 
   void accumulate(RecordEvaluationResult result);
 
-  Map<EvaluationDetailType, Long> getAggregatedCounts();
+  Map<EvaluationType, Long> getAggregatedCounts();
 
-  Map<EvaluationDetailType, List<EvaluationResultDetails>> getSamples();
+  Map<EvaluationType, List<EvaluationResultDetails>> getSamples();
 
 }
