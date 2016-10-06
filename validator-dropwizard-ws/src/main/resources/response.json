@@ -1,0 +1,50 @@
+{
+  "status": "[OK,FAILED]",
+  "indexeable": "[FALSE|TRUE]",
+   "error" : "Invalid file format",
+  "issues" : [
+      {
+        "issue": "RECORDED_DATE_MISMATCH",
+        "count": 16,
+        "sample": [
+          {
+            "relatedData": {
+              "line:" : "1",
+              "occurrenceID" : "1",
+              "dwc:month": "1",
+              "dwc:day": "26",
+              "dwc:year": "1996",
+              "dwc:eventDate": "1996-01-26T01:00Z"
+            }
+      }],
+    {
+      "issue": "COLUMNS_MISMATCH",
+      "count": 2,
+      "sample": [
+      {
+        "relatedData": {
+        "line:" : "1",
+        "occurrenceID" : "1",
+        "desription": " 12 instead 90 columns"
+        }
+      }
+    }
+        {
+          "issue": "DUPLICATE_IDS",
+          "count": 2,
+          "sample": [
+            {
+              "relatedData": {
+                "occurrenceID" : "1",
+                "lines": ["1","2"]
+              }
+            }
+          }
+      ]
+
+
+  }
+
+
+
+}
