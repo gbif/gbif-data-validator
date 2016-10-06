@@ -2,7 +2,7 @@ package org.gbif.occurrence.validation.tabular.parallel;
 
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
-import org.gbif.occurrence.validation.api.DataFileValidationResult;
+import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.model.EvaluationResult;
 import org.gbif.occurrence.validation.evaluator.OccurrenceEvaluatorFactory;

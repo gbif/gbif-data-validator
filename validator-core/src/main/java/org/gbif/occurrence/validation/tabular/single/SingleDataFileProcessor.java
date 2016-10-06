@@ -3,17 +3,14 @@ package org.gbif.occurrence.validation.tabular.single;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
-import org.gbif.occurrence.validation.api.DataFileValidationResult;
+import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.api.ResultsCollector;
-import org.gbif.occurrence.validation.model.RecordStructureEvaluationResult;
-import org.gbif.occurrence.validation.model.StructureEvaluationDetailType;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 import org.gbif.occurrence.validation.util.TempTermsUtils;
 
 import java.io.File;
-import java.text.MessageFormat;
 import java.util.Map;
 
 public class SingleDataFileProcessor implements DataFileProcessor {

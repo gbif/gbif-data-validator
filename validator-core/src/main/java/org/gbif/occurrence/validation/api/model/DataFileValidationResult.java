@@ -1,4 +1,4 @@
-package org.gbif.occurrence.validation.api;
+package org.gbif.occurrence.validation.api.model;
 
 import org.gbif.api.vocabulary.EvaluationDetailType;
 import org.gbif.api.vocabulary.EvaluationType;
