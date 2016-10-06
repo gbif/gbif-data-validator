@@ -1,34 +1,19 @@
 package org.gbif.occurrence.validation.evaluator;
 
-import org.gbif.api.vocabulary.OccurrenceIssue;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.Test;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 /**
- * Safeguard tests to make sure OCCURRENCE_ISSUE_MAPPING is in sync with OccurrenceIssue.
+ * Safeguard tests to make sure OCCURRENCE_ISSUE_MAPPING can be loaded.
  *
  */
 public class OccurrenceIssueEvaluationTypeMappingTest {
 
-  private List<OccurrenceIssue> deprecatedOccurrenceIssues = Arrays.asList(
-          OccurrenceIssue.COORDINATE_ACCURACY_INVALID,
-          OccurrenceIssue.COORDINATE_PRECISION_UNCERTAINTY_MISMATCH);
-
   @Test
   public void testOccurrenceIssueEvaluationTypeMapping() {
-
-    List<OccurrenceIssue> allOccurrenceIssue = new ArrayList<>(Arrays.asList(OccurrenceIssue.values()));
-    allOccurrenceIssue.removeAll(deprecatedOccurrenceIssues);
-
-    for(OccurrenceIssue occIssue : allOccurrenceIssue) {
-      assertTrue(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.containsKey(occIssue));
-    }
+    //we just test that we can load the map since it is initialized in a static block
+    assertFalse(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.isEmpty());
   }
 
 }
