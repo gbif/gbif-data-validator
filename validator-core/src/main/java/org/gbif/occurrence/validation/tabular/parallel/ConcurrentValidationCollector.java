@@ -46,10 +46,10 @@ public class ConcurrentValidationCollector implements ResultsCollector {
 
     result.getDetails().forEach(
             detail -> {
-              issueCounter.computeIfAbsent(detail.getEvaluationDetailType(), k -> new LongAdder()).increment();
+              issueCounter.computeIfAbsent(detail.getEvaluationType(), k -> new LongAdder()).increment();
 
-              issueSampling.putIfAbsent(detail.getEvaluationDetailType(), new ConcurrentLinkedQueue<>());
-              issueSampling.compute(detail.getEvaluationDetailType(), (type, queue) -> {
+              issueSampling.putIfAbsent(detail.getEvaluationType(), new ConcurrentLinkedQueue<>());
+              issueSampling.compute(detail.getEvaluationType(), (type, queue) -> {
                 if (queue.size() < maxNumberOfSample) {
                   issueSampling.get(type).add(detail);
                 }

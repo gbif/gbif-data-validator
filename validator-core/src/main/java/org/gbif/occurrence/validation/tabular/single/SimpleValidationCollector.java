@@ -38,10 +38,10 @@ public class SimpleValidationCollector implements ResultsCollector {
 
     result.getDetails().forEach(
             detail -> {
-              issueCounter.compute(detail.getEvaluationDetailType(), (k, v) -> (v == null) ? 1 : ++v);
+              issueCounter.compute(detail.getEvaluationType(), (k, v) -> (v == null) ? 1 : ++v);
 
-              issueSampling.putIfAbsent(detail.getEvaluationDetailType(), new ArrayList<>());
-              issueSampling.compute(detail.getEvaluationDetailType(), (type, queue) -> {
+              issueSampling.putIfAbsent(detail.getEvaluationType(), new ArrayList<>());
+              issueSampling.compute(detail.getEvaluationType(), (type, queue) -> {
                 if(queue.size() < maxNumberOfSample){
                   issueSampling.get(type).add(detail);
                 }

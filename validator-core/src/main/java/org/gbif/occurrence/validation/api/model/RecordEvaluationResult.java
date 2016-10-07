@@ -8,9 +8,11 @@ import java.util.Map;
 
 /**
  * Represents the result of an evaluation at the record level.
+ * Immutable once built.
  */
 public class RecordEvaluationResult {
 
+  //currently stored inside the details
   private final String recordId;
   private final List<EvaluationResultDetails> details;
 
@@ -23,6 +25,9 @@ public class RecordEvaluationResult {
     return details;
   }
 
+  /**
+   * Builder class to build a RecordEvaluationResult instance.
+   */
   public static class Builder {
     private Long lineNumber;
     private String recordId;
@@ -50,7 +55,7 @@ public class RecordEvaluationResult {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new DescriptionEvaluationResultDetails(evaluationType, description));
+      details.add(new DescriptionEvaluationResultDetails(lineNumber, recordId, evaluationType, description));
       return this;
     }
 
@@ -59,21 +64,20 @@ public class RecordEvaluationResult {
     }
   }
 
-  /**
-   * Contains details of a RecordInterpretationResult.
-   */
-  public static class RecordInterpretationResultDetails implements EvaluationResultDetails {
-    private Long lineNumber;
-    private String recordId;
-    private final EvaluationType issueFlag;
-    private final Map<Term, String> relatedData;
 
-    public RecordInterpretationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
-                                             Map<Term, String> relatedData) {
-      this.lineNumber = lineNumber;
-      this.recordId = recordId;
-      this.issueFlag = issueFlag;
-      this.relatedData = relatedData;
+  /**
+   *
+   */
+  public static class DescriptionEvaluationResultDetails implements EvaluationResultDetails {
+    protected Long lineNumber;
+    protected String recordId;
+    protected final EvaluationType evaluationType;
+    protected final String description;
+
+    DescriptionEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType,
+                                       String description){
+      this.evaluationType = evaluationType;
+      this.description = description;
     }
 
     public Long getLineNumber(){
@@ -84,38 +88,32 @@ public class RecordEvaluationResult {
       return recordId;
     }
 
-    public EvaluationType getIssueFlag() {
-      return issueFlag;
-    }
-
-    public Map<Term, String> getRelatedData() {
-      return relatedData;
-    }
-
-    @Override
-    public EvaluationType getEvaluationDetailType() {
-      return issueFlag;
-    }
-  }
-
-
-  public static class DescriptionEvaluationResultDetails implements EvaluationResultDetails {
-    private final EvaluationType detailType;
-    private final String description;
-
-    public DescriptionEvaluationResultDetails(EvaluationType detailType, String description){
-      this.detailType = detailType;
-      this.description = description;
-    }
-
     public String getDescription() {
       return description;
     }
 
     @Override
-    public EvaluationType getEvaluationDetailType() {
-      return detailType;
+    public EvaluationType getEvaluationType() {
+      return evaluationType;
     }
   }
 
+  /**
+   * Contains details of a RecordInterpretationResult.
+   */
+  public static class RecordInterpretationResultDetails extends DescriptionEvaluationResultDetails {
+
+    private final Map<Term, String> relatedData;
+
+    RecordInterpretationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
+                                             Map<Term, String> relatedData) {
+      super(lineNumber, recordId, issueFlag, null);
+      this.relatedData = relatedData;
+    }
+
+    public Map<Term, String> getRelatedData() {
+      return relatedData;
+    }
+  }
+  
 }
