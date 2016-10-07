@@ -35,7 +35,10 @@ public class SingleDataFileProcessor implements DataFileProcessor {
         collector.accumulate(recordEvaluator.process(line, record));
       }
 
-      return new DataFileValidationResult(collector.getAggregatedCounts(), collector.getSamples());
+      //FIXME the Status and indexeable should be decided by a another class somewhere
+      return new DataFileValidationResult(
+              collector.getAggregatedCounts().isEmpty() ? DataFileValidationResult.Status.OK : DataFileValidationResult.Status.FAILED,
+              true, collector.getAggregatedCounts(), collector.getSamples());
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

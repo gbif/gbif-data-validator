@@ -126,6 +126,9 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       system.shutdown();
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
-    return new DataFileValidationResult(validationCollector.getAggregatedCounts(), validationCollector.getSamples());
+    //FIXME the Status and indexeable should be decided by a another class somewhere
+    return new DataFileValidationResult(
+            validationCollector.getAggregatedCounts().isEmpty() ? DataFileValidationResult.Status.OK : DataFileValidationResult.Status.FAILED,
+            true, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
   }
 }
