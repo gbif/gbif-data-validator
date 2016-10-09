@@ -13,12 +13,12 @@ Specifications of the GBIF Data Validator API response.
     {
       "issue": "RECORDED_DATE_MISMATCH",
       "count": 1,
+      "identifierTerm" : "dwc:occurrenceId",
       "sample": [
         {
           "relatedData": {
             "line:": "1",
             "identifier": "occ-1",
-            "identifierTerm" : "dwc:occurrenceId",
             "dwc:month": "2",
             "dwc:day": "26",
             "dwc:year": "1996",
@@ -30,12 +30,12 @@ Specifications of the GBIF Data Validator API response.
     {
       "issue": "COLUMN_COUNT_MISMATCH",
       "count": 1,
+      "identifierTerm" : "dwc:occurrenceId",
       "sample": [
         {
           "relatedData": {
             "line:": "1",
             "identifier": "occ-1",
-            "identifierTerm" : "dwc:occurrenceId",
             "expected" : "90",
             "found" : "89",
             "message": " Expected 90 columns but found 89"
