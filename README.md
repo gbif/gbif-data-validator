@@ -36,7 +36,7 @@ This project serves as a replacement for the [GBIF Darwin Core validator](http:/
 2. It doesn’t expose information about data interpretation issues that later can appear while indexing a file in the GBIF portal - they use different underlying libraries.
 3. It does not do any meaningful content level validation - only correctness of the file (e.g. referential integrity)
 4. It only supports DwC-A
-5. It does not provide any means to consider to verify the data is suitable for a specific use
+5. It does not provide any means to verify the data is suitable for a specific use
   
 ##Roadmap
 
