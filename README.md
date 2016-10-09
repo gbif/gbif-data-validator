@@ -12,7 +12,7 @@ The GBIF Data Validator is a service to provide a report on the syntactical corr
 > Only formats where the data are represented in a single file are
 > supported.  Where data is needed to be crawled (e.g. TAPIR) a separate
 > process must crawl and reformat the data in advance.  BioCASe tools
-> supports both ABCD-Archives and DwC-A as of 2015 so are covered
+> supports both ABCD-A and DwC-A as of 2015
 
 It will provide information to data publishers and data users on items such as:
 
