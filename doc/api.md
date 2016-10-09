@@ -5,12 +5,12 @@
   "status": "[OK,FAILED]",
   "fileFormat": "[delimited | dwca | excel]",
   "indexeable": "[true|false]",
-  "errorCode": "INVALID_FILE_FORMAT", //only provided in case of error
-  "errorMessage": "Invalid file format", //only provided in case of error
+  "errorCode": "INVALID_FILE_FORMAT",
+  "errorMessage": "Invalid file format",
   "issues": [
     {
       "issue": "RECORDED_DATE_MISMATCH",
-      "count": 16,
+      "count": 1,
       "sample": [
         {
           "relatedData": {
@@ -22,7 +22,7 @@
             "dwc:year": "1996",
             "dwc:eventDate": "1996-01-26T01:00Z"
           }
-        } //other samples hidden for readability
+        }
       ]
     },
     {
