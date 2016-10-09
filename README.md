@@ -9,10 +9,10 @@ The GBIF Data Validator is a service to provide a report on the syntactical corr
  - Simple CSV files using Darwin Core terms for header values
  - ABCD Archives (ABCD-A)
 
-> (Only formats where the data are represented in a single file are
+> Only formats where the data are represented in a single file are
 > supported.  Where data is needed to be crawled (e.g. TAPIR) a separate
 > process must crawl and reformat the data in advance.  BioCASe tools
-> supports both ABCD-Archives and DwC-A as of 2015 so are covered)
+> supports both ABCD-Archives and DwC-A as of 2015 so are covered
 
 It will provide information to data publishers and data users on items such as:
 
