@@ -1,4 +1,5 @@
 # API Response
+Specifications of the GBIF Data Validator API response.
 
 ## Response Example
 ```json
@@ -59,7 +60,8 @@
     }
   ]
 }
-
+    
+```
 
 ## Main structure
 
@@ -70,5 +72,4 @@
 - `"errorMessage"` : Contains human readable message in case the provided resource can not be validated
 - `"issues"` : List of all issues found in the provided resource
 
-    
-```
+
