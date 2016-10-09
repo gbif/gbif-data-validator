@@ -1,5 +1,6 @@
 # API Response
 
+## Response Example
 ```json
 {
   "status": "[OK,FAILED]",
@@ -58,6 +59,16 @@
     }
   ]
 }
+
+
+## Main structure
+
+- `"status"` : The global status of the validation
+- `"fileFormat"` : File format used be the server handle the submitted file
+- `"indexeable"` : Is the provided resource indexeable by GBIF?
+- `"errorCode"` : Contains the error code in case the provided resource can not be validated
+- `"errorMessage"` : Contains human readable message in case the provided resource can not be validated
+- `"issues"` : List of all issues found in the provided resource
 
     
 ```
