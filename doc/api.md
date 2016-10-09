@@ -72,4 +72,63 @@ Specifications of the GBIF Data Validator API response.
 - `"errorMessage"` : Contains human readable message in case the provided resource can not be validated
 - `"issues"` : List of all issues found in the provided resource
 
+## Issue structure
+
+### Resource structure
+```json
+{
+  "issue": "DUPLICATED_IDENTIFIER",
+  "count": 1,
+  "sample": [
+    {
+      "relatedData": {
+        "dwc:occurrenceID": "1",
+        "lines": [
+          "1",
+          "2"
+        ]
+      }
+    }
+  ]
+}
+```
+### Record structure
+```json
+{
+  "issue": "COLUMN_COUNT_MISMATCH",
+  "count": 1,
+  "identifierTerm": "dwc:occurrenceId",
+  "sample": [
+    {
+      "relatedData": {
+        "line:": "1",
+        "identifier": "occ-1",
+        "expected": "90",
+        "found": "89",
+        "message": " Expected 90 columns but found 89"
+      }
+    }
+  ]
+}
+```
+### Record interpretion
+```json
+{
+  "issue": "RECORDED_DATE_MISMATCH",
+  "count": 1,
+  "identifierTerm": "dwc:occurrenceId",
+  "sample": [
+    {
+      "relatedData": {
+        "line:": "1",
+        "identifier": "occ-1",
+        "dwc:month": "2",
+        "dwc:day": "26",
+        "dwc:year": "1996",
+        "dwc:eventDate": "1996-01-26T01:00Z"
+      }
+    }
+  ]
+}
+```
 
