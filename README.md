@@ -33,7 +33,7 @@ Over time it is expected that this project will be enhanced with growing validit
 This project serves as a replacement for the [GBIF Darwin Core validator](http://tools.gbif.org/dwca-validator).  The perceived issues with the validator are:
 
 1. It is inconsistent with what happens at indexing in GBIF - data said to be valid are not indexable under certain cicumstances
-2. It doesn’t expose information about data interpretation issues that later can appear while indexing a file in the GBIF portal - they use different underlying libraries.
+2. It doesn’t expose information about data interpretation issues that later can appear while indexing a file in the GBIF portal - they use different underlying libraries
 3. It does not do any meaningful content level validation - only correctness of the file (e.g. referential integrity)
 4. It only supports DwC-A
 5. It does not provide any means to verify the data is suitable for a specific use
@@ -46,7 +46,7 @@ The roadmap is maintained using [GitHub Milestones](https://github.com/gbif/gbif
 This is a simple project:
 
  1. A Java based web service provides the entry for validation of data.  A client can POST a dataset, or provide a callback URL to an online dataset for validation.  Since validation may take some time, this returns a callback to check the job status.  Once complete, the validation report is available as JSON.  During validation, the service makes use of both libraries for validation, and online web services.
- 2. A simple Node based web application provides a basic front end to the validation web service.  This application is part of the [GBIF.org project](https://github.com/gbif/portal16)   
+ 2. A simple Node based web application provides a basic front end to the validation web service.  This application is part of the [GBIF.org project](https://github.com/gbif/portal16)   .
 
 
 ##Contributions and process
