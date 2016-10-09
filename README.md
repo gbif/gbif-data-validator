@@ -7,7 +7,7 @@ The GBIF Data Validator is a service to provide a report on the syntactical corr
  - Darwin Core Archives (DwC-A): Occurrence, Taxon, Sampling Event
  - [Excel spreadsheets](http://www.gbif.org/newsroom/news/new-darwin-core-spreadsheet-templates)
  - Simple CSV files using Darwin Core terms for header values
- - ABCD-Archives
+ - ABCD Archives (ABCD-A)
 
 > (Only formats where the data are represented in a single file are
 > supported.  Where data is needed to be crawled (e.g. TAPIR) a separate
