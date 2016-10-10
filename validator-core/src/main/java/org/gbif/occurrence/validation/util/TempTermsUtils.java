@@ -20,7 +20,7 @@ public final class TempTermsUtils {
   /**
    * Lookups columns terms from string names
    */
-  public static Term[] buildTermMapping(String... terms) {
+  public static Term[] buildTermMapping(String[] terms) {
 
     Term[] columnMapping = new Term[terms.length];
     for (int i = 0; i < terms.length; i++) {
