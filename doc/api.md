@@ -111,7 +111,28 @@ Specifications of the GBIF Data Validator API response.
   ]
 }
 ```
-### Record interpretion
+
+### Record value
+Structure of the result of a check on the value of a field(s).
+```json
+{
+  "issue": "MISSING_VALUE",
+  "count": 1,
+  "identifierTerm": "dwc:occurrenceId",
+  "terms" : ["dwc:scientificName"]
+  "sample": [
+    {
+      "relatedData": {
+        "line:": "1",
+        "identifier": "occ-1"
+      }
+    }
+  ]
+}
+```
+
+### Record interpretation
+Structure of the result of the interpretation of a record.
 ```json
 {
   "issue": "RECORDED_DATE_MISMATCH",
