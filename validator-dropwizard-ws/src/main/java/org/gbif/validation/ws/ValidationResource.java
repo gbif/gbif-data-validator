@@ -66,7 +66,7 @@ public class ValidationResource {
     dataFile.setHasHeaders(true);
     dataFile.loadHeaders();
     OccurrenceDataFileProcessorFactory dataFileProcessorFactory = new OccurrenceDataFileProcessorFactory(configuration.getApiUrl());
-    DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile.getNumOfLines());
+    DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile);
     return dataFileProcessor.process(dataFile);
   }
 }
