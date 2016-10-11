@@ -75,6 +75,8 @@ Specifications of the GBIF Data Validator API response.
 ## Issue structure
 
 ### Resource structure
+Structure of the result of an evaluation of the structure of the resource.
+
 ```json
 {
   "issue": "DUPLICATED_IDENTIFIER",
@@ -119,7 +121,7 @@ Structure of the result of a check on the value of a field(s).
   "issue": "MISSING_VALUE",
   "count": 1,
   "identifierTerm": "dwc:occurrenceId",
-  "terms" : ["dwc:scientificName"]
+  "terms" : ["dwc:scientificName"],
   "sample": [
     {
       "relatedData": {
