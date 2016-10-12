@@ -1,6 +1,5 @@
 package org.gbif.occurrence.validation.tabular.single;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
@@ -8,10 +7,8 @@ import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.api.ResultsCollector;
 import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
-import org.gbif.occurrence.validation.util.TempTermsUtils;
 
 import java.io.File;
-import java.util.Map;
 
 public class SingleDataFileProcessor implements DataFileProcessor {
 
@@ -27,12 +24,12 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   public DataFileValidationResult process(DataFile dataFile) {
 
     try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()), dataFile.getDelimiterChar(),
-            dataFile.isHasHeaders(), TempTermsUtils.buildTermMapping(dataFile.getColumns()))) {
-      Map<Term, String> record;
+            dataFile.isHasHeaders())) {
+      String[] record;
       long line = dataFile.isHasHeaders() ? 1 : 0;
       while ((record = recordSource.read()) != null) {
         line++;
-        collector.accumulate(recordEvaluator.process(line, record));
+        collector.accumulate(recordEvaluator.evaluate(line, record));
       }
 
       //FIXME the Status and indexeable should be decided by a another class somewhere

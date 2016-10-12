@@ -1,29 +1,27 @@
 package org.gbif.occurrence.validation.tabular;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.RecordSource;
-import org.gbif.tabular.TermTabularDataFileReader;
-import org.gbif.tabular.TermTabularDataLine;
+import org.gbif.utils.file.tabular.TabularDataFileReader;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.List;
 
 /**
- * Temporary class
+ * Probably a Temporary class
  */
 public class TabularFileReader implements RecordSource {
 
-  private final TermTabularDataFileReader wrapped;
+  private final TabularDataFileReader<List<String>> wrapped;
 
-  public TabularFileReader(TermTabularDataFileReader wrapped){
+  public TabularFileReader(TabularDataFileReader<List<String>> wrapped){
     this.wrapped = wrapped;
   }
 
   @Override
-  public Map<Term, String> read() throws IOException {
-    TermTabularDataLine row = wrapped.read();
+  public String[] read() throws IOException {
+    List<String> row = wrapped.read();
     if(row != null) {
-      return row.getMappedData();
+      return row.toArray(new String[0]);
     }
     return null;
   }

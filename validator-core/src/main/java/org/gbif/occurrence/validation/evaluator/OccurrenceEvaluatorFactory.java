@@ -16,6 +16,8 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
+import static org.gbif.occurrence.validation.util.TempTermsUtils.buildTermMapping;
+
 /**
  * Creates instances of RecordProcessor.
  */
@@ -37,7 +39,7 @@ public class OccurrenceEvaluatorFactory {
    * @return new instance
    */
   public RecordEvaluator create(String[] columns) {
-    return new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), columns);
+    return new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), columns, buildTermMapping(columns));
   }
 
   /**

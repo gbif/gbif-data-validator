@@ -1,12 +1,10 @@
 package org.gbif.occurrence.validation.evaluator;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.model.EvaluationType;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import java.text.MessageFormat;
-import java.util.Map;
 import javax.annotation.Nullable;
 
 public class OccurrenceStructureEvaluator implements RecordEvaluator {
@@ -18,11 +16,11 @@ public class OccurrenceStructureEvaluator implements RecordEvaluator {
   }
 
   @Override
-  public RecordEvaluationResult process(
-          @Nullable Long lineNumber, Map<Term, String> record) {
+  public RecordEvaluationResult evaluate(
+          @Nullable Long lineNumber, String[]  record) {
     int expectedColumnCount = getFields().length;
-    if (record.size() != expectedColumnCount) {
-      return toColumnCountMismatchResult(lineNumber, expectedColumnCount, record.size());
+    if (record.length != expectedColumnCount) {
+      return toColumnCountMismatchResult(lineNumber, expectedColumnCount, record.length);
     }
     return null;
   }

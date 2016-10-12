@@ -22,25 +22,36 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private final OccurrenceInterpreter interpreter;
   private final String[] fields;
+  private final Term[] columnMapping;
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
    * @param interpreter occurrence interpreter
    */
-  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, String[] fields) {
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, String[] fields, Term[] columnMapping) {
     this.interpreter = interpreter;
     this.fields = fields;
+    this.columnMapping = columnMapping;
   }
 
   @Override
-  public RecordEvaluationResult process(@Nullable Long lineNumber, Map<Term, String> record) {
-    VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
-    verbatimOccurrence.setVerbatimFields(record);
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record) {
+    VerbatimOccurrence verbatimOccurrence = toVerbatimOccurrence(record);
     String datasetKey = verbatimOccurrence.getVerbatimField(GbifTerm.datasetKey);
     if (datasetKey != null) {
       verbatimOccurrence.setDatasetKey(UUID.fromString(datasetKey));
     }
     return toEvaluationResult(lineNumber, interpreter.interpret(verbatimOccurrence));
+  }
+
+  private VerbatimOccurrence toVerbatimOccurrence(String[] record){
+    VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
+    int numOfColumns = Math.min(record.length, columnMapping.length);
+
+    for(int i = 0; i < numOfColumns; ++i) {
+      verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]);
+    }
+    return verbatimOccurrence;
   }
 
   @Override

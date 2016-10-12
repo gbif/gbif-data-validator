@@ -1,18 +1,14 @@
 package org.gbif.occurrence.validation.tabular.parallel;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
-import java.util.Map;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
-
-import static org.gbif.occurrence.validation.util.TempTermsUtils.buildTermMapping;
 
 import static akka.dispatch.Futures.future;
 import static akka.japi.pf.ReceiveBuilder.match;
@@ -43,20 +39,19 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
   private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, ActorRef sender) {
     try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
                                                                        dataFile.getDelimiterChar(),
-                                                                       dataFile.isHasHeaders(),
-                                                                       buildTermMapping(dataFile.getColumns()))) {
+                                                                       dataFile.isHasHeaders())) {
       long line = dataFile.getFileLineOffset();
 
       int expectedNumberOfColumn = dataFile.getColumns().length;
-      Map<Term, String> record;
+      String[] record;
 
       while ((record = recordSource.read()) != null) {
         line++;
-        if (record.size() != expectedNumberOfColumn) {
+        if (record.length != expectedNumberOfColumn) {
           //TODO get a list of recordEvaluators
           //sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
         }
-        sender.tell(recordEvaluator.process(line, record), self());
+        sender.tell(recordEvaluator.evaluate(line, record), self());
       }
 
       //add reader aggregated result to the DataWorkResult

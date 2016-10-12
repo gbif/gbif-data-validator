@@ -1,9 +1,7 @@
 package org.gbif.occurrence.validation.api;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
-import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
@@ -14,10 +12,10 @@ public interface RecordEvaluator {
   /**
    *
    * @param lineNumber number of the line within the context, can be null
-   * @param record
+   * @param record values
    * @return
    */
-  RecordEvaluationResult process(@Nullable Long lineNumber, Map<Term, String> record);
+  RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record);
 
   String[] getFields();
 
