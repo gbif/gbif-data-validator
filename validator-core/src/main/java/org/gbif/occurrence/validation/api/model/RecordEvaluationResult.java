@@ -73,7 +73,7 @@ public class RecordEvaluationResult implements Serializable {
 
     /**
      * Internal operation to copy details.
-     * 
+     *
      * @param details
      * @return
      */
@@ -93,14 +93,13 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
-    public Builder addDescription(EvaluationType evaluationType, String description) {
+    public Builder addBaseDetail(EvaluationType evaluationType, String expected, String found, String message) {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new DescriptionEvaluationResultDetails(lineNumber, recordId, evaluationType, description));
+      details.add(new BaseEvaluationResultDetails(lineNumber, recordId, evaluationType, expected, found , message));
       return this;
     }
-
 
     public RecordEvaluationResult build(){
       return new RecordEvaluationResult(recordId, details);
@@ -109,18 +108,29 @@ public class RecordEvaluationResult implements Serializable {
 
 
   /**
-   *
+   * Base evaluation result details with "expected" and "found".
    */
-  public static class DescriptionEvaluationResultDetails implements EvaluationResultDetails {
-    protected Long lineNumber;
-    protected String recordId;
+  public static class BaseEvaluationResultDetails implements EvaluationResultDetails {
+    protected final Long lineNumber;
+    protected final String recordId;
     protected final EvaluationType evaluationType;
-    protected final String description;
 
-    DescriptionEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType,
-                                       String description){
+    protected final String expected;
+    protected final String found;
+    protected final String message;
+
+    BaseEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType){
+      this(lineNumber, recordId, evaluationType, null, null, null);
+    }
+
+    BaseEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType,
+                                String expected, String found, String message){
+      this.lineNumber = lineNumber;
+      this.recordId = recordId;
       this.evaluationType = evaluationType;
-      this.description = description;
+      this.expected = expected;
+      this.found = found;
+      this.message = message;
     }
 
     public Long getLineNumber(){
@@ -131,8 +141,16 @@ public class RecordEvaluationResult implements Serializable {
       return recordId;
     }
 
-    public String getDescription() {
-      return description;
+    public String getExpected() {
+      return expected;
+    }
+
+    public String getFound() {
+      return found;
+    }
+
+    public String getMessage() {
+      return message;
     }
 
     @Override
@@ -144,13 +162,13 @@ public class RecordEvaluationResult implements Serializable {
   /**
    * Contains details of a RecordInterpretationResult.
    */
-  public static class RecordInterpretationResultDetails extends DescriptionEvaluationResultDetails {
+  public static class RecordInterpretationResultDetails extends BaseEvaluationResultDetails {
 
     private final Map<Term, String> relatedData;
 
     RecordInterpretationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
                                              Map<Term, String> relatedData) {
-      super(lineNumber, recordId, issueFlag, null);
+      super(lineNumber, recordId, issueFlag);
       this.relatedData = relatedData;
     }
 

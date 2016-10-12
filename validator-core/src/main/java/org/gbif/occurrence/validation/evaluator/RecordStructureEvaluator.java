@@ -4,9 +4,11 @@ import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.model.EvaluationType;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
-import java.text.MessageFormat;
 import javax.annotation.Nullable;
 
+/**
+ * Class to evaluate the structure of a record.
+ */
 public class RecordStructureEvaluator implements RecordEvaluator {
 
   private static int expectedColumnCount;
@@ -36,7 +38,7 @@ public class RecordStructureEvaluator implements RecordEvaluator {
                                                                              int actualColumnCount) {
     return new RecordEvaluationResult.Builder()
             .withLineNumber(lineNumber)
-            .addDescription(EvaluationType.COLUMN_MISMATCH, MessageFormat.format("Column count mismatch: expected {0} columns, got {1} columns",
-                    expectedColumnCount, actualColumnCount)).build();
+            .addBaseDetail(EvaluationType.COLUMN_MISMATCH, Integer.toString(expectedColumnCount),
+                    Integer.toString(actualColumnCount),null).build();
   }
 }

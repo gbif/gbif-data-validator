@@ -66,7 +66,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         String[] splits = FileBashUtilities.splitFile(dataFile.getFileName(), numOfInputRecords / splitSize, outDirPath);
         numOfActors = splits.length;
         ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class,
-                occurrenceEvaluatorFactory.createInterpretationEvaluator(dataFile.getColumns()))), "dataFileRouter");
+                occurrenceEvaluatorFactory.create(dataFile.getColumns()))), "dataFileRouter");
         results =  new HashSet<>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
