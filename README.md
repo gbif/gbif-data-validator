@@ -32,9 +32,9 @@ Over time it is expected that this project will be enhanced with growing validit
 
 This project serves as a replacement for the [GBIF Darwin Core validator](http://tools.gbif.org/dwca-validator).  The perceived issues with the validator are:
 
-1. It is inconsistent with what happens at indexing in GBIF - data said to be valid are not indexable under certain cicumstances
-2. It doesn’t expose information about data interpretation issues that later can appear while indexing a file in the GBIF portal - they use different underlying libraries
-3. It does not do any meaningful content level validation - only correctness of the file (e.g. referential integrity)
+1. It is inconsistent with what happens at indexing in GBIF — data said to be valid are not indexable under certain circumstances
+2. It doesn’t expose information about data interpretation issues that later can appear while indexing a file in the GBIF portal — they use different underlying libraries
+3. It does not do any meaningful content level validation — only correctness of the file (e.g. referential integrity)
 4. It only supports DwC-A
 5. It does not provide any means to verify the data is suitable for a specific use
   
