@@ -17,6 +17,4 @@ public interface RecordEvaluator {
    */
   RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record);
 
-  String[] getFields();
-
 }

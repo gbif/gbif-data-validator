@@ -9,26 +9,22 @@ import javax.annotation.Nullable;
 
 public class OccurrenceStructureEvaluator implements RecordEvaluator {
 
-  private String[] fields;
+
+  private static int expectedColumnCount;
 
   public OccurrenceStructureEvaluator(String[] fields) {
-    this.fields = fields;
+    expectedColumnCount = fields.length;
   }
 
   @Override
   public RecordEvaluationResult evaluate(
-          @Nullable Long lineNumber, String[]  record) {
-    int expectedColumnCount = getFields().length;
+          @Nullable Long lineNumber, String[] record) {
     if (record.length != expectedColumnCount) {
       return toColumnCountMismatchResult(lineNumber, expectedColumnCount, record.length);
     }
     return null;
   }
 
-  @Override
-  public String[] getFields() {
-    return fields;
-  }
 
   /**
    * Creates a RecordStructureEvaluationResult instance for a column count mismatch.

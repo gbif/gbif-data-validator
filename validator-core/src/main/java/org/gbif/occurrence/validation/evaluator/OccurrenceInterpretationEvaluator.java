@@ -21,16 +21,14 @@ import javax.annotation.Nullable;
 public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private final OccurrenceInterpreter interpreter;
-  private final String[] fields;
   private final Term[] columnMapping;
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
    * @param interpreter occurrence interpreter
    */
-  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, String[] fields, Term[] columnMapping) {
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term[] columnMapping) {
     this.interpreter = interpreter;
-    this.fields = fields;
     this.columnMapping = columnMapping;
   }
 
@@ -52,11 +50,6 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
       verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]);
     }
     return verbatimOccurrence;
-  }
-
-  @Override
-  public String[] getFields() {
-    return fields;
   }
 
   /**

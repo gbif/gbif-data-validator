@@ -39,7 +39,7 @@ public class OccurrenceEvaluatorFactory {
    * @return new instance
    */
   public RecordEvaluator create(String[] columns) {
-    return new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), columns, buildTermMapping(columns));
+    return new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), buildTermMapping(columns));
   }
 
   /**
