@@ -2,6 +2,7 @@ package org.gbif.occurrence.validation.api.model;
 
 import org.gbif.dwc.terms.Term;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.Map;
  * Represents the result of an evaluation at the record level.
  * Immutable once built.
  */
-public class RecordEvaluationResult {
+public class RecordEvaluationResult implements Serializable {
 
   //currently stored inside the details
   private final String recordId;
