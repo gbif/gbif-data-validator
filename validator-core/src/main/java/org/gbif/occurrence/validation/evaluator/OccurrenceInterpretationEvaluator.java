@@ -41,7 +41,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   }
 
   @Override
-  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record) {
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
 
     if(record == null || record.length == 0) {
       return null;

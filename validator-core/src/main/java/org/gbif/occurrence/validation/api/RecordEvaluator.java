@@ -18,6 +18,6 @@ public interface RecordEvaluator {
    * @return the result of the evaluation or null if no result can be generated (e.g. empty record)
    */
   @Nullable
-  RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record);
+  RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record);
 
 }
