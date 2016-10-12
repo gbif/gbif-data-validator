@@ -7,12 +7,11 @@ import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 import java.text.MessageFormat;
 import javax.annotation.Nullable;
 
-public class OccurrenceStructureEvaluator implements RecordEvaluator {
-
+public class RecordStructureEvaluator implements RecordEvaluator {
 
   private static int expectedColumnCount;
 
-  public OccurrenceStructureEvaluator(String[] fields) {
+  public RecordStructureEvaluator(String[] fields) {
     expectedColumnCount = fields.length;
   }
 
@@ -24,7 +23,6 @@ public class OccurrenceStructureEvaluator implements RecordEvaluator {
     }
     return null;
   }
-
 
   /**
    * Creates a RecordStructureEvaluationResult instance for a column count mismatch.

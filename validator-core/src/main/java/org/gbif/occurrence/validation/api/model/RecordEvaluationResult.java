@@ -34,6 +34,24 @@ public class RecordEvaluationResult implements Serializable {
     private String recordId;
     private List<EvaluationResultDetails> details;
 
+    /**
+     * Merge 2 @{link RecordEvaluationResult} into a single one.
+     * The @{link RecordEvaluationResult} are assumed to come from the same record therefore no validation is performed
+     * on the recordId and the one from rer1 will be taken.
+     * @param rer1
+     * @param rer2
+     * @return
+     */
+    public static RecordEvaluationResult merge(RecordEvaluationResult rer1, RecordEvaluationResult rer2) {
+      // if something is null, try to return the other one, if both null, null is returned
+      if(rer1 == null || rer2 == null) {
+        return rer1 == null ? rer2 : rer1;
+      }
+      return new Builder()
+              .withExisting(rer1)
+              .addDetails(rer2.getDetails()).build();
+    }
+
     public Builder withLineNumber(long lineNumber){
       this.lineNumber = lineNumber;
       return this;
@@ -41,6 +59,29 @@ public class RecordEvaluationResult implements Serializable {
 
     public Builder withRecordId(String recordId){
       this.recordId = recordId;
+      return this;
+    }
+
+    public Builder withExisting(RecordEvaluationResult recordEvaluationResult){
+      this.recordId = recordEvaluationResult.recordId;
+
+      if(recordEvaluationResult.getDetails() != null){
+        details = new ArrayList<>(recordEvaluationResult.getDetails());
+      }
+      return this;
+    }
+
+    /**
+     * Internal operation to copy details.
+     * 
+     * @param details
+     * @return
+     */
+    private Builder addDetails(List<EvaluationResultDetails> details) {
+      if(this.details == null){
+        this.details = new ArrayList<>();
+      }
+      this.details.addAll(details);
       return this;
     }
 
@@ -59,6 +100,7 @@ public class RecordEvaluationResult implements Serializable {
       details.add(new DescriptionEvaluationResultDetails(lineNumber, recordId, evaluationType, description));
       return this;
     }
+
 
     public RecordEvaluationResult build(){
       return new RecordEvaluationResult(recordId, details);
