@@ -3,18 +3,29 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
-    <groupId>org.gbif.validator</groupId>
     <artifactId>validator-motherpom</artifactId>
+    <groupId>org.gbif.validator</groupId>
     <version>0.1-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>validator-core</artifactId>
+  <artifactId>validator-processor</artifactId>
+
+  <properties>
+    <akka-actor.version>2.3.15</akka-actor.version>
+    <scala-library.version>2.10.5</scala-library.version>
+    <typesafe-config.version>1.0.2</typesafe-config.version>
+  </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.gbif.occurrence</groupId>
       <artifactId>occurrence-processor</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.validator</groupId>
+      <artifactId>validator-core</artifactId>
+      <version>${project.version}</version>
     </dependency>
     <dependency>
       <groupId>org.gbif.occurrence</groupId>
@@ -33,6 +44,10 @@
       <artifactId>dwc-api</artifactId>
     </dependency>
     <dependency>
+      <groupId>org.gbif</groupId>
+      <artifactId>dwca-io</artifactId>
+    </dependency>
+    <dependency>
       <groupId>com.sun.jersey.contribs</groupId>
       <artifactId>jersey-apache-client</artifactId>
     </dependency>
@@ -48,6 +63,16 @@
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
+    <dependency>
+      <groupId>com.typesafe.akka</groupId>
+      <artifactId>akka-actor_2.10</artifactId>
+      <version>${akka-actor.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala-library.version}</version>
+    </dependency>
 
     <!-- TEST PIECES -->
     <dependency>
@@ -56,4 +81,5 @@
     </dependency>
 
   </dependencies>
+
 </project>

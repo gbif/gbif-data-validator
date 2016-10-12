@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
-import static  org.gbif.tabular.TermTabularFiles.newTermMappedTabularFileReader;
+import static org.gbif.tabular.TermTabularFiles.newTermMappedTabularFileReader;
 
 /**
  * Creates instances of RecordSource class.
