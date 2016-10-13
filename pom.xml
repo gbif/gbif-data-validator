@@ -44,7 +44,7 @@
     <!-- VERSIONS -->
 
     <!-- GBIF VERSIONS -->
-    <dwc-api.version>1.16</dwc-api.version>
+    <dwc-api.version>1.17-SNAPSHOT</dwc-api.version>
     <dwca-io.version>1.28-SNAPSHOT</dwca-io.version>
     <gbif-api.version>0.48-SNAPSHOT</gbif-api.version>
     <gbif-common.version>0.29-SNAPSHOT</gbif-common.version>
