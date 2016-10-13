@@ -14,9 +14,12 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
+
+import org.apache.commons.lang3.Validate;
 
 /**
- * Class to process one text line that represents a occurrence record.
+ * Class to evaluate an occurrence record using an {@link OccurrenceInterpreter}.
  */
 public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
@@ -25,15 +28,25 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
+   *
    * @param interpreter occurrence interpreter
+   * @param columnMapping
    */
   public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term[] columnMapping) {
+    Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
+    Validate.notNull(columnMapping, "columnMapping must not be null");
+
     this.interpreter = interpreter;
     this.columnMapping = columnMapping;
   }
 
   @Override
-  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record) {
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
+
+    if(record == null || record.length == 0) {
+      return null;
+    }
+
     VerbatimOccurrence verbatimOccurrence = toVerbatimOccurrence(record);
     String datasetKey = verbatimOccurrence.getVerbatimField(GbifTerm.datasetKey);
     if (datasetKey != null) {
@@ -42,7 +55,14 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     return toEvaluationResult(lineNumber, interpreter.interpret(verbatimOccurrence));
   }
 
-  private VerbatimOccurrence toVerbatimOccurrence(String[] record){
+  /**
+   * -- Visible For Testing --
+   * Build a VerbatimOccurrence from a record represented as an array of values (as String).
+   * Values indices shall match the column mapping of this evaluator.
+   * @param record
+   * @return new VerbatimOccurrence, never null
+   */
+  protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record){
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     int numOfColumns = Math.min(record.length, columnMapping.length);
 
@@ -53,11 +73,14 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   }
 
   /**
-   * Creates a RecordInterpretationResult from an OccurrenceInterpretationResult.
-   * Responsible to to put the related data (e.g. field + current value) into the RecordInterpretionBasedEvaluationResult
-   * instance.
+   * -- Visible For Testing --
+   * Creates a RecordEvaluationResult from an OccurrenceInterpretationResult.
+   * Responsible to to put the related data (e.g. field + current value) into the RecordEvaluationResult instance.
+   * @param lineNumber
+   * @param result
+   * @return
    */
-  private static RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
+  protected static RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
 
     RecordEvaluationResult.Builder builder = new RecordEvaluationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();

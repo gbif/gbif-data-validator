@@ -10,11 +10,14 @@ import javax.annotation.Nullable;
 public interface RecordEvaluator {
 
   /**
+   * Evaluate a record represented as an array of values (as String).
    *
    * @param lineNumber number of the line within the context, can be null
-   * @param record values
-   * @return
+   * @param record     values
+   *
+   * @return the result of the evaluation or null if no result can be generated (e.g. empty record)
    */
-  RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record);
+  @Nullable
+  RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record);
 
 }

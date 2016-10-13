@@ -6,8 +6,12 @@ import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
+import org.gbif.occurrence.validation.api.model.RecordEvaluatorChain;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
+
+import java.util.Arrays;
+import java.util.List;
 
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -39,7 +43,11 @@ public class OccurrenceEvaluatorFactory {
    * @return new instance
    */
   public RecordEvaluator create(String[] columns) {
-    return new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), buildTermMapping(columns));
+
+    List<RecordEvaluator> evaluators = Arrays.asList(
+            new RecordStructureEvaluator(columns),
+            new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), buildTermMapping(columns)));
+    return new RecordEvaluatorChain(evaluators);
   }
 
   /**
