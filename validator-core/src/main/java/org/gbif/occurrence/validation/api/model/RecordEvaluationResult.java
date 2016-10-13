@@ -101,6 +101,22 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
+    public Builder addTermValueDetail(EvaluationType evaluationType, Term term) {
+      if(details == null){
+        details = new ArrayList<>();
+      }
+      details.add(new TermValueEvaluationResultDetails(lineNumber, recordId, evaluationType, term));
+      return this;
+    }
+
+    public Builder addTermValueDetail(EvaluationType evaluationType, Term term, String expected, String found) {
+      if(details == null){
+        details = new ArrayList<>();
+      }
+      details.add(new TermValueEvaluationResultDetails(lineNumber, recordId, evaluationType, term, expected, found));
+      return this;
+    }
+
     public RecordEvaluationResult build(){
       return new RecordEvaluationResult(recordId, details);
     }
@@ -156,6 +172,30 @@ public class RecordEvaluationResult implements Serializable {
     @Override
     public EvaluationType getEvaluationType() {
       return evaluationType;
+    }
+  }
+
+
+  /**
+   * Evaluation result related to a term and its value.
+   */
+  public static class TermValueEvaluationResultDetails extends BaseEvaluationResultDetails {
+    private Term term;
+
+    TermValueEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
+                                      Term term) {
+      super(lineNumber, recordId, issueFlag);
+      this.term = term;
+    }
+
+    TermValueEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
+                                     Term term, String expected, String found) {
+      super(lineNumber, recordId, issueFlag, expected, found, null);
+      this.term = term;
+    }
+
+    public Term getTerm() {
+      return term;
     }
   }
 
