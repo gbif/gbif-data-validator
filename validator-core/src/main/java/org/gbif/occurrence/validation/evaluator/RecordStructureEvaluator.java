@@ -6,6 +6,8 @@ import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.Validate;
+
 /**
  * Class to evaluate the structure of a record.
  */
@@ -13,8 +15,9 @@ public class RecordStructureEvaluator implements RecordEvaluator {
 
   private static int expectedColumnCount;
 
-  public RecordStructureEvaluator(String[] fields) {
-    expectedColumnCount = fields.length;
+  public RecordStructureEvaluator(String[] columns) {
+    Validate.notNull(columns, "columns must not be null");
+    expectedColumnCount = columns.length;
   }
 
   @Override
