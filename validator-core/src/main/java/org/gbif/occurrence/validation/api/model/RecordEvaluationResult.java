@@ -118,7 +118,7 @@ public class RecordEvaluationResult implements Serializable {
     }
 
     public RecordEvaluationResult build(){
-      return new RecordEvaluationResult(recordId, details);
+      return new RecordEvaluationResult(recordId, details == null ? new ArrayList<>() : details);
     }
   }
 
@@ -216,5 +216,5 @@ public class RecordEvaluationResult implements Serializable {
       return relatedData;
     }
   }
-  
+
 }
