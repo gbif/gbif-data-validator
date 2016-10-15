@@ -16,7 +16,7 @@ public class DataFileValidationResult {
   private final boolean indexeable;
 
   //There is only one for now but we will have more than one eventually
-  private final EvaluationProfile profile = EvaluationProfile.GBIF_INDEXING_PROFILE;
+  private final ValidationProfile validationProfile = ValidationProfile.GBIF_INDEXING_PROFILE;
 
   //only used in case of general error with the input file
   private final String error;

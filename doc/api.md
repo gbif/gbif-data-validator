@@ -6,6 +6,7 @@ Specifications of the GBIF Data Validator API response.
 {
   "status": "[OK,FAILED]",
   "fileFormat": "[delimited | dwca | excel]",
+  "validationProfile": "GBIF_INDEXING_PROFILE",
   "indexeable": "[true|false]",
   "errorCode": "INVALID_FILE_FORMAT",
   "errorMessage": "Invalid file format",
@@ -67,6 +68,7 @@ Specifications of the GBIF Data Validator API response.
 
 - `"status"` : The global status of the validation
 - `"fileFormat"` : File format used be the server handle the submitted file
+- `"validationProfile"` : Validation profile used to validate the provided resource
 - `"indexeable"` : Is the provided resource indexeable by GBIF?
 - `"errorCode"` : Contains the error code in case the provided resource can not be validated
 - `"errorMessage"` : Contains human readable message in case the provided resource can not be validated
