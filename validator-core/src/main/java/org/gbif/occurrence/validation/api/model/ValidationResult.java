@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * Contains the result of a DataFile validation
  */
-public class DataFileValidationResult {
+public class ValidationResult {
 
   public enum Status {OK, FAILED};
 
@@ -24,8 +24,8 @@ public class DataFileValidationResult {
   private final List<DateFileValidationElement> issues = new ArrayList<>();
 
 
-  public DataFileValidationResult(Status status, boolean indexeable, Map<EvaluationType, Long> issueCounter,
-                                  Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
+  public ValidationResult(Status status, boolean indexeable, Map<EvaluationType, Long> issueCounter,
+                          Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
     this.status = status;
     this.indexeable = indexeable;
     this.error = null;

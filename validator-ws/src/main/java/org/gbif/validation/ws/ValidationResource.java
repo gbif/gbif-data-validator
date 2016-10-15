@@ -1,7 +1,7 @@
 package org.gbif.validation.ws;
 
 import org.gbif.occurrence.validation.api.DataFile;
-import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
+import org.gbif.occurrence.validation.api.model.ValidationResult;
 import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
 import org.gbif.occurrence.validation.api.model.DataFileDescriptor;
@@ -52,7 +52,7 @@ public class ValidationResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
-  public DataFileValidationResult validateFile(@FormDataParam(FILE_PARAM) final InputStream stream,
+  public ValidationResult validateFile(@FormDataParam(FILE_PARAM) final InputStream stream,
                                                @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
                                                FormDataMultiPart formDataMultiPart) {
     try {
@@ -82,7 +82,7 @@ public class ValidationResource {
   /**
    * Applies the validation routines to the input file.
    */
-  private DataFileValidationResult processFile(java.nio.file.Path dataFilePath, DataFileDescriptor dataFileDescriptor) throws IOException {
+  private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFileDescriptor dataFileDescriptor) throws IOException {
     DataFile dataFile = new DataFile();
     dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
     dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));

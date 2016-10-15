@@ -5,7 +5,8 @@ import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.RecordEvaluator;
 import org.gbif.occurrence.validation.api.RecordSource;
 import org.gbif.occurrence.validation.api.ResultsCollector;
-import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
+import org.gbif.occurrence.validation.api.model.ValidationProfile;
+import org.gbif.occurrence.validation.api.model.ValidationResult;
 import org.gbif.occurrence.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
@@ -21,7 +22,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   }
 
   @Override
-  public DataFileValidationResult process(DataFile dataFile) {
+  public ValidationResult process(DataFile dataFile) {
 
     try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()), dataFile.getDelimiterChar(),
             dataFile.isHasHeaders())) {
@@ -33,9 +34,9 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       }
 
       //FIXME the Status and indexeable should be decided by a another class somewhere
-      return new DataFileValidationResult(
-              collector.getAggregatedCounts().isEmpty() ? DataFileValidationResult.Status.OK : DataFileValidationResult.Status.FAILED,
-              true, collector.getAggregatedCounts(), collector.getSamples());
+      return new ValidationResult(
+              collector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
+              true, ValidationProfile.GBIF_INDEXING_PROFILE, collector.getAggregatedCounts(), collector.getSamples());
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

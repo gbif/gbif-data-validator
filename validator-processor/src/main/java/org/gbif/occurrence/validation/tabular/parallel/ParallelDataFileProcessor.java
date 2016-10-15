@@ -3,7 +3,8 @@ package org.gbif.occurrence.validation.tabular.parallel;
 import org.gbif.occurrence.validation.api.DataFile;
 import org.gbif.occurrence.validation.api.DataFileProcessor;
 import org.gbif.occurrence.validation.api.ResultsCollector;
-import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
+import org.gbif.occurrence.validation.api.model.ValidationProfile;
+import org.gbif.occurrence.validation.api.model.ValidationResult;
 import org.gbif.occurrence.validation.api.model.RecordEvaluationResult;
 import org.gbif.occurrence.validation.evaluator.OccurrenceEvaluatorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
@@ -103,7 +104,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
   }
 
   @Override
-  public DataFileValidationResult process(DataFile dataFile) {
+  public ValidationResult process(DataFile dataFile) {
     ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
     // Create an Akka system
     ActorSystem system = ActorSystem.create("DataFileProcessorSystem");
@@ -128,8 +129,8 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
-    return new DataFileValidationResult(
-            validationCollector.getAggregatedCounts().isEmpty() ? DataFileValidationResult.Status.OK : DataFileValidationResult.Status.FAILED,
-            true, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
+    return new ValidationResult(
+            validationCollector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
+            true, ValidationProfile.GBIF_INDEXING_PROFILE, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
   }
 }

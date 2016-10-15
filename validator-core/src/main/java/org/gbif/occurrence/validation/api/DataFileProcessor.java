@@ -1,8 +1,8 @@
 package org.gbif.occurrence.validation.api;
 
-import org.gbif.occurrence.validation.api.model.DataFileValidationResult;
+import org.gbif.occurrence.validation.api.model.ValidationResult;
 
 public interface DataFileProcessor {
 
-  DataFileValidationResult process(DataFile dataFile);
+  ValidationResult process(DataFile dataFile);
 }
