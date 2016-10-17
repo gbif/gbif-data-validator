@@ -131,6 +131,6 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     //FIXME the Status and indexeable should be decided by a another class somewhere
     return new ValidationResult(
             validationCollector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
-            true, ValidationProfile.GBIF_INDEXING_PROFILE, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
+            true, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
   }
 }
