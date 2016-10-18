@@ -76,7 +76,7 @@ public class ValidationResource {
         if (lwrValue.startsWith("http://") || lwrValue.startsWith("https://")) {
           URL fileUrl = new URL(lwrValue);
           java.nio.file.Path destinyFilePath = Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(),
-                                                      fileUrl.getFile());
+                                                         Paths.get(lwrValue).getFileName().toString());
           httpUtil.download(fileUrl,destinyFilePath.toFile());
           return destinyFilePath;
         } else {
