@@ -10,7 +10,6 @@ import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -28,9 +27,12 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
-import org.eclipse.jetty.server.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.eclipse.jetty.server.Response.SC_BAD_REQUEST;
+import static org.eclipse.jetty.server.Response.SC_OK;
+import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
 
 @Path("/validate")
 @Produces(MediaType.APPLICATION_JSON)
@@ -41,11 +43,12 @@ public class ValidationResource {
 
   private final OccurrenceDataFileProcessorFactory dataFileProcessorFactory;
 
+  private final HttpUtil httpUtil;
+
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
   private static final String FILE_PARAM = "file";
 
-  private HttpUtil httpUtil;
 
   @Inject
   public ValidationResource(ValidationConfiguration configuration, HttpUtil httpUtil,
@@ -59,7 +62,7 @@ public class ValidationResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
-  public ValidationResult validateFile(@FormDataParam(FILE_PARAM) final InputStream stream,
+  public ValidationResult validateFile(@FormDataParam(FILE_PARAM) InputStream stream,
                                        @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
                                        FormDataMultiPart formDataMultiPart) {
       DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
@@ -72,25 +75,25 @@ public class ValidationResource {
 
 
 
-  private  java.nio.file.Path downloadFile(DataFileDescriptor descriptor, final InputStream stream) {
+  private  java.nio.file.Path downloadFile(DataFileDescriptor descriptor, InputStream stream) {
     if(descriptor.getFile() != null) {
       try {
-        URL fileUrl = new URL(descriptor.getFile());
-        return (fileUrl.getProtocol().startsWith("http"))?  downloadHttpFile(fileUrl): copyDataFile(stream,descriptor);
-      } catch(URISyntaxException | IOException  ex){
-        throw new WebApplicationException(ex, Response.SC_BAD_REQUEST);
+        return descriptor.getFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getFile())) :
+                                                          copyDataFile(stream,descriptor);
+      } catch(IOException  ex){
+        throw new WebApplicationException(ex, SC_BAD_REQUEST);
       }
     }
-    throw new WebApplicationException(Response.SC_BAD_REQUEST);
+    throw new WebApplicationException(SC_BAD_REQUEST);
   }
 
   /**
    * Downloads a file from a HTTP(s) endpoint.
    */
-  private java.nio.file.Path downloadHttpFile(URL fileUrl) throws IOException,URISyntaxException {
-    java.nio.file.Path destinyFilePath = downloadFilePath(Paths.get(fileUrl.toURI()).getFileName().toString());
-    if (httpUtil.download(fileUrl,destinyFilePath.toFile()).getStatusCode() != Response.SC_OK) {
-      throw new WebApplicationException(Response.SC_BAD_REQUEST);
+  private java.nio.file.Path downloadHttpFile(URL fileUrl) throws IOException {
+    java.nio.file.Path destinyFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
+    if (httpUtil.download(fileUrl, destinyFilePath.toFile()).getStatusCode() != SC_OK) {
+      throw new WebApplicationException(SC_BAD_REQUEST);
     }
     return destinyFilePath;
   }
@@ -106,10 +109,10 @@ public class ValidationResource {
   /**
    * Copies the input stream into a temporary directory.
    */
-  private java.nio.file.Path copyDataFile(final InputStream stream,
+  private java.nio.file.Path copyDataFile(InputStream stream,
                                           DataFileDescriptor descriptor) throws IOException {
     java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getFile());
-    LOG.info("Uploading data file into {}", descriptor.toString());
+    LOG.info("Uploading data file into {}", descriptor);
     Files.createDirectory(destinyFilePath.getParent());
     Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
     return destinyFilePath;
@@ -130,7 +133,7 @@ public class ValidationResource {
     } catch (IOException ex) {
       //deletes the file in case of error
       dataFilePath.toFile().delete();
-      throw new WebApplicationException(Response.SC_INTERNAL_SERVER_ERROR);
+      throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     }
   }
 }

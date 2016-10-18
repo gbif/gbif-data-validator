@@ -93,7 +93,7 @@ public class DataFileDescriptorProvider {
   private static <T> T orElse(WsValidationParams<T> param, FormDataMultiPart formDataMultiPart,
                               T defaultValue, Function<String,T> fromString) {
     FormDataBodyPart formData = formDataMultiPart.getField(param.getParam());
-    if(formData != null && formData.getMediaType() == MediaType.TEXT_PLAIN_TYPE) {
+    if(formData != null && formData.getMediaType().equals(MediaType.TEXT_PLAIN_TYPE)) {
       String value = formData.getValue();
       if (value != null) {
         return fromString.apply(value.trim());

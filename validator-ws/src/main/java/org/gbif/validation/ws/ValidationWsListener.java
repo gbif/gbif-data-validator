@@ -46,6 +46,7 @@ public class ValidationWsListener extends GbifServletListener {
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(OccurrenceDataFileProcessorFactory.class).toInstance(new OccurrenceDataFileProcessorFactory(configuration.getApiUrl()));
       expose(ValidationConfiguration.class);
+      expose(OccurrenceDataFileProcessorFactory.class);
       expose(HttpUtil.class);
     }
   }
