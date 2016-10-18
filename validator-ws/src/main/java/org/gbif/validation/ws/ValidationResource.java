@@ -65,7 +65,7 @@ public class ValidationResource {
       DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
       java.nio.file.Path dataFilePath = downloadFile(dataFileDescriptor, stream);
       ValidationResult result = processFile(dataFilePath, dataFileDescriptor);
-      //deletes the file
+      //deletes the downloaded file
       dataFilePath.toFile().delete();
       return result;
   }
