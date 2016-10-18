@@ -10,6 +10,25 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>validator-spark</artifactId>
+
+  <repositories>
+    <repository>
+      <id>gbif-all</id>
+      <url>http://repository.gbif.org/content/groups/gbif</url>
+    </repository>
+    <repository>
+      <id>cloudera</id>
+      <url>http://repository.cloudera.com/artifactory/cloudera-repos/</url>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+      </snapshots>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+    </repository>
+  </repositories>
+
   <properties>
     <jdkLevel>1.8</jdkLevel>
     <slf4j.version>1.7.18</slf4j.version>
