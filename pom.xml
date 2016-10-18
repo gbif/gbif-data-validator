@@ -35,6 +35,7 @@
     <module>validator-core</module>
     <module>validator-ws</module>
     <module>validator-processor</module>
+    <module>validator-spark</module>
   </modules>
 
   <properties>
@@ -48,10 +49,10 @@
     <dwca-io.version>1.28-SNAPSHOT</dwca-io.version>
     <gbif-api.version>0.48-SNAPSHOT</gbif-api.version>
     <gbif-common.version>0.29-SNAPSHOT</gbif-common.version>
-    <gbif-common-ws.version>0.36</gbif-common-ws.version>
+    <gbif-common-ws.version>0.37</gbif-common-ws.version>
     <gbif-occurrence.version>0.59-SNAPSHOT</gbif-occurrence.version>
 
-    <jersey.version>1.18.3</jersey.version>
+    <jersey.version>1.19</jersey.version>
     <jackson.version>1.9.12</jackson.version>
 
     <slf4j.version>1.7.16</slf4j.version>
@@ -103,6 +104,16 @@
         <groupId>org.gbif.occurrence</groupId>
         <artifactId>occurrence-processor</artifactId>
         <version>${gbif-occurrence.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-core</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.sun.jersey</groupId>
+            <artifactId>jersey-json</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.gbif.occurrence</groupId>

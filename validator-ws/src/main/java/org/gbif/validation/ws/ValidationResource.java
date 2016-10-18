@@ -5,10 +5,12 @@ import org.gbif.occurrence.validation.api.model.ValidationResult;
 import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.occurrence.validation.util.FileBashUtilities;
 import org.gbif.occurrence.validation.api.model.DataFileDescriptor;
+import org.gbif.utils.HttpUtil;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -40,10 +42,13 @@ public class ValidationResource {
 
   private static final String FILE_PARAM = "file";
 
+  private HttpUtil httpUtil;
+
   @Inject
   public ValidationResource(ValidationConfiguration configuration) {
     this.configuration = configuration;
     dataFileProcessorFactory = new OccurrenceDataFileProcessorFactory(configuration.getApiUrl());
+    httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(60000,10,2));
   }
 
 
@@ -53,30 +58,51 @@ public class ValidationResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
   public ValidationResult validateFile(@FormDataParam(FILE_PARAM) final InputStream stream,
-                                               @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
-                                               FormDataMultiPart formDataMultiPart) {
+                                       @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
+                                       FormDataMultiPart formDataMultiPart) {
     try {
-      DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart);
-      dataFileDescriptor.setFileName(header.getFileName());
-      java.nio.file.Path dataFilePath = copyDataFile(stream, header);
+      DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
+      java.nio.file.Path dataFilePath = copyFile(dataFileDescriptor, stream);
       return processFile(dataFilePath, dataFileDescriptor);
-    } catch (Exception  ex) {
+    } catch (Exception ex) {
       throw  new WebApplicationException(Response.SC_INTERNAL_SERVER_ERROR);
     }
   }
 
+  private  java.nio.file.Path copyFile(DataFileDescriptor dataFileDescriptor, final InputStream stream) {
+    if(dataFileDescriptor.getFile() != null) {
+      String lwrValue = dataFileDescriptor.getFile().toLowerCase();
+      try {
+        if (lwrValue.startsWith("http://") || lwrValue.startsWith("https://")) {
+          URL fileUrl = new URL(lwrValue);
+          java.nio.file.Path destinyFilePath = Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(),
+                                                      fileUrl.getFile());
+          httpUtil.download(fileUrl,destinyFilePath.toFile());
+          return destinyFilePath;
+        } else {
+          java.nio.file.Path destinyFilePath = Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(),
+                                                         dataFileDescriptor.getFile());
+          copyDataFile(stream,destinyFilePath);
+          return destinyFilePath;
+        }
+      } catch(IOException  ex){
+        throw new WebApplicationException(ex, javax.ws.rs.core.Response.Status.BAD_REQUEST);
+      }
+    }
+    throw new WebApplicationException(javax.ws.rs.core.Response.Status.BAD_REQUEST);
+  }
+
+
   /**
    * Copies the input stream into a temporary directory.
    */
-  private java.nio.file.Path copyDataFile(final InputStream stream, final FormDataContentDisposition header) throws IOException {
-    java.nio.file.Path dataFilePath = Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(),
-                                                header.getFileName());
-    LOG.info("Uploading data file {} into {}", header.getFileName(), dataFilePath.toString());
-    Files.createDirectory(dataFilePath.getParent());
+  private void copyDataFile(final InputStream stream,
+                                          java.nio.file.Path destinyDataFilePath) throws IOException {
+    LOG.info("Uploading data file into {}", destinyDataFilePath.toString());
+    Files.createDirectory(destinyDataFilePath.getParent());
     //Delete on exit JVM
-    dataFilePath.toFile().deleteOnExit();
-    Files.copy(stream, dataFilePath, StandardCopyOption.REPLACE_EXISTING);
-    return dataFilePath;
+    destinyDataFilePath.toFile().deleteOnExit();
+    Files.copy(stream, destinyDataFilePath, StandardCopyOption.REPLACE_EXISTING);
   }
 
   /**

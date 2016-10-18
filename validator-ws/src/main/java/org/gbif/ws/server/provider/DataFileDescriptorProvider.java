@@ -7,6 +7,9 @@ import org.gbif.validation.ws.WsValidationParams;
 import java.nio.charset.Charset;
 import java.util.function.Function;
 
+import javax.ws.rs.core.MediaType;
+
+import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
@@ -18,6 +21,7 @@ import static org.gbif.validation.ws.WsValidationParams.FIELDS_TERMINATED_BY;
 import static org.gbif.validation.ws.WsValidationParams.HAS_HEADERS;
 import static org.gbif.validation.ws.WsValidationParams.LINES_TERMINATED_BY;
 import static org.gbif.validation.ws.WsValidationParams.DATE_FORMAT;
+import static org.gbif.validation.ws.WsValidationParams.FILE;
 
 /**
  * Utility class to transform form parameters into DataFileDescriptor instances.
@@ -40,7 +44,8 @@ public class DataFileDescriptorProvider {
   /**
    * Creates an instance of DataFileDescriptor from the form data.
    */
-  public static DataFileDescriptor getValue(FormDataMultiPart  formDataMultiPart) {
+  public static DataFileDescriptor getValue(FormDataMultiPart  formDataMultiPart,
+                                            FormDataContentDisposition header) {
     DataFileDescriptor dataFileDescriptor = new DataFileDescriptor();
 
     dataFileDescriptor.setFormat(orElse(FORMAT, formDataMultiPart, FORMAT.getDefaultValue()));
@@ -55,6 +60,7 @@ public class DataFileDescriptorProvider {
     dataFileDescriptor.setDateFormat(orElse(DATE_FORMAT, formDataMultiPart, DATE_FORMAT.getDefaultValue()));
     dataFileDescriptor.setDecimalSeparator(orElse(DECIMAL_SEPARATOR, formDataMultiPart,
                                                   DECIMAL_SEPARATOR.getDefaultValue()));
+    dataFileDescriptor.setFile(orElse(FILE,formDataMultiPart,header.getFileName()));
     return dataFileDescriptor;
   }
 
@@ -87,7 +93,7 @@ public class DataFileDescriptorProvider {
   private static <T> T orElse(WsValidationParams<T> param, FormDataMultiPart formDataMultiPart,
                               T defaultValue, Function<String,T> fromString) {
     FormDataBodyPart formData = formDataMultiPart.getField(param.getParam());
-    if(formData != null) {
+    if(formData != null && formData.getMediaType() == MediaType.TEXT_PLAIN_TYPE) {
       String value = formData.getValue();
       if (value != null) {
         return fromString.apply(value.trim());
