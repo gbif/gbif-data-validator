@@ -1,7 +1,9 @@
 package org.gbif.validation.ws;
 
 import org.gbif.drupal.guice.DrupalMyBatisModule;
+import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.service.guice.PrivateServiceModule;
+import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
@@ -40,8 +42,11 @@ public class ValidationWsListener extends GbifServletListener {
       ValidationConfiguration configuration = new ValidationConfiguration();
       configuration.setApiUrl(getProperties().getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(getProperties().getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
+      bind(HttpUtil.class).toInstance(new HttpUtil(HttpUtil.newMultithreadedClient(60000,20,2)));
       bind(ValidationConfiguration.class).toInstance(configuration);
+      bind(OccurrenceDataFileProcessorFactory.class).toInstance(new OccurrenceDataFileProcessorFactory(configuration.getApiUrl()));
       expose(ValidationConfiguration.class);
+      expose(HttpUtil.class);
     }
   }
 

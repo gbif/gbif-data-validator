@@ -35,6 +35,9 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   private final String apiUrl;
 
+  //This instance is shared between all the requests
+  private final ActorSystem system;
+
 
   private static class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
@@ -99,15 +102,14 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   }
 
-  public ParallelDataFileProcessor(String apiUrl) {
+  public ParallelDataFileProcessor(String apiUrl, ActorSystem system) {
     this.apiUrl = apiUrl;
+    this.system = system;
   }
 
   @Override
   public ValidationResult process(DataFile dataFile) {
     ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
-    // Create an Akka system
-    ActorSystem system = ActorSystem.create("DataFileProcessorSystem");
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,

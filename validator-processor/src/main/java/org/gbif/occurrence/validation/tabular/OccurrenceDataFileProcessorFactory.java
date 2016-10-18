@@ -6,6 +6,8 @@ import org.gbif.occurrence.validation.evaluator.OccurrenceEvaluatorFactory;
 import org.gbif.occurrence.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.occurrence.validation.tabular.single.SingleDataFileProcessor;
 
+import akka.actor.ActorSystem;
+
 /**
  * Creates instances of DataFile processors.
  */
@@ -15,12 +17,16 @@ public class OccurrenceDataFileProcessorFactory {
 
   private final String apiUrl;
 
+  private ActorSystem system;
+
   /**
    * Default constructor.
    * @param apiUrl url to the GBIF api.
    */
   public OccurrenceDataFileProcessorFactory(String apiUrl) {
     this.apiUrl = apiUrl;
+    // Create an Akka system
+    system = ActorSystem.create("DataFileProcessorSystem");
   }
 
   /**
@@ -33,7 +39,7 @@ public class OccurrenceDataFileProcessorFactory {
     if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
       return new SingleDataFileProcessor(factory.create(dataFile.getColumns()));
     }
-    return new ParallelDataFileProcessor(apiUrl);
+    return new ParallelDataFileProcessor(apiUrl, system);
   }
 
 }
