@@ -15,7 +15,7 @@ public class ValidationResult {
   private final Status status;
   private final boolean indexeable;
 
-  private final ValidationProfile validationProfile;
+  private final ValidationProfile validationProfile = ValidationProfile.GBIF_INDEXING_PROFILE;
 
   //only used in case of general error with the input file
   private final String error;
@@ -23,12 +23,11 @@ public class ValidationResult {
   private final List<DateFileValidationElement> issues = new ArrayList<>();
 
 
-  public ValidationResult(Status status, boolean indexeable, ValidationProfile validationProfile,
+  public ValidationResult(Status status, boolean indexeable,
                           Map<EvaluationType, Long> issueCounter,
                           Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
     this.status = status;
     this.indexeable = indexeable;
-    this.validationProfile = validationProfile;
     //FIXME
     this.error = null;
 
