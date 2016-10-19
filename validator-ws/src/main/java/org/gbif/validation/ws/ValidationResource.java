@@ -1,10 +1,10 @@
 package org.gbif.validation.ws;
 
-import org.gbif.occurrence.validation.api.DataFile;
-import org.gbif.occurrence.validation.api.model.ValidationResult;
-import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
-import org.gbif.occurrence.validation.util.FileBashUtilities;
-import org.gbif.occurrence.validation.api.model.DataFileDescriptor;
+import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.ValidationResult;
+import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
+import org.gbif.validation.util.FileBashUtilities;
+import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.utils.HttpUtil;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 

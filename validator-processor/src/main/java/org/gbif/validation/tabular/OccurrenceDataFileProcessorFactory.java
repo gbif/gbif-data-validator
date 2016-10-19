@@ -1,0 +1,45 @@
+package org.gbif.validation.tabular;
+
+import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DataFileProcessor;
+import org.gbif.validation.evaluator.OccurrenceEvaluatorFactory;
+import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
+import org.gbif.validation.tabular.single.SingleDataFileProcessor;
+
+import akka.actor.ActorSystem;
+
+/**
+ * Creates instances of DataFile processors.
+ */
+public class OccurrenceDataFileProcessorFactory {
+
+  public static final int FILE_SPLIT_SIZE = 10000;
+
+  private final String apiUrl;
+
+  private ActorSystem system;
+
+  /**
+   * Default constructor.
+   * @param apiUrl url to the GBIF api.
+   */
+  public OccurrenceDataFileProcessorFactory(String apiUrl) {
+    this.apiUrl = apiUrl;
+    // Create an Akka system
+    system = ActorSystem.create("DataFileProcessorSystem");
+  }
+
+  /**
+   * Creates a DataFileProcessor instance analyzing the size of the input file.
+   * If the file exceeds certain size it's processed in parallel otherwise a single thread processor it's used.
+   */
+  public DataFileProcessor create(DataFile dataFile) {
+    OccurrenceEvaluatorFactory factory = new OccurrenceEvaluatorFactory(apiUrl);
+
+    if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
+      return new SingleDataFileProcessor(factory.create(dataFile.getColumns()));
+    }
+    return new ParallelDataFileProcessor(apiUrl, system);
+  }
+
+}

@@ -1,7 +1,7 @@
 package org.gbif.validation.ws;
 
 import org.gbif.drupal.guice.DrupalMyBatisModule;
-import org.gbif.occurrence.validation.tabular.OccurrenceDataFileProcessorFactory;
+import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
