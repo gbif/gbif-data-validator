@@ -75,6 +75,10 @@ public class ValidationResult {
       return issue;
     }
 
+    public EvaluationCategory getIssueCategory() {
+      return issueCategory;
+    }
+
     public long getCount() {
       return count;
     }
