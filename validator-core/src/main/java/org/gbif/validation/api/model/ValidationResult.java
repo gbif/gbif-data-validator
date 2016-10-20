@@ -59,11 +59,13 @@ public class ValidationResult {
 
   private static class DateFileValidationElement {
 
-    private EvaluationType issue;
-    private long count;
-    private List<EvaluationResultDetails> sample;
+    private final EvaluationCategory issueCategory;
+    private final EvaluationType issue;
+    private final long count;
+    private final List<EvaluationResultDetails> sample;
 
     public DateFileValidationElement(EvaluationType issue, long count, List<EvaluationResultDetails> sample){
+      this.issueCategory = issue.getCategory();
       this.issue = issue;
       this.count = count;
       this.sample = sample;
