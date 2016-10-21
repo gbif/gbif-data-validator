@@ -17,6 +17,10 @@
       <url>http://repository.gbif.org/content/groups/gbif</url>
     </repository>
     <repository>
+      <id>gbif-thirdparty</id>
+      <url>http://repository.gbif.org/content/repositories/thirdparty/</url>
+    </repository>
+    <repository>
       <id>cloudera</id>
       <url>http://repository.cloudera.com/artifactory/cloudera-repos/</url>
       <snapshots>
@@ -46,6 +50,7 @@
     <scala.tools.version>2.10</scala.tools.version>
     <scala.version>2.10.5</scala.version>
     <spark.version>1.6.1</spark.version>
+    <livy.version>0.3.0-SNAPSHOT</livy.version>
     <!-- laziness: rely on transient dependencies from DW -->
     <scalatest.version>3.0.0-SNAP13</scalatest.version>
     <junit.version>4.12</junit.version>
@@ -160,12 +165,7 @@
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>gbif-api</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
+
     </dependency>
     <dependency>
       <groupId>org.gbif</groupId>
@@ -174,23 +174,12 @@
     <dependency>
       <groupId>org.gbif</groupId>
       <artifactId>dwca-io</artifactId>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.gbif.registry</groupId>
       <artifactId>registry-ws-client</artifactId>
       <version>${registry.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>com.google.guava</groupId>
-          <artifactId>guava</artifactId>
-        </exclusion>
-      </exclusions>
+
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
@@ -231,21 +220,6 @@
       <version>${hadoop.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.spark</groupId>
-      <artifactId>spark-repl_${scala.tools.version}</artifactId>
-      <version>${spark.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-core_${scala.tools.version}</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.apache.spark</groupId>
-          <artifactId>spark-sql_${scala.tools.version}</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
       <groupId>org.scala-lang</groupId>
       <artifactId>scala-library</artifactId>
       <version>${scala.version}</version>
@@ -261,23 +235,42 @@
       <version>${spark.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.dataformat</groupId>
-      <artifactId>jackson-dataformat-yaml</artifactId>
-      <!-- Important: Dropwizard conflicts with this, so be explicit -->
-      <version>${jackson.spark.version}</version>
+      <groupId>com.databricks</groupId>
+      <artifactId>spark-csv_${scala.tools.version}</artifactId>
+      <version>1.5.0</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-annotations</artifactId>
-      <!-- Important: Dropwizard conflicts with this, so be explicit -->
-      <version>${jackson.spark.version}</version>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-yarn_${scala.tools.version}</artifactId>
+      <version>${spark.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-core</artifactId>
-      <!-- Important: Dropwizard conflicts with this, so be explicit -->
-      <version>${jackson.spark.version}</version>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-streaming_${scala.tools.version}</artifactId>
+      <version>${spark.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.spark</groupId>
+      <artifactId>spark-hive_${scala.tools.version}</artifactId>
+      <version>${spark.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.cloudera.livy</groupId>
+      <artifactId>livy-scala-api</artifactId>
+      <version>${livy.version}</version>
+    </dependency>
+
+    <dependency>
+    <groupId>com.cloudera.livy</groupId>
+    <artifactId>livy-api</artifactId>
+    <version>${livy.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>com.cloudera.livy</groupId>
+    <artifactId>livy-client-http</artifactId>
+    <version>${livy.version}</version>
+  </dependency>
 
     <!-- Tests -->
     <dependency>
