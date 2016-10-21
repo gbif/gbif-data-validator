@@ -13,23 +13,35 @@ public class ValidationResult {
   public enum Status {OK, FAILED};
 
   private final Status status;
-  private final boolean indexeable;
+  private final Boolean indexeable;
 
-  private final ValidationProfile validationProfile = ValidationProfile.GBIF_INDEXING_PROFILE;
+  private final FileFormat fileFormat;
+  private final ValidationProfile validationProfile;
 
   //only used in case of general error with the input file
-  private final String error;
+  private final ValidationErrorCode errorCode;
 
   private final List<DateFileValidationElement> issues = new ArrayList<>();
 
-
-  public ValidationResult(Status status, boolean indexeable,
-                          Map<EvaluationType, Long> issueCounter,
-                          Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
+  /**
+   * Use public static methods to get new instances.
+   *
+   * @param status
+   * @param indexeable
+   * @param fileFormat
+   * @param validationProfile
+   * @param issueCounter
+   * @param issueSampling
+   * @param errorCode
+   */
+  private ValidationResult(Status status, Boolean indexeable, FileFormat fileFormat,
+                          ValidationProfile validationProfile, Map<EvaluationType, Long> issueCounter,
+                          Map<EvaluationType, List<EvaluationResultDetails>> issueSampling, ValidationErrorCode errorCode) {
     this.status = status;
     this.indexeable = indexeable;
-    //FIXME
-    this.error = null;
+    this.fileFormat = fileFormat;
+    this.validationProfile = validationProfile;
+    this.errorCode = errorCode;
 
     issueCounter.forEach(
             (k, v) ->
@@ -37,20 +49,53 @@ public class ValidationResult {
     );
   }
 
+  /**
+   * Returns a new instance of {@link ValidationResult} when a validation can be performed and finished.
+   *
+   * @param status
+   * @param indexeable
+   * @param fileFormat
+   * @param validationProfile
+   * @param issueCounter
+   * @param issueSampling
+   * @return
+   */
+  public static ValidationResult of(Status status, boolean indexeable, FileFormat fileFormat,
+                                    ValidationProfile validationProfile, Map<EvaluationType, Long> issueCounter,
+                                    Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
+    return new ValidationResult(status, indexeable ,fileFormat, validationProfile, issueCounter, issueSampling, null);
+  }
+
+  /**
+   * Returns a new instance of {@link ValidationResult} when a validation can NOT be performed.
+   *
+   * @param status
+   * @param fileFormat
+   * @param errorCode
+   * @return
+   */
+  public static ValidationResult withError(Status status, FileFormat fileFormat, ValidationErrorCode errorCode) {
+    return new ValidationResult(status, null, fileFormat, null, null, null, errorCode);
+  }
+
   public Status getStatus() {
     return status;
   }
 
-  public boolean isIndexeable() {
+  public Boolean isIndexeable() {
     return indexeable;
+  }
+
+  public FileFormat getFileFormat() {
+    return fileFormat;
   }
 
   public ValidationProfile getValidationProfile() {
     return validationProfile;
   }
 
-  public String getError() {
-    return error;
+  public ValidationErrorCode getErrorCode() {
+    return errorCode;
   }
 
   public List<DateFileValidationElement> getIssues(){

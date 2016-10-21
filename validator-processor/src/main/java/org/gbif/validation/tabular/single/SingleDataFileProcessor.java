@@ -5,6 +5,8 @@ import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.ResultsCollector;
+import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.RecordSourceFactory;
 
@@ -33,9 +35,8 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       }
 
       //FIXME the Status and indexeable should be decided by a another class somewhere
-      return new ValidationResult(
-              collector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
-              true, collector.getAggregatedCounts(), collector.getSamples());
+      return ValidationResult.of(collector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
+              true, FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE, collector.getAggregatedCounts(), collector.getSamples());
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

@@ -3,6 +3,8 @@ package org.gbif.validation.tabular.parallel;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.ResultsCollector;
+import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.evaluator.OccurrenceEvaluatorFactory;
@@ -130,8 +132,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
-    return new ValidationResult(
-            validationCollector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
-            true, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
+    return ValidationResult.of(validationCollector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
+            true, FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE, validationCollector.getAggregatedCounts(), validationCollector.getSamples());
   }
 }
