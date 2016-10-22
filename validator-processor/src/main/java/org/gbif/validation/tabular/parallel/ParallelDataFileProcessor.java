@@ -7,7 +7,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.evaluator.OccurrenceEvaluatorFactory;
+import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
@@ -47,7 +47,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     private DataFile dataFile;
 
 
-    ParallelDataFileProcessorMaster(ResultsCollector collector, OccurrenceEvaluatorFactory occurrenceEvaluatorFactory) {
+    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory occurrenceEvaluatorFactory) {
       receive(
         match(DataFile.class, dataFile  -> {
           this.dataFile = dataFile;
@@ -60,7 +60,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       );
     }
 
-    private void processDataFile(OccurrenceEvaluatorFactory occurrenceEvaluatorFactory) {
+    private void processDataFile(EvaluatorFactory occurrenceEvaluatorFactory) {
       try {
         int numOfInputRecords = dataFile.getNumOfLines();
         int splitSize = numOfInputRecords > FILE_SPLIT_SIZE ?
@@ -114,7 +114,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,
-                                                  new OccurrenceEvaluatorFactory(apiUrl)), "DataFileProcessor");
+                                                  new EvaluatorFactory(apiUrl)), "DataFileProcessor");
     try {
       // start the calculation
       master.tell(dataFile,master);

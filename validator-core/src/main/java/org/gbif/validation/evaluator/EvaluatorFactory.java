@@ -25,7 +25,7 @@ import static org.gbif.validation.util.TempTermsUtils.buildTermMapping;
 /**
  * Creates instances of RecordProcessor.
  */
-public class OccurrenceEvaluatorFactory {
+public class EvaluatorFactory {
 
   private final String apiUrl;
 
@@ -33,7 +33,7 @@ public class OccurrenceEvaluatorFactory {
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
 
-  public OccurrenceEvaluatorFactory(String apiUrl) {
+  public EvaluatorFactory(String apiUrl) {
     this.apiUrl = apiUrl;
   }
 

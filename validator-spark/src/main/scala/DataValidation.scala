@@ -39,7 +39,7 @@ object DataValidation {
         import org.apache.spark.sql.types.{StringType, StructField, StructType}
         import org.apache.spark.sql.{Row, SQLContext}
         import org.gbif.dwc.terms.Term
-        import org.gbif.occurrence.validation.evaluator.OccurrenceEvaluatorFactory
+        import org.gbif.occurrence.validation.evaluator.EvaluatorFactory
         import org.gbif.occurrence.validation.util.TempTermsUtils
 
 
@@ -70,7 +70,7 @@ object DataValidation {
     val results = data.zipWithIndex().filter( {case(line,idx) => idx != 0})
                        .map({case(line,idx) => (idx,(line.split("\t")))})
                        .mapPartitions( partition => {
-                         val occEvaluator  = new OccurrenceEvaluatorFactory("http://api.gbif.org/v1/").create(rawHeader)
+                         val occEvaluator  = new EvaluatorFactory("http://api.gbif.org/v1/").create(rawHeader)
                          val newPartition = partition.map( { case(idx,record) => {
                                                                 occEvaluator.evaluate(idx, record)}}).toList
                                                                 // consumes the iterator, thus calls readMatchingFromDB
