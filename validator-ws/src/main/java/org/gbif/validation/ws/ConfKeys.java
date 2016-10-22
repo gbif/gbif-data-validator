@@ -11,7 +11,7 @@ public final class ConfKeys {
   /**
    * Private constructor.
    */
-  private ConfKeys(){
+  private ConfKeys() {
     //empty constructor
   }
 }

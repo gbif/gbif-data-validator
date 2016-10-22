@@ -35,6 +35,12 @@
                 </filter>
               </filters>
               <!-- Additional configuration. -->
+              <relocations>
+                <relocation>
+                  <pattern>com.google.common</pattern>
+                  <shadedPattern>g18.com.google.common</shadedPattern>
+                </relocation>
+              </relocations>
             </configuration>
           </execution>
         </executions>
