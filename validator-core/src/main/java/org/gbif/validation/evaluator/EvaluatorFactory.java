@@ -1,17 +1,23 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
@@ -33,6 +39,15 @@ public class EvaluatorFactory {
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
 
+  private static Map<EvaluationType, List<Term>> COMPLETENESS_TERMS_MAP = new HashMap<>();
+  static {
+    COMPLETENESS_TERMS_MAP.put(EvaluationType.TAXONOMIC_DATA_NOT_PROVIDED, Arrays.asList(DwcTerm.scientificName));
+    COMPLETENESS_TERMS_MAP.put(EvaluationType.GEOSPATIAL_DATA_NOT_PROVIDED, Arrays.asList(DwcTerm.decimalLatitude,
+            DwcTerm.decimalLongitude));
+    COMPLETENESS_TERMS_MAP.put(EvaluationType.TEMPORAL_DATA_NOT_PROVIDED, Arrays.asList(DwcTerm.eventDate, DwcTerm.year,
+            DwcTerm.month, DwcTerm.day));
+  }
+
   public EvaluatorFactory(String apiUrl) {
     this.apiUrl = apiUrl;
   }
@@ -43,11 +58,38 @@ public class EvaluatorFactory {
    * @return new instance
    */
   public RecordEvaluator create(String[] columns) {
-    List<RecordEvaluator> evaluators = Arrays.asList(
-            new RecordStructureEvaluator(columns),
-            new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
-                    buildTermMapping(columns)));
+    Term[] termsColumnsMapping = buildTermMapping(columns);
+    List<RecordEvaluator> evaluators = new ArrayList<>();
+    evaluators.add(new RecordStructureEvaluator(columns));
+    evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
+                    termsColumnsMapping));
+    evaluators.addAll(createCompletenessEvaluators(Arrays.asList(termsColumnsMapping)));
     return new RecordEvaluatorChain(evaluators);
+  }
+
+  public List<RecordEvaluator> createCompletenessEvaluators(List<Term> columns) {
+    List<RecordEvaluator> completenessEvaluators = new ArrayList<>();
+    for(EvaluationType _type : COMPLETENESS_TERMS_MAP.keySet()) {
+      List<Term> termList = new ArrayList<>();
+      List<Integer> idxList = new ArrayList<>();
+
+      for(Term t : COMPLETENESS_TERMS_MAP.get(_type)) {
+        if(columns.contains(t)){
+          termList.add(t);
+          idxList.add(columns.indexOf(t));
+        }
+      }
+      //we need at least one term to check completeness
+      if(termList.isEmpty()) {
+        termList.add(COMPLETENESS_TERMS_MAP.get(_type).get(0));
+        //index of of bounds
+        idxList.add(columns.size());
+      }
+      completenessEvaluators.add(new RecordCompletenessEvaluator(_type, termList.toArray(new Term[termList.size()]),
+              idxList.toArray(new Integer[idxList.size()])));
+    }
+
+    return completenessEvaluators;
   }
 
   /**

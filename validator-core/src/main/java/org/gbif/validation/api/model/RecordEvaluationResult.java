@@ -106,19 +106,11 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
-    public Builder addTermValueDetail(EvaluationType evaluationType, Term term) {
+    public Builder addMissingDataDetail(EvaluationType evaluationType, Term[] terms) {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new TermValueEvaluationResultDetails(lineNumber, recordId, evaluationType, term));
-      return this;
-    }
-
-    public Builder addTermValueDetail(EvaluationType evaluationType, Term term, String expected, String found) {
-      if(details == null){
-        details = new ArrayList<>();
-      }
-      details.add(new TermValueEvaluationResultDetails(lineNumber, recordId, evaluationType, term, expected, found));
+      details.add(new CompletenessEvaluationResultDetails(lineNumber, recordId, evaluationType, terms));
       return this;
     }
 
@@ -187,25 +179,19 @@ public class RecordEvaluationResult implements Serializable {
 
 
   /**
-   * Evaluation result related to a term and its value.
+   * Evaluation result related to completeness.
    */
-  public static class TermValueEvaluationResultDetails extends BaseEvaluationResultDetails {
-    private Term term;
+  public static class CompletenessEvaluationResultDetails extends BaseEvaluationResultDetails {
+    private Term[] terms;
 
-    TermValueEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
-                                      Term term) {
+    CompletenessEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
+                                        Term[] terms) {
       super(lineNumber, recordId, issueFlag);
-      this.term = term;
+      this.terms = terms;
     }
 
-    TermValueEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
-                                     Term term, String expected, String found) {
-      super(lineNumber, recordId, issueFlag, expected, found, null);
-      this.term = term;
-    }
-
-    public Term getTerm() {
-      return term;
+    public Term[] getTerms() {
+      return terms;
     }
   }
 
