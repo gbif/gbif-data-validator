@@ -2,7 +2,7 @@ package org.gbif.validation.tabular;
 
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
-import org.gbif.validation.evaluator.OccurrenceEvaluatorFactory;
+import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
@@ -34,7 +34,7 @@ public class OccurrenceDataFileProcessorFactory {
    * If the file exceeds certain size it's processed in parallel otherwise a single thread processor it's used.
    */
   public DataFileProcessor create(DataFile dataFile) {
-    OccurrenceEvaluatorFactory factory = new OccurrenceEvaluatorFactory(apiUrl);
+    EvaluatorFactory factory = new EvaluatorFactory(apiUrl);
 
     if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
       return new SingleDataFileProcessor(factory.create(dataFile.getColumns()));

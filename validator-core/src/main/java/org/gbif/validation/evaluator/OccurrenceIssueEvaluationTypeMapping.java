@@ -27,7 +27,7 @@ public class OccurrenceIssueEvaluationTypeMapping {
     Map<OccurrenceIssue, EvaluationType> mapping =
             Arrays.asList(OccurrenceIssue.values())
                     .stream()
-                    .filter(x -> !OccurrenceIssueEvaluationTypeMapping.UNSUPPORTED_OCCURRENCE_ISSUES.contains(x))
+                    .filter(x -> !UNSUPPORTED_OCCURRENCE_ISSUES.contains(x))
                     .collect(Collectors.toMap(Function.identity(), v -> EvaluationType.valueOf(v.name())));
     OCCURRENCE_ISSUE_MAPPING = Collections.unmodifiableMap(mapping);
   }

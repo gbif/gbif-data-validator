@@ -12,7 +12,7 @@ import scala.language.postfixOps
 import com.cloudera.livy.LivyClientBuilder
 import com.cloudera.livy.scalaapi._
 
-import org.gbif.validation.evaluator.OccurrenceEvaluatorFactory
+import org.gbif.validation.evaluator.EvaluatorFactory
 
 /**
   *  Runs the data validation on an HDFS file.
@@ -86,7 +86,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
       log.info("Columns {}", data.columns)
       //This is a bit of duplication: runs all the processing
       data.rdd.zipWithIndex().mapPartitions( partition => {
-          val occEvaluator  = new OccurrenceEvaluatorFactory(gbifApiUrl).create(data.columns)
+          val occEvaluator  = new EvaluatorFactory(gbifApiUrl).create(data.columns)
           val newPartition = partition.map( { case(record,idx) => {
 
             val values = record.toSeq.toArray.map(_.toString)
