@@ -50,7 +50,8 @@
     <scala.tools.version>2.10</scala.tools.version>
     <scala.version>2.10.5</scala.version>
     <spark.version>1.6.1</spark.version>
-    <livy.version>0.3.0-SNAPSHOT</livy.version>
+    <!-- This version was released into  GBIF third party repo, and it's actually SNAPSHOT -->
+    <livy.version>0.3.0</livy.version>
     <!-- laziness: rely on transient dependencies from DW -->
     <scalatest.version>3.0.0-SNAP13</scalatest.version>
     <junit.version>4.12</junit.version>
