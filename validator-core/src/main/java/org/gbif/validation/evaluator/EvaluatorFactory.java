@@ -26,8 +26,6 @@ import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
-import static org.gbif.validation.util.TempTermsUtils.buildTermMapping;
-
 /**
  * Creates instances of RecordProcessor.
  */
@@ -58,45 +56,13 @@ public class EvaluatorFactory {
    *
    * @return new instance
    */
-  public RecordEvaluator create(String[] columns) {
-    Term[] termsColumnsMapping = buildTermMapping(columns);
+  public RecordEvaluator create(Term[] columns) {
+
     List<RecordEvaluator> evaluators = new ArrayList<>();
     evaluators.add(new RecordStructureEvaluator(columns));
     evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
-                    termsColumnsMapping));
-    evaluators.addAll(createCompletenessEvaluators(Arrays.asList(termsColumnsMapping)));
+            columns));
     return new RecordEvaluatorChain(evaluators);
-  }
-
-  /**
-   * Creates completeness Evaluators based on the columns available in the resource.
-   * TODO maybe move that somewhere else since it's a little bit specific
-   * @param columns
-   * @return
-   */
-  public List<RecordEvaluator> createCompletenessEvaluators(List<Term> columns) {
-    List<RecordEvaluator> completenessEvaluators = new ArrayList<>();
-    for(EvaluationType _type : COMPLETENESS_TERMS_MAP.keySet()) {
-      List<Term> termList = new ArrayList<>();
-      List<Integer> idxList = new ArrayList<>();
-
-      for(Term t : COMPLETENESS_TERMS_MAP.get(_type)) {
-        if(columns.contains(t)){
-          termList.add(t);
-          idxList.add(columns.indexOf(t));
-        }
-      }
-      //we need at least one term to check completeness
-      if(termList.isEmpty()) {
-        termList.add(COMPLETENESS_TERMS_MAP.get(_type).get(0));
-        //index of of bounds
-        idxList.add(columns.size());
-      }
-      completenessEvaluators.add(new RecordCompletenessEvaluator(_type, termList.toArray(new Term[termList.size()]),
-              idxList.toArray(new Integer[idxList.size()])));
-    }
-
-    return completenessEvaluators;
   }
 
   /**

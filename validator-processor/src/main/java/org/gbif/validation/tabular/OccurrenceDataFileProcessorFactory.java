@@ -1,5 +1,6 @@
 package org.gbif.validation.tabular;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -7,6 +8,8 @@ import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
 import akka.actor.ActorSystem;
+
+import static org.gbif.validation.util.TempTermsUtils.buildTermMapping;
 
 /**
  * Creates instances of DataFile processors.
@@ -35,11 +38,12 @@ public class OccurrenceDataFileProcessorFactory {
    */
   public DataFileProcessor create(DataFile dataFile) {
     EvaluatorFactory factory = new EvaluatorFactory(apiUrl);
+    Term[] termsColumnsMapping = buildTermMapping(dataFile.getColumns());
 
     if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
-      return new SingleDataFileProcessor(factory.create(dataFile.getColumns()));
+      return new SingleDataFileProcessor(termsColumnsMapping, factory.create(termsColumnsMapping));
     }
-    return new ParallelDataFileProcessor(apiUrl, system);
+    return new ParallelDataFileProcessor(apiUrl, system, termsColumnsMapping);
   }
 
 }

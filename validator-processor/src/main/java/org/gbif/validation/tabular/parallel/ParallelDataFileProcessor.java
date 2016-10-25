@@ -1,5 +1,6 @@
 package org.gbif.validation.tabular.parallel;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.ResultsCollector;
@@ -39,18 +40,20 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
   //This instance is shared between all the requests
   private final ActorSystem system;
 
+  private final Term[] termsColumnsMapping;
 
   private static class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
     private Set<DataWorkResult> results;
     private int numOfActors;
     private DataFile dataFile;
+    private Term[] termsColumnsMapping;
 
-
-    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory occurrenceEvaluatorFactory) {
+    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory occurrenceEvaluatorFactory, Term[] termsColumnsMapping) {
       receive(
         match(DataFile.class, dataFile  -> {
           this.dataFile = dataFile;
+          this.termsColumnsMapping = termsColumnsMapping;
           processDataFile(occurrenceEvaluatorFactory);
         })
         .match(RecordEvaluationResult.class, collector::accumulate)
@@ -71,7 +74,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         String[] splits = FileBashUtilities.splitFile(dataFile.getFileName(), numOfInputRecords / splitSize, outDirPath);
         numOfActors = splits.length;
         ActorRef workerRouter = getContext().actorOf(new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class,
-                occurrenceEvaluatorFactory.create(dataFile.getColumns()))), "dataFileRouter");
+                occurrenceEvaluatorFactory.create(termsColumnsMapping))), "dataFileRouter");
         results =  new HashSet<>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
@@ -103,9 +106,10 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   }
 
-  public ParallelDataFileProcessor(String apiUrl, ActorSystem system) {
+  public ParallelDataFileProcessor(String apiUrl, ActorSystem system, Term[] termsColumnsMapping) {
     this.apiUrl = apiUrl;
     this.system = system;
+    this.termsColumnsMapping = termsColumnsMapping;
   }
 
   @Override
@@ -114,7 +118,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,
-                                                  new EvaluatorFactory(apiUrl)), "DataFileProcessor");
+                                                  new EvaluatorFactory(apiUrl), termsColumnsMapping), "DataFileProcessor");
     try {
       // start the calculation
       master.tell(dataFile,master);
@@ -132,8 +136,9 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
-    return ValidationResult.of(validationCollector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
-            true, FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE, dataFile.getNumOfLines(),
-            validationCollector.getAggregatedCounts(), validationCollector.getSamples());
+    return ValidationResult.Builder
+            .of(true, FileFormat.TABULAR, dataFile.getNumOfLines(), ValidationProfile.GBIF_INDEXING_PROFILE)
+            .withIssues(validationCollector.getAggregatedCounts(), validationCollector.getSamples())
+            .build();
   }
 }

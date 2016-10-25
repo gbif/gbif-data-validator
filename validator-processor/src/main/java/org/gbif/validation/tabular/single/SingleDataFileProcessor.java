@@ -1,5 +1,6 @@
 package org.gbif.validation.tabular.single;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.RecordEvaluator;
@@ -16,10 +17,12 @@ public class SingleDataFileProcessor implements DataFileProcessor {
 
   private final RecordEvaluator recordEvaluator;
   private final SimpleValidationCollector collector;
+  private final SimpleRecordMetricsCollector metricsCollector;
 
-  public SingleDataFileProcessor(RecordEvaluator recordEvaluator) {
+  public SingleDataFileProcessor(Term[] terms, RecordEvaluator recordEvaluator) {
     this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
+    metricsCollector = new SimpleRecordMetricsCollector(terms);
   }
 
   @Override
@@ -31,14 +34,16 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       long line = dataFile.isHasHeaders() ? 1 : 0;
       while ((record = recordSource.read()) != null) {
         line++;
+        metricsCollector.collect(record);
         collector.accumulate(recordEvaluator.evaluate(line, record));
       }
 
       //FIXME the Status and indexeable should be decided by a another class somewhere
-      return ValidationResult.of(collector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
-              true, FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE,
-              dataFile.getNumOfLines(),
-              collector.getAggregatedCounts(), collector.getSamples());
+      return ValidationResult.Builder
+              .of(true, FileFormat.TABULAR, dataFile.getNumOfLines(), ValidationProfile.GBIF_INDEXING_PROFILE)
+              .withIssues(collector.getAggregatedCounts(), collector.getSamples())
+              .withTermsFrequency(metricsCollector.getTermFrequency())
+              .build();
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

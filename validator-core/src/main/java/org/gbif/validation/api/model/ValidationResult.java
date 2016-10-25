@@ -1,5 +1,7 @@
 package org.gbif.validation.api.model;
 
+import org.gbif.dwc.terms.Term;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,9 +12,9 @@ import java.util.Map;
  */
 public class ValidationResult {
 
-  public enum Status {OK, FAILED};
+  //public enum Status {OK, FAILED};
 
-  private final Status status;
+  //private final Status status;
   private final Boolean indexeable;
 
   private final FileFormat fileFormat;
@@ -23,69 +25,110 @@ public class ValidationResult {
   //only used in case of general error with the input file
   private final ValidationErrorCode errorCode;
 
-  private final List<DateFileValidationElement> issues = new ArrayList<>();
+  private final List<DateFileValidationElement> issues;
+  private final Map<Term, Long> termsFrequency;
+
+  /**
+   * Fluent builder for {@link ValidationResult}
+   */
+  public static class Builder {
+    private Boolean indexeable;
+
+    private FileFormat fileFormat;
+    private ValidationProfile validationProfile;
+
+    private Integer numberOfLines;
+
+    //only used in case of general error with the input file
+    private ValidationErrorCode errorCode;
+
+    private List<DateFileValidationElement> issues = new ArrayList<>();
+    private Map<Term, Long> termsFrequency;
+
+    /**
+     * Returns a Builder of {@link ValidationResult} when a validation can be performed and finished.
+     *
+     * @param indexeable
+     * @param fileFormat
+     * @param numberOfLines
+     * @param validationProfile
+     *
+     * @return
+     */
+    public static Builder of(Boolean indexeable, FileFormat fileFormat, Integer numberOfLines, ValidationProfile validationProfile) {
+      return new Builder(indexeable, fileFormat, numberOfLines, validationProfile);
+    }
+
+    public static Builder withError(FileFormat fileFormat, ValidationProfile validationProfile, ValidationErrorCode errorCode) {
+      return new Builder(fileFormat,validationProfile, errorCode);
+    }
+
+    private Builder(Boolean indexeable, FileFormat fileFormat, Integer numberOfLines,
+                    ValidationProfile validationProfile) {
+      this.indexeable = indexeable;
+      this.fileFormat = fileFormat;
+      this.numberOfLines = numberOfLines;
+      this.validationProfile = validationProfile;
+    }
+
+    /**
+     * Constructor used only when we have an error (service/input error) to report.
+     *
+     * @param fileFormat
+     * @param validationProfile
+     * @param errorCode
+     */
+    private Builder(FileFormat fileFormat, ValidationProfile validationProfile, ValidationErrorCode errorCode) {
+      this.fileFormat = fileFormat;
+      this.numberOfLines = numberOfLines;
+      this.validationProfile = validationProfile;
+      this.errorCode = errorCode;
+    }
+
+    public Builder withIssues(Map<EvaluationType, Long> issueCounter,
+                              Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
+      issueCounter.forEach(
+              (k, v) ->
+                      issues.add(new DateFileValidationElement(k, v, issueSampling.get(k)))
+      );
+      return this;
+    }
+
+    public Builder withTermsFrequency(Map<Term, Long> termsFrequency) {
+      this.termsFrequency = termsFrequency;
+      return this;
+    }
+
+    public ValidationResult build() {
+      return new ValidationResult(indexeable, fileFormat,
+              validationProfile, numberOfLines, issues, termsFrequency, errorCode);
+    }
+  }
 
   /**
    * Use public static methods to get new instances.
    *
-   * @param status
    * @param indexeable
    * @param fileFormat
    * @param validationProfile
-   * @param issueCounter
-   * @param issueSampling
+   * @param issues
+   * @param termsFrequency
    * @param errorCode
    */
-  private ValidationResult(Status status, Boolean indexeable, FileFormat fileFormat,
-                          ValidationProfile validationProfile, Integer numberOfLines, Map<EvaluationType, Long> issueCounter,
-                          Map<EvaluationType, List<EvaluationResultDetails>> issueSampling, ValidationErrorCode errorCode) {
-    this.status = status;
+  private ValidationResult(Boolean indexeable, FileFormat fileFormat,
+                           ValidationProfile validationProfile, Integer numberOfLines,
+                           List<DateFileValidationElement> issues,
+                           Map<Term, Long> termsFrequency,
+                           ValidationErrorCode errorCode) {
     this.indexeable = indexeable;
     this.fileFormat = fileFormat;
     this.validationProfile = validationProfile;
     this.numberOfLines = numberOfLines;
+    this.issues = issues;
+    this.termsFrequency = termsFrequency;
     this.errorCode = errorCode;
-
-    issueCounter.forEach(
-            (k, v) ->
-                    issues.add(new DateFileValidationElement(k, v, issueSampling.get(k)))
-    );
   }
 
-  /**
-   * Returns a new instance of {@link ValidationResult} when a validation can be performed and finished.
-   *
-   * @param status
-   * @param indexeable
-   * @param fileFormat
-   * @param validationProfile
-   * @param issueCounter
-   * @param issueSampling
-   * @return
-   */
-  public static ValidationResult of(Status status, boolean indexeable, FileFormat fileFormat,
-                                    ValidationProfile validationProfile, Integer numberOfRecords,
-                                    Map<EvaluationType, Long> issueCounter,
-                                    Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
-    return new ValidationResult(status, indexeable ,fileFormat, validationProfile, numberOfRecords,
-            issueCounter, issueSampling, null);
-  }
-
-  /**
-   * Returns a new instance of {@link ValidationResult} when a validation can NOT be performed.
-   *
-   * @param status
-   * @param fileFormat
-   * @param errorCode
-   * @return
-   */
-  public static ValidationResult withError(Status status, FileFormat fileFormat, ValidationErrorCode errorCode) {
-    return new ValidationResult(status, null, fileFormat, null, null, null, null, errorCode);
-  }
-
-  public Status getStatus() {
-    return status;
-  }
 
   public Boolean isIndexeable() {
     return indexeable;
@@ -107,8 +150,12 @@ public class ValidationResult {
     return errorCode;
   }
 
-  public List<DateFileValidationElement> getIssues(){
+  public List<DateFileValidationElement> getIssues() {
     return issues;
+  }
+
+  public Map<Term, Long> getTermsFrequency() {
+    return termsFrequency;
   }
 
   private static class DateFileValidationElement {
@@ -118,7 +165,7 @@ public class ValidationResult {
     private final long count;
     private final List<EvaluationResultDetails> sample;
 
-    public DateFileValidationElement(EvaluationType issue, long count, List<EvaluationResultDetails> sample){
+    public DateFileValidationElement(EvaluationType issue, long count, List<EvaluationResultDetails> sample) {
       this.issueCategory = issue.getCategory();
       this.issue = issue;
       this.count = count;
