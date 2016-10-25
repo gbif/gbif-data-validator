@@ -3,6 +3,7 @@ import java.net.URI
 
 import akka.event.slf4j.Logger
 import org.gbif.validation.api.model.RecordEvaluationResult
+import org.gbif.validation.util.TempTermsUtils
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
@@ -86,7 +87,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
       log.info("Columns {}", data.columns)
       //This is a bit of duplication: runs all the processing
       data.rdd.zipWithIndex().mapPartitions( partition => {
-          val occEvaluator  = new EvaluatorFactory(gbifApiUrl).create(data.columns)
+          val occEvaluator  = new EvaluatorFactory(gbifApiUrl).create(TempTermsUtils.buildTermMapping(data.columns))
           val newPartition = partition.map( { case(record,idx) => {
 
             val values = record.toSeq.toArray.map(_.toString)
