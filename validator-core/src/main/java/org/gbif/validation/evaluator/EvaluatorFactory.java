@@ -41,9 +41,10 @@ public class EvaluatorFactory {
 
   private static Map<EvaluationType, List<Term>> COMPLETENESS_TERMS_MAP = new HashMap<>();
   static {
-    COMPLETENESS_TERMS_MAP.put(EvaluationType.TAXONOMIC_DATA_NOT_PROVIDED, Arrays.asList(DwcTerm.scientificName));
+    COMPLETENESS_TERMS_MAP.put(EvaluationType.TAXONOMIC_DATA_NOT_PROVIDED, Arrays.asList(
+            DwcTerm.kingdom, DwcTerm.phylum, DwcTerm.class_, DwcTerm.order, DwcTerm.family, DwcTerm.genus, DwcTerm.scientificName));
     COMPLETENESS_TERMS_MAP.put(EvaluationType.GEOSPATIAL_DATA_NOT_PROVIDED, Arrays.asList(DwcTerm.decimalLatitude,
-            DwcTerm.decimalLongitude));
+            DwcTerm.decimalLongitude, DwcTerm.geodeticDatum));
     COMPLETENESS_TERMS_MAP.put(EvaluationType.TEMPORAL_DATA_NOT_PROVIDED, Arrays.asList(DwcTerm.eventDate, DwcTerm.year,
             DwcTerm.month, DwcTerm.day));
   }
@@ -67,6 +68,12 @@ public class EvaluatorFactory {
     return new RecordEvaluatorChain(evaluators);
   }
 
+  /**
+   * Creates completeness Evaluators based on the columns available in the resource.
+   * TODO maybe move that somewhere else since it's a little bit specific
+   * @param columns
+   * @return
+   */
   public List<RecordEvaluator> createCompletenessEvaluators(List<Term> columns) {
     List<RecordEvaluator> completenessEvaluators = new ArrayList<>();
     for(EvaluationType _type : COMPLETENESS_TERMS_MAP.keySet()) {
