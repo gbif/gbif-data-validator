@@ -80,7 +80,6 @@ public class ValidationResult {
      */
     private Builder(FileFormat fileFormat, ValidationProfile validationProfile, ValidationErrorCode errorCode) {
       this.fileFormat = fileFormat;
-      this.numberOfLines = numberOfLines;
       this.validationProfile = validationProfile;
       this.errorCode = errorCode;
     }

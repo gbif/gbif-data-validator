@@ -17,12 +17,12 @@ public class SingleDataFileProcessor implements DataFileProcessor {
 
   private final RecordEvaluator recordEvaluator;
   private final SimpleValidationCollector collector;
-  private final SimpleRecordMetricsCollector metricsCollector;
+  private final SimpleTermsFrequencyCollector metricsCollector;
 
   public SingleDataFileProcessor(Term[] terms, RecordEvaluator recordEvaluator) {
     this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
-    metricsCollector = new SimpleRecordMetricsCollector(terms);
+    metricsCollector = new SimpleTermsFrequencyCollector(terms);
   }
 
   @Override
