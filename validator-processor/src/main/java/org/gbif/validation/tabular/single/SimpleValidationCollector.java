@@ -42,7 +42,7 @@ public class SimpleValidationCollector implements ResultsCollector {
 
               issueSampling.putIfAbsent(detail.getEvaluationType(), new ArrayList<>());
               issueSampling.compute(detail.getEvaluationType(), (type, queue) -> {
-                if(queue.size() < maxNumberOfSample){
+                if (queue.size() < maxNumberOfSample) {
                   issueSampling.get(type).add(detail);
                 }
                 return queue;
@@ -60,6 +60,5 @@ public class SimpleValidationCollector implements ResultsCollector {
   public Map<EvaluationType, Long> getAggregatedCounts() {
     return issueCounter;
   }
-
 
 }

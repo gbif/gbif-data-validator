@@ -50,7 +50,7 @@ public class ValidationResult {
      *
      * @param indexeable
      * @param fileFormat
-     * @param numberOfLines
+     * @param numberOfLines number of lines of data (excluding header)
      * @param validationProfile
      *
      * @return
@@ -127,7 +127,6 @@ public class ValidationResult {
     this.termsFrequency = termsFrequency;
     this.errorCode = errorCode;
   }
-
 
   public Boolean isIndexeable() {
     return indexeable;

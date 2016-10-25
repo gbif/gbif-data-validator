@@ -137,7 +137,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
     return ValidationResult.Builder
-            .of(true, FileFormat.TABULAR, dataFile.getNumOfLines(), ValidationProfile.GBIF_INDEXING_PROFILE)
+            .of(true, FileFormat.TABULAR, dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1 : 0), ValidationProfile.GBIF_INDEXING_PROFILE)
             .withIssues(validationCollector.getAggregatedCounts(), validationCollector.getSamples())
             .build();
   }
