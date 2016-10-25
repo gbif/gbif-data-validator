@@ -1,12 +1,11 @@
-package org.gbif.validation.tabular.single;
+package org.gbif.validation.collector;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.RecordMetricsCollector;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-
-import javax.annotation.concurrent.NotThreadSafe;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -14,16 +13,21 @@ import org.apache.commons.lang3.Validate;
 /**
  * Simple collector for terms frequency.
  */
-@NotThreadSafe
-public class SimpleTermsFrequencyCollector implements RecordMetricsCollector {
+public class TermsFrequencyCollector implements RecordMetricsCollector {
 
   private Term[] columnHeaders;
   private final Map<Term, Long> termFrequencyCounter;
 
-  public SimpleTermsFrequencyCollector(Term[] columnHeaders) {
+  public TermsFrequencyCollector(Term[] columnHeaders, boolean useConcurrentMap) {
     Validate.notNull(columnHeaders, "columnHeaders must not be null");
     this.columnHeaders = columnHeaders;
-    termFrequencyCounter = new LinkedHashMap<>(columnHeaders.length);
+
+    if(useConcurrentMap) {
+      termFrequencyCounter = new LinkedHashMap<>(columnHeaders.length);
+    }
+    else{
+      termFrequencyCounter = new ConcurrentHashMap<>(columnHeaders.length);
+    }
     for (Term term : columnHeaders) {
       termFrequencyCounter.put(term, 0l);
     }

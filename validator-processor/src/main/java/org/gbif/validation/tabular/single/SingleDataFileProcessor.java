@@ -9,6 +9,7 @@ import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
+import org.gbif.validation.collector.TermsFrequencyCollector;
 import org.gbif.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
@@ -17,12 +18,12 @@ public class SingleDataFileProcessor implements DataFileProcessor {
 
   private final RecordEvaluator recordEvaluator;
   private final SimpleValidationCollector collector;
-  private final SimpleTermsFrequencyCollector metricsCollector;
+  private final TermsFrequencyCollector metricsCollector;
 
   public SingleDataFileProcessor(Term[] terms, RecordEvaluator recordEvaluator) {
     this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
-    metricsCollector = new SimpleTermsFrequencyCollector(terms);
+    metricsCollector = new TermsFrequencyCollector(terms, false);
   }
 
   @Override
