@@ -18,6 +18,8 @@ public class ValidationResult {
   private final FileFormat fileFormat;
   private final ValidationProfile validationProfile;
 
+  private final Integer numberOfLines;
+
   //only used in case of general error with the input file
   private final ValidationErrorCode errorCode;
 
@@ -35,12 +37,13 @@ public class ValidationResult {
    * @param errorCode
    */
   private ValidationResult(Status status, Boolean indexeable, FileFormat fileFormat,
-                          ValidationProfile validationProfile, Map<EvaluationType, Long> issueCounter,
+                          ValidationProfile validationProfile, Integer numberOfLines, Map<EvaluationType, Long> issueCounter,
                           Map<EvaluationType, List<EvaluationResultDetails>> issueSampling, ValidationErrorCode errorCode) {
     this.status = status;
     this.indexeable = indexeable;
     this.fileFormat = fileFormat;
     this.validationProfile = validationProfile;
+    this.numberOfLines = numberOfLines;
     this.errorCode = errorCode;
 
     issueCounter.forEach(
@@ -61,9 +64,11 @@ public class ValidationResult {
    * @return
    */
   public static ValidationResult of(Status status, boolean indexeable, FileFormat fileFormat,
-                                    ValidationProfile validationProfile, Map<EvaluationType, Long> issueCounter,
+                                    ValidationProfile validationProfile, Integer numberOfRecords,
+                                    Map<EvaluationType, Long> issueCounter,
                                     Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
-    return new ValidationResult(status, indexeable ,fileFormat, validationProfile, issueCounter, issueSampling, null);
+    return new ValidationResult(status, indexeable ,fileFormat, validationProfile, numberOfRecords,
+            issueCounter, issueSampling, null);
   }
 
   /**
@@ -75,7 +80,7 @@ public class ValidationResult {
    * @return
    */
   public static ValidationResult withError(Status status, FileFormat fileFormat, ValidationErrorCode errorCode) {
-    return new ValidationResult(status, null, fileFormat, null, null, null, errorCode);
+    return new ValidationResult(status, null, fileFormat, null, null, null, null, errorCode);
   }
 
   public Status getStatus() {
@@ -88,6 +93,10 @@ public class ValidationResult {
 
   public FileFormat getFileFormat() {
     return fileFormat;
+  }
+
+  public Integer getNumberOfLines() {
+    return numberOfLines;
   }
 
   public ValidationProfile getValidationProfile() {

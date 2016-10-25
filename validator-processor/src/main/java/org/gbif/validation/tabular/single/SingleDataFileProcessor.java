@@ -36,7 +36,9 @@ public class SingleDataFileProcessor implements DataFileProcessor {
 
       //FIXME the Status and indexeable should be decided by a another class somewhere
       return ValidationResult.of(collector.getAggregatedCounts().isEmpty() ? ValidationResult.Status.OK : ValidationResult.Status.FAILED,
-              true, FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE, collector.getAggregatedCounts(), collector.getSamples());
+              true, FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE,
+              dataFile.getNumOfLines(),
+              collector.getAggregatedCounts(), collector.getSamples());
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
