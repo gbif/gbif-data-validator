@@ -1,6 +1,7 @@
 package org.gbif.validation.util;
 
 import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.api.model.occurrence.Occurrence;
 
@@ -27,6 +28,7 @@ public class OccurrenceToTermsHelper {
     fields.put(DwcTerm.day, occurrence.getDay());
     fields.put(DwcTerm.decimalLatitude, occurrence.getDecimalLatitude());
     fields.put(DwcTerm.decimalLongitude, occurrence.getDecimalLongitude());
+    fields.put(GbifTerm.taxonKey, occurrence.getTaxonKey());
 
     return fields;
   }

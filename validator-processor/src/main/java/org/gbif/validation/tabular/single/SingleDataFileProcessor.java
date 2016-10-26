@@ -1,6 +1,5 @@
 package org.gbif.validation.tabular.single;
 
-import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
@@ -15,7 +14,6 @@ import org.gbif.validation.collector.TermsFrequencyCollector;
 import org.gbif.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
-import java.util.Arrays;
 
 public class SingleDataFileProcessor implements DataFileProcessor {
 
@@ -25,11 +23,13 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   private final TermsFrequencyCollector metricsCollector;
   private final InterpretedTermsCountCollector interpretedTermsCountCollector;
 
-  public SingleDataFileProcessor(Term[] terms, RecordEvaluator recordEvaluator) {
+  //TODO Should interpretedTermsCountCollector be nullable?
+  public SingleDataFileProcessor(Term[] terms, RecordEvaluator recordEvaluator,
+                                 InterpretedTermsCountCollector interpretedTermsCountCollector) {
     this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
     metricsCollector = new TermsFrequencyCollector(terms, false);
-    interpretedTermsCountCollector = new InterpretedTermsCountCollector(Arrays.asList(DwcTerm.year), false);
+    this.interpretedTermsCountCollector = interpretedTermsCountCollector;
   }
 
   @Override

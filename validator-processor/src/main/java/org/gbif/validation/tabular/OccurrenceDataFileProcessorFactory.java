@@ -1,11 +1,16 @@
 package org.gbif.validation.tabular;
 
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
+import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
+
+import java.util.Arrays;
 
 import akka.actor.ActorSystem;
 
@@ -41,7 +46,10 @@ public class OccurrenceDataFileProcessorFactory {
     Term[] termsColumnsMapping = buildTermMapping(dataFile.getColumns());
 
     if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
-      return new SingleDataFileProcessor(termsColumnsMapping, factory.create(termsColumnsMapping));
+      //TODO create a Factory for Collectors
+      InterpretedTermsCountCollector interpretedTermsCountCollector = new InterpretedTermsCountCollector(
+              Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), false);
+      return new SingleDataFileProcessor(termsColumnsMapping, factory.create(termsColumnsMapping), interpretedTermsCountCollector);
     }
     return new ParallelDataFileProcessor(apiUrl, system, termsColumnsMapping);
   }
