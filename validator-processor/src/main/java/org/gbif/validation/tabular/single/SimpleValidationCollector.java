@@ -17,6 +17,9 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public class SimpleValidationCollector implements ResultsCollector {
 
+  //TODO provide in config
+  public static final int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
+
   private final int maxNumberOfSample;
 
   private final Map<EvaluationType, Long> issueCounter;
@@ -31,7 +34,7 @@ public class SimpleValidationCollector implements ResultsCollector {
   }
 
   @Override
-  public void accumulate(RecordEvaluationResult result) {
+  public void collect(RecordEvaluationResult result) {
 
     if (result.getDetails() == null) {
       return;
@@ -55,7 +58,7 @@ public class SimpleValidationCollector implements ResultsCollector {
   public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
     return issueSampling;
   }
-  
+
   public Map<EvaluationType, Long> getAggregatedCounts() {
     return issueCounter;
   }

@@ -27,6 +27,7 @@ public class ValidationResult {
 
   private final List<DateFileValidationElement> issues;
   private final Map<Term, Long> termsFrequency;
+  private final Map<Term, Long> interpretedValueCounts;
 
   /**
    * Fluent builder for {@link ValidationResult}
@@ -44,6 +45,7 @@ public class ValidationResult {
 
     private List<DateFileValidationElement> issues = new ArrayList<>();
     private Map<Term, Long> termsFrequency;
+    private Map<Term, Long> interpretedValueCounts;
 
     /**
      * Returns a Builder of {@link ValidationResult} when a validation can be performed and finished.
@@ -98,9 +100,14 @@ public class ValidationResult {
       return this;
     }
 
+    public Builder withInterpretedValueCounts(Map<Term, Long> interpretedValueCounts) {
+      this.interpretedValueCounts = interpretedValueCounts;
+      return this;
+    }
+
     public ValidationResult build() {
       return new ValidationResult(indexeable, fileFormat,
-              validationProfile, numberOfLines, issues, termsFrequency, errorCode);
+              validationProfile, numberOfLines, issues, termsFrequency, interpretedValueCounts, errorCode);
     }
   }
 
@@ -112,12 +119,14 @@ public class ValidationResult {
    * @param validationProfile
    * @param issues
    * @param termsFrequency
+   * @param interpretedValueCounts
    * @param errorCode
    */
   private ValidationResult(Boolean indexeable, FileFormat fileFormat,
                            ValidationProfile validationProfile, Integer numberOfLines,
                            List<DateFileValidationElement> issues,
                            Map<Term, Long> termsFrequency,
+                           Map<Term, Long> interpretedValueCounts,
                            ValidationErrorCode errorCode) {
     this.indexeable = indexeable;
     this.fileFormat = fileFormat;
@@ -125,6 +134,7 @@ public class ValidationResult {
     this.numberOfLines = numberOfLines;
     this.issues = issues;
     this.termsFrequency = termsFrequency;
+    this.interpretedValueCounts = interpretedValueCounts;
     this.errorCode = errorCode;
   }
 
@@ -154,6 +164,10 @@ public class ValidationResult {
 
   public Map<Term, Long> getTermsFrequency() {
     return termsFrequency;
+  }
+
+  public Map<Term, Long> getInterpretedValueCounts() {
+    return interpretedValueCounts;
   }
 
   private static class DateFileValidationElement {

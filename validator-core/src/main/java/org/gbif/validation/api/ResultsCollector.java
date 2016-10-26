@@ -7,8 +7,6 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
  */
 public interface ResultsCollector {
 
-  int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
-
-  void accumulate(RecordEvaluationResult result);
+  void collect(RecordEvaluationResult result);
 
 }

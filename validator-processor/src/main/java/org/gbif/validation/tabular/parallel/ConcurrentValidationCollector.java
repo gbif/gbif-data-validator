@@ -20,6 +20,9 @@ import java.util.concurrent.atomic.LongAdder;
  */
 public class ConcurrentValidationCollector implements ResultsCollector {
 
+  //TODO provide in config
+  public static final int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
+
   private final int maxNumberOfSample;
 
   private final Map<EvaluationType, LongAdder> issueCounter;
@@ -38,7 +41,7 @@ public class ConcurrentValidationCollector implements ResultsCollector {
   }
 
   @Override
-  public void accumulate(RecordEvaluationResult result) {
+  public void collect(RecordEvaluationResult result) {
 
     if(result.getDetails() == null){
       return;

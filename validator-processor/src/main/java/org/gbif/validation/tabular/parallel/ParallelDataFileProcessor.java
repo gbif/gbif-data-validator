@@ -56,7 +56,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           this.termsColumnsMapping = termsColumnsMapping;
           processDataFile(occurrenceEvaluatorFactory);
         })
-        .match(RecordEvaluationResult.class, collector::accumulate)
+        .match(RecordEvaluationResult.class, collector::collect)
         .match(DataWorkResult.class, dataWorkResult -> {
           processResults(dataWorkResult, collector);
         }).build()
@@ -114,7 +114,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   @Override
   public ValidationResult process(DataFile dataFile) {
-    ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector(ResultsCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
+    ConcurrentValidationCollector validationCollector = new ConcurrentValidationCollector(ConcurrentValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,

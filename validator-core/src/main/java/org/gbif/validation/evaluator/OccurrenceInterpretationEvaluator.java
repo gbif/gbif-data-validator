@@ -8,6 +8,7 @@ import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.util.Map;
 import java.util.UUID;
@@ -75,7 +76,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   /**
    * -- Visible For Testing --
    * Creates a RecordEvaluationResult from an OccurrenceInterpretationResult.
-   * Responsible to to put the related data (e.g. field + current value) into the RecordEvaluationResult instance.
+   * Responsible to put the related data (e.g. field + current value) into the RecordEvaluationResult instance.
    * @param lineNumber
    * @param result
    * @return
@@ -86,13 +87,15 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
 
     builder.withLineNumber(lineNumber);
-    result.getUpdated().getIssues().forEach( issue -> {
+    builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
+
+    result.getUpdated().getIssues().forEach(issue -> {
       if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue) &&
               OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.containsKey(issue)) {
         Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
-          .stream()
-          .filter(t -> verbatimFields.get(t) != null)
-          .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
+                .stream()
+                .filter(t -> verbatimFields.get(t) != null)
+                .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
         builder.addInterpretationDetail(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.get(issue),
                 relatedData);
       }

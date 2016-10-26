@@ -15,15 +15,31 @@ public class RecordEvaluationResult implements Serializable {
 
   //currently stored inside the details
   private final String recordId;
+  private final Map<Term, Object> interpretedData;
   private final List<EvaluationResultDetails> details;
 
-  public RecordEvaluationResult(String recordId, List<EvaluationResultDetails> details){
+  /**
+   * Use {@link Builder} to get an instance.
+   * @param recordId
+   * @param details
+   * @param interpretedData
+   */
+  private RecordEvaluationResult(String recordId, List<EvaluationResultDetails> details, Map<Term, Object> interpretedData){
     this.recordId = recordId;
     this.details = details;
+    this.interpretedData = interpretedData;
   }
 
   public List<EvaluationResultDetails> getDetails(){
     return details;
+  }
+
+  /**
+   *
+   * @return suggested data or null
+   */
+  public Map<Term, Object> getInterpretedData() {
+    return interpretedData;
   }
 
   @Override
@@ -37,6 +53,7 @@ public class RecordEvaluationResult implements Serializable {
   public static class Builder {
     private Long lineNumber;
     private String recordId;
+    private Map<Term, Object> interpretedData;
     private List<EvaluationResultDetails> details;
 
     /**
@@ -64,6 +81,11 @@ public class RecordEvaluationResult implements Serializable {
 
     public Builder withRecordId(String recordId){
       this.recordId = recordId;
+      return this;
+    }
+
+    public Builder withInterpretedData(Map<Term, Object> interpretedData) {
+      this.interpretedData = interpretedData;
       return this;
     }
 
@@ -115,7 +137,7 @@ public class RecordEvaluationResult implements Serializable {
     }
 
     public RecordEvaluationResult build(){
-      return new RecordEvaluationResult(recordId, details == null ? new ArrayList<>() : details);
+      return new RecordEvaluationResult(recordId, details == null ? new ArrayList<>() : details, interpretedData);
     }
   }
 
@@ -179,6 +201,7 @@ public class RecordEvaluationResult implements Serializable {
 
 
   /**
+   * TODO decide if we should keep it
    * Evaluation result related to completeness.
    */
   public static class CompletenessEvaluationResultDetails extends BaseEvaluationResultDetails {
