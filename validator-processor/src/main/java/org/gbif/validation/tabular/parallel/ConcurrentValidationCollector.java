@@ -62,7 +62,6 @@ public class ConcurrentValidationCollector implements ResultsCollector {
   /**
    * @return a copy of the inter aggregated counts.
    */
-  @Override
   public Map<EvaluationType, Long> getAggregatedCounts() {
 
     Map<EvaluationType, Long> copy = new HashMap<>();
@@ -74,7 +73,6 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    *
    * @return a copy of the internal evaluation samples.
    */
-  @Override
   public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
     Map<EvaluationType, List<EvaluationResultDetails>> copy = new HashMap<>();
 

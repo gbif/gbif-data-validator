@@ -22,6 +22,7 @@ public class SimpleValidationCollector implements ResultsCollector {
   private final Map<EvaluationType, Long> issueCounter;
   private final Map<EvaluationType, List<EvaluationResultDetails>> issueSampling;
 
+
   public SimpleValidationCollector(Integer maxNumberOfSample) {
     this.maxNumberOfSample = maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE;
 
@@ -32,7 +33,7 @@ public class SimpleValidationCollector implements ResultsCollector {
   @Override
   public void accumulate(RecordEvaluationResult result) {
 
-    if(result.getDetails() == null){
+    if (result.getDetails() == null) {
       return;
     }
 
@@ -51,12 +52,10 @@ public class SimpleValidationCollector implements ResultsCollector {
     );
   }
 
-  @Override
   public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
     return issueSampling;
   }
-
-  @Override
+  
   public Map<EvaluationType, Long> getAggregatedCounts() {
     return issueCounter;
   }
