@@ -1,11 +1,11 @@
 import java.io.{File, FileNotFoundException}
 import java.net.URI
 
-import akka.event.slf4j.Logger
 import org.gbif.validation.api.model.RecordEvaluationResult
 import org.gbif.validation.util.TempTermsUtils
 import org.slf4j.LoggerFactory
 
+import scala.collection.immutable.List
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
@@ -60,7 +60,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     val file = new File(path)
     if (!file.isDirectory) {
       val uploadJarFuture = scalaClient.uploadJar(file)
-      Await.result(uploadJarFuture, 40 second) match {
+      Await.result(uploadJarFuture, 1000 second) match {
         case null => log.info("Successfully uploaded {}",file.getName)
       }
     }
@@ -81,18 +81,18 @@ class DataValidationClient(val conf: ValidationSparkConf) {
         .format("com.databricks.spark.csv")
         .option("delimiter", "\t")
         .option("header", "true") // Use first line of all files as header
-        .option("inferSchema", "true") // Automatically infer data types
+        .option("inferSchema", "false") // Automatically infer data types
         .load(dataFile).cache();
 
-      log.info("Columns {}", data.columns)
+      val columns = data.columns
       //This is a bit of duplication: runs all the processing
       data.rdd.zipWithIndex().mapPartitions( partition => {
-          val occEvaluator  = new EvaluatorFactory(gbifApiUrl).create(TempTermsUtils.buildTermMapping(data.columns))
-          val newPartition = partition.map( { case(record,idx) => {
-
-            val values = record.toSeq.toArray.map(_.toString)
-            log.info("Values {}", values)
-            occEvaluator.evaluate(idx, values)}}).toList
+            val occEvaluator  = new EvaluatorFactory(gbifApiUrl).create(TempTermsUtils.buildTermMapping(columns))
+            val newPartition = partition.map( { case(record,idx) => {
+              val values = columns.foldLeft(List.empty[String]){ (acc, k) => acc ::: List(record.getString(record.fieldIndex(k)))}.toArray
+              val result = occEvaluator.evaluate(idx, values)
+              result
+          }}).toList
           // consumes the iterator
           newPartition.iterator
         }).collect()

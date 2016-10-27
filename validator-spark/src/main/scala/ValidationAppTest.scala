@@ -19,13 +19,13 @@ object ValidationAppTest {
     */
   def main(args: Array[String]): Unit = {
 
-    val  conf = new ValidationSparkConf("http://devgateway-vh.gbif.org:8998/","validator-spark/target/validator-spark-0.1-SNAPSHOT.jar:validator-core/target/validator-core-0.1-SNAPSHOT.jar:/Users/fmendez/.m2/repository/com/cloudera/livy/livy-client-http/0.3.0-SNAPSHOT/livy-client-http-0.3.0-SNAPSHOT.jar","http://api.gbif.org/v1/")
+    val  conf = new ValidationSparkConf("http://devgateway-vh.gbif.org:8998/","validator-spark/target/validator-spark-0.1-SNAPSHOT.jar:validator-core/target/validator-core-0.1-SNAPSHOT.jar:/Users/fmendez/.m2/repository/com/cloudera/livy/livy-client-http/0.3.0-SNAPSHOT/livy-client-http-0.3.0-SNAPSHOT.jar","http://api.gbif-dev.org/v1/")
     val client = new DataValidationClient(conf)
     try {
       client.init()
       val handle = client.processDataFile("hdfs:///user/fmendez/0008759-160822134323880.csvar")
       Await.result(handle, 100000 second)
-      log.info("Data Validation Result::{}", Await.result(handle, 100 second))
+      log.info("Data Validation Result::{}", Await.result(handle, 10000 second))
     } catch {
       case e: Throwable => log.error("Error initiating client", e)
     } finally {

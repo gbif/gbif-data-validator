@@ -35,7 +35,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   private static final long SLEEP_TIME_BEFORE_TERMINATION = 50000L;
 
-  private final String apiUrl;
+  private final EvaluatorFactory evaluatorFactory;
 
   //This instance is shared between all the requests
   private final ActorSystem system;
@@ -106,8 +106,8 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   }
 
-  public ParallelDataFileProcessor(String apiUrl, ActorSystem system, Term[] termsColumnsMapping) {
-    this.apiUrl = apiUrl;
+  public ParallelDataFileProcessor(EvaluatorFactory evaluatorFactory, ActorSystem system, Term[] termsColumnsMapping) {
+    this.evaluatorFactory = evaluatorFactory;
     this.system = system;
     this.termsColumnsMapping = termsColumnsMapping;
   }
@@ -118,7 +118,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, validationCollector,
-                                                  new EvaluatorFactory(apiUrl), termsColumnsMapping), "DataFileProcessor");
+                                                  evaluatorFactory, termsColumnsMapping), "DataFileProcessor");
     try {
       // start the calculation
       master.tell(dataFile,master);

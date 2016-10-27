@@ -18,6 +18,8 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class to evaluate an occurrence record using an {@link OccurrenceInterpreter}.
@@ -26,6 +28,8 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private final OccurrenceInterpreter interpreter;
   private final Term[] columnMapping;
+
+  private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
@@ -43,7 +47,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   @Override
   public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
-
+    LOG.info("Evaluating line {} and record {}", lineNumber, record);
     if(record == null || record.length == 0) {
       return null;
     }
@@ -83,6 +87,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    */
   protected static RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
 
+    LOG.info("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
     RecordEvaluationResult.Builder builder = new RecordEvaluationResult.Builder();
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
 
