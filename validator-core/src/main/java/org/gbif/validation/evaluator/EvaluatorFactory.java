@@ -2,7 +2,6 @@ package org.gbif.validation.evaluator;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
-import org.gbif.occurrence.processor.interpreting.DatasetInfoInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
@@ -69,11 +68,9 @@ public class EvaluatorFactory {
    */
   private OccurrenceInterpreter buildOccurrenceInterpreter() {
     WebResource webResource = httpClient.resource(apiUrl);
-    DatasetInfoInterpreter datasetInfoInterpreter = new DatasetInfoInterpreter(webResource);
     TaxonomyInterpreter taxonomyInterpreter = new TaxonomyInterpreter(webResource);
     LocationInterpreter locationInterpreter = new LocationInterpreter(new CoordinateInterpreter(webResource));
-    return new OccurrenceInterpreter(datasetInfoInterpreter, taxonomyInterpreter, locationInterpreter);
+    return new OccurrenceInterpreter(taxonomyInterpreter, locationInterpreter);
   }
-
 
 }
