@@ -75,6 +75,8 @@ Specifications of the GBIF Data Validator API response.
 - `"indexeable"` : Is the provided resource indexeable by GBIF?
 - `"errorCode"` : Contains the error code in case the provided resource can not be validated
 - `"errorMessage"` : Contains human readable message in case the provided resource can not be validated
+- `"termsFrequency"` : Contains frequency of all terms in the provided resource
+- `"interpretedValueCounts" : Contains counts of a preselected interpreted values
 - `"issues"` : List of all issues found in the provided resource
 
 ## Issue structure
