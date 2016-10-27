@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Represents the result of an evaluation at the record level.
@@ -74,12 +75,12 @@ public class RecordEvaluationResult implements Serializable {
               .addDetails(rer2.getDetails()).build();
     }
 
-    public Builder withLineNumber(long lineNumber){
+    public Builder withLineNumber(@Nullable Long lineNumber){
       this.lineNumber = lineNumber;
       return this;
     }
 
-    public Builder withRecordId(String recordId){
+    public Builder withRecordId(@Nullable String recordId){
       this.recordId = recordId;
       return this;
     }
@@ -120,11 +121,19 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
-    public Builder addBaseDetail(EvaluationType evaluationType, String expected, String found, String message) {
+    /**
+     * Base detail is in the form of expected:found with an optional message but ideally we should be able to
+     *
+     * @param evaluationType
+     * @param expected
+     * @param found
+     * @return
+     */
+    public Builder addBaseDetail(EvaluationType evaluationType, String expected, String found) {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new BaseEvaluationResultDetails(lineNumber, recordId, evaluationType, expected, found , message));
+      details.add(new BaseEvaluationResultDetails(lineNumber, recordId, evaluationType, expected, found));
       return this;
     }
 
@@ -152,20 +161,18 @@ public class RecordEvaluationResult implements Serializable {
 
     protected final String expected;
     protected final String found;
-    protected final String message;
 
     BaseEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType){
-      this(lineNumber, recordId, evaluationType, null, null, null);
+      this(lineNumber, recordId, evaluationType, null, null);
     }
 
     BaseEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType,
-                                String expected, String found, String message){
+                                String expected, String found){
       this.lineNumber = lineNumber;
       this.recordId = recordId;
       this.evaluationType = evaluationType;
       this.expected = expected;
       this.found = found;
-      this.message = message;
     }
 
     public Long getLineNumber(){
@@ -184,9 +191,6 @@ public class RecordEvaluationResult implements Serializable {
       return found;
     }
 
-    public String getMessage() {
-      return message;
-    }
 
     @Override
     public EvaluationType getEvaluationType() {

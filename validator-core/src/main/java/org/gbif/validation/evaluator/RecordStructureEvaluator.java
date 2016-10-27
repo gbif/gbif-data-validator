@@ -22,8 +22,7 @@ public class RecordStructureEvaluator implements RecordEvaluator {
   }
 
   @Override
-  public RecordEvaluationResult evaluate(
-          @Nullable Long lineNumber, String[] record) {
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record) {
     if (record.length != expectedColumnCount) {
       return toColumnCountMismatchResult(lineNumber, expectedColumnCount, record.length);
     }
@@ -43,6 +42,7 @@ public class RecordStructureEvaluator implements RecordEvaluator {
     return new RecordEvaluationResult.Builder()
             .withLineNumber(lineNumber)
             .addBaseDetail(EvaluationType.COLUMN_MISMATCH, Integer.toString(expectedColumnCount),
-                    Integer.toString(actualColumnCount),null).build();
+                    Integer.toString(actualColumnCount))
+            .build();
   }
 }
