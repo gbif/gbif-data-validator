@@ -73,9 +73,7 @@ public class ValidationResource {
       return result;
   }
 
-
-
-  private  java.nio.file.Path downloadFile(DataFileDescriptor descriptor, InputStream stream) {
+  private java.nio.file.Path downloadFile(DataFileDescriptor descriptor, InputStream stream) {
     if(descriptor.getFile() != null) {
       try {
         return descriptor.getFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getFile())) :
@@ -91,11 +89,11 @@ public class ValidationResource {
    * Downloads a file from a HTTP(s) endpoint.
    */
   private java.nio.file.Path downloadHttpFile(URL fileUrl) throws IOException {
-    java.nio.file.Path destinyFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
-    if (httpUtil.download(fileUrl, destinyFilePath.toFile()).getStatusCode() != SC_OK) {
+    java.nio.file.Path destinationFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
+    if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() != SC_OK) {
       throw new WebApplicationException(SC_BAD_REQUEST);
     }
-    return destinyFilePath;
+    return destinationFilePath;
   }
 
   /**
@@ -124,6 +122,8 @@ public class ValidationResource {
   private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFileDescriptor dataFileDescriptor)  {
     try {
       DataFile dataFile = new DataFile();
+      //set the original file name (mostly used to send it back in the response)
+      dataFile.setSourceFileName(dataFileDescriptor.getFile());
       dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
       dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
       dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());

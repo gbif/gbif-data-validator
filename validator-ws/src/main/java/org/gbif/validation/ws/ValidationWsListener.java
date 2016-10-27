@@ -1,14 +1,12 @@
 package org.gbif.validation.ws;
 
-import org.gbif.drupal.guice.DrupalMyBatisModule;
-import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
+import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
-import org.gbif.ws.server.guice.WsAuthModule;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,9 +40,11 @@ public class ValidationWsListener extends GbifServletListener {
       ValidationConfiguration configuration = new ValidationConfiguration();
       configuration.setApiUrl(getProperties().getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(getProperties().getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
+
       bind(HttpUtil.class).toInstance(new HttpUtil(HttpUtil.newMultithreadedClient(60000,20,2)));
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(OccurrenceDataFileProcessorFactory.class).toInstance(new OccurrenceDataFileProcessorFactory(configuration.getApiUrl()));
+
       expose(ValidationConfiguration.class);
       expose(OccurrenceDataFileProcessorFactory.class);
       expose(HttpUtil.class);
@@ -52,15 +52,13 @@ public class ValidationWsListener extends GbifServletListener {
   }
 
   public ValidationWsListener() throws IOException {
-    super(PropertiesUtil.readFromFile(ConfUtils.getAppConfFile(APP_CONF_FILE)), "org.gbif.validation.ws", true);
+    super(PropertiesUtil.readFromFile(ConfUtils.getAppConfFile(APP_CONF_FILE)), "org.gbif.validation.ws", false);
   }
 
   @Override
   protected List<Module> getModules(Properties properties) {
     List<Module> modules = Lists.newArrayList();
     modules.add(new ValidationModule(properties));
-    modules.add(new WsAuthModule(properties));
-    modules.add(new DrupalMyBatisModule(properties));
     return modules;
   }
 

@@ -9,15 +9,11 @@ import javax.annotation.Nullable;
 public class DataFile {
 
   private Character delimiterChar = '\t';
-
   private String[] columns;
-
   private String fileName;
-
+  private String sourceFileName;
   private Integer numOfLines;
-
   private Integer fileLineOffset;
-
   private boolean hasHeaders;
 
   public Character getDelimiterChar() {
@@ -36,21 +32,42 @@ public class DataFile {
     this.columns = columns;
   }
 
-  public String getFileName() {
-    return fileName;
-  }
-
   public void setFileName(String fileName) {
     this.fileName = fileName;
+  }
+
+  public void setNumOfLines(Integer numOfLines) {
+    this.numOfLines = numOfLines;
+  }
+
+  /**
+   * Name of the filed as received. For safety reason this name should only be used to display.
+   * @param sourceFileName
+   */
+  public void setSourceFileName(String sourceFileName) {
+    this.sourceFileName = sourceFileName;
   }
 
   public Integer getNumOfLines() {
     return numOfLines;
   }
 
+  /**
+   * File name as provided. For safety reason this name should only be used to display.
+   *
+   */
   @Nullable
-  public void setNumOfLines(Integer numOfLines) {
-    this.numOfLines = numOfLines;
+  public String getSourceFileName() {
+    return sourceFileName;
+  }
+
+  /**
+   * Generated file name.
+   *
+   * @return safe, generated filename
+   */
+  public String getFileName() {
+    return fileName;
   }
 
   /**
