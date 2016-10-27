@@ -1,10 +1,13 @@
 import java.io.{File, FileNotFoundException}
 import java.net.URI
 
-import org.gbif.validation.api.model.RecordEvaluationResult
+import org.gbif.validation.api.model.{ValidationProfile, FileFormat, ValidationResult, RecordEvaluationResult}
+import org.gbif.validation.collector.{TermsFrequencyCollector, InterpretedTermsCountCollector}
+import org.gbif.validation.tabular.single.{SimpleValidationCollector, DataValidationProcessor}
 import org.gbif.validation.util.TempTermsUtils
 import org.slf4j.LoggerFactory
 
+import collection.JavaConverters._
 import scala.collection.immutable.List
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -71,7 +74,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     *
     * @param dataFile data file to be processed data read by the Spark job.
     */
-  def processDataFile(dataFile: String): ScalaJobHandle[Array[RecordEvaluationResult]] = {
+  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResult] = {
     //url is copied to a string variable to avoid serialization errors
     val gbifApiUrl = conf.gbifApiUrl
     scalaClient.submit { context =>
@@ -85,17 +88,29 @@ class DataValidationClient(val conf: ValidationSparkConf) {
         .load(dataFile).cache();
 
       val columns = data.columns
+      val terms  = TempTermsUtils.buildTermMapping(columns)
+      val interpretedTermsCountCollector = new InterpretedTermsCountCollector(terms.toList.asJava,true)
+      val metricsCollector = new TermsFrequencyCollector(terms, true);
+      val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
+      val cnt = data.count()
+
       //This is a bit of duplication: runs all the processing
-      data.rdd.zipWithIndex().mapPartitions( partition => {
-            val occEvaluator  = new EvaluatorFactory(gbifApiUrl).create(TempTermsUtils.buildTermMapping(columns))
-            val newPartition = partition.map( { case(record,idx) => {
-              val values = columns.foldLeft(List.empty[String]){ (acc, k) => acc ::: List(record.getString(record.fieldIndex(k)))}.toArray
-              val result = occEvaluator.evaluate(idx, values)
-              result
-          }}).toList
+      data.map(row => columns.foldLeft(List.empty[String]){ (acc, k) => acc ::: List(row.getString(row.fieldIndex(k)))}.toArray)
+          .map( record  => {metricsCollector.collect(record);record})
+          .zipWithIndex()
+          .mapPartitions( partition => {
+            val evaluator  = new EvaluatorFactory(gbifApiUrl).create(terms)
+            val newPartition = partition.map( {case(record,idx) => {
+              evaluator.evaluate(idx,record)
+            }}).toList
           // consumes the iterator
           newPartition.iterator
-        }).collect()
+        }).foreach( result => {validationCollector.collect(result);interpretedTermsCountCollector.collect(result)})
+
+      ValidationResult.Builder.of(true, FileFormat.TABULAR, cnt.toInt, ValidationProfile.GBIF_INDEXING_PROFILE)
+        .withIssues(validationCollector.getAggregatedCounts, validationCollector.getSamples)
+        .withTermsFrequency(metricsCollector.getTermFrequency)
+        .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts).build();
     }
   }
 

@@ -2,6 +2,7 @@ package org.gbif.validation.api.model;
 
 import org.gbif.dwc.terms.Term;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -10,7 +11,7 @@ import java.util.Map;
 /**
  * Contains the result of a validation.
  */
-public class ValidationResult {
+public class ValidationResult implements Serializable {
 
   //public enum Status {OK, FAILED};
 

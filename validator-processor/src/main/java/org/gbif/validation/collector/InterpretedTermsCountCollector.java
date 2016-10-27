@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,7 +16,7 @@ import org.apache.commons.lang3.Validate;
  * Simple collector to count interpreted data from a predefined list of terms.
  *
  */
-public class InterpretedTermsCountCollector implements ResultsCollector {
+public class InterpretedTermsCountCollector implements ResultsCollector, Serializable {
 
   private final List<Term> targetedTerms;
 

@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ import org.apache.commons.lang3.Validate;
 /**
  * Simple collector for terms frequency based on raw data.
  */
-public class TermsFrequencyCollector implements RecordMetricsCollector {
+public class TermsFrequencyCollector implements RecordMetricsCollector, Serializable {
 
   private Term[] columnHeaders;
   private final Map<Term, Long> termFrequencyCounter;

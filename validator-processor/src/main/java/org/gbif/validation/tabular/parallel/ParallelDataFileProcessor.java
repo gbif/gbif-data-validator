@@ -49,12 +49,12 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     private DataFile dataFile;
     private Term[] termsColumnsMapping;
 
-    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory occurrenceEvaluatorFactory, Term[] termsColumnsMapping) {
+    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory evaluatorFactory, Term[] termsColumnsMapping) {
       receive(
         match(DataFile.class, dataFile  -> {
           this.dataFile = dataFile;
           this.termsColumnsMapping = termsColumnsMapping;
-          processDataFile(occurrenceEvaluatorFactory);
+          processDataFile(evaluatorFactory);
         })
         .match(RecordEvaluationResult.class, collector::collect)
         .match(DataWorkResult.class, dataWorkResult -> {

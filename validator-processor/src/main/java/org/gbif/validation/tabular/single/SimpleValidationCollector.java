@@ -5,6 +5,7 @@ import org.gbif.validation.api.model.EvaluationResultDetails;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +16,7 @@ import javax.annotation.concurrent.NotThreadSafe;
  * Basic implementation of a {@link ResultsCollector}.
  */
 @NotThreadSafe
-public class SimpleValidationCollector implements ResultsCollector {
+public class SimpleValidationCollector implements ResultsCollector, Serializable {
 
   //TODO provide in config
   public static final int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
