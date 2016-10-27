@@ -18,7 +18,11 @@ import org.apache.commons.lang3.Validate;
 public class InterpretedTermsCountCollector implements ResultsCollector {
 
   private final List<Term> targetedTerms;
+
   private final Map<Term, Long> interpretedValueCounter;
+
+  //private static final MAX_DISTINCT_COUNT
+  //private final Map<Term, Map<Object, Long>> interpretedValueDistinctCounter;
 
   /**
    *
