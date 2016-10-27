@@ -11,6 +11,7 @@ Specifications of the GBIF Data Validator API response.
   "indexeable": "[true|false]",
   "errorCode": "INVALID_FILE_FORMAT",
   "errorMessage": "Invalid file format",
+  "something": {[
   "termsFrequency":{"dwc:occurrenceID":11},
   "interpretedValueCounts":{"gbif:taxonKey":0},
   "issues": [
@@ -62,7 +63,7 @@ Specifications of the GBIF Data Validator API response.
         }
       ]
     }
-  ]
+  ]]}
 }
     
 ```
