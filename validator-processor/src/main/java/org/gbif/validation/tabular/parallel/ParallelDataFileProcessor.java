@@ -137,8 +137,13 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
     return ValidationResult.Builder
-            .of(true, FileFormat.TABULAR, dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1 : 0), ValidationProfile.GBIF_INDEXING_PROFILE)
-            .withIssues(validationCollector.getAggregatedCounts(), validationCollector.getSamples())
-            .build();
+            .of(true, dataFile.getSourceFileName(), FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
+            .withResourceResult(
+                    ValidationResult.RecordsValidationResourceResultBuilder
+                            .of("", dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
+                            .withIssues(validationCollector.getAggregatedCounts(), validationCollector.getSamples())
+                                    //.withTermsFrequency(metricsCollector.getTermFrequency())
+                                    //.withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())
+                            .build()).build();
   }
 }

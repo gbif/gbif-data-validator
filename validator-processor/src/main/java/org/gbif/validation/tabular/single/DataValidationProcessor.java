@@ -1,19 +1,12 @@
 package org.gbif.validation.tabular.single;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.RecordEvaluator;
-import org.gbif.validation.api.RecordSource;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
+import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceResultBuilder;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
-import org.gbif.validation.tabular.RecordSourceFactory;
-
-import java.io.File;
 
 public class DataValidationProcessor  {
 
@@ -23,7 +16,7 @@ public class DataValidationProcessor  {
   private final TermsFrequencyCollector metricsCollector;
   private final InterpretedTermsCountCollector interpretedTermsCountCollector;
 
-  private int line;
+  private long line;
 
   //TODO Should interpretedTermsCountCollector be nullable?
   public DataValidationProcessor(Term[] terms, RecordEvaluator recordEvaluator,
@@ -34,12 +27,10 @@ public class DataValidationProcessor  {
     this.interpretedTermsCountCollector = interpretedTermsCountCollector;
   }
 
-
   public RecordEvaluationResult process(String[] record) {
     try {
       metricsCollector.collect(record);
-      //TODO: long vs int
-      RecordEvaluationResult recEvalResult = recordEvaluator.evaluate(Integer.toUnsignedLong(line), record);
+      RecordEvaluationResult recEvalResult = recordEvaluator.evaluate(line, record);
       collector.collect(recEvalResult);
       interpretedTermsCountCollector.collect(recEvalResult);
       line++;
@@ -49,15 +40,13 @@ public class DataValidationProcessor  {
     }
   }
 
-  public ValidationResult getValidationResult() {
-    //FIXME the Status and indexeable should be decided by a another class somewhere
-    return ValidationResult.Builder
-      .of(true, FileFormat.TABULAR, line, ValidationProfile.GBIF_INDEXING_PROFILE)
-      .withIssues(collector.getAggregatedCounts(), collector.getSamples())
-      .withTermsFrequency(metricsCollector.getTermFrequency())
-      .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())
-      .build();
+  public ValidationResult.RecordsValidationResourceResult getValidationResult() {
+    return RecordsValidationResourceResultBuilder
+            .of("", line)
+            .withIssues(collector.getAggregatedCounts(), collector.getSamples())
+            .withTermsFrequency(metricsCollector.getTermFrequency())
+            .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())
+            .build();
   }
-
 
 }

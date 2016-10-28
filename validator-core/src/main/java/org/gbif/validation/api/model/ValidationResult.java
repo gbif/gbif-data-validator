@@ -13,22 +13,18 @@ import java.util.Map;
  */
 public class ValidationResult implements Serializable {
 
-  //public enum Status {OK, FAILED};
-
   //private final Status status;
   private final Boolean indexeable;
 
+  private final String fileName;
   private final FileFormat fileFormat;
   private final ValidationProfile validationProfile;
-
-  private final Integer numberOfLines;
 
   //only used in case of general error with the input file
   private final ValidationErrorCode errorCode;
 
-  private final List<DateFileValidationElement> issues;
-  private final Map<Term, Long> termsFrequency;
-  private final Map<Term, Long> interpretedValueCounts;
+  //TODO maybe we should store the concrete type to allow typed getter?
+  private final List<ValidationResourceResult> results;
 
   /**
    * Fluent builder for {@link ValidationResult}
@@ -36,41 +32,37 @@ public class ValidationResult implements Serializable {
   public static class Builder {
     private Boolean indexeable;
 
+    private String fileName;
     private FileFormat fileFormat;
     private ValidationProfile validationProfile;
 
-    private Integer numberOfLines;
+    private List<ValidationResourceResult> recordsValidationResourceResults;
 
     //only used in case of general error with the input file
     private ValidationErrorCode errorCode;
 
-    private List<DateFileValidationElement> issues = new ArrayList<>();
-    private Map<Term, Long> termsFrequency;
-    private Map<Term, Long> interpretedValueCounts;
 
     /**
      * Returns a Builder of {@link ValidationResult} when a validation can be performed and finished.
      *
      * @param indexeable
      * @param fileFormat
-     * @param numberOfLines number of lines of data (excluding header)
      * @param validationProfile
      *
      * @return
      */
-    public static Builder of(Boolean indexeable, FileFormat fileFormat, Integer numberOfLines, ValidationProfile validationProfile) {
-      return new Builder(indexeable, fileFormat, numberOfLines, validationProfile);
+    public static Builder of(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
+      return new Builder(indexeable, fileName, fileFormat, validationProfile);
     }
 
     public static Builder withError(FileFormat fileFormat, ValidationProfile validationProfile, ValidationErrorCode errorCode) {
       return new Builder(fileFormat,validationProfile, errorCode);
     }
 
-    private Builder(Boolean indexeable, FileFormat fileFormat, Integer numberOfLines,
-                    ValidationProfile validationProfile) {
+    private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
       this.indexeable = indexeable;
+      this.fileName = fileName;
       this.fileFormat = fileFormat;
-      this.numberOfLines = numberOfLines;
       this.validationProfile = validationProfile;
     }
 
@@ -87,7 +79,37 @@ public class ValidationResult implements Serializable {
       this.errorCode = errorCode;
     }
 
-    public Builder withIssues(Map<EvaluationType, Long> issueCounter,
+    public Builder withResourceResult(RecordsValidationResourceResult recordsValidationResourceResult) {
+      if(recordsValidationResourceResults == null) {
+        recordsValidationResourceResults = new ArrayList<>();
+      }
+      recordsValidationResourceResults.add(recordsValidationResourceResult);
+      return this;
+    }
+
+    public ValidationResult build() {
+      return new ValidationResult(indexeable, fileName, fileFormat, validationProfile, recordsValidationResourceResults,
+              errorCode);
+    }
+  }
+
+  public static class RecordsValidationResourceResultBuilder {
+    private String fileName;
+    private Long numberOfLines;
+    private List<DateFileValidationElement> issues = new ArrayList<>();
+    private Map<Term, Long> termsFrequency;
+    private Map<Term, Long> interpretedValueCounts;
+
+    public static RecordsValidationResourceResultBuilder of(String fileName, Long numberOfLines){
+      return new RecordsValidationResourceResultBuilder(fileName, numberOfLines);
+    }
+
+    private RecordsValidationResourceResultBuilder(String fileName, Long numberOfLines) {
+      this.fileName = fileName;
+      this.numberOfLines = numberOfLines;
+    }
+
+    public RecordsValidationResourceResultBuilder withIssues(Map<EvaluationType, Long> issueCounter,
                               Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
       issueCounter.forEach(
               (k, v) ->
@@ -96,20 +118,21 @@ public class ValidationResult implements Serializable {
       return this;
     }
 
-    public Builder withTermsFrequency(Map<Term, Long> termsFrequency) {
+    public RecordsValidationResourceResultBuilder withTermsFrequency(Map<Term, Long> termsFrequency) {
       this.termsFrequency = termsFrequency;
       return this;
     }
 
-    public Builder withInterpretedValueCounts(Map<Term, Long> interpretedValueCounts) {
+    public RecordsValidationResourceResultBuilder withInterpretedValueCounts(Map<Term, Long> interpretedValueCounts) {
       this.interpretedValueCounts = interpretedValueCounts;
       return this;
     }
 
-    public ValidationResult build() {
-      return new ValidationResult(indexeable, fileFormat,
-              validationProfile, numberOfLines, issues, termsFrequency, interpretedValueCounts, errorCode);
+    public RecordsValidationResourceResult build() {
+      return new RecordsValidationResourceResult(fileName, numberOfLines,
+              issues, termsFrequency, interpretedValueCounts);
     }
+
   }
 
   /**
@@ -118,24 +141,17 @@ public class ValidationResult implements Serializable {
    * @param indexeable
    * @param fileFormat
    * @param validationProfile
-   * @param issues
-   * @param termsFrequency
-   * @param interpretedValueCounts
    * @param errorCode
    */
-  private ValidationResult(Boolean indexeable, FileFormat fileFormat,
-                           ValidationProfile validationProfile, Integer numberOfLines,
-                           List<DateFileValidationElement> issues,
-                           Map<Term, Long> termsFrequency,
-                           Map<Term, Long> interpretedValueCounts,
+  private ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat,
+                           ValidationProfile validationProfile,
+                           List<ValidationResourceResult> results,
                            ValidationErrorCode errorCode) {
     this.indexeable = indexeable;
+    this.fileName = fileName;
     this.fileFormat = fileFormat;
     this.validationProfile = validationProfile;
-    this.numberOfLines = numberOfLines;
-    this.issues = issues;
-    this.termsFrequency = termsFrequency;
-    this.interpretedValueCounts = interpretedValueCounts;
+    this.results = results;
     this.errorCode = errorCode;
   }
 
@@ -147,30 +163,71 @@ public class ValidationResult implements Serializable {
     return fileFormat;
   }
 
-  public Integer getNumberOfLines() {
-    return numberOfLines;
-  }
-
   public ValidationProfile getValidationProfile() {
     return validationProfile;
+  }
+
+  public List<ValidationResourceResult> getResults() {
+    return results;
   }
 
   public ValidationErrorCode getErrorCode() {
     return errorCode;
   }
 
-  public List<DateFileValidationElement> getIssues() {
-    return issues;
+  /**
+   * Contract of a {@link ValidationResourceResult}.
+   */
+  private interface ValidationResourceResult {
+    List<DateFileValidationElement> getIssues();
   }
 
-  public Map<Term, Long> getTermsFrequency() {
-    return termsFrequency;
+  /**
+   * {@link ValidationResourceResult} represents the result one of possibly multiple resources
+   * included in the validation.
+   * This class is Immutable
+   */
+  public static class RecordsValidationResourceResult implements ValidationResourceResult {
+    private final String fileName;
+    private final Long numberOfLines;
+
+    private final List<DateFileValidationElement> issues;
+    private final Map<Term, Long> termsFrequency;
+    private final Map<Term, Long> interpretedValueCounts;
+
+    private RecordsValidationResourceResult(String fileName, Long numberOfLines, List<DateFileValidationElement> issues,
+                                            Map<Term, Long> termsFrequency, Map<Term, Long> interpretedValueCounts){
+      this.fileName = fileName;
+      this.numberOfLines = numberOfLines;
+      this.issues = issues;
+      this.termsFrequency = termsFrequency;
+      this.interpretedValueCounts = interpretedValueCounts;
+    }
+
+    public String getFileName() {
+      return fileName;
+    }
+
+    public Long getNumberOfLines() {
+      return numberOfLines;
+    }
+
+    public List<DateFileValidationElement> getIssues() {
+      return issues;
+    }
+
+    public Map<Term, Long> getTermsFrequency() {
+      return termsFrequency;
+    }
+
+    public Map<Term, Long> getInterpretedValueCounts() {
+      return interpretedValueCounts;
+    }
   }
 
-  public Map<Term, Long> getInterpretedValueCounts() {
-    return interpretedValueCounts;
-  }
-
+  /**
+   * This class is Immutable
+   */
   private static class DateFileValidationElement {
 
     private final EvaluationCategory issueCategory;
@@ -178,7 +235,7 @@ public class ValidationResult implements Serializable {
     private final long count;
     private final List<EvaluationResultDetails> sample;
 
-    public DateFileValidationElement(EvaluationType issue, long count, List<EvaluationResultDetails> sample) {
+    private DateFileValidationElement(EvaluationType issue, long count, List<EvaluationResultDetails> sample) {
       this.issueCategory = issue.getCategory();
       this.issue = issue;
       this.count = count;

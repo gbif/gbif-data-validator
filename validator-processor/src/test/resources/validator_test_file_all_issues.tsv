@@ -1,11 +1,11 @@
 occurrenceid	scientificname	countrycode	locality	decimallatitude	decimallongitude	coordinateuncertaintyinmeters	elevation	elevationaccuracy	depth	depthaccuracy	eventdate	day	month	year	taxonkey	specieskey	basisofrecord	institutioncode	collectioncode	catalognumber	recordnumber	identifiedby	recordedby	typestatus	expectedissue
 http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568	Maxillaria Ruiz & Pav.	CR		10.4568	-83.7035	huge					1996-01-26T01:00Z	26	1	1996	2825779		PRESERVED_SPECIMEN	MNHN	P	P00501568			Pignal, M.			COORDINATE_UNCERTAINTY_METERS_INVALID
-http://coldb.mnhn.fr/catalognumber/mnhn/p/p00101256	Maxillaria endresii Rchb.f.	CB							12 f.		1996-08-05	5	8	1996	5317903	5317903	PRESERVED_SPECIMEN	MNHN	P	P00101256		Blanco	Pignal, M.			COUNTRY_INVALID
+http://coldb.mnhn.fr/catalognumber/mnhn/p/p00101256	Maxillaria endresii Rchb.f.	CR		10.4568	-83.7035				12 f.		1996-08-05	5	8	1996	5317903	5317903	PRESERVED_SPECIMEN	MNHN	P	P00101256		Blanco	Pignal, M.			COUNTRY_INVALID
 1	Goniopsis pulchra (Lockington, 1877)	CR	Puerto Jimenez								1996-03-17T01:00Z	17	3	1996	5972960	5972960	PRESERVED_SPECIMEN	SMF	Collection Crustacea	25995					
-2	Sesarma aequatoriale Ortmann, 1894	CR	Rincon								1996-03-18T01:00Z	18	3	1996	5863403	5863403	PRESERVED_SPECIMEN	SMF	Collection Crustacea	25971					
+2	Sesarma aequatoriale Ortmann, 1894	CB	Rincon								1996-03-18	18	3	1996	5863403	5863403	PRESERVED_SPECIMEN	SMF	Collection Crustacea	25971					
 3	Sesarma rubinofforum Abele, 1973	CR	Puerto Jimenez								1996-03-17	17	3	1996	5863410	5863410	PRESERVED_SPECIMEN	SMF	Collection Crustacea	25974					
 4	Sesarma rhizophorae Rathbun, 1906	CR	Puerto Jimenez								1996-03-17	17	3	1996	5863412	5863412	PRESERVED_SPECIMEN	SMF	Collection Crustacea	25975					
-URN:catalog:CLO:EBIRD:OBS244569475	Neocrex erythrops (P. L. Sclater, 1867)	CR	Las Palmitas	104.568	-837.035						1996-11-27T01:00Z	27	11	1996	2474728	2474728	HUMAN_OBSERVATION	CLO	EBIRD	OBS244569475			obsr312212			
+URN:catalog:CLO:EBIRD:OBS244569475	Animalia	CR	Las Palmitas	104.568	-837.035						1996-11-27T01:00Z	27	11	1996	2474728	2474728	HUMAN_OBSERVATION	CLO	EBIRD	OBS244569475			obsr312212			
 URN:catalog:CLO:EBIRD:OBS244568673	Tachycineta thalassina (Swainson, 1827)	CR	Rio Birris reservoir	988.896	-837.865						1996-11-18T01:00Z	18	11	1996	5230754	5230754	HUMAN_OBSERVATION	CLO	EBIRD	OBS244568673			obsr312212			
 5	Symphyogyna aspera Steph.	CR	COSTA RICA ALAJUELA: Cantón de UPALA P. N. Rincón de la Vieja Cordillera de Guanacaste. Santa María cerca del ojo de agua.	10.75	-853.042		840.0	0.0			1996-04-13T02:00Z	13	4	1996	7828205	7828205	PRESERVED_SPECIMEN	COL	COL	412678		Uribe M., J.	Dauphin, G			
 CAS:ANTWEB:casent0919833	Hypoponera Santschi, 1938	CR	Cacao Field Station				1350.0				1996-02-34	12	2	1996	1326614		PRESERVED_SPECIMEN	CAS	ANTWEB	casent0919833			R.Anderson	PARATYPE	
