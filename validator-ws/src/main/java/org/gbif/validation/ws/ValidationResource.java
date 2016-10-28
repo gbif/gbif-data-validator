@@ -1,15 +1,20 @@
 package org.gbif.validation.ws;
 
+import org.gbif.utils.HttpUtil;
+import org.gbif.utils.file.csv.CSVReaderFactory;
+import org.gbif.utils.file.csv.UnkownDelimitersException;
+import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.validation.util.FileBashUtilities;
-import org.gbif.validation.api.model.DataFileDescriptor;
-import org.gbif.utils.HttpUtil;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,7 +32,7 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
-import org.apache.avro.reflect.Nullable;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.io.IOUtils;
@@ -35,8 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.eclipse.jetty.server.Response.SC_BAD_REQUEST;
-import static org.eclipse.jetty.server.Response.SC_OK;
 import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
+import static org.eclipse.jetty.server.Response.SC_OK;
 
 @Path("/validate")
 @Produces(MediaType.APPLICATION_JSON)
@@ -150,12 +155,13 @@ public class ValidationResource {
     try {
       DataFile dataFile = new DataFile();
       //set the original file name (mostly used to send it back in the response)
-      dataFile.setSourceFileName(dataFileDescriptor.getFile());
+      dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getFile()));
       dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
       dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
       dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
       dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
-      dataFile.loadHeaders();
+      extractAndSetTabularFileMetadata(dataFilePath, dataFile);
+
       return dataFileProcessorFactory.create(dataFile).process(dataFile);
     } catch (IOException ex) {
       //deletes the file in case of error
