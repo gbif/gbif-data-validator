@@ -1,5 +1,7 @@
 package org.gbif.validation.ws;
 
+import org.gbif.validation.DataValidationClient;
+import org.gbif.validation.ValidationSparkConf;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
@@ -8,8 +10,15 @@ import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.utils.HttpUtil;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -27,6 +36,10 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
+import org.apache.avro.reflect.Nullable;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,24 +52,17 @@ import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
 @Singleton
 public class ValidationResource {
 
-  private final ValidationConfiguration configuration;
+  @Inject private ValidationConfiguration configuration;
 
-  private final OccurrenceDataFileProcessorFactory dataFileProcessorFactory;
+  @Inject private OccurrenceDataFileProcessorFactory dataFileProcessorFactory;
 
-  private final HttpUtil httpUtil;
+  @Inject private HttpUtil httpUtil;
+
+  @Inject(optional = true )private DataValidationClient dataValidationClient;
 
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
   private static final String FILE_PARAM = "file";
-
-
-  @Inject
-  public ValidationResource(ValidationConfiguration configuration, HttpUtil httpUtil,
-                            OccurrenceDataFileProcessorFactory dataFileProcessorFactory) {
-    this.configuration = configuration;
-    this.dataFileProcessorFactory = dataFileProcessorFactory;
-    this.httpUtil = httpUtil;
-  }
 
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
@@ -66,18 +72,18 @@ public class ValidationResource {
                                        @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
                                        FormDataMultiPart formDataMultiPart) {
       DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
-      java.nio.file.Path dataFilePath = downloadFile(dataFileDescriptor, stream);
+      java.nio.file.Path dataFilePath = downloadFile(dataFileDescriptor, stream, true);
       ValidationResult result = processFile(dataFilePath, dataFileDescriptor);
       //deletes the downloaded file
       dataFilePath.toFile().delete();
       return result;
   }
 
-  private java.nio.file.Path downloadFile(DataFileDescriptor descriptor, InputStream stream) {
+  private java.nio.file.Path downloadFile(DataFileDescriptor descriptor, InputStream stream, Boolean useHdfs) {
     if(descriptor.getFile() != null) {
       try {
-        return descriptor.getFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getFile())) :
-                                                          copyDataFile(stream,descriptor);
+        return descriptor.getFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getFile()),useHdfs) :
+                                                          copyDataFile(stream,descriptor, useHdfs);
       } catch(IOException  ex){
         throw new WebApplicationException(ex, SC_BAD_REQUEST);
       }
@@ -88,12 +94,14 @@ public class ValidationResource {
   /**
    * Downloads a file from a HTTP(s) endpoint.
    */
-  private java.nio.file.Path downloadHttpFile(URL fileUrl) throws IOException {
+  private java.nio.file.Path downloadHttpFile(URL fileUrl, boolean toHdfs) throws IOException {
     java.nio.file.Path destinationFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
-    if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() != SC_OK) {
-      throw new WebApplicationException(SC_BAD_REQUEST);
+    if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() == SC_OK) {
+      copyToHdfs(destinationFilePath);
+      return destinationFilePath;
     }
-    return destinationFilePath;
+    throw new WebApplicationException(SC_BAD_REQUEST);
+
   }
 
   /**
@@ -108,12 +116,40 @@ public class ValidationResource {
    * Copies the input stream into a temporary directory.
    */
   private java.nio.file.Path copyDataFile(InputStream stream,
-                                          DataFileDescriptor descriptor) throws IOException {
-    java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getFile());
+                                          DataFileDescriptor descriptor,
+                                          Boolean useHdfs) throws IOException {
     LOG.info("Uploading data file into {}", descriptor);
-    Files.createDirectory(destinyFilePath.getParent());
-    Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
-    return destinyFilePath;
+    if (!useHdfs) {
+      java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getFile());
+      Files.createDirectory(destinyFilePath.getParent());
+      Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
+      return destinyFilePath;
+    } else {
+      return Paths.get(copyToHdfs(stream,descriptor.getFile()).toUri());
+    }
+
+  }
+
+
+  private org.apache.hadoop.fs.Path copyToHdfs(InputStream stream, String fileName) throws IOException {
+    Configuration hadoopConf = new Configuration();
+    hadoopConf.addResource("core-site.xml");
+    org.apache.hadoop.fs.Path file = new org.apache.hadoop.fs.Path(configuration.getWorkingDir() + UUID.randomUUID() + "/" + fileName);
+    try(FileSystem hdfs = FileSystem.get(hadoopConf); OutputStream os = hdfs.create(file)) {
+      IOUtils.copyBytes(stream, os, hadoopConf);
+    }
+    return file;
+  }
+
+  private org.apache.hadoop.fs.Path copyToHdfs(java.nio.file.Path filePath) throws IOException {
+    Configuration configuration = new Configuration();
+    configuration.addResource("core-site.xml");
+    org.apache.hadoop.fs.Path file = new org.apache.hadoop.fs.Path("/datavalidation/" + UUID.randomUUID() + "/" + filePath.getFileName());
+    try(FileSystem hdfs = FileSystem.get(configuration); OutputStream os = hdfs.create(file);
+        FileInputStream inputFile = new FileInputStream(filePath.toFile())) {
+      IOUtils.copyBytes(inputFile, os, configuration);
+    }
+    return file;
   }
 
   /**

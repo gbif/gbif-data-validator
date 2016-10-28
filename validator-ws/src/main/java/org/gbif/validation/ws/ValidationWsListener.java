@@ -3,18 +3,28 @@ package org.gbif.validation.ws;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
+import org.gbif.validation.DataValidationClient;
+import org.gbif.validation.ValidationSparkConf;
 import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 
 /**
  * Server listener. Contains
@@ -40,8 +50,20 @@ public class ValidationWsListener extends GbifServletListener {
       ValidationConfiguration configuration = new ValidationConfiguration();
       configuration.setApiUrl(getProperties().getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(getProperties().getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
+      HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(60000,20,2));
 
-      bind(HttpUtil.class).toInstance(new HttpUtil(HttpUtil.newMultithreadedClient(60000,20,2)));
+      if (getProperties().containsKey(ConfKeys.LIVY_URL)) {
+        ValidationSparkConf sparkConf = new ValidationSparkConf(getProperties().getProperty(ConfKeys.LIVY_URL),
+                                                                getProperties().getProperty(ConfKeys.LIVY_JARS),
+                                                                configuration.getApiUrl(),
+                                                                configuration.getWorkingDir());
+        DataValidationClient dataValidationClient = new DataValidationClient(sparkConf);
+        dataValidationClient.init();
+        bind(DataValidationClient.class).toInstance(dataValidationClient);
+        expose(DataValidationClient.class);
+      }
+
+      bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(OccurrenceDataFileProcessorFactory.class).toInstance(new OccurrenceDataFileProcessorFactory(configuration.getApiUrl()));
 
@@ -49,6 +71,8 @@ public class ValidationWsListener extends GbifServletListener {
       expose(OccurrenceDataFileProcessorFactory.class);
       expose(HttpUtil.class);
     }
+
+
   }
 
   public ValidationWsListener() throws IOException {

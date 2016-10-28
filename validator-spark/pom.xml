@@ -45,11 +45,13 @@
     <hive.version>1.1.0-cdh5.4.10</hive.version>
     <hadoop.version>2.6.0-cdh5.4.10</hadoop.version>
     <spark.version>1.6.1</spark.version>
+    <spark_sql.version>1.5.0</spark_sql.version>
     <!-- fixed to the version coming with Spark -->
     <jackson.spark.version>2.4.4</jackson.spark.version>
     <scala.tools.version>2.10</scala.tools.version>
     <scala.version>2.10.5</scala.version>
     <spark.version>1.6.1</spark.version>
+    <dispatch-core.version>0.11.2</dispatch-core.version>
     <!-- This version was released into  GBIF third party repo, and it's actually SNAPSHOT -->
     <livy.version>0.3.0</livy.version>
     <!-- laziness: rely on transient dependencies from DW -->
@@ -184,7 +186,6 @@
       <groupId>org.gbif.registry</groupId>
       <artifactId>registry-ws-client</artifactId>
       <version>${registry.version}</version>
-
     </dependency>
     <dependency>
       <groupId>com.sun.jersey</groupId>
@@ -230,6 +231,11 @@
       <version>${scala.version}</version>
     </dependency>
     <dependency>
+      <groupId>net.databinder.dispatch</groupId>
+      <artifactId>dispatch-core_${scala.tools.version}</artifactId>
+      <version>${dispatch-core.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.spark</groupId>
       <artifactId>spark-core_${scala.tools.version}</artifactId>
       <version>${spark.version}</version>
@@ -242,7 +248,7 @@
     <dependency>
       <groupId>com.databricks</groupId>
       <artifactId>spark-csv_${scala.tools.version}</artifactId>
-      <version>1.5.0</version>
+      <version>${spark_sql.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.spark</groupId>

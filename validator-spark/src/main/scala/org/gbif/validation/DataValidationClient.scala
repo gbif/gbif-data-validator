@@ -1,22 +1,27 @@
-import java.io.{File, FileNotFoundException}
-import java.net.URI
+package org.gbif.validation
 
-import org.gbif.validation.api.model.{ValidationProfile, FileFormat, ValidationResult, RecordEvaluationResult}
-import org.gbif.validation.collector.{TermsFrequencyCollector, InterpretedTermsCountCollector}
-import org.gbif.validation.tabular.single.{SimpleValidationCollector, DataValidationProcessor}
+import java.io.{FileOutputStream, File, FileNotFoundException}
+import java.net.{URL, URI}
+import java.nio.file.Paths
+
+import com.cloudera.livy.LivyClientBuilder
+import com.cloudera.livy.scalaapi._
+import dispatch.Http
+import dispatch._
+import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceResultBuilder
+import scala.concurrent.ExecutionContext.Implicits.global
+import org.gbif.validation.api.model.{FileFormat, ValidationProfile, ValidationResult}
+import org.gbif.validation.collector.{InterpretedTermsCountCollector, TermsFrequencyCollector}
+import org.gbif.validation.evaluator.EvaluatorFactory
+import org.gbif.validation.tabular.single.SimpleValidationCollector
 import org.gbif.validation.util.TempTermsUtils
 import org.slf4j.LoggerFactory
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
 import scala.collection.immutable.List
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
-import com.cloudera.livy.LivyClientBuilder
-import com.cloudera.livy.scalaapi._
-
-import org.gbif.validation.evaluator.EvaluatorFactory
 
 /**
   *  Runs the data validation on an HDFS file.
@@ -33,7 +38,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
   def init(): Unit = {
     scalaClient = new LivyClientBuilder(false).setURI(new URI(conf.livyServerUrl)).build().asScalaClient
     uploadRelevantJarsForJobExecution()
-    conf.jars.split(":").foreach(jar => uploadJar(jar))
+    conf.jars.split(",").foreach(jar => uploadJar(jar))
   }
 
   /**
@@ -60,13 +65,27 @@ class DataValidationClient(val conf: ValidationSparkConf) {
   }
 
   private def uploadJar(path: String) = {
-    val file = new File(path)
+    def getOrDownload(path: String): File = {
+      if(path.startsWith("http")) {
+        val redirectResp = Http(url(path) > (res => res))
+        val location = redirectResp().getHeader("Location")
+        val jarFile = new File(conf.workingDir, location.substring(location.lastIndexOf('/') + 1))
+        val download = Http(url(location) >  as.File(jarFile))
+        download()
+        jarFile
+      } else {
+        new File(path)
+      }
+    }
+
+    val file = getOrDownload(path)
     if (!file.isDirectory) {
       val uploadJarFuture = scalaClient.uploadJar(file)
       Await.result(uploadJarFuture, 1000 second) match {
         case null => log.info("Successfully uploaded {}",file.getName)
       }
     }
+
   }
 
   /**
@@ -74,7 +93,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     *
     * @param dataFile data file to be processed data read by the Spark job.
     */
-  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResult] = {
+  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResult.RecordsValidationResourceResult] = {
     //url is copied to a string variable to avoid serialization errors
     val gbifApiUrl = conf.gbifApiUrl
     scalaClient.submit { context =>
@@ -88,9 +107,9 @@ class DataValidationClient(val conf: ValidationSparkConf) {
         .load(dataFile).cache();
 
       val columns = data.columns
-      val terms  = TempTermsUtils.buildTermMapping(columns)
-      val interpretedTermsCountCollector = new InterpretedTermsCountCollector(terms.toList.asJava,true)
-      val metricsCollector = new TermsFrequencyCollector(terms, true);
+      val terms  = TempTermsUtils.buildTermMapping(columns).toList
+      val interpretedTermsCountCollector = new InterpretedTermsCountCollector(terms.asJava,true)
+      val metricsCollector = new TermsFrequencyCollector(terms.asJava, true);
       val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
       val cnt = data.count()
 
@@ -99,7 +118,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
           .map( record  => {metricsCollector.collect(record);record})
           .zipWithIndex()
           .mapPartitions( partition => {
-            val evaluator  = new EvaluatorFactory(gbifApiUrl).create(terms)
+            val evaluator  = new EvaluatorFactory(gbifApiUrl).create(terms.asJava)
             val newPartition = partition.map( {case(record,idx) => {
               evaluator.evaluate(idx,record)
             }}).toList
@@ -107,10 +126,10 @@ class DataValidationClient(val conf: ValidationSparkConf) {
           newPartition.iterator
         }).foreach( result => {validationCollector.collect(result);interpretedTermsCountCollector.collect(result)})
 
-      ValidationResult.Builder.of(true, FileFormat.TABULAR, cnt.toInt, ValidationProfile.GBIF_INDEXING_PROFILE)
+      RecordsValidationResourceResultBuilder.of("", cnt)
         .withIssues(validationCollector.getAggregatedCounts, validationCollector.getSamples)
         .withTermsFrequency(metricsCollector.getTermFrequency)
-        .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts).build();
+        .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts).build
     }
   }
 

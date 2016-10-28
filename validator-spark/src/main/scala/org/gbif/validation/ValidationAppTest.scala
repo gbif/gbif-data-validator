@@ -1,9 +1,11 @@
+package org.gbif.validation
+
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
-object ValidationAppTest {
+  object ValidationAppTest {
 
   val log = LoggerFactory.getLogger("ValidationAppTest")
   /**
@@ -19,7 +21,12 @@ object ValidationAppTest {
     */
   def main(args: Array[String]): Unit = {
 
-    val  conf = new ValidationSparkConf("http://devgateway-vh.gbif.org:8998/","validator-spark/target/validator-spark-0.1-SNAPSHOT.jar:validator-core/target/validator-core-0.1-SNAPSHOT.jar:/Users/fmendez/.m2/repository/com/cloudera/livy/livy-client-http/0.3.0-SNAPSHOT/livy-client-http-0.3.0-SNAPSHOT.jar","http://api.gbif-dev.org/v1/")
+    val  conf = new ValidationSparkConf("http://devgateway-vh.gbif.org:8998/",
+      "http://repository.gbif.org/service/local/artifact/maven/redirect?g=org.gbif.validator&a=validator-core&v=LATEST&r=snapshots&e=jar," +
+      "http://repository.gbif.org/service/local/artifact/maven/redirect?g=org.gbif.validator&a=validator-spark&v=LATEST&r=snapshots&e=jar," +
+      "http://repository.gbif.org/service/local/artifact/maven/redirect?g=com.cloudera.livy&a=livy-client-http&v=LATEST&r=thirdparty&e=jar",
+      "http://api.gbif-dev.org/v1/",
+       "/tmp/")
     val client = new DataValidationClient(conf)
     try {
       client.init()

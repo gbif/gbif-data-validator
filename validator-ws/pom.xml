@@ -145,6 +145,11 @@
     <version>${project.version}</version>
   </dependency>
   <dependency>
+    <groupId>org.gbif.validator</groupId>
+    <artifactId>validator-spark</artifactId>
+    <version>${project.version}</version>
+  </dependency>
+  <dependency>
     <groupId>org.gbif</groupId>
     <artifactId>gbif-parsers</artifactId>
     <version>${gbif-parsers.version}</version>
