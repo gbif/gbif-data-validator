@@ -143,6 +143,7 @@ public class ValidationResource {
   }
 
   /**
+   * TODO move to validator-processor
    * Method responsible to extract metadata (and headers) from the file identified by dataFilePath.
    *
    * @param dataFilePath location of the file

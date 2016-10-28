@@ -182,7 +182,7 @@ public class ValidationResult implements Serializable {
   /**
    * Contract of a {@link ValidationResourceResult}.
    */
-  private interface ValidationResourceResult {
+  public interface ValidationResourceResult {
     List<DateFileValidationElement> getIssues();
   }
 
