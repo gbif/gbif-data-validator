@@ -1,7 +1,5 @@
 package org.gbif.validation.ws;
 
-import org.gbif.validation.DataValidationClient;
-import org.gbif.validation.ValidationSparkConf;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
@@ -10,15 +8,8 @@ import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.utils.HttpUtil;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -171,5 +162,31 @@ public class ValidationResource {
       dataFilePath.toFile().delete();
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * TODO move to validator-processor
+   * Method responsible to extract metadata (and headers) from the file identified by dataFilePath.
+   *
+   * @param dataFilePath location of the file
+   * @param dataFile this object will be updated directly
+   */
+  private void extractAndSetTabularFileMetadata(java.nio.file.Path dataFilePath, DataFile dataFile) {
+    //TODO make use of CharsetDetection.detectEncoding(source, 16384);
+    if(dataFile.getDelimiterChar() == null) {
+      try {
+        CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
+        if (metadata.getDelimiter().length() == 1) {
+          dataFile.setDelimiterChar(metadata.getDelimiter().charAt(0));
+        } else {
+          throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
+        }
+      } catch (UnkownDelimitersException udEx) {
+        LOG.warn("Can not extractCsvMetadata of file {}", dataFilePath);
+        throw new WebApplicationException(SC_BAD_REQUEST);
+      }
+    }
+    //TODO fix this method to not load header if dataFileDescriptor.isHasHeaders() returns false
+    dataFile.loadHeaders();
   }
 }

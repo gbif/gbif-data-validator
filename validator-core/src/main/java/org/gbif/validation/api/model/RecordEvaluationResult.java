@@ -137,14 +137,6 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
-    public Builder addMissingDataDetail(EvaluationType evaluationType, Term[] terms) {
-      if(details == null){
-        details = new ArrayList<>();
-      }
-      details.add(new CompletenessEvaluationResultDetails(lineNumber, recordId, evaluationType, terms));
-      return this;
-    }
-
     public RecordEvaluationResult build(){
       return new RecordEvaluationResult(recordId, details == null ? new ArrayList<>() : details, interpretedData);
     }

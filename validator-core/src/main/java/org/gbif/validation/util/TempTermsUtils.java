@@ -17,11 +17,15 @@ public final class TempTermsUtils {
     //empty constructor
   }
 
-  /**
-   * Lookups columns terms from string names
-   */
-  public static Term[] buildTermMapping(String[] terms) {
 
+  /**
+   * Lookups columns terms from string names.
+   *
+   * @param terms
+   * @return
+   * @throws IllegalArgumentException
+   */
+  public static Term[] buildTermMapping(String[] terms) throws IllegalArgumentException {
     Term[] columnMapping = new Term[terms.length];
     for (int i = 0; i < terms.length; i++) {
       columnMapping[i] = TERM_FACTORY.findTerm(terms[i]);

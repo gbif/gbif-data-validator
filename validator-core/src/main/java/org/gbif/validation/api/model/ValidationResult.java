@@ -159,6 +159,10 @@ public class ValidationResult implements Serializable {
     return indexeable;
   }
 
+  public String getFileName() {
+    return fileName;
+  }
+
   public FileFormat getFileFormat() {
     return fileFormat;
   }
@@ -178,7 +182,7 @@ public class ValidationResult implements Serializable {
   /**
    * Contract of a {@link ValidationResourceResult}.
    */
-  private interface ValidationResourceResult {
+  public interface ValidationResourceResult {
     List<DateFileValidationElement> getIssues();
   }
 
