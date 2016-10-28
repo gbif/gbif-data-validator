@@ -3,6 +3,9 @@ package org.gbif.validation.collector;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -14,7 +17,7 @@ public class TermsFrequencyCollectorTest {
 
   @Test
   public void baseTest() {
-    Term[] columnHeaders = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DwcTerm.scientificName};
+    List<Term> columnHeaders = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DwcTerm.scientificName});
     testTermsFrequencyCollector(new TermsFrequencyCollector(columnHeaders, false));
     //just make sure the useConcurrentMap works even if this test do no test concurrency
     testTermsFrequencyCollector(new TermsFrequencyCollector(columnHeaders, true));

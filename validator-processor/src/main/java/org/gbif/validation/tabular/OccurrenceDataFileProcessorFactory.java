@@ -11,8 +11,10 @@ import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
 import java.util.Arrays;
+import java.util.List;
 
 import akka.actor.ActorSystem;
+import org.apache.commons.lang3.Validate;
 
 import static org.gbif.validation.util.TempTermsUtils.buildTermMapping;
 
@@ -43,7 +45,9 @@ public class OccurrenceDataFileProcessorFactory {
    */
   public DataFileProcessor create(DataFile dataFile) {
 
-    Term[] termsColumnsMapping = buildTermMapping(dataFile.getColumns());
+    Validate.notNull(dataFile.getColumns(), "headers must not be null");
+
+    List<Term> termsColumnsMapping = Arrays.asList(buildTermMapping(dataFile.getColumns()));
 
     if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
       //TODO create a Factory for Collectors

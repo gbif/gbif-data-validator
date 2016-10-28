@@ -40,7 +40,7 @@ public class EvaluatorFactory {
    *
    * @return new instance
    */
-  public RecordEvaluator create(Term[] columns) {
+  public RecordEvaluator create(List<Term> columns) {
     List<RecordEvaluator> evaluators = new ArrayList<>();
     evaluators.add(new RecordStructureEvaluator(columns));
     evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),

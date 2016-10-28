@@ -8,6 +8,8 @@ import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceR
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
 
+import java.util.List;
+
 public class DataValidationProcessor  {
 
   private final RecordEvaluator recordEvaluator;
@@ -19,7 +21,7 @@ public class DataValidationProcessor  {
   private long line;
 
   //TODO Should interpretedTermsCountCollector be nullable?
-  public DataValidationProcessor(Term[] terms, RecordEvaluator recordEvaluator,
+  public DataValidationProcessor(List<Term> terms, RecordEvaluator recordEvaluator,
                                  InterpretedTermsCountCollector interpretedTermsCountCollector) {
     this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);

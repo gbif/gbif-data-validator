@@ -6,6 +6,7 @@ import org.gbif.validation.api.ResultsCollector;
 
 import java.io.Serializable;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -22,12 +23,12 @@ public class TermsFrequencyCollector implements RecordMetricsCollector, Serializ
 
   /**
    *
-   * @param columnHeaders
+   * @param terms columnHeaders
    * @param useConcurrentMap if this {@link ResultsCollector} will be used in a concurrent context
    */
-  public TermsFrequencyCollector(Term[] columnHeaders, boolean useConcurrentMap) {
-    Validate.notNull(columnHeaders, "columnHeaders must not be null");
-    this.columnHeaders = columnHeaders;
+  public TermsFrequencyCollector(List<Term> terms, boolean useConcurrentMap) {
+    Validate.notNull(terms, "columnHeaders must not be null");
+    this.columnHeaders = terms.toArray(new Term[terms.size()]);
 
     if(useConcurrentMap) {
       termFrequencyCounter = new ConcurrentHashMap<>(columnHeaders.length);

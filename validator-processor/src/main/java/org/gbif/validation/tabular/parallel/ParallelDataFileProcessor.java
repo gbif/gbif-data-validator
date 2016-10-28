@@ -5,15 +5,16 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
-import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,16 +41,16 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
   //This instance is shared between all the requests
   private final ActorSystem system;
 
-  private final Term[] termsColumnsMapping;
+  private final List<Term> termsColumnsMapping;
 
   private static class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
     private Set<DataWorkResult> results;
     private int numOfActors;
     private DataFile dataFile;
-    private Term[] termsColumnsMapping;
+    private List<Term> termsColumnsMapping;
 
-    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory evaluatorFactory, Term[] termsColumnsMapping) {
+    ParallelDataFileProcessorMaster(ResultsCollector collector, EvaluatorFactory evaluatorFactory, List<Term> termsColumnsMapping) {
       receive(
         match(DataFile.class, dataFile  -> {
           this.dataFile = dataFile;
@@ -106,7 +107,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   }
 
-  public ParallelDataFileProcessor(EvaluatorFactory evaluatorFactory, ActorSystem system, Term[] termsColumnsMapping) {
+  public ParallelDataFileProcessor(EvaluatorFactory evaluatorFactory, ActorSystem system, List<Term> termsColumnsMapping) {
     this.evaluatorFactory = evaluatorFactory;
     this.system = system;
     this.termsColumnsMapping = termsColumnsMapping;

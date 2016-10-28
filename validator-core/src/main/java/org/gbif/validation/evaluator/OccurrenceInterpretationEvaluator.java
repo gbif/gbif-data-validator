@@ -10,6 +10,7 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -37,12 +38,12 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param interpreter occurrence interpreter
    * @param columnMapping
    */
-  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term[] columnMapping) {
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, List<Term> columnMapping) {
     Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
     Validate.notNull(columnMapping, "columnMapping must not be null");
 
     this.interpreter = interpreter;
-    this.columnMapping = columnMapping;
+    this.columnMapping = columnMapping.toArray(new Term[columnMapping.size()]);
   }
 
   @Override

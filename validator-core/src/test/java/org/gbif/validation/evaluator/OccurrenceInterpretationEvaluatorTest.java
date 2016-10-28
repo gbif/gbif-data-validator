@@ -6,6 +6,9 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -21,7 +24,7 @@ public class OccurrenceInterpretationEvaluatorTest {
   public void testToVerbatimOccurrence(){
 
     //test expected data
-    Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
+    List<Term> columnMapping = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified});
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
             columnMapping);
 
@@ -49,7 +52,7 @@ public class OccurrenceInterpretationEvaluatorTest {
 
   @Test
   public void testEvaluate(){
-    Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
+    List<Term> columnMapping = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified});
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
             columnMapping);
     assertNull(evaluator.evaluate(null, null));

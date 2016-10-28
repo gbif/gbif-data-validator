@@ -12,13 +12,14 @@ import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.tabular.RecordSourceFactory;
 
 import java.io.File;
+import java.util.List;
 
 public class SingleDataFileProcessor implements DataFileProcessor {
 
   private final DataValidationProcessor dataValidationProcessor;
 
   //TODO Should interpretedTermsCountCollector be nullable?
-  public SingleDataFileProcessor(Term[] terms, RecordEvaluator recordEvaluator,
+  public SingleDataFileProcessor(List<Term> terms, RecordEvaluator recordEvaluator,
                                  InterpretedTermsCountCollector interpretedTermsCountCollector) {
     dataValidationProcessor = new DataValidationProcessor(terms,recordEvaluator,interpretedTermsCountCollector);
   }
