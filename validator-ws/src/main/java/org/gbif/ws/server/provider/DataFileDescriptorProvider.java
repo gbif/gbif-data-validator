@@ -6,22 +6,21 @@ import org.gbif.validation.ws.WsValidationParams;
 
 import java.nio.charset.Charset;
 import java.util.function.Function;
-
 import javax.ws.rs.core.MediaType;
 
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
-import static org.gbif.validation.ws.WsValidationParams.FORMAT;
-import static org.gbif.validation.ws.WsValidationParams.ENCODING;
+import static org.gbif.validation.ws.WsValidationParams.DATE_FORMAT;
 import static org.gbif.validation.ws.WsValidationParams.DECIMAL_SEPARATOR;
+import static org.gbif.validation.ws.WsValidationParams.ENCODING;
 import static org.gbif.validation.ws.WsValidationParams.FIELDS_ENCLOSED_BY;
 import static org.gbif.validation.ws.WsValidationParams.FIELDS_TERMINATED_BY;
+import static org.gbif.validation.ws.WsValidationParams.FILE;
+import static org.gbif.validation.ws.WsValidationParams.FORMAT;
 import static org.gbif.validation.ws.WsValidationParams.HAS_HEADERS;
 import static org.gbif.validation.ws.WsValidationParams.LINES_TERMINATED_BY;
-import static org.gbif.validation.ws.WsValidationParams.DATE_FORMAT;
-import static org.gbif.validation.ws.WsValidationParams.FILE;
 
 /**
  * Utility class to transform form parameters into DataFileDescriptor instances.
@@ -48,19 +47,20 @@ public class DataFileDescriptorProvider {
                                             FormDataContentDisposition header) {
     DataFileDescriptor dataFileDescriptor = new DataFileDescriptor();
 
+    dataFileDescriptor.setFieldsTerminatedBy(orElse(FIELDS_TERMINATED_BY, formDataMultiPart, null));
+
     dataFileDescriptor.setFormat(orElse(FORMAT, formDataMultiPart, FORMAT.getDefaultValue()));
     dataFileDescriptor.setEncoding(orElse(ENCODING, formDataMultiPart, ENCODING.getDefaultValue()));
     dataFileDescriptor.setFieldsEnclosedBy(orElse(FIELDS_ENCLOSED_BY, formDataMultiPart,
                                                   FIELDS_ENCLOSED_BY.getDefaultValue()));
-    dataFileDescriptor.setFieldsTerminatedBy(orElse(FIELDS_TERMINATED_BY, formDataMultiPart,
-                                                    FIELDS_TERMINATED_BY.getDefaultValue()));
+
     dataFileDescriptor.setLinesTerminatedBy(orElse(LINES_TERMINATED_BY, formDataMultiPart,
                                                    LINES_TERMINATED_BY.getDefaultValue()));
     dataFileDescriptor.setHasHeaders(orElse(HAS_HEADERS, formDataMultiPart, HAS_HEADERS.getDefaultValue()));
     dataFileDescriptor.setDateFormat(orElse(DATE_FORMAT, formDataMultiPart, DATE_FORMAT.getDefaultValue()));
     dataFileDescriptor.setDecimalSeparator(orElse(DECIMAL_SEPARATOR, formDataMultiPart,
                                                   DECIMAL_SEPARATOR.getDefaultValue()));
-    dataFileDescriptor.setFile(orElse(FILE,formDataMultiPart,header.getFileName()));
+    dataFileDescriptor.setFile(orElse(FILE, formDataMultiPart, header.getFileName()));
     return dataFileDescriptor;
   }
 

@@ -159,6 +159,10 @@ public class ValidationResult implements Serializable {
     return indexeable;
   }
 
+  public String getFileName() {
+    return fileName;
+  }
+
   public FileFormat getFileFormat() {
     return fileFormat;
   }

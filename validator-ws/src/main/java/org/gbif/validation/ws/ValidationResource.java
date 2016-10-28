@@ -1,11 +1,13 @@
 package org.gbif.validation.ws;
 
+import org.gbif.utils.HttpUtil;
+import org.gbif.utils.file.csv.CSVReaderFactory;
+import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
 import org.gbif.validation.util.FileBashUtilities;
-import org.gbif.validation.api.model.DataFileDescriptor;
-import org.gbif.utils.HttpUtil;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.IOException;
@@ -27,12 +29,13 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.FormDataParam;
 import com.sun.jersey.spi.resource.Singleton;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.eclipse.jetty.server.Response.SC_BAD_REQUEST;
-import static org.eclipse.jetty.server.Response.SC_OK;
 import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
+import static org.eclipse.jetty.server.Response.SC_OK;
 
 @Path("/validate")
 @Produces(MediaType.APPLICATION_JSON)
@@ -123,17 +126,44 @@ public class ValidationResource {
     try {
       DataFile dataFile = new DataFile();
       //set the original file name (mostly used to send it back in the response)
-      dataFile.setSourceFileName(dataFileDescriptor.getFile());
+      dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getFile()));
       dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
       dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
       dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
       dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
-      dataFile.loadHeaders();
+
+      extractAndSetTabularFileMetadata(dataFilePath, dataFile);
+
       return dataFileProcessorFactory.create(dataFile).process(dataFile);
     } catch (IOException ex) {
       //deletes the file in case of error
       dataFilePath.toFile().delete();
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     }
+  }
+
+  /**
+   * Method responsible to extract metadata (and headers) from the file identified by dataFilePath.
+   *
+   * @param dataFilePath location of the file
+   * @param dataFile this object will be updated directly
+   */
+  private void extractAndSetTabularFileMetadata(java.nio.file.Path dataFilePath, DataFile dataFile) {
+    //TODO make use of CharsetDetection.detectEncoding(source, 16384);
+    if(dataFile.getDelimiterChar() == null) {
+      try {
+        CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
+        if (metadata.getDelimiter().length() == 1) {
+          dataFile.setDelimiterChar(metadata.getDelimiter().charAt(0));
+        } else {
+          throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
+        }
+      } catch (UnkownDelimitersException udEx) {
+        LOG.warn("Can not extractCsvMetadata of file {}", dataFilePath);
+        throw new WebApplicationException(SC_BAD_REQUEST);
+      }
+    }
+    //TODO fix this method to not load header if dataFileDescriptor.isHasHeaders() returns false
+    dataFile.loadHeaders();
   }
 }
