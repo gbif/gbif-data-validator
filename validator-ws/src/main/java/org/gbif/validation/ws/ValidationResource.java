@@ -3,6 +3,7 @@ package org.gbif.validation.ws;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
+import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationResult;
