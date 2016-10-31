@@ -21,7 +21,7 @@ import static org.gbif.validation.util.TempTermsUtils.buildTermMapping;
 /**
  * Creates instances of DataFile processors.
  */
-public class OccurrenceDataFileProcessorFactory {
+public class DataFileProcessorFactory {
 
   public static final int FILE_SPLIT_SIZE = 10000;
 
@@ -33,7 +33,7 @@ public class OccurrenceDataFileProcessorFactory {
    * Default constructor.
    * @param apiUrl url to the GBIF api.
    */
-  public OccurrenceDataFileProcessorFactory(String apiUrl) {
+  public DataFileProcessorFactory(String apiUrl) {
     factory = new EvaluatorFactory(apiUrl);
     // Create an Akka system
     system = ActorSystem.create("DataFileProcessorSystem");

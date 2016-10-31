@@ -26,7 +26,7 @@ public class SingleDataFileProcessorTest {
 
     File testFile = FileUtils.getClasspathFile(TEST_FILE_LOCATION);
 
-    OccurrenceDataFileProcessorFactory factory = new OccurrenceDataFileProcessorFactory(DEV_API);
+    DataFileProcessorFactory factory = new DataFileProcessorFactory(DEV_API);
     DataFile datafile = new DataFile();
     datafile.setHasHeaders(true);
     datafile.setDelimiterChar('\t');

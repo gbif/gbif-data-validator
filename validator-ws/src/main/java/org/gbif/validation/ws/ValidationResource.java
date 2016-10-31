@@ -7,7 +7,7 @@ import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationResult;
-import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
+import org.gbif.validation.tabular.DataFileProcessorFactory;
 import org.gbif.validation.util.FileBashUtilities;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
@@ -50,7 +50,7 @@ public class ValidationResource {
 
   @Inject private ValidationConfiguration configuration;
 
-  @Inject private OccurrenceDataFileProcessorFactory dataFileProcessorFactory;
+  @Inject private DataFileProcessorFactory dataFileProcessorFactory;
 
   @Inject private HttpUtil httpUtil;
 
