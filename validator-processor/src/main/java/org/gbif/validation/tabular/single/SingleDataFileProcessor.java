@@ -27,8 +27,8 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   @Override
   public ValidationResult process(DataFile dataFile) {
 
-    try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()), dataFile.getDelimiterChar(),
-            dataFile.isHasHeaders())) {
+    try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
+            dataFile.getDelimiterChar(), dataFile.isHasHeaders())) {
       String[] record;
       while ((record = recordSource.read()) != null) {
         dataValidationProcessor.process(record);
