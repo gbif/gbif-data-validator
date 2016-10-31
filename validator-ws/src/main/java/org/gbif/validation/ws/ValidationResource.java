@@ -3,7 +3,6 @@ package org.gbif.validation.ws;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
-import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationResult;
@@ -68,18 +67,25 @@ public class ValidationResource {
                                        @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
                                        FormDataMultiPart formDataMultiPart) {
       DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
-      java.nio.file.Path dataFilePath = downloadFile(dataFileDescriptor, stream, false);
+      java.nio.file.Path dataFilePath = prepareFile(dataFileDescriptor, stream, false);
       ValidationResult result = processFile(dataFilePath, dataFileDescriptor);
       //deletes the downloaded file
       dataFilePath.toFile().delete();
       return result;
   }
 
-  private java.nio.file.Path downloadFile(DataFileDescriptor descriptor, InputStream stream, Boolean useHdfs) {
-    if(descriptor.getFile() != null) {
+  /**
+   * Prepare file
+   * @param descriptor
+   * @param stream
+   * @param useHdfs
+   * @return
+   */
+  private java.nio.file.Path prepareFile(DataFileDescriptor descriptor, InputStream stream, Boolean useHdfs) {
+    if(descriptor.getSubmittedFile() != null) {
       try {
-        return descriptor.getFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getFile()),useHdfs) :
-                                                          copyDataFile(stream,descriptor, useHdfs);
+        return descriptor.getSubmittedFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getSubmittedFile()),useHdfs) :
+                                                          copyDataFile(stream, descriptor, useHdfs);
       } catch(IOException  ex){
         throw new WebApplicationException(ex, SC_BAD_REQUEST);
       }
@@ -91,7 +97,7 @@ public class ValidationResource {
    * Downloads a file from a HTTP(s) endpoint.
    */
   private java.nio.file.Path downloadHttpFile(URL fileUrl, boolean toHdfs) throws IOException {
-    java.nio.file.Path destinationFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
+    java.nio.file.Path destinationFilePath = generateFilePath();
     if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() == SC_OK) {
       if(toHdfs) {
         copyToHdfs(destinationFilePath);
@@ -105,8 +111,8 @@ public class ValidationResource {
   /**
    * Creates a new random path to be used when copying files.
    */
-  private java.nio.file.Path downloadFilePath(String fileName) {
-    return Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(),fileName);
+  private java.nio.file.Path generateFilePath() {
+    return Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(), UUID.randomUUID().toString());
   }
 
 
@@ -118,12 +124,12 @@ public class ValidationResource {
                                           Boolean useHdfs) throws IOException {
     LOG.info("Uploading data file into {}", descriptor);
     if (!useHdfs) {
-      java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getFile());
-      Files.createDirectory(destinyFilePath.getParent());
-      Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
-      return destinyFilePath;
+      java.nio.file.Path destinationFilePath = generateFilePath();
+      Files.createDirectory(destinationFilePath.getParent());
+      Files.copy(stream, destinationFilePath, StandardCopyOption.REPLACE_EXISTING);
+      return destinationFilePath;
     } else {
-      return Paths.get(copyToHdfs(stream,descriptor.getFile()).toUri());
+      return Paths.get(copyToHdfs(stream,descriptor.getSubmittedFile()).toUri());
     }
 
   }
@@ -157,7 +163,7 @@ public class ValidationResource {
     try {
       DataFile dataFile = new DataFile();
       //set the original file name (mostly used to send it back in the response)
-      dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getFile()));
+      dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
       dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
       dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
       dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());

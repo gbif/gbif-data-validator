@@ -17,7 +17,6 @@ import static org.gbif.validation.ws.WsValidationParams.DECIMAL_SEPARATOR;
 import static org.gbif.validation.ws.WsValidationParams.ENCODING;
 import static org.gbif.validation.ws.WsValidationParams.FIELDS_ENCLOSED_BY;
 import static org.gbif.validation.ws.WsValidationParams.FIELDS_TERMINATED_BY;
-import static org.gbif.validation.ws.WsValidationParams.FILE;
 import static org.gbif.validation.ws.WsValidationParams.FORMAT;
 import static org.gbif.validation.ws.WsValidationParams.HAS_HEADERS;
 import static org.gbif.validation.ws.WsValidationParams.LINES_TERMINATED_BY;
@@ -60,7 +59,7 @@ public class DataFileDescriptorProvider {
     dataFileDescriptor.setDateFormat(orElse(DATE_FORMAT, formDataMultiPart, DATE_FORMAT.getDefaultValue()));
     dataFileDescriptor.setDecimalSeparator(orElse(DECIMAL_SEPARATOR, formDataMultiPart,
                                                   DECIMAL_SEPARATOR.getDefaultValue()));
-    dataFileDescriptor.setFile(orElse(FILE, formDataMultiPart, header.getFileName()));
+    dataFileDescriptor.setSubmittedFile(header.getFileName());
     return dataFileDescriptor;
   }
 

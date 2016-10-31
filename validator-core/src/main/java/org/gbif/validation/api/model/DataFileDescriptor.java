@@ -4,7 +4,7 @@ import java.nio.charset.Charset;
 
 public class DataFileDescriptor {
 
-  private String file;
+  private String submittedFile;
 
   private FileFormat format;
 
@@ -22,12 +22,12 @@ public class DataFileDescriptor {
 
   private boolean hasHeaders;
 
-  public String getFile() {
-    return file;
+  public String getSubmittedFile() {
+    return submittedFile;
   }
 
-  public void setFile(String file) {
-    this.file = file;
+  public void setSubmittedFile(String submittedFile) {
+    this.submittedFile = submittedFile;
   }
 
   public FileFormat getFormat() {
