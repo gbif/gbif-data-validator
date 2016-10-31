@@ -68,7 +68,7 @@ public class ValidationResource {
                                        @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
                                        FormDataMultiPart formDataMultiPart) {
       DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
-      java.nio.file.Path dataFilePath = downloadFile(dataFileDescriptor, stream, true);
+      java.nio.file.Path dataFilePath = downloadFile(dataFileDescriptor, stream, false);
       ValidationResult result = processFile(dataFilePath, dataFileDescriptor);
       //deletes the downloaded file
       dataFilePath.toFile().delete();
