@@ -1,4 +1,4 @@
-package org.gbif.validation.tabular;
+package org.gbif.validation.source;
 
 import org.gbif.validation.api.RecordSource;
 import org.gbif.utils.file.tabular.TabularDataFileReader;
@@ -21,7 +21,7 @@ public class TabularFileReader implements RecordSource {
   public String[] read() throws IOException {
     List<String> row = wrapped.read();
     if(row != null) {
-      return row.toArray(new String[0]);
+      return row.toArray(new String[row.size()]);
     }
     return null;
   }

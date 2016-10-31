@@ -9,7 +9,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
-import org.gbif.validation.tabular.RecordSourceFactory;
+import org.gbif.validation.source.RecordSourceFactory;
 
 import java.io.File;
 import java.util.List;

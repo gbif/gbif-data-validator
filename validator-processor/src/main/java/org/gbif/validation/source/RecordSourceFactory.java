@@ -1,4 +1,4 @@
-package org.gbif.validation.tabular;
+package org.gbif.validation.source;
 
 import org.gbif.validation.api.RecordSource;
 import org.gbif.utils.file.tabular.TabularFiles;

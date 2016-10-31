@@ -3,7 +3,7 @@ package org.gbif.validation.tabular.parallel;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
-import org.gbif.validation.tabular.RecordSourceFactory;
+import org.gbif.validation.source.RecordSourceFactory;
 
 import java.io.File;
 
