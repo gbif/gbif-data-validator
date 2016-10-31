@@ -93,7 +93,9 @@ public class ValidationResource {
   private java.nio.file.Path downloadHttpFile(URL fileUrl, boolean toHdfs) throws IOException {
     java.nio.file.Path destinationFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
     if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() == SC_OK) {
-      copyToHdfs(destinationFilePath);
+      if(toHdfs) {
+        copyToHdfs(destinationFilePath);
+      }
       return destinationFilePath;
     }
     throw new WebApplicationException(SC_BAD_REQUEST);
