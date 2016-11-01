@@ -149,7 +149,7 @@
         <artifactId>*</artifactId>
       </exclusion>
       <exclusion>
-        <groupId>org.apache.curato</groupId>
+        <groupId>org.apache.curator</groupId>
         <artifactId>*</artifactId>
       </exclusion>
     </exclusions>
