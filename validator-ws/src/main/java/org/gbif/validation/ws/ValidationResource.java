@@ -8,7 +8,6 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.DataFileProcessorFactory;
-import org.gbif.validation.util.FileBashUtilities;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.FileInputStream;
@@ -166,7 +165,6 @@ public class ValidationResource {
       //set the original file name (mostly used to send it back in the response)
       dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
       dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
-      dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
       dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
       dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
       extractAndSetTabularFileMetadata(dataFilePath, dataFile);
@@ -201,7 +199,5 @@ public class ValidationResource {
         throw new WebApplicationException(SC_BAD_REQUEST);
       }
     }
-    //TODO fix this method to not load header if dataFileDescriptor.isHasHeaders() returns false
-    dataFile.loadHeaders();
   }
 }
