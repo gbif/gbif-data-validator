@@ -9,8 +9,7 @@ import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
-import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
-import org.gbif.validation.util.FileBashUtilities;
+import org.gbif.validation.tabular.DataFileProcessorFactory;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.File;
@@ -58,7 +57,7 @@ public class ValidationResource {
 
   @Inject private ValidationConfiguration configuration;
 
-  @Inject private OccurrenceDataFileProcessorFactory dataFileProcessorFactory;
+  @Inject private DataFileProcessorFactory dataFileProcessorFactory;
 
   @Inject private HttpUtil httpUtil;
 

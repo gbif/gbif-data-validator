@@ -5,26 +5,18 @@ import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.ValidationSparkConf;
-import org.gbif.validation.tabular.OccurrenceDataFileProcessorFactory;
+import org.gbif.validation.tabular.DataFileProcessorFactory;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
-import com.google.inject.Provides;
 
 /**
  * Server listener. Contains
@@ -65,10 +57,10 @@ public class ValidationWsListener extends GbifServletListener {
 
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
-      bind(OccurrenceDataFileProcessorFactory.class).toInstance(new OccurrenceDataFileProcessorFactory(configuration.getApiUrl()));
+      bind(DataFileProcessorFactory.class).toInstance(new DataFileProcessorFactory(configuration.getApiUrl()));
 
       expose(ValidationConfiguration.class);
-      expose(OccurrenceDataFileProcessorFactory.class);
+      expose(DataFileProcessorFactory.class);
       expose(HttpUtil.class);
     }
 

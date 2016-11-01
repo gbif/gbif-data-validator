@@ -1,17 +1,24 @@
 package org.gbif.validation.api;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
+import org.gbif.dwc.terms.Term;
+import org.gbif.validation.api.model.FileFormat;
+
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
+/**
+ * Represents a single source data file and its "metadata".
+ */
 public class DataFile {
 
-  private Character delimiterChar = '\t';
-  private String[] columns;
   private String fileName;
+  private FileFormat fileFormat;
   private String sourceFileName;
+
+  private Term[] columns;
+
+  private Character delimiterChar;
   private Integer numOfLines;
   private Integer fileLineOffset;
   private boolean hasHeaders;
@@ -24,11 +31,11 @@ public class DataFile {
     this.delimiterChar = delimiterChar;
   }
 
-  public String[] getColumns() {
+  public Term[] getColumns() {
     return columns;
   }
 
-  public void setColumns(String[] columns) {
+  public void setColumns(Term[] columns) {
     this.columns = columns;
   }
 
@@ -83,6 +90,14 @@ public class DataFile {
     this.fileLineOffset = fileLineOffset;
   }
 
+  public FileFormat getFileFormat() {
+    return fileFormat;
+  }
+
+  public void setFileFormat(FileFormat fileFormat) {
+    this.fileFormat = fileFormat;
+  }
+
   public boolean isHasHeaders() {
     return hasHeaders;
   }
@@ -91,20 +106,18 @@ public class DataFile {
     this.hasHeaders = hasHeaders;
   }
 
-  public void loadHeaders() {
-    columns = readHeader();
-  }
-
   @Override
   public String toString() {
     return "DataFile{" +
-           "delimiterChar=" + delimiterChar +
-           ", columns=" + Arrays.toString(columns) +
-           ", fileName='" + fileName + '\'' +
-           ", numOfLines=" + numOfLines +
-           ", lineOffset=" + fileLineOffset +
-           ", hasHeaders=" + hasHeaders +
-           '}';
+            "fileName=" + fileName +
+            "fileFormat=" + fileFormat +
+            "sourceFileName=" + sourceFileName +
+            ", columns=" + Arrays.toString(columns) +
+            ", delimiterChar='" + delimiterChar + '\'' +
+            ", numOfLines=" + numOfLines +
+            ", fileLineOffset=" + fileLineOffset +
+            ", hasHeaders=" + hasHeaders +
+            '}';
   }
 
   @Override
@@ -113,28 +126,26 @@ public class DataFile {
     if (o == null || getClass() != o.getClass()) return false;
     DataFile dataFile = (DataFile) o;
     return hasHeaders == dataFile.hasHeaders &&
-           Objects.equals(delimiterChar, dataFile.delimiterChar) &&
-           Arrays.equals(columns, dataFile.columns) &&
-           Objects.equals(fileName, dataFile.fileName) &&
-           Objects.equals(numOfLines, dataFile.numOfLines) &&
-           Objects.equals(fileLineOffset, dataFile.fileLineOffset);
+            Objects.equals(delimiterChar, dataFile.delimiterChar) &&
+            Arrays.equals(columns, dataFile.columns) &&
+            Objects.equals(fileName, dataFile.fileName) &&
+            Objects.equals(fileFormat, dataFile.fileFormat) &&
+            Objects.equals(sourceFileName, dataFile.sourceFileName) &&
+            Objects.equals(numOfLines, dataFile.numOfLines) &&
+            Objects.equals(fileLineOffset, dataFile.fileLineOffset);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(delimiterChar, columns, fileName, numOfLines, fileLineOffset, hasHeaders);
+    return Objects.hash(
+            fileName,
+            fileFormat,
+            sourceFileName,
+            columns,
+            delimiterChar,
+            numOfLines,
+            fileLineOffset,
+            hasHeaders);
   }
 
-  /**
-   * Reads the first line of a file and return it as the header.
-   * @return
-   */
-  private String[] readHeader() {
-    try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-      return br.readLine().split(delimiterChar.toString());
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    }
-
-  }
 }
