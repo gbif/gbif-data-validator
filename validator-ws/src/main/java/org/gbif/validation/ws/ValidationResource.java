@@ -10,6 +10,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.DataFileProcessorFactory;
+import org.gbif.validation.util.FileBashUtilities;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.File;
@@ -104,9 +105,9 @@ public class ValidationResource {
   }
 
   private URI downloadFile(DataFileDescriptor descriptor, InputStream stream, Boolean useHdfs) {
-    if(descriptor.getFile() != null) {
+    if(descriptor.getSubmittedFile() != null) {
       try {
-        return descriptor.getFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getFile()),useHdfs) :
+        return descriptor.getSubmittedFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getSubmittedFile()),useHdfs) :
                                                           copyDataFile(stream,descriptor, useHdfs);
       } catch(IOException  ex){
         throw new WebApplicationException(ex, SC_BAD_REQUEST);
@@ -146,12 +147,12 @@ public class ValidationResource {
                            Boolean useHdfs) throws IOException {
     LOG.info("Uploading data file into {}", descriptor);
     if (!useHdfs) {
-      java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getFile());
+      java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getSubmittedFile());
       Files.createDirectory(destinyFilePath.getParent());
       Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
       return destinyFilePath.toUri();
     } else {
-      return copyToHdfs(stream,descriptor.getFile()).toUri();
+      return copyToHdfs(stream,descriptor.getSubmittedFile()).toUri();
     }
 
   }
@@ -177,7 +178,7 @@ public class ValidationResource {
     try {
       if(useHdfs) {
         ScalaJobHandle<ValidationResult.RecordsValidationResourceResult> jobHandle = (ScalaJobHandle<ValidationResult.RecordsValidationResourceResult>)Await.ready(dataValidationClient.processDataFile(dataFileUri.getPath()), Duration.create(10000, TimeUnit.SECONDS));
-        return ValidationResult.Builder.of(true, dataFileDescriptor.getFile(),
+        return ValidationResult.Builder.of(true, dataFileDescriptor.getSubmittedFile(),
                                            FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
           .withResourceResult(jobHandle.value().get().get()).build();
 
@@ -185,7 +186,7 @@ public class ValidationResource {
         DataFile dataFile = new DataFile();
         java.nio.file.Path dataFilePath = Paths.get(dataFileUri);
         //set the original file name (mostly used to send it back in the response)
-        dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getFile()));
+        dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
         dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
         dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
         dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
@@ -237,6 +238,6 @@ public class ValidationResource {
       }
     }
     //TODO fix this method to not load header if dataFileDescriptor.isHasHeaders() returns false
-    dataFile.loadHeaders();
+    //dataFile.loadHeaders();
   }
 }
