@@ -6,6 +6,7 @@ import org.gbif.utils.file.tabular.TabularDataFileReader;
 import org.gbif.validation.util.TempTermsUtils;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -14,10 +15,12 @@ import javax.annotation.Nullable;
  */
 public class TabularFileReader implements RecordSource {
 
-  private List<String> headerLine;
+  private final Path filePath;
+  private final List<String> headerLine;
   private final TabularDataFileReader<List<String>> wrapped;
 
-  TabularFileReader(TabularDataFileReader<List<String>> wrapped) throws IOException {
+  TabularFileReader(Path filePath, TabularDataFileReader<List<String>> wrapped) throws IOException {
+    this.filePath = filePath;
     this.wrapped = wrapped;
     headerLine = wrapped.getHeaderLine();
   }
@@ -38,6 +41,12 @@ public class TabularFileReader implements RecordSource {
       return row.toArray(new String[row.size()]);
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public Path getFileSource() {
+    return filePath;
   }
 
   @Override

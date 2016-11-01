@@ -11,6 +11,7 @@ import org.gbif.validation.api.RecordSource;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +25,8 @@ public class DwcReader implements RecordSource {
 
   private static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
-  private ArchiveFile core;
+  //could be the core or an extension
+  private ArchiveFile darwinCoreComponent;
   private List<ArchiveField> archiveFields;
   private CSVReader csvReader;
   private Term idColumnTerm;
@@ -35,9 +37,9 @@ public class DwcReader implements RecordSource {
   DwcReader(File dwcFolder) throws IOException {
     Archive archive = ArchiveFactory.openArchive(dwcFolder);
 
-    core = archive.getCore();
-    archiveFields = core.getFieldsSorted();
-    csvReader = core.getCSVReader();
+    darwinCoreComponent = archive.getCore();
+    archiveFields = darwinCoreComponent.getFieldsSorted();
+    csvReader = darwinCoreComponent.getCSVReader();
   }
 
   @Nullable
@@ -50,10 +52,10 @@ public class DwcReader implements RecordSource {
     List<ArchiveField> termsWithDefaultValues = new ArrayList<>();
 
     // handle id column
-    idColumnTerm = core.getId().getTerm() != null ? core.getId().getTerm() : DEFAULT_ID_TERM;
+    idColumnTerm = darwinCoreComponent.getId().getTerm() != null ? darwinCoreComponent.getId().getTerm() : DEFAULT_ID_TERM;
 
     List<Term> terms = new ArrayList<>(archiveFields.size());
-    terms.add(core.getId().getIndex(), idColumnTerm);
+    terms.add(darwinCoreComponent.getId().getIndex(), idColumnTerm);
 
     for(ArchiveField af : archiveFields) {
       if(af.getIndex() != null){
@@ -93,6 +95,15 @@ public class DwcReader implements RecordSource {
     System.arraycopy(defaultValues, 0, line, line.length-1, defaultValuesTerm.length);
 
     return line;
+  }
+
+  @Nullable
+  @Override
+  public Path getFileSource() {
+    if(darwinCoreComponent == null) {
+      return null;
+    }
+    return darwinCoreComponent.getLocationFile().toPath();
   }
 
   @Override

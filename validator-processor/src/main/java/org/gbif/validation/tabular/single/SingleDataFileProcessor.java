@@ -11,7 +11,7 @@ import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.source.RecordSourceFactory;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class SingleDataFileProcessor implements DataFileProcessor {
@@ -25,10 +25,9 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   }
 
   @Override
-  public ValidationResult process(DataFile dataFile) {
+  public ValidationResult process(DataFile dataFile) throws IOException {
 
-    try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
-            dataFile.getDelimiterChar(), dataFile.isHasHeaders())) {
+    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile)) {
       String[] record;
       while ((record = recordSource.read()) != null) {
         dataValidationProcessor.process(record);

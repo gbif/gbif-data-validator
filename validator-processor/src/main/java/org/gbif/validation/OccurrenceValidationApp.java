@@ -2,9 +2,9 @@ package org.gbif.validation;
 
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationResult;
 import org.gbif.validation.tabular.DataFileProcessorFactory;
-import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.IOException;
 
@@ -17,10 +17,8 @@ public class OccurrenceValidationApp {
     String fileName = args[0];
     DataFile dataFile = new DataFile();
     dataFile.setFileName(fileName);
-    dataFile.setNumOfLines(FileBashUtilities.countLines(fileName));
-    dataFile.setDelimiterChar('\t');
+    dataFile.setFileFormat(FileFormat.DWCA);
     dataFile.setHasHeaders(true);
-    dataFile.loadHeaders();
     DataFileProcessorFactory dataFileProcessorFactory = new DataFileProcessorFactory(args[1]);
     DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile);
     ValidationResult result = dataFileProcessor.process(dataFile);

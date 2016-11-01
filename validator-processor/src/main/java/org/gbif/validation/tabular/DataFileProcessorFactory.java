@@ -7,16 +7,15 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.evaluator.EvaluatorFactory;
+import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 import akka.actor.ActorSystem;
-import org.apache.commons.lang3.Validate;
-
-import static org.gbif.validation.util.TempTermsUtils.buildTermMapping;
 
 /**
  * Creates instances of DataFile processors.
@@ -43,11 +42,9 @@ public class DataFileProcessorFactory {
    * Creates a DataFileProcessor instance analyzing the size of the input file.
    * If the file exceeds certain size it's processed in parallel otherwise a single thread processor it's used.
    */
-  public DataFileProcessor create(DataFile dataFile) {
-
-    Validate.notNull(dataFile.getColumns(), "headers must not be null");
-
-    List<Term> termsColumnsMapping = Arrays.asList(buildTermMapping(dataFile.getColumns()));
+  public DataFileProcessor create(DataFile dataFile) throws IOException {
+    DataFile preparedDataFile = RecordSourceFactory.prepareSource(dataFile);
+    List<Term> termsColumnsMapping = Arrays.asList(preparedDataFile.getColumns());
 
     if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
       //TODO create a Factory for Collectors
