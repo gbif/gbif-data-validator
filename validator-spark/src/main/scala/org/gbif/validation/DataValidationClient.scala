@@ -37,7 +37,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     */
   def init(): Unit = {
     scalaClient = new LivyClientBuilder(false).setURI(new URI(conf.livyServerUrl)).build().asScalaClient
-    uploadRelevantJarsForJobExecution()
+    //uploadRelevantJarsForJobExecution()
     conf.jars.split(",").foreach(jar => uploadJar(jar))
   }
 
@@ -104,13 +104,13 @@ class DataValidationClient(val conf: ValidationSparkConf) {
         .option("delimiter", "\t")
         .option("header", "true") // Use first line of all files as header
         .option("inferSchema", "false") // Automatically infer data types
-        .load(dataFile).cache();
+        .load(dataFile).cache()
 
       val columns = data.columns
       val terms  = TempTermsUtils.buildTermMapping(columns).toList
       val interpretedTermsCountCollector = new InterpretedTermsCountCollector(terms.asJava,true)
-      val metricsCollector = new TermsFrequencyCollector(terms.asJava, true);
-      val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
+      val metricsCollector = new TermsFrequencyCollector(terms.asJava, true)
+      val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)
       val cnt = data.count()
 
       //This is a bit of duplication: runs all the processing
