@@ -7,6 +7,7 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,30 +31,27 @@ public class SimpleValidationCollector implements ResultsCollector, Serializable
   public SimpleValidationCollector(Integer maxNumberOfSample) {
     this.maxNumberOfSample = maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE;
 
-    issueCounter = new HashMap<>();
-    issueSampling = new HashMap<>();
+    issueCounter = new EnumMap<>(EvaluationType.class);
+    issueSampling = new EnumMap<>(EvaluationType.class);
   }
 
   @Override
   public void collect(RecordEvaluationResult result) {
 
-    if (result.getDetails() == null) {
-      return;
+    if (result.getDetails() != null) {
+
+      result.getDetails().forEach(detail -> {
+        issueCounter.compute(detail.getEvaluationType(), (k, v) -> (v == null) ? 1 : ++v);
+
+        issueSampling.putIfAbsent(detail.getEvaluationType(), new ArrayList<>());
+        issueSampling.compute(detail.getEvaluationType(), (type, queue) -> {
+          if (queue.size() < maxNumberOfSample) {
+            issueSampling.get(type).add(detail);
+          }
+          return queue;
+        });
+      });
     }
-
-    result.getDetails().forEach(
-            detail -> {
-              issueCounter.compute(detail.getEvaluationType(), (k, v) -> (v == null) ? 1 : ++v);
-
-              issueSampling.putIfAbsent(detail.getEvaluationType(), new ArrayList<>());
-              issueSampling.compute(detail.getEvaluationType(), (type, queue) -> {
-                if (queue.size() < maxNumberOfSample) {
-                  issueSampling.get(type).add(detail);
-                }
-                return queue;
-              });
-            }
-    );
   }
 
   public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {

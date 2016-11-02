@@ -124,7 +124,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
             }}).toList
           // consumes the iterator
           newPartition.iterator
-        }).foreach( result => {validationCollector.collect(result);interpretedTermsCountCollector.collect(result)})
+        }).foreach( result => {log.info(result.toString);validationCollector.collect(result);interpretedTermsCountCollector.collect(result)})
 
       RecordsValidationResourceResultBuilder.of("", cnt)
         .withIssues(validationCollector.getAggregatedCounts, validationCollector.getSamples)
