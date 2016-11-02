@@ -191,6 +191,7 @@ public class ValidationResource {
         dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
         dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
         dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
+        dataFile.setFileFormat(dataFileDescriptor.getFormat());
         extractAndSetTabularFileMetadata(dataFilePath, dataFile);
 
         return dataFileProcessorFactory.create(dataFile).process(dataFile);
