@@ -7,6 +7,8 @@ package org.gbif.validation.api.model;
  */
 public enum EvaluationType {
 
+  DWCA_UNREADABLE(EvaluationCategory.RESOURCE_STRUCTURE),
+
   RECORD_NOT_UNIQUELY_IDENTIFIED(EvaluationCategory.RESOURCE_STRUCTURE),
 
   COLUMN_MISMATCH(EvaluationCategory.RECORD_STRUCTURE),

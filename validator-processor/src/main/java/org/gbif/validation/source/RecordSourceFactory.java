@@ -13,6 +13,9 @@ import org.apache.commons.lang3.Validate;
 
 /**
  * Creates instances of RecordSource class.
+ *
+ * RecordSourceFactory contract is to provide a RecordSource from different source therefore
+ * no validation on the structure of the source will be performed.
  */
 public class RecordSourceFactory {
 
@@ -75,7 +78,6 @@ public class RecordSourceFactory {
       dataFile.setColumns(rs.getHeaders());
       rs.close();
     }
-
     return dataFile;
   }
 
