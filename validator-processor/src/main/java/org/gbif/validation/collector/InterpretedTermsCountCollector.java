@@ -35,12 +35,8 @@ public class InterpretedTermsCountCollector implements ResultsCollector, Seriali
 
     this.targetedTerms = targetedTerms;
 
-    if(useConcurrentMap) {
-      interpretedValueCounter = new ConcurrentHashMap<>(targetedTerms.size());
-    }
-    else {
-      interpretedValueCounter = new HashMap<>(targetedTerms.size());
-    }
+    interpretedValueCounter = useConcurrentMap ? new ConcurrentHashMap<>(targetedTerms.size()):
+                                                 new HashMap<>(targetedTerms.size());
 
     for(Term term : targetedTerms) {
       interpretedValueCounter.put(term, 0l);

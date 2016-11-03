@@ -147,7 +147,7 @@ public class RecordEvaluationResult implements Serializable {
   /**
    * Base evaluation result details with "expected" and "found".
    */
-  public static class BaseEvaluationResultDetails implements EvaluationResultDetails {
+  public static class BaseEvaluationResultDetails implements EvaluationResultDetails, Serializable {
     protected final Long lineNumber;
     protected final String recordId;
     protected final EvaluationType evaluationType;
@@ -201,7 +201,7 @@ public class RecordEvaluationResult implements Serializable {
    * TODO decide if we should keep it
    * Evaluation result related to completeness.
    */
-  public static class CompletenessEvaluationResultDetails extends BaseEvaluationResultDetails {
+  public static class CompletenessEvaluationResultDetails extends BaseEvaluationResultDetails implements Serializable {
     private Term[] terms;
 
     CompletenessEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
@@ -218,7 +218,7 @@ public class RecordEvaluationResult implements Serializable {
   /**
    * Contains details of a RecordInterpretationResult.
    */
-  public static class RecordInterpretationResultDetails extends BaseEvaluationResultDetails {
+  public static class RecordInterpretationResultDetails extends BaseEvaluationResultDetails implements Serializable {
 
     private final Map<Term, String> relatedData;
 
