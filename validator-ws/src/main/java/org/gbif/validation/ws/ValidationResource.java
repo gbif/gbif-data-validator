@@ -4,12 +4,14 @@ import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.DataValidationClient;
+import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
-import org.gbif.validation.api.model.ValidationResult;
-import org.gbif.validation.tabular.DataFileProcessorFactory;
+import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.api.result.ValidationResultBuilders;
+import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.util.FileBashUtilities;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
@@ -58,7 +60,7 @@ public class ValidationResource {
 
   @Inject private ValidationConfiguration configuration;
 
-  @Inject private DataFileProcessorFactory dataFileProcessorFactory;
+  @Inject private ResourceEvaluationManager resourceEvaluationManager;
 
   @Inject private HttpUtil httpUtil;
 
@@ -177,9 +179,9 @@ public class ValidationResource {
   private ValidationResult processFile(URI dataFileUri, DataFileDescriptor dataFileDescriptor, boolean useHdfs)  {
     try {
       if(useHdfs) {
-        ScalaJobHandle<ValidationResult.RecordsValidationResourceResult> jobHandle = (ScalaJobHandle<ValidationResult.RecordsValidationResourceResult>)Await.ready(dataValidationClient.processDataFile(dataFileUri.getPath()), Duration.create(10000, TimeUnit.SECONDS));
-        return ValidationResult.Builder.of(true, dataFileDescriptor.getSubmittedFile(),
-                                           FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
+        ScalaJobHandle<ValidationResultElement> jobHandle = (ScalaJobHandle<ValidationResultElement>)Await.ready(dataValidationClient.processDataFile(dataFileUri.getPath()), Duration.create(10000, TimeUnit.SECONDS));
+        return ValidationResultBuilders.Builder.of(true, dataFileDescriptor.getSubmittedFile(),
+                FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
           .withResourceResult(jobHandle.value().get().get()).build();
 
       } else {
@@ -191,9 +193,10 @@ public class ValidationResource {
         dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
         dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
         dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
+        dataFile.setFileFormat(dataFileDescriptor.getFormat());
         extractAndSetTabularFileMetadata(dataFilePath, dataFile);
 
-        return dataFileProcessorFactory.create(dataFile).process(dataFile);
+        return resourceEvaluationManager.evaluate(dataFile);
       }
     } catch (Exception ex) {
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);

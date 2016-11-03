@@ -1,7 +1,7 @@
 package org.gbif.validation.tabular.parallel;
 
 import org.gbif.validation.api.ResultsCollector;
-import org.gbif.validation.api.model.EvaluationResultDetails;
+import org.gbif.validation.api.result.EvaluationResultDetails;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 

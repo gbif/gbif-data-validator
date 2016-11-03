@@ -2,7 +2,9 @@ package org.gbif.validation.api.model;
 
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceResultBuilder;
+import org.gbif.validation.api.result.RecordsValidationResultElement;
+import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.api.result.ValidationResultBuilders;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,16 +27,16 @@ public class ValidationResultTest {
     interpretedValuesCount.put(DwcTerm.scientificName, 4l);
 
     ValidationResult result =
-            ValidationResult.Builder.of(true, "myfile.zip", FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
-                    .withResourceResult(RecordsValidationResourceResultBuilder.of("myfile.csv", 18l)
+            ValidationResultBuilders.Builder.of(true, "myfile.zip", FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
+                    .withResourceResult(ValidationResultBuilders.RecordsValidationResultElementBuilder.of("myfile.csv", 18l)
                             .withTermsFrequency(termsFreq).build())
-                    .withResourceResult(RecordsValidationResourceResultBuilder.of("myextfile.csv", 4l)
+                    .withResourceResult(ValidationResultBuilders.RecordsValidationResultElementBuilder.of("myextfile.csv", 4l)
                             .withInterpretedValueCounts(interpretedValuesCount).build())
                     .build();
 
-    assertEquals(new Long(18l), ((ValidationResult.RecordsValidationResourceResult)result.getResults().get(0))
+    assertEquals(new Long(18l), ((RecordsValidationResultElement) result.getResults().get(0))
             .getTermsFrequency().get(DwcTerm.scientificName));
-    assertEquals(new Long(4l), ((ValidationResult.RecordsValidationResourceResult) result.getResults().get(1))
+    assertEquals(new Long(4l), ((RecordsValidationResultElement) result.getResults().get(1))
             .getInterpretedValueCounts().get(DwcTerm.scientificName));
   }
 }

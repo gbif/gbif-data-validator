@@ -5,19 +5,24 @@ import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
+import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.ResourceStructureEvaluator;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
+import org.apache.commons.lang3.Validate;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
 /**
@@ -46,6 +51,21 @@ public class EvaluatorFactory {
     evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
             columns));
     return new RecordEvaluatorChain(evaluators);
+  }
+
+  /**
+   * Create a {@link ResourceStructureEvaluator} instance for a specific {@link DataFile}.
+   *
+   * @param fileFormat
+   * @return
+   */
+  public ResourceStructureEvaluator createResourceStructureEvaluator(FileFormat fileFormat) {
+    Validate.notNull(fileFormat, "dataFile fileFormat be provided");
+
+    switch(fileFormat) {
+      case DWCA: return new DwcaResourceStructureEvaluator();
+      default: return (dwcFolder, sourceFilename) -> Optional.empty();
+    }
   }
 
   /**

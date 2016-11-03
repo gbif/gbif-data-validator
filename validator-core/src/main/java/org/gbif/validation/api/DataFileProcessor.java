@@ -1,6 +1,6 @@
 package org.gbif.validation.api;
 
-import org.gbif.validation.api.model.ValidationResult;
+import org.gbif.validation.api.result.ValidationResult;
 
 import java.io.IOException;
 

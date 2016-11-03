@@ -4,8 +4,8 @@ import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.DataValidationClient;
+import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.ValidationSparkConf;
-import org.gbif.validation.tabular.DataFileProcessorFactory;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
@@ -57,10 +57,10 @@ public class ValidationWsListener extends GbifServletListener {
 
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
-      bind(DataFileProcessorFactory.class).toInstance(new DataFileProcessorFactory(configuration.getApiUrl()));
+      bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl()));
 
       expose(ValidationConfiguration.class);
-      expose(DataFileProcessorFactory.class);
+      expose(ResourceEvaluationManager.class);
       expose(HttpUtil.class);
     }
 

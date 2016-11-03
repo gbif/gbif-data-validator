@@ -1,11 +1,10 @@
 package org.gbif.validation;
 
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.api.model.ValidationResult;
-import org.gbif.validation.tabular.DataFileProcessorFactory;
+import org.gbif.validation.api.result.ValidationResult;
 
+import java.io.File;
 import java.io.IOException;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -17,11 +16,13 @@ public class OccurrenceValidationApp {
     String fileName = args[0];
     DataFile dataFile = new DataFile();
     dataFile.setFileName(fileName);
+    dataFile.setSourceFileName(new File(fileName).toPath().getFileName().toString());
     dataFile.setFileFormat(FileFormat.DWCA);
     dataFile.setHasHeaders(true);
-    DataFileProcessorFactory dataFileProcessorFactory = new DataFileProcessorFactory(args[1]);
-    DataFileProcessor dataFileProcessor = dataFileProcessorFactory.create(dataFile);
-    ValidationResult result = dataFileProcessor.process(dataFile);
+
+    ResourceEvaluationManager resourceEvaluationManager = new ResourceEvaluationManager(args[1]);
+
+    ValidationResult result = resourceEvaluationManager.evaluate(dataFile);
 
     ObjectMapper om = new ObjectMapper();
     om.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);

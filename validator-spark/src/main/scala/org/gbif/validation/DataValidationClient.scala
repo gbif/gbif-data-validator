@@ -8,9 +8,9 @@ import com.cloudera.livy.LivyClientBuilder
 import com.cloudera.livy.scalaapi._
 import dispatch.Http
 import dispatch._
-import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceResultBuilder
+import org.gbif.validation.api.result.{ValidationResultBuilders, ValidationResultElement, ValidationResult}
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.gbif.validation.api.model.{FileFormat, ValidationProfile, ValidationResult}
+import org.gbif.validation.api.model.{FileFormat, ValidationProfile}
 import org.gbif.validation.collector.{InterpretedTermsCountCollector, TermsFrequencyCollector}
 import org.gbif.validation.evaluator.EvaluatorFactory
 import org.gbif.validation.tabular.single.SimpleValidationCollector
@@ -93,7 +93,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     *
     * @param dataFile data file to be processed data read by the Spark job.
     */
-  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResult.RecordsValidationResourceResult] = {
+  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResultElement] = {
     //url is copied to a string variable to avoid serialization errors
     val gbifApiUrl = conf.gbifApiUrl
     scalaClient.submit { context =>
@@ -126,7 +126,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
           newPartition.iterator
         }).foreach( result => {validationCollector.collect(result);interpretedTermsCountCollector.collect(result)})
 
-      RecordsValidationResourceResultBuilder.of("", cnt)
+      ValidationResultBuilders.RecordsValidationResultElementBuilder.of("", cnt)
         .withIssues(validationCollector.getAggregatedCounts, validationCollector.getSamples)
         .withTermsFrequency(metricsCollector.getTermFrequency)
         .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts).build
