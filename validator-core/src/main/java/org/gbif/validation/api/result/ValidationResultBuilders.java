@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- *
+ * Contains all builders for {@link ValidationResult} and different {@link ValidationResultElement} implementations.
  */
 public class ValidationResultBuilders {
 
