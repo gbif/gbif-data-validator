@@ -6,6 +6,9 @@ import org.gbif.validation.api.model.RecordEvaluationResult
 import org.gbif.validation.conversion.MapConversions._
 import scala.collection.JavaConversions._
 
+/**
+  * Accumulates counts of evaluation types.
+  */
 class ResultsAccumulable extends AccumulableParam[Map[EvaluationType, Long], RecordEvaluationResult]  {
 
   override def addAccumulator(r: Map[EvaluationType, Long], t: RecordEvaluationResult): Map[EvaluationType, Long] = {

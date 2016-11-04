@@ -7,11 +7,11 @@ import com.cloudera.livy.LivyClientBuilder
 import com.cloudera.livy.scalaapi._
 import dispatch.Http
 import dispatch._
-import org.gbif.validation.accumulators.{InterpretedTermsAccumulable, ResultsAccumulable, TermFrequencyAccumulator}
+import org.gbif.validation.accumulators.{RecordIssuesAccumulable, InterpretedTermsAccumulable, ResultsAccumulable, TermFrequencyAccumulator}
 import org.gbif.validation.conversion.MapConversions
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.gbif.validation.api.model.EvaluationType
-import org.gbif.validation.api.result.{ValidationResultBuilders, ValidationResultElement}
+import org.gbif.validation.api.result.{EvaluationResultDetails, ValidationResultBuilders, ValidationResultElement}
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.gbif.validation.evaluator.EvaluatorFactory
 import org.gbif.validation.tabular.single.SimpleValidationCollector
@@ -113,6 +113,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
       val termsFrequencyAcc = context.sc.accumulable(Map.empty[Term,Long],"termFrequencyAcc")(new TermFrequencyAccumulator)
       val resultsAccumulableAcc = context.sc.accumulable(Map.empty[EvaluationType,Long],"resultsAccumulableAcc")(new ResultsAccumulable)
       val interpretedAccumulableAcc = context.sc.accumulable(Map.empty[Term,Long],"interpretedAccumulableAcc")(new InterpretedTermsAccumulable)
+      val recordIssuesAccumulable = context.sc.accumulable(Map.empty[EvaluationType, List[EvaluationResultDetails]],"recordIssuesAccumulable")(new RecordIssuesAccumulable(10))
 
       val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)
       val cnt = data.count()
@@ -127,11 +128,11 @@ class DataValidationClient(val conf: ValidationSparkConf) {
             }}).toList
           // consumes the iterator
           newPartition.iterator
-        }).foreach( result => {resultsAccumulableAcc += result;interpretedAccumulableAcc += result})
+        }).foreach( result => {resultsAccumulableAcc += result;interpretedAccumulableAcc += result; recordIssuesAccumulable+= result})
 
 
       ValidationResultBuilders.RecordsValidationResultElementBuilder.of("", cnt)
-        .withIssues(resultsAccumulableAcc.value.toMutableJavaMap, validationCollector.getSamples)
+        .withIssues(resultsAccumulableAcc.value.toMutableJavaMap, recordIssuesAccumulable.value.toMapListJava)
         .withTermsFrequency(termsFrequencyAcc.value.toMutableJavaMap)
         .withInterpretedValueCounts(interpretedAccumulableAcc.value.toMutableJavaMap).build
 

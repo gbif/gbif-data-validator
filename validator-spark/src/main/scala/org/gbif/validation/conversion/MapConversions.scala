@@ -1,17 +1,21 @@
 package org.gbif.validation.conversion
 
+import java.util
 import java.util.HashMap
 
 import org.apache.spark.sql.Row
 import org.gbif.dwc.terms.Term
+import scala.collection.JavaConversions._
 
-import scala.collection.immutable.List
 
 /**
   * Utility to convert between java and scala maps.
   */
 object MapConversions {
 
+  /**
+    * Implicit to operate over maps with long values.
+    */
   implicit class LongValueMapConversion[K](val m: Map[K, Long])
   {
 
@@ -36,6 +40,24 @@ object MapConversions {
     }
   }
 
+  /**
+    * Converts an scala Map[_,List] into a mutable java Map[_,List].
+    */
+  implicit  class MutableMapListJava[K,L](val m: Map[K, List[L]]) {
+
+    def toMapListJava : java.util.Map[K, java.util.List[L]] = {
+      val newMap: HashMap[K, java.util.List[L]] = new HashMap(m.size)
+      m.foreach({ case (key, l) => {
+        newMap.put(key, new util.ArrayList(l))
+      }
+      })
+      newMap
+    }
+  }
+
+  /**
+    * Common operations on list of terms.
+    */
   implicit class TermsConversion(val terms: List[Term]) {
 
     /**
@@ -50,6 +72,9 @@ object MapConversions {
   }
 
 
+  /**
+    * Utility implicit to translate Rows into array of strings.
+    */
   implicit class RowConversion(val row: Row) {
     /**
       * Converts a Row into a Array(String) for the columns specified in the columns parameter.

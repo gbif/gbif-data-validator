@@ -7,6 +7,9 @@ import org.gbif.validation.conversion.MapConversions._
 
 import scala.collection.JavaConversions._
 
+/**
+  * Accumulates counts of interpreted terms.
+  */
 class InterpretedTermsAccumulable extends AccumulableParam[Map[Term, Long], RecordEvaluationResult]  {
 
   override def addAccumulator(r: Map[Term, Long], t: RecordEvaluationResult): Map[Term, Long] = {
