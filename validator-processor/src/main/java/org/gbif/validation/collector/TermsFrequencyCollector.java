@@ -30,12 +30,9 @@ public class TermsFrequencyCollector implements RecordMetricsCollector, Serializ
     Validate.notNull(terms, "columnHeaders must not be null");
     this.columnHeaders = terms.toArray(new Term[terms.size()]);
 
-    if(useConcurrentMap) {
-      termFrequencyCounter = new ConcurrentHashMap<>(columnHeaders.length);
-    }
-    else{
-      termFrequencyCounter = new LinkedHashMap<>(columnHeaders.length);
-    }
+    termFrequencyCounter = useConcurrentMap ? new ConcurrentHashMap<>(columnHeaders.length) :
+            new LinkedHashMap<>(columnHeaders.length);
+
     for (Term term : columnHeaders) {
       termFrequencyCounter.put(term, 0l);
     }

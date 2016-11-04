@@ -3,8 +3,8 @@ package org.gbif.validation.tabular.single;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.api.model.ValidationResult;
-import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceResultBuilder;
+import org.gbif.validation.api.result.RecordsValidationResultElement;
+import org.gbif.validation.api.result.ValidationResultBuilders.RecordsValidationResultElementBuilder;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
 
@@ -42,8 +42,8 @@ public class DataValidationProcessor  {
     }
   }
 
-  public ValidationResult.RecordsValidationResourceResult getValidationResult() {
-    return RecordsValidationResourceResultBuilder
+  public RecordsValidationResultElement getValidationResult() {
+    return RecordsValidationResultElementBuilder
             .of("", line)
             .withIssues(collector.getAggregatedCounts(), collector.getSamples())
             .withTermsFrequency(metricsCollector.getTermFrequency())

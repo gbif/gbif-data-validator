@@ -1,29 +1,27 @@
 package org.gbif.validation
 
-import java.io.{File, FileNotFoundException}
-import java.net.URI
+import java.io.{FileOutputStream, File, FileNotFoundException}
+import java.net.{URL, URI}
+import java.nio.file.Paths
 
 import com.cloudera.livy.LivyClientBuilder
 import com.cloudera.livy.scalaapi._
 import dispatch.Http
 import dispatch._
-import org.gbif.validation.accumulators.{InterpretedTermsAccumulable, ResultsAccumulable, TermFrequencyAccumulator}
-import org.gbif.validation.api.model.ValidationResult.RecordsValidationResourceResultBuilder
-import org.gbif.validation.conversion.MapConversions
+import org.gbif.validation.api.result.{ValidationResultBuilders, ValidationResultElement, ValidationResult}
 import scala.concurrent.ExecutionContext.Implicits.global
-import org.gbif.validation.api.model.{EvaluationType, ValidationResult}
+import org.gbif.validation.api.model.{FileFormat, ValidationProfile}
+import org.gbif.validation.collector.{InterpretedTermsCountCollector, TermsFrequencyCollector}
 import org.gbif.validation.evaluator.EvaluatorFactory
 import org.gbif.validation.tabular.single.SimpleValidationCollector
 import org.gbif.validation.util.TempTermsUtils
-import org.gbif.dwc.terms.Term
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
+import scala.collection.immutable.List
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
-
-import MapConversions._
 
 /**
   *  Runs the data validation on an HDFS file.
@@ -39,7 +37,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     */
   def init(): Unit = {
     scalaClient = new LivyClientBuilder(false).setURI(new URI(conf.livyServerUrl)).build().asScalaClient
-    uploadRelevantJarsForJobExecution()
+    //uploadRelevantJarsForJobExecution()
     conf.jars.split(",").foreach(jar => uploadJar(jar))
   }
 
@@ -95,7 +93,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
     *
     * @param dataFile data file to be processed data read by the Spark job.
     */
-  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResult.RecordsValidationResourceResult] = {
+  def processDataFile(dataFile: String): ScalaJobHandle[ValidationResultElement] = {
     //url is copied to a string variable to avoid serialization errors
     val gbifApiUrl = conf.gbifApiUrl
     scalaClient.submit { context =>
@@ -107,33 +105,31 @@ class DataValidationClient(val conf: ValidationSparkConf) {
         .option("header", "true") // Use first line of all files as header
         .option("inferSchema", "false") // Automatically infer data types
         .load(dataFile).cache()
+
       val columns = data.columns
       val terms  = TempTermsUtils.buildTermMapping(columns).toList
-      val termsFrequencyAcc = context.sc.accumulable(Map.empty[Term,Long],"termFrequencyAcc")(new TermFrequencyAccumulator)
-      val resultsAccumulableAcc = context.sc.accumulable(Map.empty[EvaluationType,Long],"resultsAccumulableAcc")(new ResultsAccumulable)
-      val interpretedAccumulableAcc = context.sc.accumulable(Map.empty[Term,Long],"interpretedAccumulableAcc")(new InterpretedTermsAccumulable)
-
+      val interpretedTermsCountCollector = new InterpretedTermsCountCollector(terms.asJava,true)
+      val metricsCollector = new TermsFrequencyCollector(terms.asJava, true)
       val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)
       val cnt = data.count()
 
-      data.map(row =>  row.toArray(columns))
+      //This is a bit of duplication: runs all the processing
+      data.map(row => columns.foldLeft(List.empty[String]){ (acc, k) => acc ::: List(row.getString(row.fieldIndex(k)))}.toArray)
+          .map( record  => {metricsCollector.collect(record);record})
           .zipWithIndex()
           .mapPartitions( partition => {
             val evaluator  = new EvaluatorFactory(gbifApiUrl).create(terms.asJava)
             val newPartition = partition.map( {case(record,idx) => {
-              termsFrequencyAcc += terms.toPresenceMap(record)
               evaluator.evaluate(idx,record)
             }}).toList
           // consumes the iterator
           newPartition.iterator
-        }).foreach( result => {resultsAccumulableAcc += result;interpretedAccumulableAcc += result})
+        }).foreach( result => {log.info(result.toString);validationCollector.collect(result);interpretedTermsCountCollector.collect(result)})
 
-      RecordsValidationResourceResultBuilder.of("", cnt)
-        .withIssues(resultsAccumulableAcc.value.toMutableJavaMap, validationCollector.getSamples)
-        .withTermsFrequency(termsFrequencyAcc.value.toMutableJavaMap)
-        .withInterpretedValueCounts(interpretedAccumulableAcc.value.toMutableJavaMap).build
-
-
+      ValidationResultBuilders.RecordsValidationResultElementBuilder.of("", cnt)
+        .withIssues(validationCollector.getAggregatedCounts, validationCollector.getSamples)
+        .withTermsFrequency(metricsCollector.getTermFrequency)
+        .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts).build
     }
   }
 

@@ -7,7 +7,8 @@ import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.ValidationProfile;
-import org.gbif.validation.api.model.ValidationResult;
+import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
@@ -137,10 +138,10 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
-    return ValidationResult.Builder
+    return ValidationResultBuilders.Builder
             .of(true, dataFile.getSourceFileName(), FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
             .withResourceResult(
-                    ValidationResult.RecordsValidationResourceResultBuilder
+                    ValidationResultBuilders.RecordsValidationResultElementBuilder
                             .of("", dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
                             .withIssues(validationCollector.getAggregatedCounts(), validationCollector.getSamples())
                                     //.withTermsFrequency(metricsCollector.getTermFrequency())

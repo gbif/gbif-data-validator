@@ -5,7 +5,7 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
 import javax.annotation.Nullable;
 
 /**
- * Evaluator is responsible to take a record and produce an {@link RecordEvaluationResult}.
+ * {@link RecordEvaluator} is responsible to take a record and produce an {@link RecordEvaluationResult}.
  */
 public interface RecordEvaluator {
 

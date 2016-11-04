@@ -1,6 +1,7 @@
 package org.gbif.validation.api.model;
 
 import org.gbif.dwc.terms.Term;
+import org.gbif.validation.api.result.EvaluationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
- * Represents the result of an evaluation at the record level.
+ * Represents the result of an evaluation of a single record.
  * Immutable once built.
  */
 public class RecordEvaluationResult implements Serializable {

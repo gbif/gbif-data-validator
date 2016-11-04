@@ -1,4 +1,6 @@
-package org.gbif.validation.api.model;
+package org.gbif.validation.api.result;
+
+import org.gbif.validation.api.model.EvaluationType;
 
 import java.io.Serializable;
 

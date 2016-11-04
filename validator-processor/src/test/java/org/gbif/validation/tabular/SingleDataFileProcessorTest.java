@@ -1,10 +1,10 @@
 package org.gbif.validation.tabular;
 
 import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.api.model.ValidationResult;
+import org.gbif.validation.api.result.ValidationResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class SingleDataFileProcessorTest {
 
     File testFile = FileUtils.getClasspathFile(TEST_FILE_LOCATION);
 
-    DataFileProcessorFactory factory = new DataFileProcessorFactory(DEV_API);
+    ResourceEvaluationManager manager = new ResourceEvaluationManager(DEV_API);
     DataFile datafile = new DataFile();
     datafile.setHasHeaders(true);
     datafile.setDelimiterChar('\t');
@@ -36,8 +36,7 @@ public class SingleDataFileProcessorTest {
     datafile.setFileFormat(FileFormat.TABULAR);
     datafile.setFileName(testFile.getAbsolutePath());
 
-    DataFileProcessor processor = factory.create(datafile);
-    ValidationResult result = processor.process(datafile);
+    ValidationResult result = manager.evaluate(datafile);
 
     assertNotNull(result.getResults());
     // we should have 1 ValidationResourceResult which should matches NUMBER_OF_ISSUES_EXPECTED
