@@ -22,8 +22,8 @@ import scala.concurrent.duration._
   def main(args: Array[String]): Unit = {
 
     val  conf = new ValidationSparkConf("http://devgateway-vh.gbif.org:8998/",
-      "http://repository.gbif.org/service/local/artifact/maven/redirect?g=org.gbif.validator&a=validator-core&v=LATEST&r=snapshots&e=jar," +
-      "http://repository.gbif.org/service/local/artifact/maven/redirect?g=org.gbif.validator&a=validator-spark&v=LATEST&r=snapshots&e=jar," +
+      "/Users/fmendez/dev/git/gbif/gbif-data-validator/validator-core/target/validator-core-0.1-SNAPSHOT.jar," +
+      "/Users/fmendez/dev/git/gbif/gbif-data-validator/validator-spark/target/validator-spark-0.1-SNAPSHOT.jar," +
       "http://repository.gbif.org/service/local/artifact/maven/redirect?g=com.cloudera.livy&a=livy-client-http&v=LATEST&r=thirdparty&e=jar",
       "http://api.gbif-dev.org/v1/",
        "/tmp/")
@@ -31,8 +31,8 @@ import scala.concurrent.duration._
     try {
       client.init()
       val handle = client.processDataFile("hdfs:///user/fmendez/0008759-160822134323880.csvar")
-      Await.result(handle, 100000 second)
       log.info("Data Validation Result::{}", Await.result(handle, 10000 second))
+      println(handle.value.get.get)
     } catch {
       case e: Throwable => log.error("Error initiating client", e)
     } finally {
