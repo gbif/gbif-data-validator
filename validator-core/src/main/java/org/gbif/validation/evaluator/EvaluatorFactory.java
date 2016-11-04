@@ -15,6 +15,7 @@ import org.gbif.ws.mixin.Mixins;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.sun.jersey.api.client.WebResource;
@@ -22,7 +23,6 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
-import org.apache.commons.lang3.Validate;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 
 /**
@@ -60,7 +60,7 @@ public class EvaluatorFactory {
    * @return
    */
   public ResourceStructureEvaluator createResourceStructureEvaluator(FileFormat fileFormat) {
-    Validate.notNull(fileFormat, "dataFile fileFormat be provided");
+    Objects.requireNonNull(fileFormat, "fileFormat shall be provided");
 
     switch(fileFormat) {
       case DWCA: return new DwcaResourceStructureEvaluator();

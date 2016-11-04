@@ -9,6 +9,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Contains all builders for {@link ValidationResult} and different {@link ValidationResultElement} implementations.
@@ -43,8 +44,15 @@ public class ValidationResultBuilders {
       return new Builder(indexeable, fileName, fileFormat, validationProfile);
     }
 
-    public static Builder withError(FileFormat fileFormat, ValidationProfile validationProfile, ValidationErrorCode errorCode) {
-      return new Builder(fileFormat,validationProfile, errorCode);
+    /**
+     *
+     * @param fileName
+     * @param fileFormat
+     * @param errorCode
+     * @return
+     */
+    public static Builder withError(String fileName, @Nullable FileFormat fileFormat, ValidationErrorCode errorCode) {
+      return new Builder(fileName, fileFormat, errorCode);
     }
 
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
@@ -58,12 +66,12 @@ public class ValidationResultBuilders {
      * Constructor used only when we have an error (service/input error) to report.
      *
      * @param fileFormat
-     * @param validationProfile
      * @param errorCode
      */
-    private Builder(FileFormat fileFormat, ValidationProfile validationProfile, ValidationErrorCode errorCode) {
+    private Builder(String fileName, FileFormat fileFormat, ValidationErrorCode errorCode) {
+      this.fileName = fileName;
+      this.indexeable = false;
       this.fileFormat = fileFormat;
-      this.validationProfile = validationProfile;
       this.errorCode = errorCode;
     }
 

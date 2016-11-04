@@ -8,11 +8,11 @@ import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
-import org.gbif.validation.util.FileBashUtilities;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.File;
@@ -25,21 +25,31 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import com.cloudera.livy.scalaapi.ScalaJobHandle;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataMultiPart;
 import com.sun.jersey.multipart.FormDataParam;
-import com.sun.jersey.spi.resource.Singleton;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
@@ -58,24 +68,48 @@ import static org.eclipse.jetty.server.Response.SC_OK;
 @Singleton
 public class ValidationResource {
 
-  @Inject private ValidationConfiguration configuration;
+  private final ValidationConfiguration configuration;
+  private final ResourceEvaluationManager resourceEvaluationManager;
+  private final HttpUtil httpUtil;
 
-  @Inject private ResourceEvaluationManager resourceEvaluationManager;
-
-  @Inject private HttpUtil httpUtil;
-
-  @Inject(optional = true )private DataValidationClient dataValidationClient;
+  @Inject(optional = true )
+  private DataValidationClient dataValidationClient;
 
   private final Configuration hadoopConf;
 
+  private final DiskFileItemFactory diskFileItemFactory;
+  private final ServletFileUpload servletBasedFileUpload;
+  private final UploadedFileManager uploadedFileManager;
+
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
+  private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
+  private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
+  private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
   private static final String FILE_PARAM = "file";
 
-  public ValidationResource() {
+  @Inject
+  public ValidationResource(ValidationConfiguration configuration, ResourceEvaluationManager resourceEvaluationManager,
+                            HttpUtil httpUtil) throws IOException {
+    this.configuration = configuration;
+    this.resourceEvaluationManager = resourceEvaluationManager;
+    this.httpUtil = httpUtil;
+
     hadoopConf = new Configuration();
     hadoopConf.addResource("hdfs-site.xml");
     hadoopConf.addResource("core-site.xml");
+
+    uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+
+    //TODO clean on startup?
+    java.nio.file.Path fileUploadDirectory = Paths.get(configuration.getWorkingDir()).resolve(FILEUPLOAD_TMP_FOLDER);
+    if(!fileUploadDirectory.toFile().exists()) {
+      Files.createDirectory(fileUploadDirectory);
+    }
+
+    diskFileItemFactory = new DiskFileItemFactory(MAX_SIZE_BEFORE_DISK_IN_BYTES, fileUploadDirectory.toFile());
+    servletBasedFileUpload = new ServletFileUpload(diskFileItemFactory);
+    servletBasedFileUpload.setFileSizeMax(MAX_UPLOAD_SIZE_IN_BYTES);
   }
 
   @POST
@@ -90,6 +124,47 @@ public class ValidationResource {
       ValidationResult result = processFile(dataFilePath, dataFileDescriptor, false);
 
       return result;
+  }
+
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/file2")
+  public ValidationResult onValidateFile(@Context HttpServletRequest request) {
+    ValidationResult result;
+    String uploadFileName = null;
+    try {
+      Map<String, String> params = new HashMap<>();
+      InputStream uploadFileInputStream = null;
+
+      String uploadFileMimeType = null;
+      List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
+      for(FileItem item : uploadedContent) {
+        if (item.isFormField()) {
+          params.put(item.getFieldName(), item.getString());
+        }
+        else {
+          uploadFileMimeType = item.getContentType();
+          uploadFileName = item.getName();
+          uploadFileInputStream = item.getInputStream();
+        }
+      }
+
+      //TODO handle file download from URL
+      DataFileDescriptor dataFileDescriptor = uploadedFileManager.handleFileUpload(uploadFileName, uploadFileMimeType,
+              uploadFileInputStream);
+      result = processFile(dataFileDescriptor.getUploadedResourcePath().toUri(), dataFileDescriptor, false);
+    }
+    catch (FileUploadException fileUploadEx) {
+      LOG.error("FileUpload issue", fileUploadEx);
+      throw new WebApplicationException(fileUploadEx, SC_BAD_REQUEST);
+    } catch (IOException ioEx) {
+      LOG.error("Can't handle uploaded file", ioEx);
+      Response.ResponseBuilder r = Response.status(Response.Status.BAD_REQUEST);
+      r.entity(ValidationResultBuilders.Builder.withError(uploadFileName, null, ValidationErrorCode.IO_ERROR).build());
+      throw new WebApplicationException(r.build());
+    }
+    return result;
   }
 
   @POST
@@ -122,7 +197,7 @@ public class ValidationResource {
    * Downloads a file from a HTTP(s) endpoint.
    */
   private URI downloadHttpFile(URL fileUrl, boolean toHdfs) throws IOException {
-    java.nio.file.Path destinationFilePath = downloadFilePath(Paths.get(fileUrl.getFile()).getFileName().toString());
+    java.nio.file.Path destinationFilePath = uploadedFileManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
     if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() == SC_OK) {
       if(toHdfs) {
         copyToHdfs(destinationFilePath);
@@ -131,13 +206,6 @@ public class ValidationResource {
     }
     throw new WebApplicationException(SC_BAD_REQUEST);
 
-  }
-
-  /**
-   * Creates a new random path to be used when copying files.
-   */
-  private java.nio.file.Path downloadFilePath(String fileName) {
-    return Paths.get(configuration.getWorkingDir(), UUID.randomUUID().toString(),fileName);
   }
 
 
@@ -149,7 +217,7 @@ public class ValidationResource {
                            Boolean useHdfs) throws IOException {
     LOG.info("Uploading data file into {}", descriptor);
     if (!useHdfs) {
-      java.nio.file.Path destinyFilePath = downloadFilePath(descriptor.getSubmittedFile());
+      java.nio.file.Path destinyFilePath = uploadedFileManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
       Files.createDirectory(destinyFilePath.getParent());
       Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
       return destinyFilePath.toUri();
@@ -190,7 +258,6 @@ public class ValidationResource {
         //set the original file name (mostly used to send it back in the response)
         dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
         dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
-        dataFile.setNumOfLines(FileBashUtilities.countLines(dataFilePath.toFile().getAbsolutePath()));
         dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
         dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
         dataFile.setFileFormat(dataFileDescriptor.getFormat());
@@ -240,7 +307,5 @@ public class ValidationResource {
         throw new WebApplicationException(SC_BAD_REQUEST);
       }
     }
-    //TODO fix this method to not load header if dataFileDescriptor.isHasHeaders() returns false
-    //dataFile.loadHeaders();
   }
 }

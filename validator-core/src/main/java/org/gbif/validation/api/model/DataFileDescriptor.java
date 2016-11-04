@@ -1,9 +1,11 @@
 package org.gbif.validation.api.model;
 
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 
 public class DataFileDescriptor {
 
+  private Path uploadedResourcePath;
   private String submittedFile;
 
   private FileFormat format;
@@ -92,5 +94,13 @@ public class DataFileDescriptor {
 
   public void setHasHeaders(boolean hasHeaders) {
     this.hasHeaders = hasHeaders;
+  }
+
+  public Path getUploadedResourcePath() {
+    return uploadedResourcePath;
+  }
+
+  public void setUploadedResourcePath(Path uploadedResourcePath) {
+    this.uploadedResourcePath = uploadedResourcePath;
   }
 }

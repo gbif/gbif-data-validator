@@ -5,7 +5,6 @@ import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
@@ -25,6 +24,7 @@ import java.util.Optional;
 import akka.actor.ActorSystem;
 
 /**
+ * {@link ResourceEvaluationManager} is responsible to create and trigger evaluations.
  *
  */
 public class ResourceEvaluationManager {
@@ -37,13 +37,20 @@ public class ResourceEvaluationManager {
     factory = new EvaluatorFactory(apiUrl);
   }
 
+  /**
+   * Trigger the entire evaluation process for a {@link DataFile}.
+   *
+   * @param dataFile
+   * @return
+   * @throws IOException
+   */
   public ValidationResult evaluate(DataFile dataFile) throws IOException {
     Optional<ValidationResultElement> resourceStructureEvaluationResult = factory.createResourceStructureEvaluator(dataFile.getFileFormat()).evaluate(
             new File(dataFile.getFileName()).toPath(), dataFile.getSourceFileName());
 
     if(resourceStructureEvaluationResult.isPresent()) {
       return ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-              FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
+              dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
               .withResourceResult(resourceStructureEvaluationResult.get()).build();
     }
 
@@ -64,6 +71,5 @@ public class ResourceEvaluationManager {
     system = ActorSystem.create("DataFileProcessorSystem");
     return new ParallelDataFileProcessor(factory, system, termsColumnsMapping);
   }
-
 
 }
