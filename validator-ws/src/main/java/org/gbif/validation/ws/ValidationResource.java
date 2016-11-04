@@ -25,9 +25,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServletRequest;
@@ -131,40 +130,59 @@ public class ValidationResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file2")
   public ValidationResult onValidateFile(@Context HttpServletRequest request) {
-    ValidationResult result;
+    ValidationResult result = null;
     String uploadFileName = null;
     try {
-      Map<String, String> params = new HashMap<>();
-      InputStream uploadFileInputStream = null;
 
-      String uploadFileMimeType = null;
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
-      for(FileItem item : uploadedContent) {
-        if (item.isFormField()) {
-          params.put(item.getFieldName(), item.getString());
-        }
-        else {
-          uploadFileMimeType = item.getContentType();
-          uploadFileName = item.getName();
-          uploadFileInputStream = item.getInputStream();
+      Optional<FileItem> uploadFileInputStream = uploadedContent.stream().filter(
+              fileItem -> !fileItem.isFormField() && FILE_PARAM.equals(fileItem.getFieldName()))
+              .findFirst();
+
+      if(uploadFileInputStream.isPresent()) {
+        //TODO handle file download from URL
+        Optional<DataFileDescriptor> dataFileDescriptor =
+                uploadedFileManager.handleFileUpload(
+                        uploadFileInputStream.get().getName(),
+                        uploadFileInputStream.get().getContentType(),
+                        uploadFileInputStream.get().getInputStream());
+        uploadFileName = uploadFileInputStream.get().getName();
+        if(dataFileDescriptor.isPresent()) {
+          result = processFile(dataFileDescriptor.get().getUploadedResourcePath().toUri(),
+                  dataFileDescriptor.get(), false);
         }
       }
-
-      //TODO handle file download from URL
-      DataFileDescriptor dataFileDescriptor = uploadedFileManager.handleFileUpload(uploadFileName, uploadFileMimeType,
-              uploadFileInputStream);
-      result = processFile(dataFileDescriptor.getUploadedResourcePath().toUri(), dataFileDescriptor, false);
     }
     catch (FileUploadException fileUploadEx) {
       LOG.error("FileUpload issue", fileUploadEx);
       throw new WebApplicationException(fileUploadEx, SC_BAD_REQUEST);
     } catch (IOException ioEx) {
       LOG.error("Can't handle uploaded file", ioEx);
-      Response.ResponseBuilder r = Response.status(Response.Status.BAD_REQUEST);
-      r.entity(ValidationResultBuilders.Builder.withError(uploadFileName, null, ValidationErrorCode.IO_ERROR).build());
-      throw new WebApplicationException(r.build());
+      throw new WebApplicationException(buildErrorResponse(uploadFileName,
+              Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR));
+    }
+
+    //it no error it thrown and we do not have result, we assume we can not handle
+    //this file format
+    if(result == null){
+      throw new WebApplicationException(buildErrorResponse(uploadFileName,
+              Response.Status.BAD_REQUEST, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT));
     }
     return result;
+  }
+
+  /**
+   * Prepare a {@link Response} object.
+   *
+   * @param uploadFileName
+   * @param status
+   * @param errorCode
+   * @return
+   */
+  private Response buildErrorResponse(String uploadFileName, Response.Status status, ValidationErrorCode errorCode) {
+    Response.ResponseBuilder repBuilder = Response.status(status);
+    repBuilder.entity(ValidationResultBuilders.Builder.withError(uploadFileName, null, errorCode).build());
+    return repBuilder.build();
   }
 
   @POST
