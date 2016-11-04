@@ -10,6 +10,7 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
+import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
@@ -63,7 +64,7 @@ public class EvaluatorFactory {
     Objects.requireNonNull(fileFormat, "fileFormat shall be provided");
 
     switch(fileFormat) {
-      case DWCA: return new DwcaResourceStructureEvaluator();
+      case DWCA: return new DwcaResourceStructureEvaluator(new XMLSchemaValidatorProvider());
       default: return (dwcFolder, sourceFilename) -> Optional.empty();
     }
   }

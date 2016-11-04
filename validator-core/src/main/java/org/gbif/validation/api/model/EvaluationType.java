@@ -8,6 +8,8 @@ package org.gbif.validation.api.model;
 public enum EvaluationType {
 
   DWCA_UNREADABLE(EvaluationCategory.RESOURCE_STRUCTURE),
+  DWCA_META_XML_NOT_FOUND(EvaluationCategory.RESOURCE_STRUCTURE),
+  DWCA_META_XML_SCHEMA(EvaluationCategory.RESOURCE_STRUCTURE),
 
   RECORD_NOT_UNIQUELY_IDENTIFIED(EvaluationCategory.RESOURCE_STRUCTURE),
 
