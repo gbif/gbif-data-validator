@@ -1,5 +1,6 @@
 package org.gbif.validation.source;
 
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.RecordSource;
 
@@ -27,6 +28,7 @@ public class DwcReaderTest {
     try {
       source = RecordSourceFactory.fromDwcA(testFolder);
       assertEquals(13, source.getHeaders().length);
+      assertEquals(DwcTerm.Taxon, ((DwcReader)source).getRowType());
 
       String[] line1 = source.read();
       assertEquals("1559060", line1[0]);

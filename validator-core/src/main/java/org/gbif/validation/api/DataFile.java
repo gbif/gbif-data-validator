@@ -17,6 +17,7 @@ public class DataFile {
   private String sourceFileName;
 
   private Term[] columns;
+  private Term rowType;
 
   private Character delimiterChar;
   private Integer numOfLines;
@@ -37,6 +38,14 @@ public class DataFile {
 
   public void setColumns(Term[] columns) {
     this.columns = columns;
+  }
+
+  public Term getRowType() {
+    return rowType;
+  }
+
+  public void setRowType(Term rowType) {
+    this.rowType = rowType;
   }
 
   public void setFileName(String fileName) {
@@ -113,6 +122,7 @@ public class DataFile {
             "fileFormat=" + fileFormat +
             "sourceFileName=" + sourceFileName +
             ", columns=" + Arrays.toString(columns) +
+            ", rowType=" + rowType +
             ", delimiterChar='" + delimiterChar + '\'' +
             ", numOfLines=" + numOfLines +
             ", fileLineOffset=" + fileLineOffset +
@@ -128,6 +138,7 @@ public class DataFile {
     return hasHeaders == dataFile.hasHeaders &&
             Objects.equals(delimiterChar, dataFile.delimiterChar) &&
             Arrays.equals(columns, dataFile.columns) &&
+            Objects.equals(rowType, dataFile.rowType) &&
             Objects.equals(fileName, dataFile.fileName) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
@@ -142,6 +153,7 @@ public class DataFile {
             fileFormat,
             sourceFileName,
             columns,
+            rowType,
             delimiterChar,
             numOfLines,
             fileLineOffset,

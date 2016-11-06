@@ -16,7 +16,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import org.gbif.validation.evaluator.EvaluatorFactory
 import org.gbif.validation.tabular.single.SimpleValidationCollector
 import org.gbif.validation.util.TempTermsUtils
-import org.gbif.dwc.terms.Term
+import org.gbif.dwc.terms.{DwcTerm, Term}
 import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
@@ -131,7 +131,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
         }).foreach( result => {resultsAccumulableAcc += result;interpretedAccumulableAcc += result; recordIssuesAccumulable+= result})
 
 
-      ValidationResultBuilders.RecordsValidationResultElementBuilder.of("", cnt)
+      ValidationResultBuilders.RecordsValidationResultElementBuilder.of("", DwcTerm.Occurrence, cnt)
         .withIssues(resultsAccumulableAcc.value.toMutableJavaMap, recordIssuesAccumulable.value.toMapListJava)
         .withTermsFrequency(termsFrequencyAcc.value.toMutableJavaMap)
         .withInterpretedValueCounts(interpretedAccumulableAcc.value.toMutableJavaMap).build

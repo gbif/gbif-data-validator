@@ -3,6 +3,7 @@ package org.gbif.validation.source;
 import org.gbif.utils.file.tabular.TabularFiles;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
@@ -76,6 +77,11 @@ public class RecordSourceFactory {
     if(rs != null){
       dataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
       dataFile.setColumns(rs.getHeaders());
+
+      if(FileFormat.DWCA.equals(dataFile.getFileFormat())) {
+        dataFile.setRowType(((DwcReader)rs).getRowType());
+      }
+
       rs.close();
     }
     return dataFile;
