@@ -3,7 +3,7 @@ package org.gbif.validation.accumulators
 import org.apache.spark.AccumulableParam
 import org.gbif.dwc.terms.Term
 import org.gbif.validation.api.model.RecordEvaluationResult
-import org.gbif.validation.conversion.MapConversions._
+import org.gbif.validation.conversion.UtilConversions._
 
 import scala.collection.JavaConversions._
 

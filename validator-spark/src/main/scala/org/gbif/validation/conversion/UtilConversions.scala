@@ -11,7 +11,37 @@ import scala.collection.JavaConversions._
 /**
   * Utility to convert between java and scala maps.
   */
-object MapConversions {
+object UtilConversions {
+
+  /**
+    * Implicit to operate over maps with AnyVal values.
+    */
+  implicit class ValueMapConversion[K, V <: AnyVal](val m: Map[K, V])
+  {
+    /**
+      * Converts a scala util.Map into a Java mutable map.
+      * This conversion is needed when serializing maps in Kryo.
+      */
+    def toMutableJavaMap[R <: AnyRef](converter: V => R): java.util.Map[K, R]  =
+    {
+      val newMap: HashMap[K, R] = new HashMap(m.size)
+      m.foreach({ case (key, value) => {
+        newMap.put(key, converter(value))
+      }})
+      newMap
+    }
+  }
+
+  /**
+    *  Accumulate operation on numeric values maps.
+    */
+  implicit class MapAccumulable[K, V <: AnyVal](val m: Map[K, V])(implicit n: Numeric[V])
+  {
+    def acc(m2: Map[K, V]): Map[K, V] = {
+      m ++ (for ((k, v) <- m2) yield (k -> (n.plus(v, m.getOrElse(k, n.zero)))))
+    }
+  }
+
 
   /**
     * Implicit to operate over maps with long values.
@@ -23,13 +53,9 @@ object MapConversions {
       * Converts a scala util.Map into a Java mutable map.
       * This conversion is needed when serializing maps in Kryo.
       */
-    def toMutableJavaMap: java.util.Map[K, java.lang.Long]  =
+    def toMutableJavaValueLongMap: java.util.Map[K, java.lang.Long]  =
     {
-      val newMap: HashMap[K, java.lang.Long] = new HashMap(m.size)
-      m.foreach({ case (key, cnt) => {
-        newMap.put(key, long2Long(cnt))
-      }})
-      newMap
+      m.toMutableJavaMap(long2Long)
     }
 
     /**
@@ -39,6 +65,7 @@ object MapConversions {
       m ++ (for ((k, v) <- m2) yield (k -> (v + m.getOrElse(k, 0L))))
     }
   }
+
 
   /**
     * Converts an scala Map[_,List] into a mutable java Map[_,List].
@@ -68,6 +95,23 @@ object MapConversions {
         (term, if (value == null || value.size == 0) 0L else 1L)
       }
       }).toMap
+    }
+  }
+
+  /**
+    * Common operations on list of terms.
+    */
+  implicit class ListAddIf[T](val l: Option[List[T]]) {
+
+    /**
+      * Converts a list of terms and values into a map that shows if that a term has a value in the input record.
+      */
+    def addIf(element: T, condition: Boolean): List[T] = {
+      val listValue = l.getOrElse(List.empty)
+      if (condition) {
+        listValue :+ element
+      }
+      listValue
     }
   }
 

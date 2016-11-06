@@ -8,7 +8,7 @@ import com.cloudera.livy.scalaapi._
 import dispatch.Http
 import dispatch._
 import org.gbif.validation.accumulators.{RecordIssuesAccumulable, InterpretedTermsAccumulable, ResultsAccumulable, TermFrequencyAccumulator}
-import org.gbif.validation.conversion.MapConversions
+import org.gbif.validation.conversion.UtilConversions
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.gbif.validation.api.model.EvaluationType
 import org.gbif.validation.api.result.{EvaluationResultDetails, ValidationResultBuilders, ValidationResultElement}
@@ -24,7 +24,7 @@ import scala.concurrent.Await
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-import MapConversions._
+import UtilConversions._
 
 /**
   *  Runs the data validation on an HDFS file.
@@ -130,14 +130,10 @@ class DataValidationClient(val conf: ValidationSparkConf) {
           newPartition.iterator
         }).foreach( result => {resultsAccumulableAcc += result;interpretedAccumulableAcc += result; recordIssuesAccumulable+= result})
 
-
       ValidationResultBuilders.RecordsValidationResultElementBuilder.of("", DwcTerm.Occurrence, cnt)
-        .withIssues(resultsAccumulableAcc.value.toMutableJavaMap, recordIssuesAccumulable.value.toMapListJava)
-        .withTermsFrequency(termsFrequencyAcc.value.toMutableJavaMap)
-        .withInterpretedValueCounts(interpretedAccumulableAcc.value.toMutableJavaMap).build
-
-
-
+        .withIssues(resultsAccumulableAcc.value.toMutableJavaValueLongMap, recordIssuesAccumulable.value.toMapListJava)
+        .withTermsFrequency(termsFrequencyAcc.value.toMutableJavaValueLongMap)
+        .withInterpretedValueCounts(interpretedAccumulableAcc.value.toMutableJavaValueLongMap).build
     }
   }
 

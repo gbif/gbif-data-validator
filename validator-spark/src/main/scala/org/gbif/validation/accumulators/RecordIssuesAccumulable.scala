@@ -5,6 +5,7 @@ import org.gbif.validation.api.model.{EvaluationType, RecordEvaluationResult}
 import org.gbif.validation.api.result.EvaluationResultDetails
 
 import scala.collection.JavaConversions._
+import org.gbif.validation.conversion.UtilConversions.ListAddIf
 
 /**
   * Accumulates counts of interpreted terms.
@@ -14,8 +15,10 @@ class RecordIssuesAccumulable(val maxNumberOfSample: Integer) extends Accumulabl
 
   override def addAccumulator(r: Map[EvaluationType, List[EvaluationResultDetails]],
     t: RecordEvaluationResult): Map[EvaluationType, List[EvaluationResultDetails]] =
-    if (t.getDetails == null) r else r ++ t.getDetails.map(detail => { val evalType = r.get(detail.getEvaluationType);
-      if(evalType.isDefined && r.size < maxNumberOfSample) (evalType,List(detail))}).toMap
+    if (t.getDetails == null) r else r ++ t.getDetails.map(detail => { val results = r.get(detail.getEvaluationType);
+      (detail.getEvaluationType, results.addIf(detail,r.size < maxNumberOfSample))
+      }).toMap
+
 
   override def addInPlace(r1: Map[EvaluationType, List[EvaluationResultDetails]],
     r2: Map[EvaluationType, List[EvaluationResultDetails]]): Map[EvaluationType, List[EvaluationResultDetails]] =
