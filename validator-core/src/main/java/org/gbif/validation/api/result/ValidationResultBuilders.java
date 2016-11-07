@@ -103,6 +103,7 @@ public class ValidationResultBuilders {
 
     private RecordsValidationResultElementBuilder(String fileName, Term rowType, Long numberOfLines) {
       this.fileName = fileName;
+      this.rowType = rowType;
       this.numberOfLines = numberOfLines;
     }
 

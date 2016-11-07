@@ -5,7 +5,6 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
@@ -35,7 +34,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       }
       //FIXME the Status and indexeable should be decided by a another class somewhere
       return ValidationResultBuilders.Builder.of(true, dataFile.getSourceFileName(),
-              FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
+              dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
               .withResourceResult(dataValidationProcessor.getValidationResult(dataFile.getSourceFileName(),
                       dataFile.getRowType())).build();
     } catch (Exception ex) {
