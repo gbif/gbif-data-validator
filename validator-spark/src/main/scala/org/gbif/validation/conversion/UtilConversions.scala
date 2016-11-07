@@ -24,11 +24,10 @@ object UtilConversions {
       */
     def toMutableJavaMap[R <: AnyRef](converter: V => R): java.util.Map[K, R]  =
     {
-      val newMap: HashMap[K, R] = new HashMap(m.size)
-      m.foreach({ case (key, value) => {
-        newMap.put(key, converter(value))
-      }})
-      newMap
+      new HashMap(for ((k, v) <- m) yield (k -> converter(v)))
+      //m.foreach({ case (key, value) => {
+      //  newMap.put(key, converter(value))
+      //}})
     }
   }
 
@@ -108,10 +107,7 @@ object UtilConversions {
       */
     def addIf(element: T, condition: Boolean): List[T] = {
       val listValue = l.getOrElse(List.empty)
-      if (condition) {
-        listValue :+ element
-      }
-      listValue
+      if (condition)  listValue :+ element else listValue
     }
   }
 
