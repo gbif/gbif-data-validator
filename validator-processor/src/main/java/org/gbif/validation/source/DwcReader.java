@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -34,10 +35,33 @@ public class DwcReader implements RecordSource {
   private Term[] defaultValuesTerm;
   private String[] defaultValues;
 
+  /**
+   * Get a new Reader for the core component of the Dwc-A.
+   *
+   * @param dwcFolder
+   * @throws IOException
+   */
   DwcReader(File dwcFolder) throws IOException {
-    Archive archive = ArchiveFactory.openArchive(dwcFolder);
+    this(dwcFolder, null);
+  }
 
-    darwinCoreComponent = archive.getCore();
+  /**
+   * Get a new Reader for an extension of the Dwc-A.
+   *
+   * @param dwcFolder
+   * @param rowType can be null to get the core
+   * @throws IOException
+   */
+  DwcReader(File dwcFolder, @Nullable Term rowType) throws IOException {
+    Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
+
+    Archive archive = ArchiveFactory.openArchive(dwcFolder);
+    if(rowType == null) {
+      darwinCoreComponent = archive.getCore();
+    }
+    else {
+      darwinCoreComponent = archive.getExtension(rowType);
+    }
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
   }
@@ -104,6 +128,13 @@ public class DwcReader implements RecordSource {
       return null;
     }
     return darwinCoreComponent.getLocationFile().toPath();
+  }
+
+  public Term getRowType() {
+    if(darwinCoreComponent == null) {
+      return null;
+    }
+    return darwinCoreComponent.getRowType();
   }
 
   @Override

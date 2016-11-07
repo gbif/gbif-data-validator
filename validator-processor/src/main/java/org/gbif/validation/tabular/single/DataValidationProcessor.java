@@ -42,9 +42,9 @@ public class DataValidationProcessor  {
     }
   }
 
-  public RecordsValidationResultElement getValidationResult() {
+  public RecordsValidationResultElement getValidationResult(String fileName, Term rowType) {
     return RecordsValidationResultElementBuilder
-            .of("", line)
+            .of(fileName, rowType, line)
             .withIssues(collector.getAggregatedCounts(), collector.getSamples())
             .withTermsFrequency(metricsCollector.getTermFrequency())
             .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())

@@ -36,7 +36,8 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       //FIXME the Status and indexeable should be decided by a another class somewhere
       return ValidationResultBuilders.Builder.of(true, dataFile.getSourceFileName(),
               FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
-              .withResourceResult(dataValidationProcessor.getValidationResult()).build();
+              .withResourceResult(dataValidationProcessor.getValidationResult(dataFile.getSourceFileName(),
+                      dataFile.getRowType())).build();
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

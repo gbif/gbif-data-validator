@@ -142,7 +142,8 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
             .of(true, dataFile.getSourceFileName(), FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
             .withResourceResult(
                     ValidationResultBuilders.RecordsValidationResultElementBuilder
-                            .of("", dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
+                            .of(dataFile.getSourceFileName(), dataFile.getRowType(),
+                                    dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
                             .withIssues(validationCollector.getAggregatedCounts(), validationCollector.getSamples())
                                     //.withTermsFrequency(metricsCollector.getTermFrequency())
                                     //.withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())

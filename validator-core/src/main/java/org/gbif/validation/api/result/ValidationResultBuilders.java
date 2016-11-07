@@ -92,15 +92,16 @@ public class ValidationResultBuilders {
   public static class RecordsValidationResultElementBuilder {
     private String fileName;
     private Long numberOfLines;
+    private Term rowType;
     private List<ValidationIssue> issues = new ArrayList<>();
     private Map<Term, Long> termsFrequency;
     private Map<Term, Long> interpretedValueCounts;
 
-    public static RecordsValidationResultElementBuilder of(String fileName, Long numberOfLines){
-      return new RecordsValidationResultElementBuilder(fileName, numberOfLines);
+    public static RecordsValidationResultElementBuilder of(String fileName, Term rowType, Long numberOfLines){
+      return new RecordsValidationResultElementBuilder(fileName, rowType, numberOfLines);
     }
 
-    private RecordsValidationResultElementBuilder(String fileName, Long numberOfLines) {
+    private RecordsValidationResultElementBuilder(String fileName, Term rowType, Long numberOfLines) {
       this.fileName = fileName;
       this.numberOfLines = numberOfLines;
     }
@@ -125,8 +126,8 @@ public class ValidationResultBuilders {
     }
 
     public RecordsValidationResultElement build() {
-      return new RecordsValidationResultElement(fileName, numberOfLines,
-              issues, termsFrequency, interpretedValueCounts);
+      return new RecordsValidationResultElement(fileName, numberOfLines, rowType, issues,
+              termsFrequency, interpretedValueCounts);
     }
   }
 

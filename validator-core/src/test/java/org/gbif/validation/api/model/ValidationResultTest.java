@@ -28,9 +28,11 @@ public class ValidationResultTest {
 
     ValidationResult result =
             ValidationResultBuilders.Builder.of(true, "myfile.zip", FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
-                    .withResourceResult(ValidationResultBuilders.RecordsValidationResultElementBuilder.of("myfile.csv", 18l)
+                    .withResourceResult(ValidationResultBuilders.RecordsValidationResultElementBuilder.of("myfile.csv",
+                            DwcTerm.Occurrence, 18l)
                             .withTermsFrequency(termsFreq).build())
-                    .withResourceResult(ValidationResultBuilders.RecordsValidationResultElementBuilder.of("myextfile.csv", 4l)
+                    .withResourceResult(ValidationResultBuilders.RecordsValidationResultElementBuilder.of("myextfile.csv",
+                            DwcTerm.Occurrence, 4l)
                             .withInterpretedValueCounts(interpretedValuesCount).build())
                     .build();
 
