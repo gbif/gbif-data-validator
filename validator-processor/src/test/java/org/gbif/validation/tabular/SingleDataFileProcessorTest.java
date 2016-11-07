@@ -28,7 +28,7 @@ public class SingleDataFileProcessorTest {
 
     File testFile = FileUtils.getClasspathFile(TEST_FILE_LOCATION);
 
-    ResourceEvaluationManager manager = new ResourceEvaluationManager(DEV_API);
+    ResourceEvaluationManager manager = new ResourceEvaluationManager(DEV_API, 1000);
     DataFile datafile = new DataFile();
     datafile.setHasHeaders(true);
     datafile.setDelimiterChar('\t');

@@ -29,12 +29,19 @@ import akka.actor.ActorSystem;
  */
 public class ResourceEvaluationManager {
 
-  public static final int FILE_SPLIT_SIZE = 10000;
   private final EvaluatorFactory factory;
+  private final Integer fileSplitSize;
+
   private ActorSystem system;
 
-  public ResourceEvaluationManager(String apiUrl){
+  /**
+   *
+   * @param apiUrl
+   * @param fileSplitSize threshold (in number of lines) until we use the parallel processing.
+   */
+  public ResourceEvaluationManager(String apiUrl, Integer fileSplitSize){
     factory = new EvaluatorFactory(apiUrl);
+    this.fileSplitSize = fileSplitSize;
   }
 
   /**
@@ -61,7 +68,7 @@ public class ResourceEvaluationManager {
   }
 
   private DataFileProcessor createDataFileProcessor(DataFile dataFile, List<Term> termsColumnsMapping) {
-    if (dataFile.getNumOfLines() <= FILE_SPLIT_SIZE) {
+    if (dataFile.getNumOfLines() <= fileSplitSize) {
       //TODO create a Factory for Collectors
       InterpretedTermsCountCollector interpretedTermsCountCollector = new InterpretedTermsCountCollector(
               Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), false);
@@ -69,7 +76,7 @@ public class ResourceEvaluationManager {
               interpretedTermsCountCollector);
     }
     system = ActorSystem.create("DataFileProcessorSystem");
-    return new ParallelDataFileProcessor(factory, system, termsColumnsMapping);
+    return new ParallelDataFileProcessor(factory, system, termsColumnsMapping, fileSplitSize);
   }
 
 }

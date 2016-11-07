@@ -17,6 +17,7 @@ import java.util.Properties;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
+import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * Server listener. Contains
@@ -42,6 +43,7 @@ public class ValidationWsListener extends GbifServletListener {
       ValidationConfiguration configuration = new ValidationConfiguration();
       configuration.setApiUrl(getProperties().getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(getProperties().getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
+      configuration.setFileSplitSize(NumberUtils.toInt(getProperties().getProperty(ConfKeys.FILE_SPLIT_SIZE), 10000));
       HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(60000,20,2));
 
       if (getProperties().containsKey(ConfKeys.LIVY_URL)) {
@@ -57,14 +59,13 @@ public class ValidationWsListener extends GbifServletListener {
 
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
-      bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl()));
+      bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
+              configuration.getFileSplitSize()));
 
       expose(ValidationConfiguration.class);
       expose(ResourceEvaluationManager.class);
       expose(HttpUtil.class);
     }
-
-
   }
 
   public ValidationWsListener() throws IOException {

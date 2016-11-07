@@ -5,10 +5,10 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.source.RecordSourceFactory;
 
-import java.io.File;
-
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static akka.dispatch.Futures.future;
 import static akka.japi.pf.ReceiveBuilder.match;
@@ -18,6 +18,8 @@ import static akka.pattern.Patterns.pipe;
  * Akka actor that processes a single occurrence data file.
  */
 public class SingleFileReaderActor extends AbstractLoggingActor {
+
+  private static final Logger LOG = LoggerFactory.getLogger(SingleFileReaderActor.class);
 
   public SingleFileReaderActor(RecordEvaluator recordEvaluator) {
     receive(
@@ -37,26 +39,19 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
    * The sender is sent as parameter because the real sender is only known in the context of receiving messages.
    */
   private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, ActorRef sender) {
-    try (RecordSource recordSource = RecordSourceFactory.fromDelimited(new File(dataFile.getFileName()),
-                                                                       dataFile.getDelimiterChar(),
-                                                                       dataFile.isHasHeaders())) {
+
+    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile)) {
       long line = dataFile.getFileLineOffset();
-
-      int expectedNumberOfColumn = dataFile.getColumns().length;
       String[] record;
-
       while ((record = recordSource.read()) != null) {
         line++;
-        if (record.length != expectedNumberOfColumn) {
-          //TODO get a list of recordEvaluators
-          //sender.tell(toColumnCountMismatchEvaluationResult(line, expectedNumberOfColumn, record.size()), self());
-        }
+        sender.tell(new DataLine(record), self());
         sender.tell(recordEvaluator.evaluate(line, record), self());
       }
-
       //add reader aggregated result to the DataWorkResult
       return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS);
     } catch (Exception ex) {
+      LOG.error("", ex);
       return new DataWorkResult(dataFile, DataWorkResult.Result.FAILED);
     }
   }

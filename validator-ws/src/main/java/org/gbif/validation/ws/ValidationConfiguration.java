@@ -11,6 +11,11 @@ public class ValidationConfiguration {
   private String apiUrl;
 
   /**
+   * Maximum number of lines a file can contains until we split it.
+   */
+  private Integer fileSplitSize;
+
+  /**
    * Directory used to copy data files to be validated.
    */
   private String workingDir;
@@ -21,6 +26,14 @@ public class ValidationConfiguration {
 
   public void setApiUrl(String apiUrl) {
     this.apiUrl = apiUrl;
+  }
+
+  public Integer getFileSplitSize() {
+    return fileSplitSize;
+  }
+
+  public void setFileSplitSize(Integer fileSplitSize) {
+    this.fileSplitSize = fileSplitSize;
   }
 
   public String getWorkingDir() {
