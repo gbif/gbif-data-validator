@@ -110,25 +110,11 @@ public class ValidationResource {
     servletBasedFileUpload = new ServletFileUpload(diskFileItemFactory);
     servletBasedFileUpload.setFileSizeMax(MAX_UPLOAD_SIZE_IN_BYTES);
   }
-
+  
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
-  public ValidationResult validateFile(@FormDataParam(FILE_PARAM) InputStream stream,
-                                       @FormDataParam(FILE_PARAM) FormDataContentDisposition header,
-                                       FormDataMultiPart formDataMultiPart) {
-      DataFileDescriptor dataFileDescriptor = DataFileDescriptorProvider.getValue(formDataMultiPart, header);
-      URI dataFilePath = downloadFile(dataFileDescriptor, stream, false);
-      ValidationResult result = processFile(dataFilePath, dataFileDescriptor, false);
-
-      return result;
-  }
-
-  @POST
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
-  @Produces(MediaType.APPLICATION_JSON)
-  @Path("/file2")
   public ValidationResult onValidateFile(@Context HttpServletRequest request) {
     ValidationResult result = null;
     String uploadFileName = null;
