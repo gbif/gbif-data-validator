@@ -32,8 +32,9 @@ public class UploadedFileManager {
   private static final String ZIP_CONTENT_TYPE = DefaultMediaTypePredictor.CommonMediaTypes.ZIP.getMediaType().toString();
   private static final String TXT_CONTENT_TYPE = DefaultMediaTypePredictor.CommonMediaTypes.TXT.getMediaType().toString();
   private static final String CSV_CONTENT_TYPE = "text/csv";
+  private static final String TSV_CONTENT_TYPE = "text/tab-separated-values";
 
-  private final static List<String> TABULAR_CONTENT_TYPE = Arrays.asList(TXT_CONTENT_TYPE, CSV_CONTENT_TYPE);
+  private final static List<String> TABULAR_CONTENT_TYPE = Arrays.asList(TXT_CONTENT_TYPE, CSV_CONTENT_TYPE, TSV_CONTENT_TYPE);
 
   private final String workingDirectory;
 

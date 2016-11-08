@@ -1,7 +1,7 @@
 package org.gbif.validation.tabular.parallel;
 
 /**
- * Package protected class to keep a DataLine to simplify the usage with Akka.
+ * Simple class keeping a DataLine to simplify the usage with Akka.
  */
 class DataLine {
 

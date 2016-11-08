@@ -80,6 +80,8 @@ public class RecordSourceFactory {
 
       if(FileFormat.DWCA.equals(dataFile.getFileFormat())) {
         dataFile.setRowType(((DwcReader)rs).getRowType());
+        //change the current file path to point to the core
+        dataFile.setFileName(rs.getFileSource().toString());
       }
 
       rs.close();

@@ -7,7 +7,6 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
@@ -179,7 +178,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
     return ValidationResultBuilders.Builder
-            .of(true, dataFile.getSourceFileName(), FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
+            .of(true, dataFile.getSourceFileName(), dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
             .withResourceResult(
                     ValidationResultBuilders.RecordsValidationResultElementBuilder
                             .of(dataFile.getSourceFileName(), dataFile.getRowType(),
