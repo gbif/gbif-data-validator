@@ -15,7 +15,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -27,10 +30,9 @@ public class DwcReader implements RecordSource {
   private static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
   //could be the core or an extension
-  private ArchiveFile darwinCoreComponent;
-  private List<ArchiveField> archiveFields;
-  private CSVReader csvReader;
-  private Term idColumnTerm;
+  private final ArchiveFile darwinCoreComponent;
+  private final List<ArchiveField> archiveFields;
+  private final CSVReader csvReader;
 
   private Term[] defaultValuesTerm;
   private String[] defaultValues;
@@ -56,12 +58,7 @@ public class DwcReader implements RecordSource {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
     Archive archive = ArchiveFactory.openArchive(dwcFolder);
-    if(rowType == null) {
-      darwinCoreComponent = archive.getCore();
-    }
-    else {
-      darwinCoreComponent = archive.getExtension(rowType);
-    }
+    darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
   }
@@ -76,7 +73,7 @@ public class DwcReader implements RecordSource {
     List<ArchiveField> termsWithDefaultValues = new ArrayList<>();
 
     // handle id column
-    idColumnTerm = darwinCoreComponent.getId().getTerm() != null ? darwinCoreComponent.getId().getTerm() : DEFAULT_ID_TERM;
+    Term idColumnTerm = darwinCoreComponent.getId().getTerm() != null ? darwinCoreComponent.getId().getTerm() : DEFAULT_ID_TERM;
 
     List<Term> terms = new ArrayList<>(archiveFields.size());
     terms.add(darwinCoreComponent.getId().getIndex(), idColumnTerm);

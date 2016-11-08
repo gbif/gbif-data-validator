@@ -52,7 +52,8 @@ public class ResourceEvaluationManager {
    * @throws IOException
    */
   public ValidationResult evaluate(DataFile dataFile) throws IOException {
-    Optional<ValidationResultElement> resourceStructureEvaluationResult = factory.createResourceStructureEvaluator(dataFile.getFileFormat()).evaluate(
+    Optional<ValidationResultElement> resourceStructureEvaluationResult =
+      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat()).evaluate(
             new File(dataFile.getFileName()).toPath(), dataFile.getSourceFileName());
 
     if(resourceStructureEvaluationResult.isPresent()) {

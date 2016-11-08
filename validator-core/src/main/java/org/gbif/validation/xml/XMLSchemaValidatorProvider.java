@@ -21,7 +21,7 @@ public class XMLSchemaValidatorProvider {
   private static final Logger LOG = LoggerFactory.getLogger(XMLSchemaValidatorProvider.class);
 
   private static final String SCHEMA_LANG = "http://www.w3.org/2001/XMLSchema";
-  private final SchemaFactory SCHEMA_FACTORY = SchemaFactory.newInstance(SCHEMA_LANG);
+  private static final SchemaFactory SCHEMA_FACTORY = SchemaFactory.newInstance(SCHEMA_LANG);
 
   public static final String DWC_META_XML = "dwc_meta_xml";
 
@@ -33,11 +33,11 @@ public class XMLSchemaValidatorProvider {
   //TODO implement schema cache in local folder
   //public XMLSchemaValidatorProvider(String workingFolder, Map<String, String> schemaKeyUrl) {
   public XMLSchemaValidatorProvider() {
-    schemas = Collections.synchronizedMap(new HashMap());
+    schemas = Collections.synchronizedMap(new HashMap<String, Schema>());
     try {
       schemas.put(DWC_META_XML, SCHEMA_FACTORY.newSchema(new StreamSource(DWC_META_XML_SCHEMA)));
     } catch (SAXException e) {
-      LOG.error("Can not load XML schema {}", e);
+      LOG.error("Can not load XML schema", e);
     }
   }
 
