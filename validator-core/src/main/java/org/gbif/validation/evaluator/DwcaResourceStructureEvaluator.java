@@ -34,6 +34,7 @@ public class DwcaResourceStructureEvaluator implements ResourceStructureEvaluato
     this.xmlSchemaValidatorProvider = xmlSchemaValidatorProvider;
   }
 
+  @Override
   public Optional<ValidationResultElement> evaluate(Path dwcFolder, String sourceFilename) {
     try {
       ArchiveFactory.openArchive(dwcFolder.toFile());

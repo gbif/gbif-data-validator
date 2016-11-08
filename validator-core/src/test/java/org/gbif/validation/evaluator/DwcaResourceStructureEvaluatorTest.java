@@ -37,11 +37,19 @@ public class DwcaResourceStructureEvaluatorTest {
   }
 
   @Test
-  public void dwcaResourceStructureEvaluatorTestMetaXmlSchame() {
+  public void dwcaResourceStructureEvaluatorTestMetaXmlSchema() {
     File dwcaFolder = FileUtils.getClasspathFile("dwca-occurrence-schema");
     Optional<ValidationResultElement> result = dwcaResourceStructureEvaluator.evaluate(dwcaFolder.toPath(), "test");
     assertTrue(result.isPresent());
     assertEquals(EvaluationType.DWCA_META_XML_SCHEMA, result.get().getIssues().get(0).getIssue());
+  }
+
+  @Test
+  public void dwcaResourceStructureEvaluatorTestNoMetaXml() {
+    File dwcaFolder = FileUtils.getClasspathFile("dwca-occurrence-no-meta");
+    Optional<ValidationResultElement> result = dwcaResourceStructureEvaluator.evaluate(dwcaFolder.toPath(), "test");
+    assertTrue(result.isPresent());
+    assertEquals(EvaluationType.DWCA_META_XML_NOT_FOUND, result.get().getIssues().get(0).getIssue());
   }
 
 }

@@ -5,7 +5,6 @@ import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
-import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.FileFormat;
@@ -55,7 +54,7 @@ public class EvaluatorFactory {
   }
 
   /**
-   * Create a {@link ResourceStructureEvaluator} instance for a specific {@link DataFile}.
+   * Create a {@link ResourceStructureEvaluator} instance for a specific {@link FileFormat}.
    *
    * @param fileFormat
    * @return
