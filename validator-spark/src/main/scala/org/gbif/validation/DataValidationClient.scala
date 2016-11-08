@@ -118,6 +118,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
       val validationCollector  = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)
       val cnt = data.count()
 
+
       data.map(row =>  row.toArray(columns))
           .zipWithIndex()
           .mapPartitions( partition => {
