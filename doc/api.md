@@ -65,6 +65,7 @@ Structure of the result of an evaluation of the structure of the resource.
   ]
 }
 ```
+
 ### Record structure
 ```json
 {
@@ -85,25 +86,6 @@ Structure of the result of an evaluation of the structure of the resource.
 }
 ```
 
-### Record value
-Structure of the result of a check on the value of a field(s).
-```json
-{
-  "issue": "MISSING_VALUE",
-  "count": 1,
-  "identifierTerm": "dwc:occurrenceId",
-  "terms" : ["dwc:scientificName"],
-  "sample": [
-    {
-      "relatedData": {
-        "line:": "1",
-        "identifier": "occ-1"
-      }
-    }
-  ]
-}
-```
-
 ### Record interpretation
 Structure of the result of the interpretation of a record.
 ```json
@@ -113,8 +95,8 @@ Structure of the result of the interpretation of a record.
   "identifierTerm": "dwc:occurrenceId",
   "sample": [
     {
+      "lineNumber": 1,
       "relatedData": {
-        "line:": "1",
         "identifier": "occ-1",
         "dwc:month": "2",
         "dwc:day": "26",
