@@ -34,7 +34,7 @@ public class SingleDataFileProcessorTest {
     datafile.setDelimiterChar('\t');
     datafile.setSourceFileName("myfile.tsv");
     datafile.setFileFormat(FileFormat.TABULAR);
-    datafile.setFileName(testFile.getAbsolutePath());
+    datafile.setFilePath(testFile.toPath());
 
     ValidationResult result = manager.evaluate(datafile);
 

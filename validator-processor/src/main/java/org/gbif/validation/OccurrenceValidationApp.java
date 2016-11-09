@@ -18,13 +18,13 @@ public class OccurrenceValidationApp {
   public static void main(String[] args) throws IOException {
     String fileName = args[0];
     DataFile dataFile = new DataFile();
-    dataFile.setFileName(fileName);
+    dataFile.setFilePath(Paths.get(fileName));
     dataFile.setSourceFileName(new File(fileName).toPath().getFileName().toString());
-    dataFile.setFileFormat(FileFormat.TABULAR);
+    dataFile.setFileFormat(FileFormat.DWCA);
     dataFile.setHasHeaders(true);
-    dataFile.setDelimiterChar('\t');
+    //dataFile.setDelimiterChar('\t');
 
-    extractAndSetTabularFileMetadata(Paths.get(fileName), dataFile);
+  //  extractAndSetTabularFileMetadata(Paths.get(fileName), dataFile);
 
     ResourceEvaluationManager resourceEvaluationManager = new ResourceEvaluationManager(args[1], 5);
 

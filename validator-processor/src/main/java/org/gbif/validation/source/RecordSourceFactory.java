@@ -55,8 +55,8 @@ public class RecordSourceFactory {
 
     switch (dataFile.getFileFormat()) {
       case TABULAR : return
-              fromDelimited(new File(dataFile.getFileName()), dataFile.getDelimiterChar(), dataFile.isHasHeaders());
-      case DWCA: return fromDwcA(new File(dataFile.getFileName()));
+              fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(), dataFile.isHasHeaders());
+      case DWCA: return fromDwcA(dataFile.getFilePath().toFile());
     }
     return null;
   }
@@ -70,7 +70,7 @@ public class RecordSourceFactory {
    */
   public static DataFile prepareSource(DataFile dataFile) throws IOException {
 
-    Validate.notNull(dataFile.getFileName(), "fileName shall be provided");
+    Validate.notNull(dataFile.getFilePath(), "filePath shall be provided");
     Validate.notNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
     RecordSource rs = fromDataFile(dataFile);
@@ -81,7 +81,7 @@ public class RecordSourceFactory {
       if(FileFormat.DWCA.equals(dataFile.getFileFormat())) {
         dataFile.setRowType(((DwcReader)rs).getRowType());
         //change the current file path to point to the core
-        dataFile.setFileName(rs.getFileSource().toString());
+        dataFile.setFilePath(rs.getFileSource());
       }
 
       rs.close();

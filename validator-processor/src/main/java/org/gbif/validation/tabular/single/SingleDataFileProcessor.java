@@ -32,11 +32,12 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       while ((record = recordSource.read()) != null) {
         dataValidationProcessor.process(record);
       }
+
       //FIXME the Status and indexeable should be decided by a another class somewhere
       return ValidationResultBuilders.Builder.of(true, dataFile.getSourceFileName(),
               dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-              .withResourceResult(dataValidationProcessor.getValidationResult(dataFile.getSourceFileName(),
-                      dataFile.getRowType())).build();
+              .withResourceResult(dataValidationProcessor
+                      .getValidationResult(dataFile.getFilePath().getFileName().toString(), dataFile.getRowType())).build();
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

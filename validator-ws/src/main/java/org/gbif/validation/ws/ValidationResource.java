@@ -162,7 +162,7 @@ public class ValidationResource {
         DataFile dataFile = new DataFile();
         //set the original file name (mostly used to send it back in the response)
         dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
-        dataFile.setFileName(dataFilePath.toFile().getAbsolutePath());
+        dataFile.setFilePath(dataFilePath.toAbsolutePath());
         dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
         dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
         dataFile.setFileFormat(dataFileDescriptor.getFormat());

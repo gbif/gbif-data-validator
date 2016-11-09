@@ -15,7 +15,6 @@ import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -53,8 +52,8 @@ public class ResourceEvaluationManager {
    */
   public ValidationResult evaluate(DataFile dataFile) throws IOException {
     Optional<ValidationResultElement> resourceStructureEvaluationResult =
-      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat()).evaluate(
-            new File(dataFile.getFileName()).toPath(), dataFile.getSourceFileName());
+      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+              .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
 
     if(resourceStructureEvaluationResult.isPresent()) {
       return ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),

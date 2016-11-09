@@ -18,6 +18,7 @@ import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -88,7 +89,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
         File outDir = new File(UUID.randomUUID().toString());
         outDir.deleteOnExit();
         String outDirPath = outDir.getAbsolutePath();
-        String[] splits = FileBashUtilities.splitFile(dataFile.getFileName(), numOfInputRecords / splitSize, outDirPath);
+        String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), numOfInputRecords / splitSize, outDirPath);
         numOfActors = splits.length;
 
         ActorRef workerRouter = getContext().actorOf(
@@ -102,7 +103,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           DataFile dataInputSplitFile = new DataFile();
           File splitFile = new File(outDirPath, splits[i]);
           splitFile.deleteOnExit();
-          dataInputSplitFile.setFileName(splitFile.getAbsolutePath());
+          dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
           dataInputSplitFile.setSourceFileName(dataInputSplitFile.getSourceFileName());
           dataInputSplitFile.setColumns(dataFile.getColumns());
           dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
@@ -174,7 +175,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       throw new RuntimeException(ex);
     } finally {
       system.shutdown();
-      LOG.info("Processing time for file {}: {} seconds", dataFile.getFileName(), system.uptime());
+      LOG.info("Processing time for file {}: {} seconds", dataFile.getFilePath(), system.uptime());
     }
     //FIXME the Status and indexeable should be decided by a another class somewhere
     return ValidationResultBuilders.Builder

@@ -3,6 +3,7 @@ package org.gbif.validation.api;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.model.FileFormat;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -12,7 +13,7 @@ import javax.annotation.Nullable;
  */
 public class DataFile {
 
-  private String fileName;
+  private Path filePath;
   private FileFormat fileFormat;
   private String sourceFileName;
 
@@ -48,8 +49,8 @@ public class DataFile {
     this.rowType = rowType;
   }
 
-  public void setFileName(String fileName) {
-    this.fileName = fileName;
+  public void setFilePath(Path filePath) {
+    this.filePath = filePath;
   }
 
   public void setNumOfLines(Integer numOfLines) {
@@ -78,12 +79,12 @@ public class DataFile {
   }
 
   /**
-   * Generated file name.
+   * Path to generated file name.
    *
-   * @return safe, generated filename
+   * @return safe, path to generated filename
    */
-  public String getFileName() {
-    return fileName;
+  public Path getFilePath() {
+    return filePath;
   }
 
   /**
@@ -118,7 +119,7 @@ public class DataFile {
   @Override
   public String toString() {
     return "DataFile{" +
-            "fileName=" + fileName +
+            "filePath=" + filePath +
             "fileFormat=" + fileFormat +
             "sourceFileName=" + sourceFileName +
             ", columns=" + Arrays.toString(columns) +
@@ -139,7 +140,7 @@ public class DataFile {
             Objects.equals(delimiterChar, dataFile.delimiterChar) &&
             Arrays.equals(columns, dataFile.columns) &&
             Objects.equals(rowType, dataFile.rowType) &&
-            Objects.equals(fileName, dataFile.fileName) &&
+            Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
@@ -149,7 +150,7 @@ public class DataFile {
   @Override
   public int hashCode() {
     return Objects.hash(
-            fileName,
+            filePath,
             fileFormat,
             sourceFileName,
             columns,
