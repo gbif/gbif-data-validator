@@ -1,10 +1,10 @@
 package org.gbif.validation.source;
 
-import org.gbif.utils.file.tabular.TabularFiles;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.util.FileBashUtilities;
+import static org.gbif.utils.file.tabular.TabularFiles.newTabularFileReader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -32,15 +32,14 @@ public class RecordSourceFactory {
    */
   public static RecordSource fromDelimited(File sourceFile, char delimiterChar, boolean headerIncluded)
           throws IOException {
-    return new TabularFileReader(sourceFile.toPath(), TabularFiles.newTabularFileReader(new FileInputStream(sourceFile), delimiterChar,
-            headerIncluded));
+    return new TabularFileReader(sourceFile.toPath(), newTabularFileReader(new FileInputStream(sourceFile),
+                                                                           delimiterChar, headerIncluded));
   }
 
   /**
    * Creates instances of RecordSource from a folder containing an extracted DarwinCore archive.
    */
-  public static RecordSource fromDwcA(File sourceFolder)
-          throws IOException {
+  public static RecordSource fromDwcA(File sourceFolder) throws IOException {
     return new DwcReader(sourceFolder);
   }
 
@@ -73,18 +72,17 @@ public class RecordSourceFactory {
     Validate.notNull(dataFile.getFileName(), "fileName shall be provided");
     Validate.notNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
-    RecordSource rs = fromDataFile(dataFile);
-    if(rs != null){
-      dataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
-      dataFile.setColumns(rs.getHeaders());
+    try (RecordSource rs = fromDataFile(dataFile)) {
+      if (rs != null) {
+        dataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
+        dataFile.setColumns(rs.getHeaders());
 
-      if(FileFormat.DWCA.equals(dataFile.getFileFormat())) {
-        dataFile.setRowType(((DwcReader)rs).getRowType());
-        //change the current file path to point to the core
-        dataFile.setFileName(rs.getFileSource().toString());
+        if (FileFormat.DWCA == dataFile.getFileFormat()) {
+          dataFile.setRowType(((DwcReader) rs).getRowType());
+          //change the current file path to point to the core
+          dataFile.setFileName(rs.getFileSource().toString());
+        }
       }
-
-      rs.close();
     }
     return dataFile;
   }

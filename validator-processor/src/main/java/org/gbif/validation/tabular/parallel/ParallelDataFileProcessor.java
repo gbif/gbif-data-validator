@@ -18,6 +18,7 @@ import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -61,7 +62,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       receive(
         match(DataFile.class, dataFile -> {
           this.dataFile = dataFile;
-          this.termsColumnsMapping = termsColumnsMapping;
+          this.termsColumnsMapping = new ArrayList<Term>(termsColumnsMapping);
           processDataFile(fileSplitSize, evaluatorFactory);
         })
         .match(DataLine.class, dataLine -> {
@@ -141,7 +142,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
                                    List<Term> termsColumnsMapping, Integer fileSplitSize) {
     this.evaluatorFactory = evaluatorFactory;
     this.system = system;
-    this.termsColumnsMapping = termsColumnsMapping;
+    this.termsColumnsMapping = new ArrayList<>(termsColumnsMapping);
     this.fileSplitSize = fileSplitSize;
   }
 
