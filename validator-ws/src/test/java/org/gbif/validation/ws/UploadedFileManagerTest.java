@@ -59,12 +59,13 @@ public class UploadedFileManagerTest {
     assertEquals("validator_test_file_all_issues.tsv",
             UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; filename=\"validator_test_file_all_issues.tsv\"").get());
     assertEquals("validator_test_file_all_issues.tsv",
-            UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; fileName=\"validator_test_file_all_issues.tsv\"").get());
+            UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; fileName =\"validator_test_file_all_issues.tsv\"").get());
     assertEquals("validator_test_file_all_issues.tsv",
             UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; filename = validator_test_file_all_issues.tsv").get());
 
     assertFalse(UploadedFileManager.parseContentDisposition("").isPresent());
     assertFalse(UploadedFileManager.parseContentDisposition("form-data; name=\"file\";").isPresent());
+    assertFalse(UploadedFileManager.parseContentDisposition("name=\"file\"; filename=").isPresent());
   }
 
 }

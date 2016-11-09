@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 
@@ -41,6 +42,9 @@ public class UploadedFileManager {
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
   private static final String ZIP_CONTENT_TYPE = DefaultMediaTypePredictor.CommonMediaTypes.ZIP.getMediaType().toString();
+
+  private static final Pattern FILENAME_PATTERN = Pattern.compile("filename[ ]*=[ ]*[\\S]+",Pattern.CASE_INSENSITIVE);
+  private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
 
   private final static List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN, ExtraMediaTypes.TEXT_CSV,
           ExtraMediaTypes.TEXT_TSV);
@@ -208,12 +212,10 @@ public class UploadedFileManager {
   protected static Optional<String> parseContentDisposition(String contentDisposition) {
     Objects.requireNonNull(contentDisposition, "contentDisposition shall not be null");
 
-    return
-            Arrays.stream(contentDisposition.split(";"))
-                    .map(el-> el.split("="))
-                    .filter(p -> p.length > 1 && p[0].trim().equalsIgnoreCase("filename"))
-                    .map(cd -> cd[1].trim().replaceAll("\"", ""))
-                    .findFirst();
+    return Arrays.stream(contentDisposition.split(";"))
+            .filter(el ->  FILENAME_PATTERN.matcher(el.trim()).matches())
+            .map(el ->  QUOTE_PATTERN.matcher(el.split("=")[1].trim()).replaceAll(""))
+            .findFirst();
   }
 
   /**
