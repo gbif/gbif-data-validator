@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 /**
@@ -51,6 +52,19 @@ public class UploadedFileManagerTest {
       e.printStackTrace();
       fail();
     }
+  }
+
+  @Test
+  public void testParseContentDisposition() {
+    assertEquals("validator_test_file_all_issues.tsv",
+            UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; filename=\"validator_test_file_all_issues.tsv\"").get());
+    assertEquals("validator_test_file_all_issues.tsv",
+            UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; fileName=\"validator_test_file_all_issues.tsv\"").get());
+    assertEquals("validator_test_file_all_issues.tsv",
+            UploadedFileManager.parseContentDisposition("form-data; name=\"file\"; filename = validator_test_file_all_issues.tsv").get());
+
+    assertFalse(UploadedFileManager.parseContentDisposition("").isPresent());
+    assertFalse(UploadedFileManager.parseContentDisposition("form-data; name=\"file\";").isPresent());
   }
 
 }

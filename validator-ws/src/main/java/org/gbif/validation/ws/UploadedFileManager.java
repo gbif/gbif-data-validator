@@ -11,15 +11,14 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import javax.ws.rs.core.MediaType;
 
-import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.file.DefaultMediaTypePredictor;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -141,12 +140,7 @@ public class UploadedFileManager {
       String contentDisposition = urlConnection.getHeaderField(FileUploadBase.CONTENT_DISPOSITION);
 
       if(StringUtils.isNotBlank(contentDisposition)) {
-        try {
-          ContentDisposition cd = new ContentDisposition(contentDisposition);
-          filename = cd.getFileName();
-        } catch (ParseException ignore) {
-          ignore.printStackTrace();
-        }
+        filename = parseContentDisposition(contentDisposition).orElse(null);
       }
 
       //if we still have no name for the file, take it from URL as last resort
@@ -202,6 +196,24 @@ public class UploadedFileManager {
         entry = Optional.ofNullable ((ZipArchiveEntry) ais.getNextEntry());
       }
     }
+  }
+
+  /**
+   * Try to extract the filename from a String extract from the HTTP headers.
+   * VISIBLE-FOR-TESTING
+   *
+   * @param contentDisposition
+   * @return
+   */
+  protected static Optional<String> parseContentDisposition(String contentDisposition) {
+    Objects.requireNonNull(contentDisposition, "contentDisposition shall not be null");
+
+    return
+            Arrays.stream(contentDisposition.split(";"))
+                    .map(el-> el.split("="))
+                    .filter(p -> p.length > 1 && p[0].trim().equalsIgnoreCase("filename"))
+                    .map(cd -> cd[1].trim().replaceAll("\"", ""))
+                    .findFirst();
   }
 
   /**
