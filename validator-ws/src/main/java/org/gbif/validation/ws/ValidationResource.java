@@ -11,6 +11,7 @@ import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -20,6 +21,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -46,7 +48,7 @@ public class ValidationResource {
   private final ResourceEvaluationManager resourceEvaluationManager;
 
   private final ServletFileUpload servletBasedFileUpload;
-  private final UploadedFileManager uploadedFileManager;
+  private final UploadedFileManager fileTransferManager;
 
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
@@ -54,12 +56,13 @@ public class ValidationResource {
   private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
 
+
   @Inject
   public ValidationResource(ValidationConfiguration configuration, ResourceEvaluationManager resourceEvaluationManager)
     throws IOException {
     this.resourceEvaluationManager = resourceEvaluationManager;
 
-    uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+    fileTransferManager = new UploadedFileManager(configuration.getWorkingDir(), MAX_UPLOAD_SIZE_IN_BYTES);
 
     //TODO clean on startup?
     java.nio.file.Path fileUploadDirectory = Paths.get(configuration.getWorkingDir()).resolve(FILEUPLOAD_TMP_FOLDER);
@@ -87,9 +90,7 @@ public class ValidationResource {
               .findFirst();
 
       if(uploadFileInputStream.isPresent()) {
-        //TODO handle file download from URL
-        Optional<DataFileDescriptor> dataFileDescriptor =
-                uploadedFileManager.handleFileUpload(
+        Optional<DataFileDescriptor> dataFileDescriptor = fileTransferManager.handleFileTransfer(
                         uploadFileInputStream.get().getName(),
                         uploadFileInputStream.get().getContentType(),
                         uploadFileInputStream.get().getInputStream());
@@ -116,6 +117,28 @@ public class ValidationResource {
     }
     return result;
   }
+
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Path("/url")
+  public ValidationResult onValidateFile(@QueryParam("fileUrl") String fileURL) {
+    ValidationResult result = null;
+    try {
+      Optional<DataFileDescriptor> dataFileDescriptor =
+              fileTransferManager.handleFileDownload(null, null, new URL(fileURL));
+      if(dataFileDescriptor.isPresent()) {
+        result = processFile(dataFileDescriptor.get().getUploadedResourcePath(),
+                dataFileDescriptor.get());
+      }
+    } catch (IOException ioEx) {
+      LOG.error("Can't handle file download from {}", ioEx, fileURL);
+      throw new WebApplicationException(buildErrorResponse(fileURL.toString(),
+              Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR));
+    }
+    return result;
+  }
+
 
   /**
    * Prepare a {@link Response} object.
