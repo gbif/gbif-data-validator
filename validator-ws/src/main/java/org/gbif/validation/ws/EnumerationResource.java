@@ -8,10 +8,10 @@ import org.gbif.ws.server.interceptor.NullToNotFound;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -20,8 +20,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * A resource that provides a JSON serialization of validation related Enumerations.
@@ -31,16 +29,10 @@ import org.slf4j.LoggerFactory;
 @Singleton
 public class EnumerationResource {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EnumerationResource.class);
+  private static final List<Class<? extends Enum<?>>> AVAILABLE_ENUMS = Collections.unmodifiableList(
+    Arrays.asList(EvaluationCategory.class, EvaluationType.class, ValidationErrorCode.class, FileFormat.class));
 
-  private static final List<Class<? extends Enum>> AVAILABLE_ENUMS =
-          Arrays.asList(
-                  EvaluationCategory.class,
-                  EvaluationType.class,
-                  ValidationErrorCode.class,
-                  FileFormat.class);
-
-  private static Map<String, Enum<?>[]> PATH_MAPPING = initEnumerations();
+  private static final Map<String, Enum<?>[]> PATH_MAPPING = initEnumerations();
 
   /**
    * Initialize enumeration elements based on Enumeration defined in AVAILABLE_ENUMS.
@@ -48,21 +40,7 @@ public class EnumerationResource {
    * @return
    */
   private static Map<String, Enum<?>[]> initEnumerations() {
-    Map<String, Enum<?>[]> enumMap = new HashMap<>();
-    try {
-      for (Class<? extends Enum> enumClass : AVAILABLE_ENUMS) {
-        // verify that it is an Enumeration
-        if (enumClass.getEnumConstants() != null) {
-          //enum getEnumConstants preserves the order in which the enum constants are defined
-          enumMap.put(enumClass.getSimpleName(), enumClass.getEnumConstants());
-        }
-      }
-    } catch (Exception e) {
-      LOG.error("Unable to read enumeration value(s)", e);
-      //do no return a partial map
-      enumMap.clear();
-    }
-    return Collections.unmodifiableMap(enumMap);
+      return AVAILABLE_ENUMS.stream().collect(Collectors.toMap(Class::getSimpleName, Class::getEnumConstants));
   }
 
 
@@ -88,10 +66,6 @@ public class EnumerationResource {
   @GET
   @NullToNotFound
   public Enum<?>[] getEnumeration(@PathParam("name") @NotNull String name) {
-    if (PATH_MAPPING.containsKey(name)) {
-      return PATH_MAPPING.get(name);
-    } else {
-      return null;
-    }
+    return PATH_MAPPING.getOrDefault(name,null);
   }
 }

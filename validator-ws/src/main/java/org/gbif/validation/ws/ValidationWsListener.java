@@ -6,6 +6,8 @@ import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.ValidationSparkConf;
+import org.gbif.validation.ws.conf.ConfKeys;
+import org.gbif.validation.ws.conf.ValidationConfiguration;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;

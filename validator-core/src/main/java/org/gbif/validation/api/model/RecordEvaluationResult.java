@@ -92,7 +92,7 @@ public class RecordEvaluationResult implements Serializable {
     }
 
     public Builder withExisting(RecordEvaluationResult recordEvaluationResult){
-      this.recordId = recordEvaluationResult.recordId;
+      recordId = recordEvaluationResult.recordId;
 
       if(recordEvaluationResult.getDetails() != null){
         details = new ArrayList<>(recordEvaluationResult.getDetails());

@@ -8,6 +8,7 @@ import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
+import org.gbif.validation.ws.conf.ValidationConfiguration;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,7 +53,6 @@ public class ValidationResource {
   private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
   private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
-  private static final String FILE_PARAM = "file";
 
   @Inject
   public ValidationResource(ValidationConfiguration configuration, ResourceEvaluationManager resourceEvaluationManager)
@@ -83,7 +83,7 @@ public class ValidationResource {
 
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
       Optional<FileItem> uploadFileInputStream = uploadedContent.stream().filter(
-              fileItem -> !fileItem.isFormField() && FILE_PARAM.equals(fileItem.getFieldName()))
+              fileItem -> !fileItem.isFormField() && WsValidationParams.FILE.getParam().equals(fileItem.getFieldName()))
               .findFirst();
 
       if(uploadFileInputStream.isPresent()) {

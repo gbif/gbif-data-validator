@@ -32,7 +32,7 @@ public class EvaluatorFactory {
 
   private final String apiUrl;
 
-  private static ApacheHttpClient httpClient = createHttpClient();
+  private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
 
@@ -87,7 +87,7 @@ public class EvaluatorFactory {
    * Builds an OccurrenceInterpreter using the current HttpClient instance.
    */
   private OccurrenceInterpreter buildOccurrenceInterpreter() {
-    WebResource webResource = httpClient.resource(apiUrl);
+    WebResource webResource = HTTP_CLIENT.resource(apiUrl);
     TaxonomyInterpreter taxonomyInterpreter = new TaxonomyInterpreter(webResource);
     LocationInterpreter locationInterpreter = new LocationInterpreter(new CoordinateInterpreter(webResource));
     return new OccurrenceInterpreter(taxonomyInterpreter, locationInterpreter);

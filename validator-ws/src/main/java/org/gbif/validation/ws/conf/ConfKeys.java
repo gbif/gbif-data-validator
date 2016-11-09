@@ -1,4 +1,4 @@
-package org.gbif.validation.ws;
+package org.gbif.validation.ws.conf;
 
 /**
  * Configuration keys used in properties file.

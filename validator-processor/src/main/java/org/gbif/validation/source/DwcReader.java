@@ -71,9 +71,8 @@ public class DwcReader implements RecordSource {
     }
 
     List<ArchiveField> termsWithDefaultValues = new ArrayList<>();
-
     // handle id column
-    Term idColumnTerm = darwinCoreComponent.getId().getTerm() != null ? darwinCoreComponent.getId().getTerm() : DEFAULT_ID_TERM;
+    Term idColumnTerm =  Optional.ofNullable(darwinCoreComponent.getId().getTerm()).orElse(DEFAULT_ID_TERM);
 
     List<Term> terms = new ArrayList<>(archiveFields.size());
     terms.add(darwinCoreComponent.getId().getIndex(), idColumnTerm);
@@ -108,12 +107,10 @@ public class DwcReader implements RecordSource {
     }
 
     String[] line = csvReader.next();
-
-    if(line == null){
-      return null;
+    if (line != null) {
+      line = Arrays.copyOf(line, line.length + defaultValuesTerm.length);
+      System.arraycopy(defaultValues, 0, line, line.length - 1, defaultValuesTerm.length);
     }
-    line = Arrays.copyOf(line, line.length + defaultValuesTerm.length);
-    System.arraycopy(defaultValues, 0, line, line.length-1, defaultValuesTerm.length);
 
     return line;
   }

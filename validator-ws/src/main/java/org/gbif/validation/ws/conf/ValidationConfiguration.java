@@ -1,4 +1,4 @@
-package org.gbif.validation.ws;
+package org.gbif.validation.ws.conf;
 
 /**
  * Configuration settings required by the data validation web services.

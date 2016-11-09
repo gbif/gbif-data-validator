@@ -9,6 +9,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.ws.conf.ValidationConfiguration;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.File;
@@ -72,18 +73,25 @@ public class SparkValidationResource {
     this.configuration = configuration;
     this.httpUtil = httpUtil;
     uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
-
     hadoopConf = buildHadoopConf();
+    initUploadDirectory(configuration.getWorkingDir());
+  }
 
-    //TODO clean on startup?
-    java.nio.file.Path fileUploadDirectory = Paths.get(configuration.getWorkingDir()).resolve(FILEUPLOAD_TMP_FOLDER);
+  /**
+   * Gets the path where files are uploaded. If it doesn't exist, the directory is created.
+   */
+  private static java.nio.file.Path initUploadDirectory(String uploadDir) throws IOException {
+    java.nio.file.Path fileUploadDirectory = Paths.get(uploadDir).resolve(FILEUPLOAD_TMP_FOLDER);
     if(!fileUploadDirectory.toFile().exists()) {
       Files.createDirectory(fileUploadDirectory);
     }
-
+    return fileUploadDirectory;
   }
 
-  private  static Configuration buildHadoopConf() {
+  /**
+   * Creates a Hadoop Configuration instance.
+   */
+  private static Configuration buildHadoopConf() {
     Configuration conf = new Configuration();
     conf.addResource("hdfs-site.xml");
     conf.addResource("core-site.xml");
@@ -106,8 +114,11 @@ public class SparkValidationResource {
   private URI downloadFile(DataFileDescriptor descriptor, InputStream stream) {
     if(descriptor.getSubmittedFile() != null) {
       try {
-        return descriptor.getSubmittedFile().startsWith("http")? downloadHttpFile(new URL(descriptor.getSubmittedFile())) :
-                                                          copyToHdfs(stream,descriptor.getSubmittedFile()).toUri();
+        if (descriptor.getSubmittedFile().startsWith("http")) {
+          File downloadedFile = downloadHttpFile(new URL(descriptor.getSubmittedFile()));
+          return moveToHdfs(downloadedFile, descriptor.getSubmittedFile()).toUri();
+        }
+        return copyToHdfs(stream,descriptor.getSubmittedFile()).toUri();
       } catch(IOException  ex){
         throw new WebApplicationException(ex, SC_BAD_REQUEST);
       }
@@ -118,26 +129,33 @@ public class SparkValidationResource {
   /**
    * Downloads a file from a HTTP(s) endpoint.
    */
-  private URI downloadHttpFile(URL fileUrl) throws IOException {
+  private File downloadHttpFile(URL fileUrl) throws IOException {
     java.nio.file.Path destinationFilePath = uploadedFileManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
-    if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() == SC_OK) {
-      copyToHdfs(destinationFilePath);
-      return destinationFilePath.toUri();
+    File file = destinationFilePath.toFile();
+    if (httpUtil.download(fileUrl, file).getStatusCode() == SC_OK) {
+      return file;
     }
     throw new WebApplicationException(SC_BAD_REQUEST);
   }
 
-  private org.apache.hadoop.fs.Path copyToHdfs(InputStream stream, String fileName) throws IOException {
-    org.apache.hadoop.fs.Path file = new org.apache.hadoop.fs.Path(configuration.getWorkingDir() + '/' + UUID.randomUUID() + '/' + fileName);
-    try(FileSystem hdfs = FileSystem.get(hadoopConf); OutputStream os = hdfs.create(file)) {
-      IOUtils.copyBytes(stream, os, hadoopConf);
-    }
-    return file;
+  /**
+   * Move a file to HDFS and deletes the file from the local file system.
+   */
+  private org.apache.hadoop.fs.Path moveToHdfs(File file, String fileName) throws IOException {
+    org.apache.hadoop.fs.Path filePath = copyToHdfs(new FileInputStream(file),fileName);
+    file.delete();
+    return  filePath;
   }
 
-  private org.apache.hadoop.fs.Path copyToHdfs(java.nio.file.Path filePath) throws IOException {
-    File file = filePath.toFile();
-    return copyToHdfs(new FileInputStream(file),file.getName());
+  /**
+   * Copies the stream content into a file in HDFS.
+   */
+  private org.apache.hadoop.fs.Path copyToHdfs(InputStream stream, String fileName) throws IOException {
+    org.apache.hadoop.fs.Path filePath = new org.apache.hadoop.fs.Path(configuration.getWorkingDir() + '/' + UUID.randomUUID() + '/' + fileName);
+    try(OutputStream os = FileSystem.get(hadoopConf).create(filePath)) {
+      IOUtils.copyBytes(stream, os, hadoopConf);
+    }
+    return filePath;
   }
 
   /**
@@ -145,10 +163,11 @@ public class SparkValidationResource {
    */
   private ValidationResult processFile(URI dataFileUri, DataFileDescriptor dataFileDescriptor)  {
     try {
-        ScalaJobHandle<ValidationResultElement> jobHandle = (ScalaJobHandle<ValidationResultElement>)Await.ready(dataValidationClient.processDataFile(dataFileUri.getPath()), Duration.create(10000, TimeUnit.SECONDS));
-        return ValidationResultBuilders.Builder.of(true, dataFileDescriptor.getSubmittedFile(),
-                FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE)
-          .withResourceResult(jobHandle.value().get().get()).build();
+      ScalaJobHandle<ValidationResultElement> jobHandle = (ScalaJobHandle<ValidationResultElement>)Await.ready(dataValidationClient.processDataFile(dataFileUri.getPath()), Duration.create(10000, TimeUnit.SECONDS));
+
+      return ValidationResultBuilders.Builder.of(true, dataFileDescriptor.getSubmittedFile(), FileFormat.TABULAR,
+                                                 ValidationProfile.GBIF_INDEXING_PROFILE)
+                                             .withResourceResult(jobHandle.value().get().get()).build();
     } catch (Exception ex) {
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     } finally {
@@ -156,9 +175,12 @@ public class SparkValidationResource {
     }
   }
 
+  /**
+   * Deletes the uploaded file on HDFS.
+   */
   private void deleteFile(URI fileUri) {
-    try {
-        FileSystem.get(hadoopConf).delete(new org.apache.hadoop.fs.Path(fileUri), false);
+    try (FileSystem fs = FileSystem.get(hadoopConf)) {
+        fs.delete(new org.apache.hadoop.fs.Path(fileUri), false);
     } catch (Exception ex) {
       LOG.error("Error deleting file {}", fileUri, ex);
     }
