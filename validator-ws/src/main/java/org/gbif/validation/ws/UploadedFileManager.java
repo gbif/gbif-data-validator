@@ -2,6 +2,7 @@ package org.gbif.validation.ws;
 
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.FileFormat;
+import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import javax.annotation.Nullable;
+import javax.ws.rs.core.MediaType;
 
 import com.sun.jersey.core.header.ContentDisposition;
 import com.sun.jersey.multipart.file.DefaultMediaTypePredictor;
@@ -40,11 +42,9 @@ public class UploadedFileManager {
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
   private static final String ZIP_CONTENT_TYPE = DefaultMediaTypePredictor.CommonMediaTypes.ZIP.getMediaType().toString();
-  private static final String TXT_CONTENT_TYPE = DefaultMediaTypePredictor.CommonMediaTypes.TXT.getMediaType().toString();
-  private static final String CSV_CONTENT_TYPE = "text/csv";
-  private static final String TSV_CONTENT_TYPE = "text/tab-separated-values";
 
-  private final static List<String> TABULAR_CONTENT_TYPE = Arrays.asList(TXT_CONTENT_TYPE, CSV_CONTENT_TYPE, TSV_CONTENT_TYPE);
+  private final static List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN, ExtraMediaTypes.TEXT_CSV,
+          ExtraMediaTypes.TEXT_TSV);
 
   private final int FILE_DOWNLOAD_TIMEOUT_MS = 10000;
 
@@ -101,7 +101,7 @@ public class UploadedFileManager {
           LOG.error("Issue while unzipping data from {}.", arEx, filename);
           throw new IOException(arEx);
         }
-      } else if (TABULAR_CONTENT_TYPE.contains(contentType)) {
+      } else if (TABULAR_CONTENT_TYPES.contains(contentType)) {
         //preserve the extension (mostly for debugging)
         String fileExt = FilenameUtils.getExtension(filename);
         uploadedResourcePath = destinationFolder.resolve(UUID.randomUUID().toString() + "." + fileExt);

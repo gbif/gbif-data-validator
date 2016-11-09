@@ -63,6 +63,7 @@ public class SparkValidationResource {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkValidationResource.class);
 
+  private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
   private static final String FILE_PARAM = "file";
 
@@ -71,7 +72,7 @@ public class SparkValidationResource {
                                  HttpUtil httpUtil) throws IOException {
     this.configuration = configuration;
     this.httpUtil = httpUtil;
-    uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+    uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir(), MAX_UPLOAD_SIZE_IN_BYTES);
 
     hadoopConf = buildHadoopConf();
 
