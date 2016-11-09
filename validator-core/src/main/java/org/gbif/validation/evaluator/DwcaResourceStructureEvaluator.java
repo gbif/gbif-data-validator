@@ -61,7 +61,7 @@ public class DwcaResourceStructureEvaluator implements ResourceStructureEvaluato
     return xmlSchemaValidatorProvider.getXmlValidator(XMLSchemaValidatorProvider.DWC_META_XML);
   }
 
-  private ValidationResultElement buildResult(String sourceFilename, EvaluationType type, String msg){
+  private static ValidationResultElement buildResult(String sourceFilename, EvaluationType type, String msg){
     return ValidationResultBuilders.DefaultValidationResultElementBuilder
             .of(sourceFilename).addExceptionResultDetails(type, msg).build();
   }

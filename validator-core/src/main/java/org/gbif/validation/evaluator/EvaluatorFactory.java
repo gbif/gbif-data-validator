@@ -59,7 +59,7 @@ public class EvaluatorFactory {
    * @param fileFormat
    * @return
    */
-  public ResourceStructureEvaluator createResourceStructureEvaluator(FileFormat fileFormat) {
+  public static ResourceStructureEvaluator createResourceStructureEvaluator(FileFormat fileFormat) {
     Objects.requireNonNull(fileFormat, "fileFormat shall be provided");
 
     switch(fileFormat) {

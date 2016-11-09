@@ -1,7 +1,8 @@
 package org.gbif.validation.conversion
 
-import java.util
-import java.util.HashMap
+import java.util.{HashMap => JavaMutableMap}
+import java.util.{ArrayList => JavaMutableList}
+
 
 import org.apache.spark.sql.Row
 import org.gbif.dwc.terms.Term
@@ -16,7 +17,7 @@ object UtilConversions {
   /**
     * Implicit to operate over maps with AnyVal values.
     */
-  implicit class ValueMapConversion[K, V <: AnyVal](val m: Map[K, V])
+  implicit class ValueMapConversion[K, V](val m: Map[K, V])
   {
     /**
       * Converts a scala util.Map into a Java mutable map.
@@ -24,10 +25,7 @@ object UtilConversions {
       */
     def toMutableJavaMap[R <: AnyRef](converter: V => R): java.util.Map[K, R]  =
     {
-      new HashMap(for ((k, v) <- m) yield (k -> converter(v)))
-      //m.foreach({ case (key, value) => {
-      //  newMap.put(key, converter(value))
-      //}})
+      new JavaMutableMap(m.map(e => (e._1,converter(e._2))))
     }
   }
 
@@ -72,12 +70,7 @@ object UtilConversions {
   implicit  class MutableMapListJava[K,L](val m: Map[K, List[L]]) {
 
     def toMapListJava : java.util.Map[K, java.util.List[L]] = {
-      val newMap: HashMap[K, java.util.List[L]] = new HashMap(m.size)
-      m.foreach({ case (key, l) => {
-        newMap.put(key, new util.ArrayList(l))
-      }
-      })
-      newMap
+        m.toMutableJavaMap(new JavaMutableList[L](_))
     }
   }
 
@@ -90,10 +83,7 @@ object UtilConversions {
       * Converts a list of terms and values into a map that shows if that a term has a value in the input record.
       */
     def toPresenceMap(record: Array[String]): Map[Term, Long] = {
-      terms.zip(record).map({ case (term, value) => {
-        (term, if (value == null || value.size == 0) 0L else 1L)
-      }
-      }).toMap
+      terms.zip(record).map({ case (term, value) => (term, if (value == null || value.length == 0) 0L else 1L)}).toMap
     }
   }
 
