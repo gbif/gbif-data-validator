@@ -9,6 +9,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.ws.conf.ValidationConfiguration;
 import org.gbif.ws.server.provider.DataFileDescriptorProvider;
 
 import java.io.File;
