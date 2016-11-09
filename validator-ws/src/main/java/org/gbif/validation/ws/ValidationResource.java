@@ -34,6 +34,7 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -78,13 +79,14 @@ public class ValidationResource {
 
   private final DiskFileItemFactory diskFileItemFactory;
   private final ServletFileUpload servletBasedFileUpload;
-  private final UploadedFileManager uploadedFileManager;
+  private final UploadedFileManager fileTransferManager;
 
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
   private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
   private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
+
   private static final String FILE_PARAM = "file";
 
   @Inject
@@ -98,7 +100,7 @@ public class ValidationResource {
     hadoopConf.addResource("hdfs-site.xml");
     hadoopConf.addResource("core-site.xml");
 
-    uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+    fileTransferManager = new UploadedFileManager(configuration.getWorkingDir(), MAX_UPLOAD_SIZE_IN_BYTES);
 
     //TODO clean on startup?
     java.nio.file.Path fileUploadDirectory = Paths.get(configuration.getWorkingDir()).resolve(FILEUPLOAD_TMP_FOLDER);
@@ -110,7 +112,7 @@ public class ValidationResource {
     servletBasedFileUpload = new ServletFileUpload(diskFileItemFactory);
     servletBasedFileUpload.setFileSizeMax(MAX_UPLOAD_SIZE_IN_BYTES);
   }
-  
+
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
@@ -126,9 +128,7 @@ public class ValidationResource {
               .findFirst();
 
       if(uploadFileInputStream.isPresent()) {
-        //TODO handle file download from URL
-        Optional<DataFileDescriptor> dataFileDescriptor =
-                uploadedFileManager.handleFileUpload(
+        Optional<DataFileDescriptor> dataFileDescriptor = fileTransferManager.handleFileTransfer(
                         uploadFileInputStream.get().getName(),
                         uploadFileInputStream.get().getContentType(),
                         uploadFileInputStream.get().getInputStream());
@@ -156,6 +156,28 @@ public class ValidationResource {
     }
     return result;
   }
+
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Path("/url")
+  public ValidationResult onValidateFile(@QueryParam("fileUrl") String fileURL) {
+    ValidationResult result = null;
+    try {
+      Optional<DataFileDescriptor> dataFileDescriptor =
+              fileTransferManager.handleFileDownload(null, null, new URL(fileURL));
+      if(dataFileDescriptor.isPresent()) {
+        result = processFile(dataFileDescriptor.get().getUploadedResourcePath().toUri(),
+                dataFileDescriptor.get(), false);
+      }
+    } catch (IOException ioEx) {
+      LOG.error("Can't handle file download from {}", ioEx, fileURL);
+      throw new WebApplicationException(buildErrorResponse(fileURL.toString(),
+              Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR));
+    }
+    return result;
+  }
+
 
   /**
    * Prepare a {@link Response} object.
@@ -201,7 +223,7 @@ public class ValidationResource {
    * Downloads a file from a HTTP(s) endpoint.
    */
   private URI downloadHttpFile(URL fileUrl, boolean toHdfs) throws IOException {
-    java.nio.file.Path destinationFilePath = uploadedFileManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
+    java.nio.file.Path destinationFilePath = fileTransferManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
     if (httpUtil.download(fileUrl, destinationFilePath.toFile()).getStatusCode() == SC_OK) {
       if(toHdfs) {
         copyToHdfs(destinationFilePath);
@@ -221,7 +243,7 @@ public class ValidationResource {
                            Boolean useHdfs) throws IOException {
     LOG.info("Uploading data file into {}", descriptor);
     if (!useHdfs) {
-      java.nio.file.Path destinyFilePath = uploadedFileManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
+      java.nio.file.Path destinyFilePath = fileTransferManager.generateRandomFolderPath().resolve(UUID.randomUUID().toString());
       Files.createDirectory(destinyFilePath.getParent());
       Files.copy(stream, destinyFilePath, StandardCopyOption.REPLACE_EXISTING);
       return destinyFilePath.toUri();

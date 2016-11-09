@@ -289,6 +289,13 @@
     <artifactId>jersey-multipart</artifactId>
     <version>${jersey.version}</version>
   </dependency>
+
+  <!-- TEST PIECES -->
+  <dependency>
+    <groupId>junit</groupId>
+    <artifactId>junit</artifactId>
+    <scope>test</scope>
+  </dependency>
 </dependencies>
 
 </project>
