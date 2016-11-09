@@ -18,7 +18,7 @@ import org.apache.commons.lang3.Validate;
  */
 public class TermsFrequencyCollector implements RecordMetricsCollector, Serializable {
 
-  private Term[] columnHeaders;
+  private final Term[] columnHeaders;
   private final Map<Term, Long> termFrequencyCounter;
 
   /**
@@ -28,7 +28,7 @@ public class TermsFrequencyCollector implements RecordMetricsCollector, Serializ
    */
   public TermsFrequencyCollector(List<Term> terms, boolean useConcurrentMap) {
     Validate.notNull(terms, "columnHeaders must not be null");
-    this.columnHeaders = terms.toArray(new Term[terms.size()]);
+    columnHeaders = terms.toArray(new Term[terms.size()]);
 
     termFrequencyCounter = useConcurrentMap ? new ConcurrentHashMap<>(columnHeaders.length) :
             new LinkedHashMap<>(columnHeaders.length);

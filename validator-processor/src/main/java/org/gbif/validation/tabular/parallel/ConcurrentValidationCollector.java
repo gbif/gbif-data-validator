@@ -6,12 +6,15 @@ import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Collects results of data validations produced from a multi-threaded processing.
@@ -66,10 +69,8 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    * @return a copy of the inter aggregated counts.
    */
   public Map<EvaluationType, Long> getAggregatedCounts() {
-
-    Map<EvaluationType, Long> copy = new HashMap<>();
-    issueCounter.entrySet().forEach(rec -> copy.put(rec.getKey(), rec.getValue().longValue()));
-    return copy;
+    return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
+                                                                     rec -> rec.getValue().longValue())); //Value
   }
 
   /**
@@ -77,12 +78,8 @@ public class ConcurrentValidationCollector implements ResultsCollector {
    * @return a copy of the internal evaluation samples.
    */
   public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
-    Map<EvaluationType, List<EvaluationResultDetails>> copy = new HashMap<>();
-
-    issueSampling.entrySet().forEach( rec -> copy.put(rec.getKey(),
-                              new ArrayList<>(rec.getValue()))
-    );
-    return copy;
+    return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
+                                                                      rec ->  new ArrayList<>(rec.getValue()))); //Value
   }
 
 }

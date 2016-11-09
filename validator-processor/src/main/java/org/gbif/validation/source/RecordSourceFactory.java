@@ -1,6 +1,5 @@
 package org.gbif.validation.source;
 
-import org.gbif.utils.file.tabular.TabularFiles;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.model.FileFormat;
@@ -11,6 +10,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.apache.commons.lang3.Validate;
+
+import static org.gbif.utils.file.tabular.TabularFiles.newTabularFileReader;
 
 /**
  * Creates instances of RecordSource class.
@@ -32,15 +33,14 @@ public class RecordSourceFactory {
    */
   public static RecordSource fromDelimited(File sourceFile, char delimiterChar, boolean headerIncluded)
           throws IOException {
-    return new TabularFileReader(sourceFile.toPath(), TabularFiles.newTabularFileReader(new FileInputStream(sourceFile), delimiterChar,
-            headerIncluded));
+    return new TabularFileReader(sourceFile.toPath(), newTabularFileReader(new FileInputStream(sourceFile),
+                                                                           delimiterChar, headerIncluded));
   }
 
   /**
    * Creates instances of RecordSource from a folder containing an extracted DarwinCore archive.
    */
-  public static RecordSource fromDwcA(File sourceFolder)
-          throws IOException {
+  public static RecordSource fromDwcA(File sourceFolder) throws IOException {
     return new DwcReader(sourceFolder);
   }
 
@@ -73,18 +73,17 @@ public class RecordSourceFactory {
     Validate.notNull(dataFile.getFilePath(), "filePath shall be provided");
     Validate.notNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
-    RecordSource rs = fromDataFile(dataFile);
-    if(rs != null){
-      dataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
-      dataFile.setColumns(rs.getHeaders());
+    try (RecordSource rs = fromDataFile(dataFile)) {
+      if (rs != null) {
+        dataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
+        dataFile.setColumns(rs.getHeaders());
 
-      if(FileFormat.DWCA.equals(dataFile.getFileFormat())) {
-        dataFile.setRowType(((DwcReader)rs).getRowType());
-        //change the current file path to point to the core
-        dataFile.setFilePath(rs.getFileSource());
+        if (FileFormat.DWCA == dataFile.getFileFormat()) {
+          dataFile.setRowType(((DwcReader) rs).getRowType());
+          //change the current file path to point to the core
+          dataFile.setFilePath(rs.getFileSource());
+        }
       }
-
-      rs.close();
     }
     return dataFile;
   }
