@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class FileBashUtilities {
 
@@ -43,6 +45,14 @@ public class FileBashUtilities {
     executeSimpleCmd(String.format("split -l %s %s %s", Integer.toString(splitSize), fileName,
                                    Paths.get(outputDir, inFile.getName())));
     return outDir.list();
+  }
+
+  /**
+   * Applies the the command 'sed -n /pattern/= fileName' which returns the lines number where the pattern occurs.
+   */
+  public static Integer[] findInFile(String fileName, String pattern) throws IOException {
+    String[] lines =  executeSimpleCmd(String.format("sed -n '/%s/=' %s",pattern,fileName));
+    return Arrays.stream(lines).map(lineNr -> Integer.parseInt(lineNr)).toArray(size -> new Integer[size]);
   }
 
   /**
