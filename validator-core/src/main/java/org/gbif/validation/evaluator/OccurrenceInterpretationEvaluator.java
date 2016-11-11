@@ -1,6 +1,7 @@
 package org.gbif.validation.evaluator;
 
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
+import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition;
@@ -9,12 +10,16 @@ import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretatio
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
+import static org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition.REMARKS_MAP;
+import static org.gbif.validation.evaluator.OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
@@ -31,6 +36,9 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   private final Term[] columnMapping;
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
+
+  private static Predicate<OccurrenceIssue> isIssueMapped = issue -> REMARKS_MAP.containsKey(issue) &&
+                                                                     OCCURRENCE_ISSUE_MAPPING.containsKey(issue);
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
@@ -70,11 +78,8 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    */
   protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record){
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
-    int numOfColumns = Math.min(record.length, columnMapping.length);
-
-    for(int i = 0; i < numOfColumns; ++i) {
-      verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]);
-    }
+    IntStream.of(0, Math.min(record.length, columnMapping.length))
+      .forEach( i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
     return verbatimOccurrence;
   }
 
@@ -95,16 +100,16 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     builder.withLineNumber(lineNumber);
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
 
-    result.getUpdated().getIssues().forEach(issue -> {
-      if (InterpretationRemarksDefinition.REMARKS_MAP.containsKey(issue) &&
-              OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.containsKey(issue)) {
+    result.getUpdated().getIssues().stream().filter(isIssueMapped).
+      forEach(issue -> {
+
         Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
                 .stream()
                 .filter(t -> verbatimFields.get(t) != null)
                 .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
         builder.addInterpretationDetail(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.get(issue),
                 relatedData);
-      }
+
     });
     return builder.build();
   }
