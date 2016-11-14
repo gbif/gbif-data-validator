@@ -8,6 +8,8 @@ public class DataFileDescriptor {
   private Path uploadedResourcePath;
   private String submittedFile;
 
+  private boolean isFileConverted;
+
   private FileFormat format;
 
   private Charset encoding;
@@ -102,5 +104,13 @@ public class DataFileDescriptor {
 
   public void setUploadedResourcePath(Path uploadedResourcePath) {
     this.uploadedResourcePath = uploadedResourcePath;
+  }
+
+  public boolean isFileConverted() {
+    return isFileConverted;
+  }
+
+  public void setFileConverted(boolean fileConverted) {
+    isFileConverted = fileConverted;
   }
 }

@@ -17,6 +17,8 @@ public class DataFile {
   private FileFormat fileFormat;
   private String sourceFileName;
 
+  private String sourceFileComponentName;
+
   private Term[] columns;
   private Term rowType;
 
@@ -24,6 +26,8 @@ public class DataFile {
   private Integer numOfLines;
   private Integer fileLineOffset;
   private boolean hasHeaders;
+
+  private boolean isFileConverted;
 
   public Character getDelimiterChar() {
     return delimiterChar;
@@ -58,7 +62,7 @@ public class DataFile {
   }
 
   /**
-   * Name of the filed as received. For safety reason this name should only be used to display.
+   * Name of the file as received. For safety reason this name should only be used to display.
    * @param sourceFileName
    */
   public void setSourceFileName(String sourceFileName) {
@@ -79,7 +83,23 @@ public class DataFile {
   }
 
   /**
-   * Path to generated file name.
+   * If the source file is a composition of files (e.g. Dwc-A), the component name is the name of a single component
+   * inside the composition.
+   *
+   * @return
+   */
+  @Nullable
+  public String getSourceFileComponentName() {
+    return sourceFileComponentName;
+  }
+
+  public void setSourceFileComponentName(String sourceFileComponentName) {
+    this.sourceFileComponentName = sourceFileComponentName;
+  }
+
+
+  /**
+   * Path to the working file stored with a generated file name.
    *
    * @return safe, path to generated filename
    */
@@ -116,18 +136,34 @@ public class DataFile {
     this.hasHeaders = hasHeaders;
   }
 
+  /**
+   * Is the working file a file we converted?
+   *
+   * @return
+   */
+  public boolean isFileConverted() {
+    return isFileConverted;
+  }
+
+  public void setFileConverted(boolean converted) {
+    isFileConverted = converted;
+  }
+
+
   @Override
   public String toString() {
     return "DataFile{" +
             "filePath=" + filePath +
-            "fileFormat=" + fileFormat +
-            "sourceFileName=" + sourceFileName +
+            ", sourceFileComponentName=" + sourceFileComponentName +
+            ", fileFormat=" + fileFormat +
+            ", sourceFileName=" + sourceFileName +
             ", columns=" + Arrays.toString(columns) +
             ", rowType=" + rowType +
             ", delimiterChar='" + delimiterChar + '\'' +
             ", numOfLines=" + numOfLines +
             ", fileLineOffset=" + fileLineOffset +
             ", hasHeaders=" + hasHeaders +
+            ", isFileConverted=" + isFileConverted +
             '}';
   }
 
@@ -143,8 +179,10 @@ public class DataFile {
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
+            Objects.equals(sourceFileComponentName, dataFile.sourceFileComponentName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
-            Objects.equals(fileLineOffset, dataFile.fileLineOffset);
+            Objects.equals(fileLineOffset, dataFile.fileLineOffset) &&
+            Objects.equals(isFileConverted, dataFile.isFileConverted);
   }
 
   @Override
@@ -153,12 +191,14 @@ public class DataFile {
             filePath,
             fileFormat,
             sourceFileName,
+            sourceFileComponentName,
             columns,
             rowType,
             delimiterChar,
             numOfLines,
             fileLineOffset,
-            hasHeaders);
+            hasHeaders,
+            isFileConverted);
   }
 
 }

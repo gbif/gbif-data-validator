@@ -40,7 +40,7 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
    */
   private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, ActorRef sender) {
 
-    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile)) {
+    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
       long line = dataFile.getFileLineOffset();
       String[] record;
       while ((record = recordSource.read()) != null) {

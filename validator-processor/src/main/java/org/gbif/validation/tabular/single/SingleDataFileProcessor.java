@@ -27,7 +27,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   @Override
   public ValidationResult process(DataFile dataFile) throws IOException {
 
-    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile)) {
+    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
       String[] record;
       while ((record = recordSource.read()) != null) {
         dataValidationProcessor.process(record);
@@ -37,7 +37,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
       return ValidationResultBuilders.Builder.of(true, dataFile.getSourceFileName(),
               dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
               .withResourceResult(dataValidationProcessor
-                      .getValidationResult(dataFile.getFilePath().getFileName().toString(), dataFile.getRowType())).build();
+                      .getValidationResult(dataFile.getSourceFileComponentName(), dataFile.getRowType())).build();
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }

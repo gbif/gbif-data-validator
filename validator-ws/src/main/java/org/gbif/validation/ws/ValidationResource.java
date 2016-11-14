@@ -159,15 +159,18 @@ public class ValidationResource {
    */
   private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFileDescriptor dataFileDescriptor)  {
     try {
-        DataFile dataFile = new DataFile();
-        //set the original file name (mostly used to send it back in the response)
-        dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
-        dataFile.setFilePath(dataFilePath.toAbsolutePath());
-        dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
-        dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
-        dataFile.setFileFormat(dataFileDescriptor.getFormat());
-        extractAndSetTabularFileMetadata(dataFilePath, dataFile);
-        return resourceEvaluationManager.evaluate(dataFile);
+      DataFile dataFile = new DataFile();
+      //set the original file name (mostly used to send it back in the response)
+      dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
+      dataFile.setFilePath(dataFilePath.toAbsolutePath());
+      dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
+      dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
+      dataFile.setFileFormat(dataFileDescriptor.getFormat());
+
+      dataFile.setFileConverted(dataFileDescriptor.isFileConverted());
+
+      extractAndSetTabularFileMetadata(dataFilePath, dataFile);
+      return resourceEvaluationManager.evaluate(dataFile);
     } catch (Exception ex) {
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     } finally {

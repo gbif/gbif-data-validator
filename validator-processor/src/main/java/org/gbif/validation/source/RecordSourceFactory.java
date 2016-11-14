@@ -8,8 +8,8 @@ import org.gbif.validation.util.FileBashUtilities;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-
-import org.apache.commons.lang3.Validate;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.gbif.utils.file.tabular.TabularFiles.newTabularFileReader;
 
@@ -50,15 +50,25 @@ public class RecordSourceFactory {
    * @return
    * @throws IOException
    */
-  public static RecordSource fromDataFile(DataFile dataFile) throws IOException {
-    Validate.notNull(dataFile.getFileFormat(), "fileFormat shall be provided");
+  public static Optional<RecordSource> fromDataFile(DataFile dataFile) throws IOException {
+    Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
     switch (dataFile.getFileFormat()) {
-      case TABULAR : return
-              fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(), dataFile.isHasHeaders());
-      case DWCA: return fromDwcA(dataFile.getFilePath().toFile());
+      case TABULAR:
+        return
+                Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
+                        dataFile.isHasHeaders()));
+      case SPREADSHEET:
+        //we can only provide RecordSource if the spreadsheet was converted to CSV
+        if(dataFile.isFileConverted()) {
+          Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
+                  dataFile.isHasHeaders()));
+        }
+        break;
+      case DWCA:
+        return Optional.of(fromDwcA(dataFile.getFilePath().toFile()));
     }
-    return null;
+    return Optional.empty();
   }
 
   /**
@@ -69,11 +79,10 @@ public class RecordSourceFactory {
    * @throws IOException
    */
   public static DataFile prepareSource(DataFile dataFile) throws IOException {
+    Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
+    Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
-    Validate.notNull(dataFile.getFilePath(), "filePath shall be provided");
-    Validate.notNull(dataFile.getFileFormat(), "fileFormat shall be provided");
-
-    try (RecordSource rs = fromDataFile(dataFile)) {
+    try (RecordSource rs = fromDataFile(dataFile).orElse(null)) {
       if (rs != null) {
         dataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
         dataFile.setColumns(rs.getHeaders());
@@ -82,6 +91,10 @@ public class RecordSourceFactory {
           dataFile.setRowType(((DwcReader) rs).getRowType());
           //change the current file path to point to the core
           dataFile.setFilePath(rs.getFileSource());
+          dataFile.setSourceFileComponentName(rs.getFileSource().getFileName().toString());
+        }
+        else {
+          dataFile.setSourceFileComponentName(dataFile.getSourceFileName());
         }
       }
     }
