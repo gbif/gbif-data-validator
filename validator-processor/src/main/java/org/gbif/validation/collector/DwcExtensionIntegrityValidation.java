@@ -63,7 +63,7 @@ public class DwcExtensionIntegrityValidation {
    */
   private static Optional<String> getColumnValue(String line, int column, String separator) {
     String[] values = line.split(separator);
-    return column <= values.length ? Optional.of(values[column]) : Optional.empty();
+    return column < values.length ? Optional.of(values[column]) : Optional.empty();
   }
 
 }

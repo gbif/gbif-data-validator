@@ -1,5 +1,5 @@
 id,basisOfRecord,institutionCode,collectionCode,parentId
-1,PreservedSpecimen,I1,C1,88
+1,PreservedSpecimen,I1,C1,
 2,PreservedSpecimen,I1,C1,1
 3,PreservedSpecimen,I1,C1,4
 4,PreservedSpecimen,I1,C1,5
