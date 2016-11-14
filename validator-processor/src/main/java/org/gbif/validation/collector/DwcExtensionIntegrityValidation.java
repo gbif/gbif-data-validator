@@ -33,10 +33,10 @@ public class DwcExtensionIntegrityValidation {
                                                       long maxSampleSize) throws IOException {
 
     try(Stream<String> lines = Files.lines(Paths.get(extDescriptor.getSubmittedFile()))) {
-      return lines.filter(line -> getColumnValue(line, extColumn,
-                                                 extDescriptor.getFieldsTerminatedBy().toString())
-                                  .map(isValueInFile(coreDescriptor, coreColumn)).isPresent()
-                          )
+
+      return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)
+                  .filter(line -> getColumnValue(line, extColumn, extDescriptor.getFieldsTerminatedBy().toString())
+                                  .map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
                   .limit(maxSampleSize)
                   .collect(Collectors.toList());
     }
@@ -46,10 +46,10 @@ public class DwcExtensionIntegrityValidation {
    * Validates if the String function parameter exists in any line[column] of the descriptor.getSubmittedFile.
    * It was created to maintain readability in the collectUnlinkedExtension method.
    */
-  private static Function<String,Boolean> isValueInFile(DataFileDescriptor descriptor, int column){
+  private static Function<String,Boolean> valueIsNotInFile(DataFileDescriptor descriptor, int column){
     return val -> {
         try {
-          return findInFile(descriptor.getSubmittedFile(), val, column,
+          return findInFile(descriptor.getSubmittedFile(), val, column + 1, //bash uses 1-based indexes
                             StringEscapeUtils.escapeJava(descriptor.getFieldsTerminatedBy().toString())).length == 0;
         } catch (Exception ex) {
           throw new RuntimeException(ex);
@@ -63,7 +63,7 @@ public class DwcExtensionIntegrityValidation {
    */
   private static Optional<String> getColumnValue(String line, int column, String separator) {
     String[] values = line.split(separator);
-    return values.length <= column ? Optional.of(values[column]) : Optional.empty();
+    return column <= values.length ? Optional.of(values[column]) : Optional.empty();
   }
 
 }

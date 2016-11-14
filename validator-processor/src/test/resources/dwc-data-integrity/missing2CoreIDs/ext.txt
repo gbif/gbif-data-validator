@@ -1,0 +1,5 @@
+id,url,type
+1,http://demo.gbif.org/occurrence/1269558875,StillImage
+999999,http://demo.gbif.org/occurrence/1269558875,StillImage
+2,http://demo.gbif.org/occurrence/1269558875,StillImage
+8,http://demo.gbif.org/occurrence/1269558875,StillImage

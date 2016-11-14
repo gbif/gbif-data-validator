@@ -78,14 +78,10 @@ public class FileBashUtilities {
       while ((line = in.readLine()) != null) {
         out.add(line);
       }
-      while (process.isAlive()) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException ex) {
-
-        }
-      }
+      process.waitFor();
       return out.toArray(new String[out.size()]);
+    } catch (InterruptedException ex) {
+      throw new RuntimeException(ex);
     } finally {
       if (process.isAlive()) {
         process.destroy();
