@@ -78,7 +78,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    */
   protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record){
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
-    IntStream.of(0, Math.min(record.length, columnMapping.length))
+    IntStream.range(0, Math.min(record.length, columnMapping.length))
       .forEach( i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
     return verbatimOccurrence;
   }
