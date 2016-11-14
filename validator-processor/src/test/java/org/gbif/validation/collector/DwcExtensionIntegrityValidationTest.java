@@ -13,9 +13,12 @@ import com.google.common.io.Resources;
 import org.junit.Assert;
 import org.junit.Test;
 
+/**
+ * Tests class to validate data integrity in Dwc files.
+ */
 public class DwcExtensionIntegrityValidationTest {
 
-  private final static String RESOURCES_DIR = "dwc-data-integrity";
+  private static final String RESOURCES_DIR = "dwc-data-integrity";
 
   /**
    * Gets a test core file from the specified testDir.
@@ -59,6 +62,17 @@ public class DwcExtensionIntegrityValidationTest {
   }
 
   /**
+   * Utility method to build simple data integrity tests.
+   */
+  private static void buildIntegrityInSameFileTest(String testDir, int coreColumn, int parentColumn, int numSamples)
+    throws IOException {
+    List<String> unLinked  = collectUnlinkedExtensions(getCoreTestFileDescriptor(testDir), coreColumn, //core, column
+                                                       getCoreTestFileDescriptor(testDir), parentColumn, //ext, column
+                                                       numSamples); //# of samples
+    Assert.assertEquals(unLinked.size(), numSamples);
+  }
+
+  /**
    * Tests that 2 extension columns are missing in the core file.
    */
   @Test
@@ -80,6 +94,15 @@ public class DwcExtensionIntegrityValidationTest {
   @Test
   public void collectUnlinkedExtensionsNoInitialColumnsTest() throws IOException {
     buildIntegrityTest("integrityOn3rdColumn", 2, 1, 2);
+  }
+
+
+  /**
+   * Tests that 2 extension columns are missing in columns different to the first columns in core and extension files.
+   */
+  @Test
+  public void collectUnlinkedParentIdTest() throws IOException {
+    buildIntegrityInSameFileTest("integrityInSameFile", 0, 4, 1);
   }
 
 }
