@@ -109,7 +109,7 @@ public class ValidationResource {
               Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR));
     }
 
-    //it no error it thrown and we do not have result, we assume we can not handle
+    //if no error it thrown and we do not have result, we assume we can not handle
     //this file format
     if(result == null){
       throw new WebApplicationException(buildErrorResponse(uploadFileName,

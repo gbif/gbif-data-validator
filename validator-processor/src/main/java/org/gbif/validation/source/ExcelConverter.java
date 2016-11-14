@@ -37,10 +37,11 @@ import org.supercsv.prefs.CsvPreference;
  * Inspired from Apache POI example:
  * http://svn.apache.org/repos/asf/poi/trunk/src/examples/src/org/apache/poi/ss/examples/ToCSV.java
  */
-public class ExcelConverter {
+class ExcelConverter {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExcelConverter.class);
   private static final TimeZone UTC_TIMEZONE = TimeZone.getTimeZone("UTC");
+  private static final int FLUSH_INTERVAL = 1000;
 
   private DataFormatter formatter;
 
@@ -49,16 +50,12 @@ public class ExcelConverter {
    *
    * @return
    */
-  public static ExcelConverter newConverter(){
-    return new ExcelConverter();
-  }
-
-  private ExcelConverter() {
+  ExcelConverter() {
     formatter = new DataFormatter(Locale.ENGLISH, true);
   }
 
   /**
-   * Convert a workbook (binary .xls or SpreadsheetML .xlsx format)
+   * Convert a workbook (binary .xls or SpreadsheetML .xlsx format) to csv.
    *
    * @param workbookFile Path to the  workbook file
    * @param csvFile Path to the csv file to produce
@@ -118,11 +115,13 @@ public class ExcelConverter {
       csvWriter.writeHeader(headers.toArray(new String[headers.size()]));
 
       int lastRowNum = sheet.getLastRowNum();
+      int nextFlush = FLUSH_INTERVAL;
       for(int j = 1; j <= lastRowNum; j++) {
         row = sheet.getRow(j);
         csvWriter.write(rowToCSV(row, evaluator, Optional.of(headers.size() - 1)));
-        if(j/100 == 0){
+        if(j == nextFlush){
           csvWriter.flush();
+          nextFlush += FLUSH_INTERVAL;
         }
       }
     }
@@ -141,7 +140,7 @@ public class ExcelConverter {
     List<String> csvLine = new ArrayList<>();
 
     if(row != null) {
-      Cell cell = null;
+      Cell cell;
       //we want to loop until maxColumnIdx (if provided) even if it's greater than getLastCellNum()
       //we shall have the same number of entries on every line in the CSV
       int maxCellNum = maxColumnIdx.orElse(Short.valueOf(row.getLastCellNum()).intValue());
@@ -153,17 +152,14 @@ public class ExcelConverter {
         }
         else {
           //getCellTypeEnum deprecation explanation: see https://bz.apache.org/bugzilla/show_bug.cgi?id=60228
-          if(cell.getCellTypeEnum() != CellType.FORMULA) {
-            if(cell.getCellTypeEnum() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
-              csvLine.add(DateUtil.getJavaDate(cell.getNumericCellValue(), false, UTC_TIMEZONE).toInstant().toString());
-            }
-            else {
-              csvLine.add(this.formatter.formatCellValue(cell));
-            }
+          if(CellType.FORMULA == cell.getCellTypeEnum()) {
+            csvLine.add(this.formatter.formatCellValue(cell, evaluator));
           }
-          //if there is a formula, apply the evluator to get the result
-          else {
-              csvLine.add(this.formatter.formatCellValue(cell, evaluator));
+          else if(cell.getCellTypeEnum() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)){
+            csvLine.add(DateUtil.getJavaDate(cell.getNumericCellValue(), false, UTC_TIMEZONE).toInstant().toString());
+          }
+          else{
+            csvLine.add(this.formatter.formatCellValue(cell));
           }
         }
       }

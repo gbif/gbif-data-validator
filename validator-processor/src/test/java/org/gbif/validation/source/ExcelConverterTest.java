@@ -20,12 +20,9 @@ public class ExcelConverterTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-  private ExcelConverter EC = ExcelConverter.newConverter();
-
   private static final String CSV_TEST_FILE_LOCATION = "workbooks/occurrence-workbook.csv";
   private static final String XLSX_TEST_FILE_LOCATION = "workbooks/occurrence-workbook.xlsx";
   private static final String XLS_TEST_FILE_LOCATION = "workbooks/occurrence-workbook.xls";
-  //private static final String ODS_TEST_FILE_LOCATION = "workbooks/occurrence-workbook.ods";
 
   @Test
   public void testDwcReader() throws IOException, InvalidFormatException {
@@ -37,7 +34,7 @@ public class ExcelConverterTest {
 
     File testCsvFile = FileUtils.getClasspathFile(CSV_TEST_FILE_LOCATION);
     File testFile = folder.newFile();
-    EC.convertToCSV(workbookFile.toPath(), testFile.toPath());
+    SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(), testFile.toPath());
 
     assertTrue(org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(testFile, testCsvFile, "UTF-8"));
   }
