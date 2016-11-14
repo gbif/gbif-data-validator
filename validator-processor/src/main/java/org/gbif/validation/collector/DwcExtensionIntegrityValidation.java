@@ -1,16 +1,18 @@
 package org.gbif.validation.collector;
 
-import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.model.DataFileDescriptor;
-import org.gbif.validation.util.FileBashUtilities;
+import static  org.gbif.validation.util.FileBashUtilities.findInFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringEscapeUtils;
 
 public class DwcExtensionIntegrityValidation {
 
@@ -21,33 +23,47 @@ public class DwcExtensionIntegrityValidation {
     //empty constructor
   }
 
-  public static List<String> collectUnlinkedExtension(DataFileDescriptor coreDescriptor, int coreColumn,
+  /**
+   * Collects values of extColumn that are not present in coreColumn. This is done scanning each line of extDescriptor,
+   * extracting the column extColumn of extDescriptor.getSubmittedFile and matching it agains coreColumn of
+   * coreDescriptor.getSubmittedFile.
+   */
+  public static List<String> collectUnlinkedExtensions(DataFileDescriptor coreDescriptor, int coreColumn,
                                                       DataFileDescriptor extDescriptor, int extColumn,
-                                                      long maxSampleSize, Path workingDir) throws IOException {
+                                                      long maxSampleSize) throws IOException {
 
-    Path coreSortedFile = sortFile(coreDescriptor, coreColumn, workingDir);
-    Path extSortedFile = sortFile(extDescriptor, extColumn, workingDir);
+    try(Stream<String> lines = Files.lines(Paths.get(extDescriptor.getSubmittedFile()))) {
 
-    try(Stream<String> lines = Files.lines(extSortedFile)) {
-      return lines.filter(line -> {
-                                    try {
-                                      return FileBashUtilities.findInFile(coreSortedFile.toString(), line).length == 0;
-                                    } catch (IOException ex) {
-                                      throw  new RuntimeException(ex);
-                                    }
-                                  })
+      return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)
+                  .filter(line -> getColumnValue(line, extColumn, extDescriptor.getFieldsTerminatedBy().toString())
+                                  .map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
                   .limit(maxSampleSize)
                   .collect(Collectors.toList());
     }
   }
 
-  private static Path sortFile(DataFileDescriptor descriptor, int column, Path workingDir) throws IOException {
-    FileUtils fileUtils = new FileUtils();
-    Path sortedFile =  Files.createTempFile(workingDir, "val", ".tmp");
-    fileUtils.sort(new File(descriptor.getSubmittedFile()), sortedFile.toFile(), descriptor.getEncoding().name(),
-                   column, descriptor.getFieldsTerminatedBy().toString(), descriptor.getFieldsEnclosedBy(),
-                   descriptor.getLinesTerminatedBy(), descriptor.isHasHeaders()? 1 : 0);
-    return sortedFile;
+  /**
+   * Validates if the String function parameter exists in any line[column] of the descriptor.getSubmittedFile.
+   * It was created to maintain readability in the collectUnlinkedExtension method.
+   */
+  private static Function<String,Boolean> valueIsNotInFile(DataFileDescriptor descriptor, int column){
+    return val -> {
+        try {
+          return findInFile(descriptor.getSubmittedFile(), val, column + 1, //bash uses 1-based indexes
+                            StringEscapeUtils.escapeJava(descriptor.getFieldsTerminatedBy().toString())).length == 0;
+        } catch (Exception ex) {
+          throw new RuntimeException(ex);
+        }
+      };
+
+  }
+
+  /**
+   * Gets line[column] if exists.
+   */
+  private static Optional<String> getColumnValue(String line, int column, String separator) {
+    String[] values = line.split(separator);
+    return column <= values.length ? Optional.of(values[column]) : Optional.empty();
   }
 
 }

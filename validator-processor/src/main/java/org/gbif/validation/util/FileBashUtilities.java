@@ -48,10 +48,12 @@ public class FileBashUtilities {
   }
 
   /**
-   * Applies the the command 'sed -n /pattern/= fileName' which returns the lines number where the pattern occurs.
+   * Applies the command 'awk -v column=column -v value='value' -F'\t' '$column == value {print FNR}' fileName'.
+   * It returns the lines number where the pattern occurs.
    */
-  public static Integer[] findInFile(String fileName, String pattern) throws IOException {
-    String[] lines =  executeSimpleCmd(String.format("sed -n '/%s/=' %s",pattern,fileName));
+  public static Integer[] findInFile(String fileName, String value, int column, String separator) throws IOException {
+    String[] lines =  executeSimpleCmd(String.format("awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s",
+                                                     column,value,separator,fileName));
     return Arrays.stream(lines).map(lineNr -> Integer.parseInt(lineNr)).toArray(size -> new Integer[size]);
   }
 
@@ -76,14 +78,10 @@ public class FileBashUtilities {
       while ((line = in.readLine()) != null) {
         out.add(line);
       }
-      while (process.isAlive()) {
-        try {
-          Thread.sleep(1000);
-        } catch (InterruptedException ex) {
-
-        }
-      }
+      process.waitFor();
       return out.toArray(new String[out.size()]);
+    } catch (InterruptedException ex) {
+      throw new RuntimeException(ex);
     } finally {
       if (process.isAlive()) {
         process.destroy();

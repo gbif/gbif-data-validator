@@ -54,6 +54,10 @@
 
     <jersey.version>1.19</jersey.version>
     <jackson.version>1.9.12</jackson.version>
+    <validation-api.version>1.1.0.Final</validation-api.version>
+
+    <scala-library.version>2.10.5</scala-library.version>
+    <commons-lang3.version>3.4</commons-lang3.version>
 
     <slf4j.version>1.7.16</slf4j.version>
     <logback.version>1.1.5</logback.version>
@@ -136,6 +140,22 @@
         <groupId>org.codehaus.jackson</groupId>
         <artifactId>jackson-jaxrs</artifactId>
         <version>${jackson.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.scala-lang</groupId>
+        <artifactId>scala-library</artifactId>
+        <version>${scala-library.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.validation</groupId>
+        <artifactId>validation-api</artifactId>
+        <version>${validation-api.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.commons</groupId>
+        <artifactId>commons-lang3</artifactId>
+        <version>${commons-lang3.version}</version>
       </dependency>
 
       <!-- Logging -->

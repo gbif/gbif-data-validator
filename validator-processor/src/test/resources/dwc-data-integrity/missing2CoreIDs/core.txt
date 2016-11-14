@@ -1,0 +1,7 @@
+id,basisOfRecord,institutionCode,collectionCode
+1,PreservedSpecimen,I1,C1
+2,PreservedSpecimen,I1,C1
+3,PreservedSpecimen,I1,C1
+4,PreservedSpecimen,I1,C1
+5,PreservedSpecimen,I1,C1
+6,PreservedSpecimen,I1,C1
