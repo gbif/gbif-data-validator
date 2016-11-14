@@ -18,46 +18,15 @@ public class DwcExtensionIntegrityValidationTest {
   private final static String RESOURCES_DIR = "dwc-data-integrity";
 
   /**
-   * Tests that 2 extension columns are missing in the core file.
+   * Gets a test core file from the specified testDir.
    */
-  @Test
-  public void collectUnlinkedExtensionsTest() throws IOException {
-    String testDir = "missing2CoreIDs";
-    List<String> unLinked  = collectUnlinkedExtensions(getCoreTestFileDescriptor(testDir), 0, //core, column
-                                                       getExtensionTestFileDescriptor(testDir), 0, //ext, column
-                                                       2); //# of samples
-    Assert.assertTrue("2 extensions are not linked", unLinked.size() == 2);
-  }
-
-  /**
-   * Tests that correct number of samples are collected.
-   */
-  @Test
-  public void collectUnlinkedExtensionsSamplingTest() throws IOException {
-    String testDir = "missing2CoreIDs";
-    List<String> unLinked  = collectUnlinkedExtensions(getCoreTestFileDescriptor(testDir), 0, //core, column
-                                                       getExtensionTestFileDescriptor(testDir), 0, //ext, column
-                                                       1); //# of samples
-    Assert.assertTrue("Only 1 sample was requested", unLinked.size() == 1);
-  }
-
-  /**
-   * Tests that 2 extension columns are missing in columns different to the first columns in core and extension files.
-   */
-  @Test
-  public void collectUnlinkedExtensionsNoInitialColumnsTest() throws IOException {
-    String testDir = "integrityOn3rdColumn";
-    List<String> unLinked  = collectUnlinkedExtensions(getCoreTestFileDescriptor(testDir), 2, //core, column
-                                                       getExtensionTestFileDescriptor(testDir), 1, //ext, column
-                                                       2); //# of samples
-    Assert.assertTrue("2 extensions are not linked", unLinked.size() == 2);
-  }
-
-
   private static DataFileDescriptor getCoreTestFileDescriptor(String testDir) {
-     return getTestFileDescriptor(testDir, "core.txt");
+    return getTestFileDescriptor(testDir, "core.txt");
   }
 
+  /**
+   * Gets a test extension file from the specified testDir.
+   */
   private static DataFileDescriptor getExtensionTestFileDescriptor(String testDir) {
     return getTestFileDescriptor(testDir, "ext.txt");
   }
@@ -76,6 +45,41 @@ public class DwcExtensionIntegrityValidationTest {
     } catch (URISyntaxException ex) {
       throw new RuntimeException(ex);
     }
+  }
+
+  /**
+   * Utility method to build simple data integrity tests.
+   */
+  private static void buildIntegrityTest(String testDir, int coreColumn, int extColumn, int numSamples)
+    throws IOException {
+    List<String> unLinked  = collectUnlinkedExtensions(getCoreTestFileDescriptor(testDir), coreColumn, //core, column
+                                                       getExtensionTestFileDescriptor(testDir), extColumn, //ext, column
+                                                       numSamples); //# of samples
+    Assert.assertEquals(unLinked.size(), numSamples);
+  }
+
+  /**
+   * Tests that 2 extension columns are missing in the core file.
+   */
+  @Test
+  public void collectUnlinkedExtensionsTest() throws IOException {
+    buildIntegrityTest("missing2CoreIDs", 0, 0, 2);
+  }
+
+  /**
+   * Tests that correct number of samples are collected.
+   */
+  @Test
+  public void collectUnlinkedExtensionsSamplingTest() throws IOException {
+    buildIntegrityTest("missing2CoreIDs", 0, 0, 1);
+  }
+
+  /**
+   * Tests that 2 extension columns are missing in columns different to the first columns in core and extension files.
+   */
+  @Test
+  public void collectUnlinkedExtensionsNoInitialColumnsTest() throws IOException {
+    buildIntegrityTest("integrityOn3rdColumn", 2, 1, 2);
   }
 
 }
