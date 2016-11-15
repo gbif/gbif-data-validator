@@ -51,6 +51,8 @@ public class ResourceEvaluationManager {
    * @throws IOException
    */
   public ValidationResult evaluate(DataFile dataFile) throws IOException {
+
+    //Validate the structure of the resource
     Optional<ValidationResultElement> resourceStructureEvaluationResult =
       EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
               .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
@@ -61,10 +63,16 @@ public class ResourceEvaluationManager {
               .withResourceResult(resourceStructureEvaluationResult.get()).build();
     }
 
-    DataFile preparedDataFile = RecordSourceFactory.prepareSource(dataFile);
-    List<Term> termsColumnsMapping = Arrays.asList(preparedDataFile.getColumns());
+    //prepare the resource
+    List<DataFile> preparedDataFiles = RecordSourceFactory.prepareSource(dataFile);
 
-    return createDataFileProcessor(dataFile, termsColumnsMapping).process(dataFile);
+    // the list will handle extensions at some point
+    if(preparedDataFiles.size() > 0) {
+      List<Term> termsColumnsMapping = Arrays.asList(preparedDataFiles.get(0).getColumns());
+      return createDataFileProcessor(preparedDataFiles.get(0), termsColumnsMapping).process(preparedDataFiles.get(0));
+    }
+
+    return null;
   }
 
   private DataFileProcessor createDataFileProcessor(DataFile dataFile, List<Term> termsColumnsMapping) {

@@ -166,8 +166,7 @@ public class ValidationResource {
       dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
       dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
       dataFile.setFileFormat(dataFileDescriptor.getFormat());
-
-      dataFile.setFileConverted(dataFileDescriptor.isFileConverted());
+      dataFile.setContentType(dataFileDescriptor.getContentType());
 
       extractAndSetTabularFileMetadata(dataFilePath, dataFile);
       return resourceEvaluationManager.evaluate(dataFile);

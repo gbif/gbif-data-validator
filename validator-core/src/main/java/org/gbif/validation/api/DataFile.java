@@ -6,28 +6,49 @@ import org.gbif.validation.api.model.FileFormat;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * Represents a single source data file and its "metadata".
+ * Represents a single source data in a file. The source of data can be a portion of a bigger source.
+ * It can also represent a tabular view of other formats (spreadsheet).
+ *
  */
 public class DataFile {
 
   private Path filePath;
   private FileFormat fileFormat;
+
+  private String contentType;
+
   private String sourceFileName;
 
-  private String sourceFileComponentName;
+  //private String sourceFileComponentName;
 
   private Term[] columns;
   private Term rowType;
 
+  private Integer fileLineOffset;
+
   private Character delimiterChar;
   private Integer numOfLines;
-  private Integer fileLineOffset;
+
   private boolean hasHeaders;
 
-  private boolean isFileConverted;
+  private final Optional<DataFile> isAlternateViewOf;
+
+  public DataFile() {
+    this(null);
+  }
+
+  /**
+   * Constructor used to get a new {@link DataFile} that represents an alternative view of another {@link DataFile}.
+   *
+   * @param isAlternateViewOf the parent {@link DataFile}
+   */
+  public DataFile(DataFile isAlternateViewOf) {
+    this.isAlternateViewOf = Optional.ofNullable(isAlternateViewOf);
+  }
 
   public Character getDelimiterChar() {
     return delimiterChar;
@@ -82,20 +103,20 @@ public class DataFile {
     return sourceFileName;
   }
 
-  /**
-   * If the source file is a composition of files (e.g. Dwc-A), the component name is the name of a single component
-   * inside the composition.
-   *
-   * @return
-   */
-  @Nullable
-  public String getSourceFileComponentName() {
-    return sourceFileComponentName;
-  }
-
-  public void setSourceFileComponentName(String sourceFileComponentName) {
-    this.sourceFileComponentName = sourceFileComponentName;
-  }
+//  /**
+//   * If the source file is a composition of files (e.g. Dwc-A), the component name is the name of a single component
+//   * inside the composition.
+//   *
+//   * @return
+//   */
+//  @Nullable
+//  public String getSourceFileComponentName() {
+//    return sourceFileComponentName;
+//  }
+//
+//  public void setSourceFileComponentName(String sourceFileComponentName) {
+//    this.sourceFileComponentName = sourceFileComponentName;
+//  }
 
 
   /**
@@ -136,25 +157,22 @@ public class DataFile {
     this.hasHeaders = hasHeaders;
   }
 
-  /**
-   * Is the working file a file we converted?
-   *
-   * @return
-   */
-  public boolean isFileConverted() {
-    return isFileConverted;
+  public String getContentType() {
+    return contentType;
   }
 
-  public void setFileConverted(boolean converted) {
-    isFileConverted = converted;
+  public void setContentType(String contentType) {
+    this.contentType = contentType;
   }
 
+  public Optional<DataFile> isAlternateViewOf() {
+    return isAlternateViewOf;
+  }
 
   @Override
   public String toString() {
     return "DataFile{" +
             "filePath=" + filePath +
-            ", sourceFileComponentName=" + sourceFileComponentName +
             ", fileFormat=" + fileFormat +
             ", sourceFileName=" + sourceFileName +
             ", columns=" + Arrays.toString(columns) +
@@ -163,7 +181,7 @@ public class DataFile {
             ", numOfLines=" + numOfLines +
             ", fileLineOffset=" + fileLineOffset +
             ", hasHeaders=" + hasHeaders +
-            ", isFileConverted=" + isFileConverted +
+            ", isAlternateViewOf=" + isAlternateViewOf +
             '}';
   }
 
@@ -179,10 +197,9 @@ public class DataFile {
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
-            Objects.equals(sourceFileComponentName, dataFile.sourceFileComponentName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
             Objects.equals(fileLineOffset, dataFile.fileLineOffset) &&
-            Objects.equals(isFileConverted, dataFile.isFileConverted);
+            Objects.equals(isAlternateViewOf, dataFile.isAlternateViewOf);
   }
 
   @Override
@@ -191,14 +208,13 @@ public class DataFile {
             filePath,
             fileFormat,
             sourceFileName,
-            sourceFileComponentName,
             columns,
             rowType,
             delimiterChar,
             numOfLines,
             fileLineOffset,
             hasHeaders,
-            isFileConverted);
+            isAlternateViewOf);
   }
 
 }

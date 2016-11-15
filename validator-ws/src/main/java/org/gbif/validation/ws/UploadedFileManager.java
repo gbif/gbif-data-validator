@@ -2,7 +2,6 @@ package org.gbif.validation.ws;
 
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.source.SpreadsheetConverters;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;
@@ -38,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Class responsible to manage files uploaded for validation.
+ * This class will unzip the file is required.
+ *
  */
 public class UploadedFileManager {
 
@@ -112,19 +113,12 @@ public class UploadedFileManager {
           throw new IOException(arEx);
         }
       } else if (TABULAR_CONTENT_TYPES.contains(contentType)) {
-        //preserve the extension (mostly for debugging)
-        String fileExt = FilenameUtils.getExtension(filename);
-        uploadedResourcePath = destinationFolder.resolve(UUID.randomUUID().toString() + "." + fileExt);
-
-        Files.copy(inputStream, uploadedResourcePath);
+        uploadedResourcePath = copyInputStream(destinationFolder, inputStream, filename);
         inputStream.close();
         dataFileDescriptor.setFormat(FileFormat.TABULAR);
       } else if (SPREADSHEET_CONTENT_TYPES.contains(contentType)) {
-        uploadedResourcePath = handleSpreadsheetConversion(destinationFolder, filename, contentType, inputStream);
+        uploadedResourcePath = copyInputStream(destinationFolder, inputStream, filename);
         inputStream.close();
-        dataFileDescriptor.setFileConverted(true);
-        dataFileDescriptor.setHasHeaders(true);
-        dataFileDescriptor.setFieldsTerminatedBy(',');
         dataFileDescriptor.setFormat(FileFormat.SPREADSHEET);
       } else {
         LOG.warn("Unsupported file type: {}", contentType);
@@ -139,6 +133,7 @@ public class UploadedFileManager {
     }
 
     dataFileDescriptor.setSubmittedFile(filename);
+    dataFileDescriptor.setContentType(contentType);
     dataFileDescriptor.setUploadedResourcePath(uploadedResourcePath);
     return Optional.of(dataFileDescriptor);
   }
@@ -233,30 +228,20 @@ public class UploadedFileManager {
   }
 
   /**
-   *
+   * Copy the provided {@link InputStream} into the provided destination folder using a random UUID and the
+   * file extension extracted from filename.
    * @param destinationFolder
-   * @param filename
-   * @param contentType
    * @param inputStream
+   * @param filename
    * @return
    * @throws IOException
    */
-  private static Path handleSpreadsheetConversion(Path destinationFolder, String filename, String contentType,
-                                             InputStream inputStream) throws IOException {
+  private static Path copyInputStream(Path destinationFolder, InputStream inputStream, String filename) throws IOException {
     String fileExt = FilenameUtils.getExtension(filename);
     Path uploadedResourcePath = destinationFolder.resolve(UUID.randomUUID().toString() + "." + fileExt);
-    Path uploadedResourcePathCsv = destinationFolder.resolve(UUID.randomUUID().toString() + ".csv");
 
     Files.copy(inputStream, uploadedResourcePath);
-
-    if(ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
-            ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(contentType)) {
-      SpreadsheetConverters.convertExcelToCSV(uploadedResourcePath, uploadedResourcePathCsv);
-    } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(contentType)) {
-      SpreadsheetConverters.convertOdsToCSV(uploadedResourcePath, uploadedResourcePathCsv);
-    }
-
-    return uploadedResourcePathCsv;
+    return uploadedResourcePath;
   }
 
   /**

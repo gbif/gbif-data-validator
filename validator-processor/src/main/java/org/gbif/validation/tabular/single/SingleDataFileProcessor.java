@@ -14,6 +14,8 @@ import org.gbif.validation.source.RecordSourceFactory;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class SingleDataFileProcessor implements DataFileProcessor {
 
   private final DataValidationProcessor dataValidationProcessor;
@@ -21,7 +23,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   //TODO Should interpretedTermsCountCollector be nullable?
   public SingleDataFileProcessor(List<Term> terms, RecordEvaluator recordEvaluator,
                                  InterpretedTermsCountCollector interpretedTermsCountCollector) {
-    dataValidationProcessor = new DataValidationProcessor(terms,recordEvaluator,interpretedTermsCountCollector);
+    dataValidationProcessor = new DataValidationProcessor(terms, recordEvaluator, interpretedTermsCountCollector);
   }
 
   @Override
@@ -33,11 +35,16 @@ public class SingleDataFileProcessor implements DataFileProcessor {
         dataValidationProcessor.process(record);
       }
 
+      DataFile scopedDataFile = dataFile.isAlternateViewOf().orElse(dataFile);
+
       //FIXME the Status and indexeable should be decided by a another class somewhere
-      return ValidationResultBuilders.Builder.of(true, dataFile.getSourceFileName(),
-              dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-              .withResourceResult(dataValidationProcessor
-                      .getValidationResult(dataFile.getSourceFileComponentName(), dataFile.getRowType())).build();
+      return ValidationResultBuilders.Builder.of(true, scopedDataFile.getSourceFileName(),
+              scopedDataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
+              .withResourceResult(
+                      dataValidationProcessor.getValidationResult(
+                              StringUtils.isNotBlank(dataFile.getSourceFileName()) ? dataFile.getSourceFileName() :
+                                      scopedDataFile.getSourceFileName(),
+                              dataFile.getRowType())).build();
     } catch (Exception ex) {
       throw new RuntimeException(ex);
     }
