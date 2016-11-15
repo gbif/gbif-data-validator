@@ -15,10 +15,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -28,6 +27,8 @@ import javax.annotation.Nullable;
 public class DwcReader implements RecordSource {
 
   private static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
+
+  private final Archive archive;
 
   //could be the core or an extension
   private final ArchiveFile darwinCoreComponent;
@@ -57,10 +58,19 @@ public class DwcReader implements RecordSource {
   DwcReader(File dwcFolder, @Nullable Term rowType) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
-    Archive archive = ArchiveFactory.openArchive(dwcFolder);
+    archive = ArchiveFactory.openArchive(dwcFolder);
     darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
+  }
+
+  /**
+   * Get a Set of the extensions registered in this archive.
+   *
+   * @return never null
+   */
+  public Set<ArchiveFile> getExtensions(){
+    return archive.getExtensions();
   }
 
   @Nullable

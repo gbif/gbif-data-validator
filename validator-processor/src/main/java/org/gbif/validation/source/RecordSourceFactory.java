@@ -1,5 +1,6 @@
 package org.gbif.validation.source;
 
+import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.model.FileFormat;
@@ -10,11 +11,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.apache.commons.lang3.Validate;
 
 import static org.gbif.utils.file.tabular.TabularFiles.newTabularFileReader;
 
@@ -81,47 +85,66 @@ public class RecordSourceFactory {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
-    DataFile workingDataFile = dataFile;
+    List<DataFile> dataFileList = new ArrayList<>();
 
-    //handle file conversion
-    if(FileFormat.SPREADSHEET == dataFile.getFileFormat()) {
-      workingDataFile = handleSpreadsheetConversion(dataFile);
+    switch(dataFile.getFileFormat()) {
+      case SPREADSHEET:
+        dataFileList.add(handleSpreadsheetConversion(dataFile));
+          break;
+      case DWCA:
+        dataFileList.addAll(prepareDwcA(dataFile));
+        break;
+      case TABULAR:
+      default :
+        dataFileList.add(dataFile);
     }
 
-    try (RecordSource rs = fromDataFile(workingDataFile).orElse(null)) {
-      if (rs != null) {
-        workingDataFile.setNumOfLines(FileBashUtilities.countLines(rs.getFileSource().toAbsolutePath().toString()));
-        workingDataFile.setColumns(rs.getHeaders());
-
-        if (FileFormat.DWCA == workingDataFile.getFileFormat()) {
-          //we only work with the core for now
-          workingDataFile = createDwcDataFile(workingDataFile, rs.getFileSource());
-          workingDataFile.setSourceFileName(rs.getFileSource().getFileName().toString());
-          workingDataFile.setRowType(((DwcReader) rs).getRowType());
+    for(DataFile currDataFile : dataFileList) {
+      currDataFile.setNumOfLines(FileBashUtilities.countLines(currDataFile.getFilePath().toAbsolutePath().toString()));
+      try (RecordSource rs = fromDataFile(currDataFile).orElse(null)) {
+        if (rs != null) {
+          currDataFile.setColumns(rs.getHeaders());
         }
       }
     }
 
-    // the list will be used to return extensions
-    List<DataFile> dataFiles = new ArrayList<>();
-    dataFiles.add(workingDataFile);
-    return dataFiles;
+    return dataFileList;
   }
 
   /**
-   * 
-   * @param dwcaDatafile
-   * @param componentPath
+   * Given a {@link DataFile} pointing to folder containing the extracted DarwinCore archive this method creates
+   * a list of {@link DataFile} for each of the data component (core + extensions).
+   * @param dwcaDataFile
    * @return
    */
-  private static DataFile createDwcDataFile(DataFile dwcaDatafile, Path componentPath) {
+  private static final List<DataFile> prepareDwcA(DataFile dwcaDataFile) throws IOException {
+    Validate.isTrue(dwcaDataFile.getFilePath().toFile().isDirectory(), "dwcaDataFile.getFilePath() must point to a directory");
+    List<DataFile> dataFileList = new ArrayList<>();
+    DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile());
+
+    //add the core first
+    dataFileList.add(createDwcDataFile(dwcaDataFile, dwcReader.getFileSource()));
+
+    DataFile extDatafile;
+    for(ArchiveFile ext : dwcReader.getExtensions()){
+      extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
+      dataFileList.add(extDatafile);
+    }
+    return dataFileList;
+  }
+
+  /**
+   * Creates a new {@link DataFile} representing a DarwinCore component.
+   *
+   * @param dwcaDatafile
+   * @param dwcComponentPath
+   * @return
+   */
+  private static DataFile createDwcDataFile(DataFile dwcaDatafile, Path dwcComponentPath) {
 
     DataFile dwcComponentDataFile = new DataFile(dwcaDatafile);
-    dwcComponentDataFile.setFilePath(componentPath);
-
-    dwcComponentDataFile.setNumOfLines(dwcaDatafile.getNumOfLines());
-    dwcComponentDataFile.setColumns(dwcaDatafile.getColumns());
-    dwcComponentDataFile.setContentType(dwcaDatafile.getContentType());
+    dwcComponentDataFile.setFilePath(dwcComponentPath);
+    dwcComponentDataFile.setSourceFileName(dwcComponentPath.getFileName().toString());
     dwcComponentDataFile.setFileFormat(dwcaDatafile.getFileFormat());
 
     return dwcComponentDataFile;
