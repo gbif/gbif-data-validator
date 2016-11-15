@@ -1,6 +1,6 @@
 package org.gbif.validation.ws;
 
-import org.gbif.validation.api.model.DataFileDescriptor;
+import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.ws.util.ExtraMediaTypes;
 
@@ -90,14 +90,14 @@ public class UploadedFileManager {
    * @param filename
    * @param contentType
    * @param inputStream
-   * @return
+   * @return a {@link DataFile} instance that represents the file that was transferred.
    * @throws IOException
    */
-  public Optional<DataFileDescriptor> handleFileTransfer(String filename, String contentType, InputStream inputStream) throws IOException {
+  public Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream) throws IOException {
     java.nio.file.Path destinationFolder = generateRandomFolderPath();
     Files.createDirectory(destinationFolder);
 
-    DataFileDescriptor dataFileDescriptor = new DataFileDescriptor();
+    DataFile transferredDataFile = new DataFile();
     java.nio.file.Path uploadedResourcePath;
 
     try {
@@ -107,7 +107,7 @@ public class UploadedFileManager {
           unzip(inputStream, destinationFolder);
           uploadedResourcePath = destinationFolder;
           //a little bit risky to assume that
-          dataFileDescriptor.setFormat(FileFormat.DWCA);
+          transferredDataFile.setFileFormat(FileFormat.DWCA);
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", arEx, filename);
           throw new IOException(arEx);
@@ -115,11 +115,11 @@ public class UploadedFileManager {
       } else if (TABULAR_CONTENT_TYPES.contains(contentType)) {
         uploadedResourcePath = copyInputStream(destinationFolder, inputStream, filename);
         inputStream.close();
-        dataFileDescriptor.setFormat(FileFormat.TABULAR);
+        transferredDataFile.setFileFormat(FileFormat.TABULAR);
       } else if (SPREADSHEET_CONTENT_TYPES.contains(contentType)) {
         uploadedResourcePath = copyInputStream(destinationFolder, inputStream, filename);
         inputStream.close();
-        dataFileDescriptor.setFormat(FileFormat.SPREADSHEET);
+        transferredDataFile.setFileFormat(FileFormat.SPREADSHEET);
       } else {
         LOG.warn("Unsupported file type: {}", contentType);
         return Optional.empty();
@@ -132,13 +132,13 @@ public class UploadedFileManager {
       throw ioEx;
     }
 
-    dataFileDescriptor.setSubmittedFile(filename);
-    dataFileDescriptor.setContentType(contentType);
-    dataFileDescriptor.setUploadedResourcePath(uploadedResourcePath);
-    return Optional.of(dataFileDescriptor);
+    transferredDataFile.setFilePath(uploadedResourcePath);
+    transferredDataFile.setSourceFileName(filename);
+    transferredDataFile.setContentType(contentType);
+    return Optional.of(transferredDataFile);
   }
 
-  public Optional<DataFileDescriptor> handleFileDownload(@Nullable String providedFilename,
+  public Optional<DataFile> handleFileDownload(@Nullable String providedFilename,
                                                          @Nullable String providedContentType,
                                                          URL fileToDownload) throws IOException {
 

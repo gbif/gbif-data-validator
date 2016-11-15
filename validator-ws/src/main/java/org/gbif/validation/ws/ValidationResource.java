@@ -4,7 +4,7 @@ import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.DataFileDescriptor;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
@@ -33,7 +33,6 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,13 +89,13 @@ public class ValidationResource {
               .findFirst();
 
       if(uploadFileInputStream.isPresent()) {
-        Optional<DataFileDescriptor> dataFileDescriptor = fileTransferManager.handleFileTransfer(
+        Optional<DataFile> dataFile = fileTransferManager.handleFileTransfer(
                         uploadFileInputStream.get().getName(),
                         uploadFileInputStream.get().getContentType(),
                         uploadFileInputStream.get().getInputStream());
         uploadFileName = uploadFileInputStream.get().getName();
-        if(dataFileDescriptor.isPresent()) {
-          result = processFile(dataFileDescriptor.get().getUploadedResourcePath(), dataFileDescriptor.get());
+        if(dataFile.isPresent()) {
+          result = processFile(dataFile.get().getFilePath(), dataFile.get());
         }
       }
     }
@@ -125,10 +124,10 @@ public class ValidationResource {
   public ValidationResult onValidateFile(@QueryParam("fileUrl") String fileURL) {
     ValidationResult result = null;
     try {
-      Optional<DataFileDescriptor> dataFileDescriptor =
+      Optional<DataFile> dataFileDescriptor =
               fileTransferManager.handleFileDownload(null, null, new URL(fileURL));
       if(dataFileDescriptor.isPresent()) {
-        result = processFile(dataFileDescriptor.get().getUploadedResourcePath(),
+        result = processFile(dataFileDescriptor.get().getFilePath(),
                 dataFileDescriptor.get());
       }
     } catch (IOException ioEx) {
@@ -157,17 +156,8 @@ public class ValidationResource {
   /**
    * Applies the validation routines to the input file.
    */
-  private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFileDescriptor dataFileDescriptor)  {
+  private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFile dataFile)  {
     try {
-      DataFile dataFile = new DataFile();
-      //set the original file name (mostly used to send it back in the response)
-      dataFile.setSourceFileName(FilenameUtils.getName(dataFileDescriptor.getSubmittedFile()));
-      dataFile.setFilePath(dataFilePath.toAbsolutePath());
-      dataFile.setDelimiterChar(dataFileDescriptor.getFieldsTerminatedBy());
-      dataFile.setHasHeaders(dataFileDescriptor.isHasHeaders());
-      dataFile.setFileFormat(dataFileDescriptor.getFormat());
-      dataFile.setContentType(dataFileDescriptor.getContentType());
-
       extractAndSetTabularFileMetadata(dataFilePath, dataFile);
       return resourceEvaluationManager.evaluate(dataFile);
     } catch (Exception ex) {
@@ -195,7 +185,7 @@ public class ValidationResource {
    */
   private static void extractAndSetTabularFileMetadata(java.nio.file.Path dataFilePath, DataFile dataFile) {
     //TODO make use of CharsetDetection.detectEncoding(source, 16384);
-    if(dataFile.getDelimiterChar() == null) {
+    if(FileFormat.TABULAR == dataFile.getFileFormat() && dataFile.getDelimiterChar() == null) {
       try {
         CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
         if (metadata.getDelimiter().length() == 1) {
