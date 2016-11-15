@@ -36,14 +36,6 @@ class OdsConverter {
   private static final Logger LOG = LoggerFactory.getLogger(OdsConverter.class);
   private static final String DATE_VALUE_TYPE = "date";
 
-  /**
-   * Get a new OdsConverter instance.
-   *
-   * @return
-   */
-  OdsConverter() {
-  }
-
   public void convertToCSV(Path workbookFile, Path csvFile) throws IOException {
 
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
@@ -69,15 +61,15 @@ class OdsConverter {
    * @param csvWriter
    * @throws IOException
    */
-  private void convertToCSV(SpreadsheetDocument spreadsheetDocument, ICsvListWriter csvWriter) throws IOException {
+  private static void convertToCSV(SpreadsheetDocument spreadsheetDocument, ICsvListWriter csvWriter) throws IOException {
     Objects.requireNonNull(spreadsheetDocument, "spreadsheetDocument shall be provided");
     Objects.requireNonNull(csvWriter, "csvWriter shall be provided");
 
-    if( spreadsheetDocument.getSheetCount() == 0 ) {
+    if (spreadsheetDocument.getSheetCount() == 0) {
       LOG.warn("No sheet found in the spreadsheetDocument");
       return;
     } //we work only on one sheet
-    else  if( spreadsheetDocument.getSheetCount() > 1) {
+    if(spreadsheetDocument.getSheetCount() > 1) {
       LOG.warn("Detected more than 1 sheet, only reading the first one.");
     }
 
@@ -86,13 +78,12 @@ class OdsConverter {
     List<String> headers = extractWhile(table, 0, cell -> cell != null && StringUtils.isNotBlank(cell.getStringValue()));
     csvWriter.writeHeader(headers.toArray(new String[headers.size()]));
 
-    boolean emptyLine = false;
+    boolean hasContent = true;
     int rowIdx = 1;
-    List<String> line;
-    while(!emptyLine) {
-      line = extractLine(table, rowIdx, headers.size());
-      emptyLine = line.stream().allMatch(StringUtils::isBlank);
-      if(!emptyLine) {
+    while (hasContent) {
+      List<String> line = extractLine(table, rowIdx, headers.size());
+      hasContent = !line.stream().allMatch(StringUtils::isBlank);
+      if (hasContent) {
         csvWriter.write(line);
       }
       rowIdx++;
@@ -107,24 +98,18 @@ class OdsConverter {
    * @param expectedNumberOfColumns
    * @return
    */
-  private List<String> extractLine(Table table, int row, int expectedNumberOfColumns) {
+  private static List<String> extractLine(Table table, int row, int expectedNumberOfColumns) {
     List<String> lineData = new ArrayList<>(expectedNumberOfColumns);
-    Cell cell;
 
     for (int colIdx = 0; colIdx < expectedNumberOfColumns; colIdx++) {
-      cell = table.getCellByPosition(colIdx, row);
+      Cell cell = table.getCellByPosition(colIdx, row);
 
       if(cell == null){
         lineData.add("");
-      }
-      else if (DATE_VALUE_TYPE.equalsIgnoreCase(cell.getValueType())) {
-        Instant instant;
-        if(cell.getFormatString().indexOf("H:") > 0 ){
-          instant = cell.getDateTimeValue().toInstant();
-        }
-        else {
-          instant = cell.getDateValue().toInstant();
-        }
+      } else if (DATE_VALUE_TYPE.equalsIgnoreCase(cell.getValueType())) {
+        //we should document what "H:" means
+        Instant instant = cell.getFormatString().indexOf("H:") > 0 ? cell.getDateTimeValue().toInstant():
+                                                                     cell.getDateValue().toInstant();
 
         //we need to use systemDefault ZoneId since the date we get from the library used it (by using Calendar).
         LocalDateTime date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
@@ -145,7 +130,7 @@ class OdsConverter {
    * @param check function to run on a Cell object to know if we should continue to extract data on the row.
    * @return
    */
-  private List<String> extractWhile(Table table, int row, Function<Cell, Boolean> check) {
+  private static List<String> extractWhile(Table table, int row, Function<Cell, Boolean> check) {
     List<String> headers = new ArrayList<>();
 
     int colIdx = 0;

@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
@@ -29,25 +30,14 @@ public class TermsFrequencyCollector implements RecordMetricsCollector, Serializ
   public TermsFrequencyCollector(List<Term> terms, boolean useConcurrentMap) {
     Validate.notNull(terms, "columnHeaders must not be null");
     columnHeaders = terms.toArray(new Term[terms.size()]);
-
-    termFrequencyCounter = useConcurrentMap ? new ConcurrentHashMap<>(columnHeaders.length) :
-            new LinkedHashMap<>(columnHeaders.length);
-
-    for (Term term : columnHeaders) {
-      termFrequencyCounter.put(term, 0l);
-    }
+    termFrequencyCounter = CollectorUtils.getZeroTermFrequency(columnHeaders, useConcurrentMap);
   }
 
   @Override
   public void collect(String[] recordData) {
-    for (int i = 0; i < recordData.length; i++) {
-      if (StringUtils.isNotBlank(recordData[i])) {
-        //just in case we have a line larger than the number of column
-        if (i < columnHeaders.length) {
-          termFrequencyCounter.compute(columnHeaders[i], (k, v) -> ++v);
-        }
-      }
-    }
+    IntStream.range(0, Math.min(recordData.length, columnHeaders.length))
+      .filter( i -> StringUtils.isNotBlank(recordData[i]))
+      .forEach(i -> termFrequencyCounter.compute(columnHeaders[i], (k, v) -> ++v));
   }
 
   @Override

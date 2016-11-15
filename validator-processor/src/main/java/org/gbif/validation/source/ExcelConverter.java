@@ -9,9 +9,7 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.TimeZone;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -43,7 +41,7 @@ class ExcelConverter {
   private static final TimeZone UTC_TIMEZONE = TimeZone.getTimeZone("UTC");
   private static final int FLUSH_INTERVAL = 1000;
 
-  private DataFormatter formatter;
+  private final DataFormatter formatter;
 
   /**
    * Get a new ExcelConverter instance.
@@ -66,7 +64,7 @@ class ExcelConverter {
 
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
          ICsvListWriter csvWriter = new CsvListWriter(new FileWriter(csvFile.toFile()),
-                 CsvPreference.STANDARD_PREFERENCE)) {
+                                                      CsvPreference.STANDARD_PREFERENCE)) {
 
       Workbook workbook = WorkbookFactory.create(fis);
       convertToCSV(workbook, csvWriter);
@@ -89,42 +87,56 @@ class ExcelConverter {
     Objects.requireNonNull(workbook, "workbook shall be provided");
     Objects.requireNonNull(csvWriter, "csvWriter shall be provided");
 
-    if( workbook.getNumberOfSheets() == 0 ) {
+    if (workbook.getNumberOfSheets() == 0) {
       LOG.warn("No sheet found in the workbook");
       return;
-    } //we work only on one sheet
-    else  if( workbook.getNumberOfSheets() > 1) {
+    }
+
+    if (workbook.getNumberOfSheets() > 1) { //we work only on one sheet
       LOG.warn("Detected more than 1 sheet, only reading the first one.");
     }
 
-    Sheet sheet = workbook.getSheetAt(0);
-    FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
-    if(sheet.getPhysicalNumberOfRows() > 0) {
-      Row row;
-      //extract headers (first line)
-      row = sheet.getRow(0);
-      List<String> headers = rowToCSV(row, evaluator, Optional.empty());
+    Sheet sheet = workbook.getSheetAt(0); //get the first Sheet, and only get this
+    if (sheet.getPhysicalNumberOfRows() > 0) {
+      //pass the evaluator to other methods since it's unknown how expensive is to get one!
+      writeSheetContent(csvWriter, sheet, workbook.getCreationHelper().createFormulaEvaluator());
+    }
+  }
 
-      //reverse iteration (from the right side of the Workbook) to remove empty columns
-      ListIterator<String> iterator = headers.listIterator(headers.size());
-      while (iterator.hasPrevious()) {
-        if(StringUtils.isBlank(iterator.previous())){
-          iterator.remove();
-        }
-      }
-      csvWriter.writeHeader(headers.toArray(new String[headers.size()]));
+  /**
+   * Writes the content of a Sheet into the csvWriter.
+   */
+  private void writeSheetContent(ICsvListWriter csvWriter, Sheet sheet, FormulaEvaluator evaluator) throws IOException {
+    //extract headers (first line)
+    String[] headers = getHeaders(sheet, evaluator);
+    csvWriter.writeHeader(headers);
 
-      int lastRowNum = sheet.getLastRowNum();
-      int nextFlush = FLUSH_INTERVAL;
-      for(int j = 1; j <= lastRowNum; j++) {
-        row = sheet.getRow(j);
-        csvWriter.write(rowToCSV(row, evaluator, Optional.of(headers.size() - 1)));
-        if(j == nextFlush){
-          csvWriter.flush();
-          nextFlush += FLUSH_INTERVAL;
-        }
+    int rowSize = headers.length - 1; //this is done avoid thi calculation on each call
+    for(int j = 1; j <= sheet.getLastRowNum(); j++) {
+      csvWriter.write(rowToCSV(sheet.getRow(j), evaluator, rowSize));
+      if (j % FLUSH_INTERVAL == 0) {
+        csvWriter.flush();
       }
     }
+  }
+
+  /**
+   * Extract the first row from as the header.
+   */
+  private String[] getHeaders(Sheet sheet, FormulaEvaluator evaluator) {
+    Row headerRow = sheet.getRow(0);
+    //we want to loop until maxColumnIdx (if provided) even if it's greater than getLastCellNum()
+    //we shall have the same number of entries on every line in the CSV
+    List<String> headers = rowToCSV(headerRow, evaluator, Short.valueOf(headerRow.getLastCellNum()).intValue());
+
+    //reverse iteration (from the right side of the Workbook) to remove empty columns
+    ListIterator<String> iterator = headers.listIterator(headers.size());
+    while (iterator.hasPrevious()) {
+      if (StringUtils.isBlank(iterator.previous())) {
+        iterator.remove();
+      }
+    }
+    return headers.toArray(new String[headers.size()]);
   }
 
   /**
@@ -132,34 +144,26 @@ class ExcelConverter {
    * output to the CSV file.
    *
    * @param row can be HSSFRow or XSSFRow classes or null
-   * @param evaluator
-   * @param maxColumnIdx
+   * @param evaluator workbook formula evaluator
+   * @param maxCellNum maximum number of cell to evaluate
    * @return
    */
-  private List<String> rowToCSV(@Nullable Row row, FormulaEvaluator evaluator, Optional<Integer> maxColumnIdx) {
+  private List<String> rowToCSV(Row row, FormulaEvaluator evaluator, int maxCellNum) {
     List<String> csvLine = new ArrayList<>();
-
-    if(row != null) {
-      Cell cell;
-      //we want to loop until maxColumnIdx (if provided) even if it's greater than getLastCellNum()
-      //we shall have the same number of entries on every line in the CSV
-      int maxCellNum = maxColumnIdx.orElse(Short.valueOf(row.getLastCellNum()).intValue());
-      for(int i = 0; i <= maxCellNum; i++) {
-        cell = row.getCell(i);
+    if (row != null) {
+      for (int i = 0; i <= maxCellNum; i++) {
+        Cell cell = row.getCell(i);
         //add an empty string when we have no data
-        if(cell == null) {
+        if (cell == null) {
           csvLine.add("");
-        }
-        else {
+        } else {
           //getCellTypeEnum deprecation explanation: see https://bz.apache.org/bugzilla/show_bug.cgi?id=60228
-          if(CellType.FORMULA == cell.getCellTypeEnum()) {
-            csvLine.add(this.formatter.formatCellValue(cell, evaluator));
-          }
-          else if(cell.getCellTypeEnum() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)){
+          if (CellType.FORMULA == cell.getCellTypeEnum()) {
+            csvLine.add(formatter.formatCellValue(cell, evaluator));
+          } else if (cell.getCellTypeEnum() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
             csvLine.add(DateUtil.getJavaDate(cell.getNumericCellValue(), false, UTC_TIMEZONE).toInstant().toString());
-          }
-          else{
-            csvLine.add(this.formatter.formatCellValue(cell));
+          } else {
+            csvLine.add(formatter.formatCellValue(cell));
           }
         }
       }
