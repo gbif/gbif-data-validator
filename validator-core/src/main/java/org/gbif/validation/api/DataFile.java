@@ -18,12 +18,9 @@ public class DataFile {
 
   private Path filePath;
   private FileFormat fileFormat;
-
   private String contentType;
 
   private String sourceFileName;
-
-  //private String sourceFileComponentName;
 
   private Term[] columns;
   private Term rowType;
@@ -102,21 +99,6 @@ public class DataFile {
   public String getSourceFileName() {
     return sourceFileName;
   }
-
-//  /**
-//   * If the source file is a composition of files (e.g. Dwc-A), the component name is the name of a single component
-//   * inside the composition.
-//   *
-//   * @return
-//   */
-//  @Nullable
-//  public String getSourceFileComponentName() {
-//    return sourceFileComponentName;
-//  }
-//
-//  public void setSourceFileComponentName(String sourceFileComponentName) {
-//    this.sourceFileComponentName = sourceFileComponentName;
-//  }
 
 
   /**

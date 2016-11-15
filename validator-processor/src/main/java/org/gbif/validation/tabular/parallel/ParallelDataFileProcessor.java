@@ -31,6 +31,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -178,12 +179,15 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
       system.shutdown();
       LOG.info("Processing time for file {}: {} seconds", dataFile.getFilePath(), system.uptime());
     }
+
+    DataFile scopedDataFile = dataFile.isAlternateViewOf().orElse(dataFile);
     //FIXME the Status and indexeable should be decided by a another class somewhere
     return ValidationResultBuilders.Builder
             .of(true, dataFile.getSourceFileName(), dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
             .withResourceResult(
                     ValidationResultBuilders.RecordsValidationResultElementBuilder
-                            .of(dataFile.getSourceFileName(), dataFile.getRowType(),
+                            .of(StringUtils.isNotBlank(dataFile.getSourceFileName()) ? dataFile.getSourceFileName() :
+                                            scopedDataFile.getSourceFileName(), dataFile.getRowType(),
                                     dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
                             .withIssues(resultsCollector.getAggregatedCounts(), resultsCollector.getSamples())
                             .withTermsFrequency(termsFrequencyCollector.getTermFrequency())

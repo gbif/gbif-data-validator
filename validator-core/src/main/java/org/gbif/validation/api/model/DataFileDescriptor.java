@@ -3,6 +3,7 @@ package org.gbif.validation.api.model;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
+@Deprecated
 public class DataFileDescriptor {
 
   private Path uploadedResourcePath;
