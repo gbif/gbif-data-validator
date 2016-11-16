@@ -34,10 +34,8 @@ public class ValidationResult implements Serializable {
    * @param validationProfile
    * @param errorCode
    */
-  ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat,
-                           ValidationProfile validationProfile,
-                           List<ValidationResultElement> results,
-                           ValidationErrorCode errorCode) {
+  ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
+                   List<ValidationResultElement> results, ValidationErrorCode errorCode) {
     this.indexeable = indexeable;
     this.fileName = fileName;
     this.fileFormat = fileFormat;

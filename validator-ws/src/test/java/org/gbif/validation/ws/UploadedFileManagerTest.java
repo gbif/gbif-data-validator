@@ -2,6 +2,7 @@ package org.gbif.validation.ws;
 
 
 import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.ws.resources.UploadedFileManager;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,4 +1,4 @@
-package org.gbif.validation.ws;
+package org.gbif.validation.ws.resources;
 
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
@@ -26,6 +26,7 @@ import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadBase;
 import org.apache.commons.fileupload.util.LimitedInputStream;
 import org.apache.commons.io.FileUtils;
@@ -136,6 +137,15 @@ public class UploadedFileManager {
     transferredDataFile.setSourceFileName(filename);
     transferredDataFile.setContentType(contentType);
     return Optional.of(transferredDataFile);
+  }
+
+
+  public Optional<DataFile> handleFileTransfer(FileItem fileItem) throws IOException {
+    return handleFileTransfer(fileItem.getName(), fileItem.getContentType(), fileItem.getInputStream());
+  }
+
+  public Optional<DataFile> handleFileDownload(URL fileToDownload) throws IOException {
+    return handleFileDownload(null,null,fileToDownload);
   }
 
   public Optional<DataFile> handleFileDownload(@Nullable String providedFilename,
