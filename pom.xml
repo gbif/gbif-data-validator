@@ -55,6 +55,7 @@
     <jersey.version>1.19</jersey.version>
     <jackson.version>1.9.12</jackson.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
+    <guava.version>18.0</guava.version>
 
     <scala-library.version>2.10.5</scala-library.version>
     <commons-lang3.version>3.4</commons-lang3.version>
@@ -156,6 +157,11 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
         <version>${commons-lang3.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.guava</groupId>
+        <artifactId>guava</artifactId>
+        <version>${guava.version}</version>
       </dependency>
 
       <!-- Logging -->

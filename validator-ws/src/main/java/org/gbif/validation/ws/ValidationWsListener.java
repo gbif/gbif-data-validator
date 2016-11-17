@@ -71,7 +71,7 @@ public class ValidationWsListener extends GbifServletListener {
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
-              configuration.getFileSplitSize(),ActorSystem.create("DataFileProcessorSystem")));
+                                                                                     configuration.getFileSplitSize()));
 
       expose(ValidationConfiguration.class);
       expose(ResourceEvaluationManager.class);

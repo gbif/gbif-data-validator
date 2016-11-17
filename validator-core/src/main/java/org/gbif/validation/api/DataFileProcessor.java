@@ -1,8 +1,8 @@
 package org.gbif.validation.api;
 
-import java.io.IOException;
+import org.gbif.validation.api.result.RecordsValidationResultElement;
 
 public interface DataFileProcessor {
 
-  void process(DataFile dataFile) throws IOException;
+  RecordsValidationResultElement process(DataFile dataFile);
 }

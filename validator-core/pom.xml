@@ -11,10 +11,6 @@
 
   <artifactId>validator-core</artifactId>
 
-  <properties>
-    <guava.version>18.0</guava.version>
-  </properties>
-
   <build>
     <plugins>
       <plugin>
