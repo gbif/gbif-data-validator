@@ -18,7 +18,6 @@ import javax.annotation.concurrent.NotThreadSafe;
 @NotThreadSafe
 public class SimpleValidationCollector implements ResultsCollector, Serializable {
 
-  //TODO provide in config
   public static final int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
 
   private final int maxNumberOfSample;
@@ -37,8 +36,7 @@ public class SimpleValidationCollector implements ResultsCollector, Serializable
   @Override
   public void collect(RecordEvaluationResult result) {
 
-    if (result.getDetails() != null) {
-
+    if (result !=null && result.getDetails() != null) {
       result.getDetails().forEach(detail -> {
         issueCounter.compute(detail.getEvaluationType(), (k, v) -> (v == null) ? 1 : ++v);
 

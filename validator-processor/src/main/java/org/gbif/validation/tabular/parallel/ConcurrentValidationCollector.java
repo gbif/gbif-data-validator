@@ -1,19 +1,16 @@
 package org.gbif.validation.tabular.parallel;
 
 import org.gbif.validation.api.ResultsCollector;
-import org.gbif.validation.api.result.EvaluationResultDetails;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.api.result.EvaluationResultDetails;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 /**
@@ -23,7 +20,6 @@ import java.util.stream.Collectors;
  */
 public class ConcurrentValidationCollector implements ResultsCollector {
 
-  //TODO provide in config
   public static final int DEFAULT_MAX_NUMBER_OF_SAMPLE = 10;
 
   private final int maxNumberOfSample;

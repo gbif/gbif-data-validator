@@ -9,6 +9,7 @@ import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
 
 import java.util.List;
+import java.util.Optional;
 
 public class DataValidationProcessor  {
 
@@ -16,13 +17,12 @@ public class DataValidationProcessor  {
 
   private final SimpleValidationCollector collector;
   private final TermsFrequencyCollector metricsCollector;
-  private final InterpretedTermsCountCollector interpretedTermsCountCollector;
+  private final Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector;
 
   private long line;
 
-  //TODO Should interpretedTermsCountCollector be nullable?
   public DataValidationProcessor(List<Term> terms, RecordEvaluator recordEvaluator,
-                                 InterpretedTermsCountCollector interpretedTermsCountCollector) {
+                                 Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector) {
     this.recordEvaluator = recordEvaluator;
     collector = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
     metricsCollector = new TermsFrequencyCollector(terms, false);
@@ -34,7 +34,7 @@ public class DataValidationProcessor  {
       metricsCollector.collect(record);
       RecordEvaluationResult recEvalResult = recordEvaluator.evaluate(line, record);
       collector.collect(recEvalResult);
-      interpretedTermsCountCollector.collect(recEvalResult);
+      interpretedTermsCountCollector.ifPresent(c -> c.collect(recEvalResult));
       line++;
       return recEvalResult;
     } catch (Exception ex) {
@@ -47,7 +47,7 @@ public class DataValidationProcessor  {
             .of(fileName, rowType, line)
             .withIssues(collector.getAggregatedCounts(), collector.getSamples())
             .withTermsFrequency(metricsCollector.getTermFrequency())
-            .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())
+            .withInterpretedValueCounts(interpretedTermsCountCollector.isPresent() ? interpretedTermsCountCollector.get().getInterpretedCounts() : null)
             .build();
   }
 

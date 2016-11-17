@@ -68,6 +68,10 @@ public class RecordSourceFactory {
                 Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
                         dataFile.isHasHeaders()));
       case DWCA:
+        if(dataFile.getFileLineOffset().isPresent()){
+          return Optional.of(new DwcReader(dataFile.isAlternateViewOf().get().getFilePath().toFile(),
+                  dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders()));
+        }
         return Optional.of(fromDwcA(dataFile.getFilePath().toFile()));
     }
     return Optional.empty();
@@ -123,11 +127,14 @@ public class RecordSourceFactory {
     DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile());
 
     //add the core first
-    dataFileList.add(createDwcDataFile(dwcaDataFile, dwcReader.getFileSource()));
+    DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
+    core.setRowType(dwcReader.getRowType());
+    dataFileList.add(core);
 
     DataFile extDatafile;
     for(ArchiveFile ext : dwcReader.getExtensions()){
       extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
+      extDatafile.setRowType(ext.getRowType());
       dataFileList.add(extDatafile);
     }
     return dataFileList;
