@@ -9,6 +9,7 @@ import org.gbif.validation.api.result.ValidationResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -31,7 +32,7 @@ public class SingleDataFileProcessorTest {
 
     ResourceEvaluationManager manager = new ResourceEvaluationManager(DEV_API, 1000);
     DataFile datafile = new DataFile();
-    datafile.setHasHeaders(true);
+    datafile.setHasHeaders(Optional.of(true));
     datafile.setDelimiterChar('\t');
     datafile.setSourceFileName("myfile.tsv");
     datafile.setRowType(DwcTerm.Occurrence);

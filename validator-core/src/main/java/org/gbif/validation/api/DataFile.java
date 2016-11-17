@@ -26,11 +26,10 @@ public class DataFile {
   private Term rowType;
 
   private Optional<Integer> fileLineOffset = Optional.empty();
+  private Optional<Boolean> hasHeaders = Optional.empty();
 
   private Character delimiterChar;
   private Integer numOfLines;
-
-  private boolean hasHeaders;
 
   private final Optional<DataFile> isAlternateViewOf;
 
@@ -131,11 +130,11 @@ public class DataFile {
     this.fileFormat = fileFormat;
   }
 
-  public boolean isHasHeaders() {
+  public Optional<Boolean> isHasHeaders() {
     return hasHeaders;
   }
 
-  public void setHasHeaders(boolean hasHeaders) {
+  public void setHasHeaders(Optional<Boolean> hasHeaders) {
     this.hasHeaders = hasHeaders;
   }
 
