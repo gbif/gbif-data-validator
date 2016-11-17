@@ -25,15 +25,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
+import akka.pattern.Patterns;
 import akka.routing.RoundRobinPool;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.concurrent.Await;
+import scala.concurrent.Future;
+import scala.concurrent.duration.Duration;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
@@ -44,7 +49,10 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
   private static final long SLEEP_TIME_BEFORE_TERMINATION = 50000L;
 
   private final EvaluatorFactory evaluatorFactory;
+
   private final Integer fileSplitSize;
+
+  private final long jobId;
 
   //This instance is shared between all the requests
   private final ActorSystem system;
@@ -141,15 +149,17 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
   }
 
   public ParallelDataFileProcessor(EvaluatorFactory evaluatorFactory, ActorSystem system,
-                                   List<Term> termsColumnsMapping, Integer fileSplitSize) {
+                                   List<Term> termsColumnsMapping, Integer fileSplitSize,
+                                   long jobId) {
     this.evaluatorFactory = evaluatorFactory;
     this.system = system;
     this.termsColumnsMapping = new ArrayList<>(termsColumnsMapping);
     this.fileSplitSize = fileSplitSize;
+    this.jobId = jobId;
   }
 
   @Override
-  public ValidationResult process(DataFile dataFile) {
+  public void process(DataFile dataFile) {
 
     RecordMetricsCollector termsFrequencyCollector = new TermsFrequencyCollector(termsColumnsMapping, true);
     ConcurrentValidationCollector resultsCollector = new ConcurrentValidationCollector(ConcurrentValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
@@ -162,37 +172,10 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, metricsCollector,
-            recordsCollectors, evaluatorFactory, termsColumnsMapping, fileSplitSize), "DataFileProcessor");
-    try {
-      // start the calculation
-      master.tell(dataFile, master);
-      while (!master.isTerminated()) {
-        try {
-          Thread.sleep(SLEEP_TIME_BEFORE_TERMINATION);
-        } catch (InterruptedException ie) {
-          LOG.error("Thread interrupted", ie);
-        }
-      }
-    } catch (Exception ex) {
-      throw new RuntimeException(ex);
-    } finally {
-      system.shutdown();
-      LOG.info("Processing time for file {}: {} seconds", dataFile.getFilePath(), system.uptime());
-    }
+                                                  recordsCollectors, evaluatorFactory, termsColumnsMapping,
+                                                  fileSplitSize), "DataFileProcessor" + jobId);
+     // start the calculation
+    master.tell(dataFile, master);
 
-    DataFile scopedDataFile = dataFile.isAlternateViewOf().orElse(dataFile);
-    //FIXME the Status and indexeable should be decided by a another class somewhere
-    return ValidationResultBuilders.Builder
-            .of(true, dataFile.getSourceFileName(), dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-            .withResourceResult(
-                    ValidationResultBuilders.RecordsValidationResultElementBuilder
-                            .of(StringUtils.isNotBlank(dataFile.getSourceFileName()) ? dataFile.getSourceFileName() :
-                                            scopedDataFile.getSourceFileName(), dataFile.getRowType(),
-                                    dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
-                            .withIssues(resultsCollector.getAggregatedCounts(), resultsCollector.getSamples())
-                            .withTermsFrequency(termsFrequencyCollector.getTermFrequency())
-                            .withInterpretedValueCounts(interpretedTermsCountCollector.getInterpretedCounts())
-                            .build())
-            .build();
   }
 }

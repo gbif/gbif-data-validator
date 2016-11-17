@@ -17,8 +17,10 @@ import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import akka.actor.ActorSystem;
 
@@ -31,16 +33,19 @@ public class ResourceEvaluationManager {
   private final EvaluatorFactory factory;
   private final Integer fileSplitSize;
 
-  private ActorSystem system;
+  private final ActorSystem system;
+  private AtomicLong initialJobId;
 
   /**
    *
    * @param apiUrl
    * @param fileSplitSize threshold (in number of lines) until we use the parallel processing.
    */
-  public ResourceEvaluationManager(String apiUrl, Integer fileSplitSize){
+  public ResourceEvaluationManager(String apiUrl, Integer fileSplitSize, ActorSystem system){
     factory = new EvaluatorFactory(apiUrl);
     this.fileSplitSize = fileSplitSize;
+    this.system = system;
+    initialJobId = new AtomicLong(new Date().getTime());
   }
 
   /**
@@ -51,7 +56,6 @@ public class ResourceEvaluationManager {
    * @throws IOException
    */
   public ValidationResult evaluate(DataFile dataFile) throws IOException {
-
     //Validate the structure of the resource
     Optional<ValidationResultElement> resourceStructureEvaluationResult =
       EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
@@ -83,8 +87,7 @@ public class ResourceEvaluationManager {
       return new SingleDataFileProcessor(termsColumnsMapping, factory.create(termsColumnsMapping),
               interpretedTermsCountCollector);
     }
-    system = ActorSystem.create("DataFileProcessorSystem");
-    return new ParallelDataFileProcessor(factory, system, termsColumnsMapping, fileSplitSize);
+    return new ParallelDataFileProcessor(factory, system, termsColumnsMapping, fileSplitSize, initialJobId.incrementAndGet());
   }
 
 }

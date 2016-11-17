@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import akka.actor.ActorSystem;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -70,7 +71,7 @@ public class ValidationWsListener extends GbifServletListener {
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
-              configuration.getFileSplitSize()));
+              configuration.getFileSplitSize(),ActorSystem.create("DataFileProcessorSystem")));
 
       expose(ValidationConfiguration.class);
       expose(ResourceEvaluationManager.class);
