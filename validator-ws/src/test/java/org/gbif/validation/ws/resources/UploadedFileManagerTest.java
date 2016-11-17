@@ -1,8 +1,7 @@
-package org.gbif.validation.ws;
+package org.gbif.validation.ws.resources;
 
 
 import org.gbif.utils.file.FileUtils;
-import org.gbif.validation.ws.resources.UploadedFileManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -31,12 +30,10 @@ public class UploadedFileManagerTest {
 
     try {
       File testFolder = folder.newFolder("subfolder");
-      UploadedFileManager ufm = new UploadedFileManager(testFolder.getAbsolutePath(), 1);
-
       File f = FileUtils.getClasspathFile("zip/zip-test-with-folder.zip");
       FileInputStream fis = new FileInputStream(f);
       try {
-        ufm.unzip(fis, testFolder.toPath());
+        UploadedFileManager.unzip(fis, testFolder.toPath());
         File[] unzippedFiles = testFolder.listFiles(pathname -> !pathname.isDirectory());
         File[] unzippedFolder = testFolder.listFiles(pathname -> pathname.isDirectory() && !pathname.isHidden());
         assertEquals(1, unzippedFiles.length);

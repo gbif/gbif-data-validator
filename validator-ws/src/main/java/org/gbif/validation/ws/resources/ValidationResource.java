@@ -1,10 +1,7 @@
 package org.gbif.validation.ws.resources;
 
-import org.gbif.utils.file.csv.CSVReaderFactory;
-import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
@@ -143,14 +140,12 @@ public class ValidationResource {
    */
   private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFile dataFile)  {
     try {
-      extractAndSetTabularFileMetadata(dataFilePath, dataFile);
       return resourceEvaluationManager.evaluate(dataFile);
     } catch (Exception ex) {
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     } finally {
       deletePath(dataFilePath);
     }
-
   }
 
   private static void deletePath(java.nio.file.Path dataFilePath) {
@@ -161,34 +156,5 @@ public class ValidationResource {
     }
   }
 
-  /**
-   * TODO move to validator-processor
-   * Method responsible to extract metadata (and headers) from the file identified by dataFilePath.
-   *
-   * @param dataFilePath location of the file
-   * @param dataFile this object will be updated directly
-   */
-  private static void extractAndSetTabularFileMetadata(java.nio.file.Path dataFilePath, DataFile dataFile) {
-    //TODO make use of CharsetDetection.detectEncoding(source, 16384);
-    if(FileFormat.TABULAR == dataFile.getFileFormat() && dataFile.getDelimiterChar() == null) {
-      try {
-        dataFile.setDelimiterChar(getDelimiter(dataFilePath));
-      } catch (UnkownDelimitersException udEx) {
-        LOG.error("Can not extractCsvMetadata of file {}", dataFilePath, udEx);
-        throw new WebApplicationException(SC_BAD_REQUEST);
-      }
-    }
-  }
 
-  /**
-   * Guesses the delimiter character form the data file.
-   */
-  private static Character getDelimiter(java.nio.file.Path dataFilePath) {
-    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
-    if (metadata.getDelimiter().length() == 1) {
-      return metadata.getDelimiter().charAt(0);
-    } else {
-      throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
-    }
-  }
 }

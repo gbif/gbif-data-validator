@@ -204,7 +204,7 @@ public class UploadedFileManager {
    * @throws ArchiveException
    * @throws IOException
    */
-  protected void unzip(InputStream zippedInputStream, java.nio.file.Path destinationFile) throws ArchiveException, IOException {
+  protected static void unzip(InputStream zippedInputStream, java.nio.file.Path destinationFile) throws ArchiveException, IOException {
 
     try(ArchiveInputStream ais = new
             ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP, zippedInputStream)){
