@@ -2,10 +2,11 @@ package org.gbif.validation;
 
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
-import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationProfile;
+import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
@@ -21,14 +22,22 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
+import javax.validation.constraints.NotNull;
 
 import akka.actor.ActorSystem;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * {@link ResourceEvaluationManager} is responsible to create and trigger evaluations.
  *
  */
 public class ResourceEvaluationManager {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ResourceEvaluationManager.class);
 
   private final EvaluatorFactory factory;
   private final Integer fileSplitSize;
@@ -70,13 +79,13 @@ public class ResourceEvaluationManager {
     //prepare the resource
     List<DataFile> preparedDataFiles = RecordSourceFactory.prepareSource(dataFile);
 
-    // the list will handle extensions at some point
-    if(preparedDataFiles.size() > 0) {
-      List<Term> termsColumnsMapping = Arrays.asList(preparedDataFiles.get(0).getColumns());
-      return createDataFileProcessor(preparedDataFiles.get(0), termsColumnsMapping).process(preparedDataFiles.get(0));
+    int maxNumOfLine = preparedDataFiles.stream().mapToInt(df -> df.getNumOfLines()).max().getAsInt();
+
+    if (maxNumOfLine <= fileSplitSize) {
+      return runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
     }
 
-    return null;
+    return runEvaluationWithSplit(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
   }
 
   private DataFileProcessor createDataFileProcessor(DataFile dataFile, List<Term> termsColumnsMapping) {
@@ -88,6 +97,98 @@ public class ResourceEvaluationManager {
               interpretedTermsCountCollector);
     }
     return new ParallelDataFileProcessor(factory, system, termsColumnsMapping, fileSplitSize, initialJobId.incrementAndGet());
+  /**
+   * Split files and run evaluation on all of them.
+   *
+   * @param sourceFileName
+   * @param fileFormat
+   * @param dataFiles
+   * @return
+   */
+  private ValidationResult runEvaluationWithSplit(String sourceFileName, FileFormat fileFormat,
+                                                  List<DataFile> dataFiles) throws IOException {
+
+    ValidationResultBuilders.Builder blrd = ValidationResultBuilders.Builder.of(true, sourceFileName,
+            fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
+    //FIX ME .get(0) should be a loop when we can create multiples ParallelDataFileProcessor
+    blrd.withResourceResult(buildDataFileProcessorWithSplit(dataFiles.get(0)).process(dataFiles.get(0)));
+    return blrd.build();
+  }
+
+  /**
+   * WIP : exception handling not done properly yet
+   * Run evaluation on all {@link DataFile} provided in separate threads and wait for the result before returning.
+   *
+   * @param sourceFileName
+   * @param fileFormat
+   * @param dataFiles
+   * @return
+   */
+  private ValidationResult runEvaluation(String sourceFileName, FileFormat fileFormat, List<DataFile> dataFiles) {
+
+    List<CompletableFuture<RecordsValidationResultElement>> completableEvaluations =
+            dataFiles.stream().map(df ->
+                    CompletableFuture.supplyAsync(() -> {
+                      try {
+                        return buildDataFileProcessor(df).process(df);
+                      } catch (IOException ioEx) {
+                        LOG.error("Issue running evaluation on " + df.getFilePath(), ioEx);
+                        //FIXME not a very good solution
+                        throw new RuntimeException(ioEx);
+                      }
+                    }))
+                    .collect(Collectors.toList());
+
+    //.exceptionally();
+
+    CompletableFuture.allOf(completableEvaluations.toArray(new CompletableFuture[completableEvaluations.size()])).join();
+
+    ValidationResultBuilders.Builder blrd = ValidationResultBuilders.Builder.of(true, sourceFileName,
+            fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
+    completableEvaluations.forEach(e -> {
+      try {
+        blrd.withResourceResult(e.get());
+      } catch (InterruptedException | ExecutionException ex) {
+        LOG.error("Issue getting evaluation result ", ex);
+      }
+    });
+    return blrd.build();
+  }
+
+  /**
+   * Build a {@link DataFileProcessor} instance.
+   *
+   * @param dataFile
+   * @return
+   */
+  private DataFileProcessor buildDataFileProcessor(@NotNull DataFile dataFile) {
+  //TODO create a Factory for Collectors
+    Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector = DwcTerm.Occurrence == dataFile.getRowType() ?
+            Optional.of(new InterpretedTermsCountCollector(
+            Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), false)):
+            Optional.empty();
+
+    return new SingleDataFileProcessor(Arrays.asList(dataFile.getColumns()),
+            factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
+            interpretedTermsCountCollector);
+  }
+
+  /**
+   * Build a {@link DataFileProcessor} instance configured to split source file(s).
+   *
+   * @param dataFile
+   * @return
+   */
+  private DataFileProcessor buildDataFileProcessorWithSplit(@NotNull DataFile dataFile) {
+    //TODO create a Factory for Collectors
+    Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector = DwcTerm.Occurrence == dataFile.getRowType() ?
+            Optional.of(new InterpretedTermsCountCollector(
+                    Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), false)):
+            Optional.empty();
+
+    return new ParallelDataFileProcessor(Arrays.asList(dataFile.getColumns()),
+            factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
+            interpretedTermsCountCollector, system, fileSplitSize);
   }
 
 }

@@ -122,7 +122,7 @@ class DataValidationClient(val conf: ValidationSparkConf) {
       data.map(row =>  row.toArray(columns))
           .zipWithIndex()
           .mapPartitions( partition => {
-            val evaluator  = new EvaluatorFactory(gbifApiUrl).create(terms.asJava)
+            val evaluator  = new EvaluatorFactory(gbifApiUrl).create(terms.asJava, DwcTerm.Occurrence)
             val newPartition = partition.map( {case(record,idx) => {
               termsFrequencyAcc += terms.toPresenceMap(record)
               evaluator.evaluate(idx,record)

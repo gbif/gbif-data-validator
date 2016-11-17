@@ -1,5 +1,6 @@
 package org.gbif.validation.tabular;
 
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
@@ -33,6 +34,7 @@ public class SingleDataFileProcessorTest {
     datafile.setHasHeaders(true);
     datafile.setDelimiterChar('\t');
     datafile.setSourceFileName("myfile.tsv");
+    datafile.setRowType(DwcTerm.Occurrence);
     datafile.setFileFormat(FileFormat.TABULAR);
     datafile.setFilePath(testFile.toPath());
 

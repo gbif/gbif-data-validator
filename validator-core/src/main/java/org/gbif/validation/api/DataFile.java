@@ -25,7 +25,7 @@ public class DataFile {
   private Term[] columns;
   private Term rowType;
 
-  private Integer fileLineOffset;
+  private Optional<Integer> fileLineOffset = Optional.empty();
 
   private Character delimiterChar;
   private Integer numOfLines;
@@ -115,11 +115,11 @@ public class DataFile {
    * source file.
    * @return
    */
-  public Integer getFileLineOffset() {
+  public Optional<Integer> getFileLineOffset() {
     return fileLineOffset;
   }
 
-  public void setFileLineOffset(Integer fileLineOffset) {
+  public void setFileLineOffset(Optional<Integer> fileLineOffset) {
     this.fileLineOffset = fileLineOffset;
   }
 

@@ -1,16 +1,16 @@
 package org.gbif.validation.tabular.parallel;
 
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
+import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.api.result.RecordsValidationResultElement;
+import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
-import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -39,6 +40,12 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
   private final EvaluatorFactory evaluatorFactory;
 
+  private static final long SLEEP_TIME_BEFORE_TERMINATION = 50000L;
+
+  private final List<Term> termsColumnsMapping;
+  private final RecordEvaluator recordEvaluator;
+  private final Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector;
+
   private final Integer fileSplitSize;
 
   private final long jobId;
@@ -56,13 +63,12 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     private List<Term> termsColumnsMapping;
 
     ParallelDataFileProcessorMaster(List<RecordMetricsCollector> metricsCollector,
-                                    List<ResultsCollector> recordsCollectors, EvaluatorFactory evaluatorFactory,
+                                    List<ResultsCollector> recordsCollectors, RecordEvaluator recordEvaluator,
                                     List<Term> termsColumnsMapping, Integer fileSplitSize) {
       receive(
         match(DataFile.class, dataFile -> {
           this.dataFile = dataFile;
-          this.termsColumnsMapping = new ArrayList<Term>(termsColumnsMapping);
-          processDataFile(fileSplitSize, evaluatorFactory);
+          processDataFile(fileSplitSize, recordEvaluator);
         })
         .match(DataLine.class, dataLine -> {
           metricsCollector.forEach(c -> c.collect(dataLine.getLine()));
@@ -80,7 +86,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
      *
      * @param occurrenceEvaluatorFactory
      */
-    private void processDataFile(Integer fileSplitSize, EvaluatorFactory occurrenceEvaluatorFactory) {
+    private void processDataFile(Integer fileSplitSize, RecordEvaluator recordEvaluator) {
       try {
         int numOfInputRecords = dataFile.getNumOfLines();
         int splitSize = numOfInputRecords > fileSplitSize ?
@@ -93,13 +99,12 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
         ActorRef workerRouter = getContext().actorOf(
                 new RoundRobinPool(numOfActors).props(
-                        Props.create(SingleFileReaderActor.class,
-                                occurrenceEvaluatorFactory.create(termsColumnsMapping)))
+                        Props.create(SingleFileReaderActor.class, recordEvaluator))
                 , "dataFileRouter");
         results =  new HashSet<>(numOfActors);
 
         for(int i = 0; i < splits.length; i++) {
-          DataFile dataInputSplitFile = new DataFile();
+          DataFile dataInputSplitFile = new DataFile(dataFile);
           File splitFile = new File(outDirPath, splits[i]);
           splitFile.deleteOnExit();
           dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
@@ -108,7 +113,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
           dataInputSplitFile.setFileFormat(dataFile.getFileFormat());
           dataInputSplitFile.setDelimiterChar(dataFile.getDelimiterChar());
-          dataInputSplitFile.setFileLineOffset((i * fileSplitSize) + (dataFile.isHasHeaders() ? 1 : 0) );
+          dataInputSplitFile.setFileLineOffset(Optional.of((i * fileSplitSize) + (dataFile.isHasHeaders() ? 1 : 0)) );
 
           workerRouter.tell(dataInputSplitFile, self());
         }
@@ -142,7 +147,21 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
                                    long jobId) {
     this.evaluatorFactory = evaluatorFactory;
     this.system = system;
+  /**
+   *
+   * @param termsColumnsMapping
+   * @param recordEvaluator
+   * @param interpretedTermsCountCollector
+   * @param system
+   * @param fileSplitSize
+   */
+  public ParallelDataFileProcessor(List<Term> termsColumnsMapping, RecordEvaluator recordEvaluator,
+                                   Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector,
+                                   ActorSystem system, Integer fileSplitSize) {
     this.termsColumnsMapping = new ArrayList<>(termsColumnsMapping);
+    this.recordEvaluator = recordEvaluator;
+    this.interpretedTermsCountCollector = interpretedTermsCountCollector;
+    this.system = system;
     this.fileSplitSize = fileSplitSize;
     this.jobId = jobId;
   }
@@ -152,12 +171,10 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
 
     RecordMetricsCollector termsFrequencyCollector = new TermsFrequencyCollector(termsColumnsMapping, true);
     ConcurrentValidationCollector resultsCollector = new ConcurrentValidationCollector(ConcurrentValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
-    //TODO list of terms shall come from config
-    InterpretedTermsCountCollector interpretedTermsCountCollector = new InterpretedTermsCountCollector(
-            Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), true);
 
     List<RecordMetricsCollector> metricsCollector = Arrays.asList(termsFrequencyCollector);
-    List<ResultsCollector> recordsCollectors = Arrays.asList(resultsCollector, interpretedTermsCountCollector);
+    List<ResultsCollector> recordsCollectors = new ArrayList<>(Arrays.asList(resultsCollector));
+    interpretedTermsCountCollector.ifPresent(c -> recordsCollectors.add(c));
 
     // create the master
     ActorRef master = system.actorOf(Props.create(ParallelDataFileProcessorMaster.class, metricsCollector,

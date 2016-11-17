@@ -1,5 +1,6 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
@@ -45,11 +46,17 @@ public class EvaluatorFactory {
    *
    * @return new instance
    */
-  public RecordEvaluator create(List<Term> columns) {
+  public RecordEvaluator create(List<Term> columns, Term rowType) {
+    Objects.requireNonNull(columns, "columns shall be provided");
+    Objects.requireNonNull(rowType, "rowType shall be provided");
+
     List<RecordEvaluator> evaluators = new ArrayList<>();
     evaluators.add(new RecordStructureEvaluator(columns));
-    evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
-            columns));
+
+    if(DwcTerm.Occurrence == rowType) {
+      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
+              columns));
+    }
     return new RecordEvaluatorChain(evaluators);
   }
 

@@ -21,7 +21,8 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
- * Currently, we only read the core file.
+ * {@link RecordSource} implementation for DarwinCore Archive.
+ * This reader can work on the core file, an extension file or a portion of one of them (after splitting).
  *
  */
 public class DwcReader implements RecordSource {
@@ -62,6 +63,24 @@ public class DwcReader implements RecordSource {
     darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
+  }
+
+  /**
+   * Get a new reader for the core or an extension that uses a portion of the original file obtained after splitting.
+   * @param dwcFolder
+   * @param partFile portion of the original file obtained after splitting
+   * @param rowType
+   * @param ignoreHeaderLines
+   * @throws IOException
+   */
+  DwcReader(File dwcFolder, File partFile, @Nullable Term rowType, boolean ignoreHeaderLines) throws IOException {
+    Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
+
+    archive = ArchiveFactory.openArchive(dwcFolder);
+    darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
+    archiveFields = darwinCoreComponent.getFieldsSorted();
+    csvReader =  new CSVReader(partFile, darwinCoreComponent.getEncoding(),
+            darwinCoreComponent.getFieldsTerminatedBy(), darwinCoreComponent.getFieldsEnclosedBy(), ignoreHeaderLines ? 1 : 0);
   }
 
   /**
