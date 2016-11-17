@@ -1,6 +1,10 @@
 package org.gbif.validation.source;
 
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.ArchiveFile;
+import org.gbif.utils.file.csv.CSVReaderFactory;
+import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.model.FileFormat;
@@ -13,10 +17,12 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.Validate;
 
@@ -40,37 +46,48 @@ public class RecordSourceFactory {
   /**
    * Creates instances of RecordSource from character delimited files.
    */
-  public static RecordSource fromDelimited(File sourceFile, char delimiterChar, boolean headerIncluded)
-          throws IOException {
+  public static RecordSource fromDelimited(@NotNull File sourceFile, @NotNull Character delimiterChar,
+                                           Optional<Boolean> headerIncluded) throws IOException {
+    Objects.requireNonNull(sourceFile, "sourceFile shall be provided");
+    Objects.requireNonNull(delimiterChar, "delimiterChar shall be provided");
     return new TabularFileReader(sourceFile.toPath(), newTabularFileReader(new FileInputStream(sourceFile),
-                                                                           delimiterChar, headerIncluded));
+                                                                           delimiterChar, headerIncluded.orElse(false)));
   }
 
   /**
    * Creates instances of RecordSource from a folder containing an extracted DarwinCore archive.
    */
-  public static RecordSource fromDwcA(File sourceFolder) throws IOException {
+  public static RecordSource fromDwcA(@NotNull File sourceFolder) throws IOException {
+    Objects.requireNonNull(sourceFolder, "sourceFolder shall be provided");
     return new DwcReader(sourceFolder);
   }
 
   /**
    * Build a new RecordSource matching the {@link DataFile} file format.
+   * This method will only return a RecordSource for TABULAR or DWCA.
+   *
    * @param dataFile
    * @return
    * @throws IOException
+   * @throws IllegalStateException
    */
-  public static Optional<RecordSource> fromDataFile(DataFile dataFile) throws IOException {
+  public static Optional<RecordSource> fromDataFile(DataFile dataFile) throws IOException, IllegalStateException {
+    Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
+
+    Validate.validState(FileFormat.SPREADSHEET != dataFile.getFileFormat(),
+            "FileFormat.SPREADSHEET can not be read directly. Use prepareSource().");
+    Validate.validState(FileFormat.TABULAR != dataFile.getFileFormat() || dataFile.getDelimiterChar() != null,
+            "FileFormat.TABULAR shall also provide delimiterChar");
 
     switch (dataFile.getFileFormat()) {
       case TABULAR:
-        return
-                Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
+        return Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
                         dataFile.isHasHeaders()));
       case DWCA:
         if(dataFile.getFileLineOffset().isPresent()){
           return Optional.of(new DwcReader(dataFile.isAlternateViewOf().get().getFilePath().toFile(),
-                  dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders()));
+                  dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
         }
         return Optional.of(fromDwcA(dataFile.getFilePath().toFile()));
     }
@@ -82,15 +99,15 @@ public class RecordSourceFactory {
    * This step includes reading the headers from the file and generating a list of {@link DataFile}.
    *
    * @param dataFile
-   * @return
+   * @return a list of {@link DataFile}
    * @throws IOException
+   * @throws IllegalStateException
    */
-  public static List<DataFile> prepareSource(DataFile dataFile) throws IOException {
+  public static List<DataFile> prepareSource(DataFile dataFile) throws IOException, IllegalStateException {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
     List<DataFile> dataFileList = new ArrayList<>();
-
     switch(dataFile.getFileFormat()) {
       case SPREADSHEET:
         dataFileList.add(handleSpreadsheetConversion(dataFile));
@@ -100,7 +117,7 @@ public class RecordSourceFactory {
         break;
       case TABULAR:
       default :
-        dataFileList.add(dataFile);
+        dataFileList.add(prepareTabular(dataFile));
     }
 
     for(DataFile currDataFile : dataFileList) {
@@ -108,6 +125,11 @@ public class RecordSourceFactory {
       try (RecordSource rs = fromDataFile(currDataFile).orElse(null)) {
         if (rs != null) {
           currDataFile.setColumns(rs.getHeaders());
+
+          //if the rowType is not provided and we have headers we can try to guess it
+          if(currDataFile.getColumns() != null && currDataFile.getRowType() == null) {
+            currDataFile.setRowType(determineRowType(Arrays.asList(currDataFile.getColumns())).orElse(null));
+          }
         }
       }
     }
@@ -115,9 +137,11 @@ public class RecordSourceFactory {
     return dataFileList;
   }
 
+
   /**
    * Given a {@link DataFile} pointing to folder containing the extracted DarwinCore archive this method creates
    * a list of {@link DataFile} for each of the data component (core + extensions).
+   *
    * @param dwcaDataFile
    * @return
    */
@@ -138,6 +162,20 @@ public class RecordSourceFactory {
       dataFileList.add(extDatafile);
     }
     return dataFileList;
+  }
+
+  /**
+   *
+   * @param dwcaDataFile
+   * @return
+   * @throws IOException
+   */
+  private static final DataFile prepareTabular(DataFile dwcaDataFile) throws IOException {
+
+    if(dwcaDataFile.getDelimiterChar() == null) {
+      dwcaDataFile.setDelimiterChar(getDelimiter(dwcaDataFile.getFilePath()));
+    }
+    return dwcaDataFile;
   }
 
   /**
@@ -178,12 +216,43 @@ public class RecordSourceFactory {
 
     DataFile dataFile = new DataFile(spreadsheetDataFile);
     dataFile.setFilePath(csvFile);
-    dataFile.setHasHeaders(true);
+    dataFile.setHasHeaders(Optional.of(true));
     dataFile.setDelimiterChar(',');
     dataFile.setContentType(ExtraMediaTypes.TEXT_CSV);
     dataFile.setFileFormat(FileFormat.TABULAR);
 
     return dataFile;
+  }
+
+  /**
+   * Tries to determine the rowType of a file based on its headers.
+   *
+   * @param headers
+   * @return
+   */
+  private static final Optional<Term> determineRowType(List<Term> headers) {
+    if(headers.contains(DwcTerm.occurrenceID)) {
+      return Optional.of(DwcTerm.Occurrence);
+    }
+    else if (headers.contains(DwcTerm.taxonID)) {
+      return Optional.of(DwcTerm.Taxon);
+    }
+    else if(headers.contains(DwcTerm.eventID)) {
+      return Optional.of(DwcTerm.Event);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Guesses the delimiter character form the data file.
+   */
+  private static Character getDelimiter(java.nio.file.Path dataFilePath) throws UnkownDelimitersException {
+    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
+    if (metadata.getDelimiter().length() == 1) {
+      return metadata.getDelimiter().charAt(0);
+    } else {
+      throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
+    }
   }
 
 }

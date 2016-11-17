@@ -109,10 +109,11 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
           dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
           dataInputSplitFile.setSourceFileName(dataInputSplitFile.getSourceFileName());
           dataInputSplitFile.setColumns(dataFile.getColumns());
-          dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
+          dataInputSplitFile.setHasHeaders(Optional.of(dataFile.isHasHeaders().orElse(false) && (i == 0)));
           dataInputSplitFile.setFileFormat(dataFile.getFileFormat());
           dataInputSplitFile.setDelimiterChar(dataFile.getDelimiterChar());
-          dataInputSplitFile.setFileLineOffset(Optional.of((i * fileSplitSize) + (dataFile.isHasHeaders() ? 1 : 0)) );
+          dataInputSplitFile.setFileLineOffset(Optional.of((i * fileSplitSize) +
+                  (dataFile.isHasHeaders().orElse(false) ? 1 : 0)) );
 
           workerRouter.tell(dataInputSplitFile, self());
         }
@@ -196,7 +197,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor {
     return ValidationResultBuilders.RecordsValidationResultElementBuilder
             .of(StringUtils.isNotBlank(dataFile.getSourceFileName()) ? dataFile.getSourceFileName() :
                     scopedDataFile.getSourceFileName(), dataFile.getRowType(),
-                    dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
+                    dataFile.getNumOfLines() - (dataFile.isHasHeaders().orElse(false) ? 1l : 0l))
             .withIssues(resultsCollector.getAggregatedCounts(), resultsCollector.getSamples())
             .withTermsFrequency(termsFrequencyCollector.getTermFrequency())
             .withInterpretedValueCounts(interpretedTermsCountCollector.isPresent() ? interpretedTermsCountCollector.get().getInterpretedCounts() : null)
