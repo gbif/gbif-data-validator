@@ -8,9 +8,6 @@ import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.api.model.ValidationProfile;
-import org.gbif.validation.api.result.ValidationResult;
-import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -25,28 +22,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.pattern.Patterns;
 import akka.routing.RoundRobinPool;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.concurrent.Await;
-import scala.concurrent.Future;
-import scala.concurrent.duration.Duration;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
 public class ParallelDataFileProcessor implements DataFileProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ParallelDataFileProcessor.class);
-
-  private static final long SLEEP_TIME_BEFORE_TERMINATION = 50000L;
 
   private final EvaluatorFactory evaluatorFactory;
 
