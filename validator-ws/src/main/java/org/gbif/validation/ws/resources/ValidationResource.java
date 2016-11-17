@@ -1,4 +1,4 @@
-package org.gbif.validation.ws;
+package org.gbif.validation.ws.resources;
 
 import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
@@ -79,24 +79,19 @@ public class ValidationResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/file")
   public ValidationResult onValidateFile(@Context HttpServletRequest request) {
-    ValidationResult result = null;
-    String uploadFileName = null;
+    Optional<ValidationResult> result = Optional.empty();
+    Optional<String> uploadedFileName = Optional.empty();
     try {
-
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
       Optional<FileItem> uploadFileInputStream = uploadedContent.stream().filter(
               fileItem -> !fileItem.isFormField() && WsValidationParams.FILE.getParam().equals(fileItem.getFieldName()))
               .findFirst();
 
       if(uploadFileInputStream.isPresent()) {
-        Optional<DataFile> dataFile = fileTransferManager.handleFileTransfer(
-                        uploadFileInputStream.get().getName(),
-                        uploadFileInputStream.get().getContentType(),
-                        uploadFileInputStream.get().getInputStream());
-        uploadFileName = uploadFileInputStream.get().getName();
-        if(dataFile.isPresent()) {
-          result = processFile(dataFile.get().getFilePath(), dataFile.get());
-        }
+        FileItem uploadFileInputStreamVal = uploadFileInputStream.get();
+        uploadedFileName = Optional.ofNullable(uploadFileInputStreamVal.getName());
+        Optional<DataFile> dataFile = fileTransferManager.handleFileTransfer(uploadFileInputStreamVal);
+        result =  dataFile.map(dataFileVal -> processFile(dataFileVal.getFilePath(), dataFileVal));
       }
     }
     catch (FileUploadException fileUploadEx) {
@@ -104,17 +99,13 @@ public class ValidationResource {
       throw new WebApplicationException(fileUploadEx, SC_BAD_REQUEST);
     } catch (IOException ioEx) {
       LOG.error("Can't handle uploaded file", ioEx);
-      throw new WebApplicationException(buildErrorResponse(uploadFileName,
-              Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR));
+      throw errorResponse(uploadedFileName.orElse(""), Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
     }
 
-    //if no error it thrown and we do not have result, we assume we can not handle
-    //this file format
-    if(result == null){
-      throw new WebApplicationException(buildErrorResponse(uploadFileName,
-              Response.Status.BAD_REQUEST, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT));
-    }
-    return result;
+    String filename = uploadedFileName.orElse(""); //lambdas only accept immutable/final objects
+    return result.orElseThrow(() -> errorResponse(filename, Response.Status.BAD_REQUEST,
+                                                  ValidationErrorCode.UNSUPPORTED_FILE_FORMAT));
+
   }
 
   @POST
@@ -122,20 +113,14 @@ public class ValidationResource {
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/url")
   public ValidationResult onValidateFile(@QueryParam("fileUrl") String fileURL) {
-    ValidationResult result = null;
     try {
-      Optional<DataFile> dataFileDescriptor =
-              fileTransferManager.handleFileDownload(null, null, new URL(fileURL));
-      if(dataFileDescriptor.isPresent()) {
-        result = processFile(dataFileDescriptor.get().getFilePath(),
-                dataFileDescriptor.get());
-      }
+      Optional<DataFile> dataFileDescriptor = fileTransferManager.handleFileDownload(new URL(fileURL));
+      return dataFileDescriptor.map(dataFileDescriptorVal ->
+                                      processFile(dataFileDescriptorVal.getFilePath(), dataFileDescriptor.get())).get();
     } catch (IOException ioEx) {
-      LOG.error("Can't handle file download from {}", ioEx, fileURL);
-      throw new WebApplicationException(buildErrorResponse(fileURL.toString(),
-              Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR));
+      LOG.error("Can't handle file download from {}", fileURL, ioEx);
+      throw errorResponse(fileURL, Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
     }
-    return result;
   }
 
 
@@ -147,10 +132,10 @@ public class ValidationResource {
    * @param errorCode
    * @return
    */
-  private static Response buildErrorResponse(String uploadFileName, Response.Status status, ValidationErrorCode errorCode) {
+  private static WebApplicationException errorResponse(String uploadFileName, Response.Status status, ValidationErrorCode errorCode) {
     Response.ResponseBuilder repBuilder = Response.status(status);
     repBuilder.entity(ValidationResultBuilders.Builder.withError(uploadFileName, null, errorCode).build());
-    return repBuilder.build();
+    return new WebApplicationException(repBuilder.build());
   }
 
   /**
@@ -187,16 +172,23 @@ public class ValidationResource {
     //TODO make use of CharsetDetection.detectEncoding(source, 16384);
     if(FileFormat.TABULAR == dataFile.getFileFormat() && dataFile.getDelimiterChar() == null) {
       try {
-        CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
-        if (metadata.getDelimiter().length() == 1) {
-          dataFile.setDelimiterChar(metadata.getDelimiter().charAt(0));
-        } else {
-          throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
-        }
+        dataFile.setDelimiterChar(getDelimiter(dataFilePath));
       } catch (UnkownDelimitersException udEx) {
-        LOG.warn("Can not extractCsvMetadata of file {}", dataFilePath);
+        LOG.error("Can not extractCsvMetadata of file {}", dataFilePath, udEx);
         throw new WebApplicationException(SC_BAD_REQUEST);
       }
+    }
+  }
+
+  /**
+   * Guesses the delimiter character form the data file.
+   */
+  private static Character getDelimiter(java.nio.file.Path dataFilePath) {
+    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
+    if (metadata.getDelimiter().length() == 1) {
+      return metadata.getDelimiter().charAt(0);
+    } else {
+      throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
     }
   }
 }

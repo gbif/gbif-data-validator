@@ -7,6 +7,7 @@ import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -70,7 +71,7 @@ public class ValidationResultBuilders {
      */
     private Builder(String fileName, FileFormat fileFormat, ValidationErrorCode errorCode) {
       this.fileName = fileName;
-      this.indexeable = false;
+      indexeable = false;
       this.fileFormat = fileFormat;
       this.errorCode = errorCode;
     }
@@ -108,7 +109,8 @@ public class ValidationResultBuilders {
     }
 
     public RecordsValidationResultElementBuilder withIssues(Map<EvaluationType, Long> issueCounter,
-                                                             Map<EvaluationType, List<EvaluationResultDetails>> issueSampling) {
+                                                            Map<EvaluationType,
+                                                            List<EvaluationResultDetails>> issueSampling) {
       issueCounter.forEach(
               (k, v) ->
                       issues.add(new ValidationIssueSampling(k, v, issueSampling.get(k)))
@@ -136,7 +138,7 @@ public class ValidationResultBuilders {
    * Builder class to build a {@link DefaultValidationResultElement} instance.
    */
   public static class DefaultValidationResultElementBuilder {
-    private String filename;
+    private final String filename;
     private List<ValidationIssue> issues;
 
     public static DefaultValidationResultElementBuilder of(String filename) {
@@ -162,7 +164,7 @@ public class ValidationResultBuilders {
     }
 
     public DefaultValidationResultElement build(){
-      return new DefaultValidationResultElement(this.filename, this.issues);
+      return new DefaultValidationResultElement(filename, issues);
     }
   }
 

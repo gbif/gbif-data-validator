@@ -36,6 +36,12 @@ public class ValidationWsListener extends GbifServletListener {
 
     private static final String PROPERTIES_PREFIX = "validation.";
 
+    private static final int DEFAULT_SPLIT_SIZE = 10000;
+
+    private static final int HTTP_CLIENT_TO = 60000;
+    private static final int HTTP_CLIENT_THREADS = 20;
+    private static final int HTTP_CLIENT_THREADS_PER_ROUTE = 20;
+
     ValidationModule(Properties properties) {
       super(PROPERTIES_PREFIX,properties);
     }
@@ -45,8 +51,10 @@ public class ValidationWsListener extends GbifServletListener {
       ValidationConfiguration configuration = new ValidationConfiguration();
       configuration.setApiUrl(getProperties().getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(getProperties().getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
-      configuration.setFileSplitSize(NumberUtils.toInt(getProperties().getProperty(ConfKeys.FILE_SPLIT_SIZE), 10000));
-      HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(60000,20,2));
+      configuration.setFileSplitSize(NumberUtils.toInt(getProperties().getProperty(ConfKeys.FILE_SPLIT_SIZE),
+                                                       DEFAULT_SPLIT_SIZE));
+      HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(HTTP_CLIENT_TO, HTTP_CLIENT_THREADS,
+                                                                       HTTP_CLIENT_THREADS_PER_ROUTE));
 
       if (getProperties().containsKey(ConfKeys.LIVY_URL)) {
         ValidationSparkConf sparkConf = new ValidationSparkConf(getProperties().getProperty(ConfKeys.LIVY_URL),

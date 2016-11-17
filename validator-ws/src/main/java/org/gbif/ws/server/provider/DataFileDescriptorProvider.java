@@ -2,7 +2,7 @@ package org.gbif.ws.server.provider;
 
 import org.gbif.validation.api.model.DataFileDescriptor;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.ws.WsValidationParams;
+import org.gbif.validation.ws.resources.WsValidationParams;
 
 import java.nio.charset.Charset;
 import java.util.function.Function;
@@ -12,14 +12,14 @@ import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
-import static org.gbif.validation.ws.WsValidationParams.DATE_FORMAT;
-import static org.gbif.validation.ws.WsValidationParams.DECIMAL_SEPARATOR;
-import static org.gbif.validation.ws.WsValidationParams.ENCODING;
-import static org.gbif.validation.ws.WsValidationParams.FIELDS_ENCLOSED_BY;
-import static org.gbif.validation.ws.WsValidationParams.FIELDS_TERMINATED_BY;
-import static org.gbif.validation.ws.WsValidationParams.FORMAT;
-import static org.gbif.validation.ws.WsValidationParams.HAS_HEADERS;
-import static org.gbif.validation.ws.WsValidationParams.LINES_TERMINATED_BY;
+import static org.gbif.validation.ws.resources.WsValidationParams.DATE_FORMAT;
+import static org.gbif.validation.ws.resources.WsValidationParams.DECIMAL_SEPARATOR;
+import static org.gbif.validation.ws.resources.WsValidationParams.ENCODING;
+import static org.gbif.validation.ws.resources.WsValidationParams.FIELDS_ENCLOSED_BY;
+import static org.gbif.validation.ws.resources.WsValidationParams.FIELDS_TERMINATED_BY;
+import static org.gbif.validation.ws.resources.WsValidationParams.FORMAT;
+import static org.gbif.validation.ws.resources.WsValidationParams.HAS_HEADERS;
+import static org.gbif.validation.ws.resources.WsValidationParams.LINES_TERMINATED_BY;
 
 /**
  * Utility class to transform form parameters into DataFileDescriptor instances.

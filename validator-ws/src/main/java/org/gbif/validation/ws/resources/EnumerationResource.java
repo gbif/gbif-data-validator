@@ -1,4 +1,4 @@
-package org.gbif.validation.ws;
+package org.gbif.validation.ws.resources;
 
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
