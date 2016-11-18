@@ -2,7 +2,9 @@ package org.gbif.validation;
 
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
+import org.gbif.validation.api.DataFileProcessorAsync;
 import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.ValidationJobResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResult;
@@ -16,10 +18,12 @@ import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
@@ -39,6 +43,8 @@ public class ResourceEvaluationManager {
   private final Integer fileSplitSize;
 
   private ActorSystem system;
+
+  private AtomicLong newJobId = new AtomicLong(new Date().getTime());
 
   /**
    *
@@ -63,12 +69,12 @@ public class ResourceEvaluationManager {
     //Validate the structure of the resource
     Optional<ValidationResultElement> resourceStructureEvaluationResult =
       EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
-              .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
+        .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
 
     if(resourceStructureEvaluationResult.isPresent()) {
       return ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-              dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-              .withResourceResult(resourceStructureEvaluationResult.get()).build();
+                                                 dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
+        .withResourceResult(resourceStructureEvaluationResult.get()).build();
     }
 
     //prepare the resource
@@ -84,6 +90,41 @@ public class ResourceEvaluationManager {
   }
 
   /**
+   * Trigger the entire evaluation process for a {@link DataFile}.
+   *
+   * @param dataFile
+   * @return
+   * @throws IOException
+   */
+  public ValidationJobResponse evaluateAsync(DataFile dataFile) throws IOException {
+
+    //Validate the structure of the resource
+    Optional<ValidationResultElement> resourceStructureEvaluationResult =
+      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+        .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
+
+    if(resourceStructureEvaluationResult.isPresent()) {
+      return new ValidationJobResponse(ValidationJobResponse.JobStatus.SUCCEEDED,newJobId.get(),
+                                        ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
+                                                                            dataFile.getFileFormat(),
+                                                                            ValidationProfile.GBIF_INDEXING_PROFILE)
+                                          .withResourceResult(resourceStructureEvaluationResult.get()).build());
+    }
+
+    //prepare the resource
+    List<DataFile> preparedDataFiles = RecordSourceFactory.prepareSource(dataFile);
+
+    int maxNumOfLine = preparedDataFiles.stream().mapToInt(df -> df.getNumOfLines()).max().getAsInt();
+
+    if (maxNumOfLine <= fileSplitSize) {
+      return new ValidationJobResponse(ValidationJobResponse.JobStatus.SUCCEEDED,newJobId.get(),
+                                       runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles));
+    }
+
+    return  runEvaluationAsync(preparedDataFiles);
+  }
+
+  /**
    * Split files and run evaluation on all of them.
    *
    * @param sourceFileName
@@ -92,13 +133,20 @@ public class ResourceEvaluationManager {
    * @return
    */
   private ValidationResult runEvaluationWithSplit(String sourceFileName, FileFormat fileFormat,
-                                                  List<DataFile> dataFiles) throws IOException {
+                                                  List<DataFile> dataFiles)  {
 
     ValidationResultBuilders.Builder blrd = ValidationResultBuilders.Builder.of(true, sourceFileName,
-            fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
+                                                                                fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
     //FIX ME .get(0) should be a loop when we can create multiples ParallelDataFileProcessor
     blrd.withResourceResult(buildDataFileProcessorWithSplit(dataFiles.get(0)).process(dataFiles.get(0)));
     return blrd.build();
+  }
+
+  /**
+   * Run the data validation asynchronously.
+   */
+  private ValidationJobResponse runEvaluationAsync(List<DataFile> dataFiles)  {
+    return buildAsyncDataFileProcessor(dataFiles.get(0)).processAsync(dataFiles.get(0));
   }
 
   /**
@@ -113,24 +161,15 @@ public class ResourceEvaluationManager {
   private ValidationResult runEvaluation(String sourceFileName, FileFormat fileFormat, List<DataFile> dataFiles) {
 
     List<CompletableFuture<RecordsValidationResultElement>> completableEvaluations =
-            dataFiles.stream().map(df ->
-                    CompletableFuture.supplyAsync(() -> {
-                      try {
-                        return buildDataFileProcessor(df).process(df);
-                      } catch (IOException ioEx) {
-                        LOG.error("Issue running evaluation on " + df.getFilePath(), ioEx);
-                        //FIXME not a very good solution
-                        throw new RuntimeException(ioEx);
-                      }
-                    }))
-                    .collect(Collectors.toList());
+      dataFiles.stream().map(df -> CompletableFuture.supplyAsync(() ->  buildDataFileProcessor(df).process(df)))
+                          .collect(Collectors.toList());
 
     //.exceptionally();
 
     CompletableFuture.allOf(completableEvaluations.toArray(new CompletableFuture[completableEvaluations.size()])).join();
 
     ValidationResultBuilders.Builder blrd = ValidationResultBuilders.Builder.of(true, sourceFileName,
-            fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
+                                                                                fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
     completableEvaluations.forEach(e -> {
       try {
         blrd.withResourceResult(e.get());
@@ -160,10 +199,19 @@ public class ResourceEvaluationManager {
    * @return
    */
   private DataFileProcessor buildDataFileProcessorWithSplit(@NotNull DataFile dataFile) {
+    return buildParallelDataFileProcessor(dataFile);
+  }
+
+  private DataFileProcessorAsync buildAsyncDataFileProcessor(@NotNull DataFile dataFile) {
+    return buildParallelDataFileProcessor(dataFile);
+  }
+
+  private ParallelDataFileProcessor buildParallelDataFileProcessor(@NotNull DataFile dataFile) {
     return new ParallelDataFileProcessor(Arrays.asList(dataFile.getColumns()),
             factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
-            CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), true),
-            system, fileSplitSize);
+            CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), true), system, fileSplitSize,
+            newJobId.getAndIncrement());
   }
+
 
 }

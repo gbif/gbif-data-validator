@@ -25,7 +25,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
   }
 
   @Override
-  public RecordsValidationResultElement process(DataFile dataFile) throws IOException {
+  public RecordsValidationResultElement process(DataFile dataFile) {
 
     try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
       String[] record;
