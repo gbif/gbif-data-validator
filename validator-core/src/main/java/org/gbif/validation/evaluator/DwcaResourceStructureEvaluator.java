@@ -49,10 +49,9 @@ public class DwcaResourceStructureEvaluator implements ResourceStructureEvaluato
       else{
         return Optional.of(buildResult(sourceFilename, EvaluationType.DWCA_META_XML_NOT_FOUND, null));
       }
-    } catch (UnsupportedArchiveException uaEx) {
+    } catch (IOException | UnsupportedArchiveException uaEx) {
+      LOG.debug("Can't evaluate Dwca", uaEx);
       return Optional.of(buildResult(sourceFilename, EvaluationType.DWCA_UNREADABLE, uaEx.getMessage()));
-    } catch (IOException e) {
-      LOG.error("Can't evaluate Dwca", e);
     }
     return Optional.empty();
   }
