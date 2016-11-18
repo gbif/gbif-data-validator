@@ -1,7 +1,5 @@
 package org.gbif.validation;
 
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.model.FileFormat;
@@ -10,7 +8,7 @@ import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
-import org.gbif.validation.collector.InterpretedTermsCountCollector;
+import org.gbif.validation.collector.CollectorFactory;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
@@ -150,15 +148,9 @@ public class ResourceEvaluationManager {
    * @return
    */
   private DataFileProcessor buildDataFileProcessor(@NotNull DataFile dataFile) {
-  //TODO create a Factory for Collectors
-    Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector = DwcTerm.Occurrence == dataFile.getRowType() ?
-            Optional.of(new InterpretedTermsCountCollector(
-            Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), false)):
-            Optional.empty();
-
     return new SingleDataFileProcessor(Arrays.asList(dataFile.getColumns()),
             factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
-            interpretedTermsCountCollector);
+            CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), false));
   }
 
   /**
@@ -168,15 +160,10 @@ public class ResourceEvaluationManager {
    * @return
    */
   private DataFileProcessor buildDataFileProcessorWithSplit(@NotNull DataFile dataFile) {
-    //TODO create a Factory for Collectors
-    Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector = DwcTerm.Occurrence == dataFile.getRowType() ?
-            Optional.of(new InterpretedTermsCountCollector(
-                    Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey), false)):
-            Optional.empty();
-
     return new ParallelDataFileProcessor(Arrays.asList(dataFile.getColumns()),
             factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
-            interpretedTermsCountCollector, system, fileSplitSize);
+            CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), true),
+            system, fileSplitSize);
   }
 
 }
