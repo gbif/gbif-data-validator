@@ -76,7 +76,7 @@ public class ParallelDataFileProcessor implements DataFileProcessor, DataFilePro
     public RecordsValidationResultElement toResult(DataFile dataFile, String resultingFileName){
       return ValidationResultBuilders.RecordsValidationResultElementBuilder
         .of(resultingFileName, dataFile.getRowType(),
-            dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l))
+            dataFile.getNumOfLines() - (dataFile.isHasHeaders().orElse(false) ? 1l : 0l))
         .withIssues(resultsCollector.getAggregatedCounts(), resultsCollector.getSamples())
         .withTermsFrequency(metricsCollector.getTermFrequency())
         .withInterpretedValueCounts(interpretedTermsCountCollector.isPresent() ? interpretedTermsCountCollector.get().getInterpretedCounts() : null)
@@ -92,7 +92,6 @@ public class ParallelDataFileProcessor implements DataFileProcessor, DataFilePro
     private Set<DataWorkResult> results;
     private int numOfActors;
     private DataFile dataFile;
-    private ParallelResultCollector collector;
 
     ParallelDataFileProcessorMaster(ParallelResultCollector collector, RecordEvaluator recordEvaluator,
                                     List<Term> termsColumnsMapping, Integer fileSplitSize) {
@@ -142,10 +141,11 @@ public class ParallelDataFileProcessor implements DataFileProcessor, DataFilePro
           dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
           dataInputSplitFile.setSourceFileName(dataInputSplitFile.getSourceFileName());
           dataInputSplitFile.setColumns(dataFile.getColumns());
-          dataInputSplitFile.setHasHeaders(dataFile.isHasHeaders() && (i == 0));
+          dataInputSplitFile.setHasHeaders(Optional.of(dataFile.isHasHeaders().orElse(false) && (i == 0)));
           dataInputSplitFile.setFileFormat(dataFile.getFileFormat());
           dataInputSplitFile.setDelimiterChar(dataFile.getDelimiterChar());
-          dataInputSplitFile.setFileLineOffset(Optional.of((i * fileSplitSize) + (dataFile.isHasHeaders() ? 1 : 0)) );
+          dataInputSplitFile.setFileLineOffset(Optional.of((i * fileSplitSize) +
+                                                           (dataFile.isHasHeaders().orElse(false) ? 1 : 0)));
 
           workerRouter.tell(dataInputSplitFile, self());
         }

@@ -104,7 +104,7 @@ public class ResourceEvaluationManager {
         .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
 
     if(resourceStructureEvaluationResult.isPresent()) {
-      return new ValidationJobResponse(ValidationJobResponse.JobStatus.SUCCEEDED,newJobId.get(),
+      return new ValidationJobResponse(ValidationJobResponse.JobStatus.FINISHED, newJobId.get(),
                                         ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
                                                                             dataFile.getFileFormat(),
                                                                             ValidationProfile.GBIF_INDEXING_PROFILE)
@@ -117,7 +117,7 @@ public class ResourceEvaluationManager {
     int maxNumOfLine = preparedDataFiles.stream().mapToInt(df -> df.getNumOfLines()).max().getAsInt();
 
     if (maxNumOfLine <= fileSplitSize) {
-      return new ValidationJobResponse(ValidationJobResponse.JobStatus.SUCCEEDED,newJobId.get(),
+      return new ValidationJobResponse(ValidationJobResponse.JobStatus.FINISHED, newJobId.get(),
                                        runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles));
     }
 

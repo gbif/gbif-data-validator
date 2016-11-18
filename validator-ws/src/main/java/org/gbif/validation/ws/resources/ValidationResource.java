@@ -3,6 +3,7 @@ package org.gbif.validation.ws.resources;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.ValidationErrorCode;
+import org.gbif.validation.api.model.ValidationJobResponse;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
@@ -17,6 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
@@ -106,6 +108,47 @@ public class ValidationResource {
   }
 
   @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/file/async")
+  public ValidationJobResponse onValidateFileAsync(@Context HttpServletRequest request) {
+
+    Optional<String> uploadedFileName = Optional.empty();
+    try {
+      List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
+      Optional<FileItem> uploadFileInputStream = uploadedContent.stream().filter(
+        fileItem -> !fileItem.isFormField() && WsValidationParams.FILE.getParam().equals(fileItem.getFieldName()))
+        .findFirst();
+
+      if(uploadFileInputStream.isPresent()) {
+        FileItem uploadFileInputStreamVal = uploadFileInputStream.get();
+        uploadedFileName = Optional.ofNullable(uploadFileInputStreamVal.getName());
+        Optional<DataFile> dataFile = fileTransferManager.handleFileTransfer(uploadFileInputStreamVal);
+        return dataFile.map(dataFileVal -> processFileAsync(dataFileVal)).get();
+      }
+    }
+    catch (FileUploadException fileUploadEx) {
+      LOG.error("FileUpload issue", fileUploadEx);
+      throw new WebApplicationException(fileUploadEx, SC_BAD_REQUEST);
+    } catch (IOException ioEx) {
+      LOG.error("Can't handle uploaded file", ioEx);
+      throw errorResponse(uploadedFileName.orElse(""), Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
+    }
+
+    return ValidationJobResponse.FAILED_RESPONSE;
+
+  }
+
+
+  @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/file/async/{job}")
+  public ValidationJobResponse getJobStatus(@PathParam("job") String jobId) {
+    return resourceEvaluationManager.getJobStatus(Long.parseLong(jobId));
+  }
+
+  @POST
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/url")
@@ -145,6 +188,17 @@ public class ValidationResource {
       throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     } finally {
       deletePath(dataFilePath);
+    }
+  }
+
+  /**
+   * Applies, asynchronously, the validation routines to the input file.
+   */
+  private ValidationJobResponse processFileAsync(DataFile dataFile)  {
+    try {
+      return resourceEvaluationManager.evaluateAsync(dataFile);
+    } catch (Exception ex) {
+      throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
     }
   }
 
