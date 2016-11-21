@@ -17,17 +17,18 @@ import akka.actor.Props;
 import akka.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
+import scala.util.Try;
 
 /**
  * Manages the job submission and statis retrieval.
  */
 public class JobServer {
 
-  //Prefix used to name actor
-  private static final String JOB_NAME_PREFIX = "DataValidation_";
+
 
   //Path used to find actors in the system of actors
-  private static final String ACTOR_SELECTION_PATH = "/user/" + JOB_NAME_PREFIX;
+  private static final String ACTOR_SELECTION_PATH = "/user/JobMonitor/";
 
   //Default timeout in seconds to get an actor ref
   private static final int ACTOR_SELECTION_TO = 5;
@@ -40,13 +41,16 @@ public class JobServer {
 
   private final JobStorage<ValidationResult> jobStorage;
 
+  private final ActorRef jobMonitor;
+
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
    */
-  public JobServer(JobStorage<ValidationResult> jobStorage) {
+  public JobServer(JobStorage<ValidationResult> jobStorage, ActorPropsMapping propsMapping) {
     system = ActorSystem.create("JobServerSystem");
     jobIdSeed = new AtomicLong(new Date().getTime());
     this.jobStorage = jobStorage;
+    jobMonitor = system.actorOf(Props.create(JobMonitor.class,propsMapping,jobStorage),"JobMonitor");
     LOG.info("New jobServer instance created");
   }
 
@@ -54,10 +58,9 @@ public class JobServer {
    * Process the submission of a data validation job.
    * If the job is accepted the response contains the new jobId ACCEPTED as the job status.
    */
-  public ValidationJobResponse submit(Props actorConf, DataFile dataFile) {
+  public ValidationJobResponse submit(DataFile dataFile) {
     long  newJobId = jobIdSeed.getAndIncrement();
-    ActorRef master = system.actorOf(actorConf, JOB_NAME_PREFIX + newJobId);
-    master.tell(dataFile, master);
+    jobMonitor.tell(new DataJob(newJobId, dataFile), jobMonitor);
     return new ValidationJobResponse(ValidationJobResponse.JobStatus.ACCEPTED, newJobId);
   }
 
@@ -75,19 +78,47 @@ public class JobServer {
   }
 
   /**
+   * Tries to kill a jobId.
+   */
+  public ValidationJobResponse kill(long jobId) {
+    Option<Try<ActorRef>> actorRef = getRunningActor(jobId);
+    if (!actorRef.isEmpty()) {
+      system.stop(actorRef.get().get());
+      return new ValidationJobResponse(JobStatus.KILLED,jobId);
+    }
+    return new ValidationJobResponse(JobStatus.NOT_FOUND, jobId);
+  }
+
+  /**
+   * Stops the jobs server and all the underlying actors.
+   */
+  public void stop() {
+    if (!system.isTerminated()) {
+      system.shutdown();
+    }
+  }
+
+  /**
    * Tries to gets the status from the running instances.
    */
   private ValidationJobResponse getJobStatus(long jobId) {
     try {
-      ActorSelection sel = system.actorSelection(ACTOR_SELECTION_PATH + jobId);
-      Timeout to = new Timeout(ACTOR_SELECTION_TO, TimeUnit.SECONDS);
       //there's a running actor with that jobId name?
-      return new ValidationJobResponse(sel.resolveOne(to).value().isEmpty() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
+      return new ValidationJobResponse( getRunningActor(jobId).isEmpty() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
                                        jobId);
     } catch (Exception ex) {
       LOG.error("Error  retrieving JobId {} data", jobId, ex);
     }
     return ValidationJobResponse.NOT_FOUND;
+  }
+
+  /**
+   * Tries to get the reference of a running Actor in the system.
+   */
+  private Option<Try<ActorRef>> getRunningActor(long jobId) {
+    ActorSelection sel = system.actorSelection(ACTOR_SELECTION_PATH + jobId);
+    Timeout to = new Timeout(ACTOR_SELECTION_TO, TimeUnit.SECONDS);
+    return sel.resolveOne(to).value();
   }
 
 }

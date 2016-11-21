@@ -5,7 +5,7 @@ import org.gbif.validation.api.result.ValidationResult;
 public class ValidationJobResponse {
 
   public enum JobStatus {
-    ACCEPTED, RUNNING, FAILED, FINISHED, NOT_FOUND;
+    ACCEPTED, RUNNING, FAILED, FINISHED, NOT_FOUND, KILLED;
   }
 
   public static final ValidationJobResponse FAILED_RESPONSE = new ValidationJobResponse(JobStatus.FAILED,-1L);
