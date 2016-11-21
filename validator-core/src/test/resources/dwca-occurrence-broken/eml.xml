@@ -10,24 +10,7 @@
   <alternateIdentifier>http://dx.doi.org/10.5886/txsd3at3</alternateIdentifier>
   <alternateIdentifier>http://data.canadensys.net/ipt/resource?r=megachile_chomskyi</alternateIdentifier>
   <title xml:lang="eng">Distribution Data for Megachile chomskyi</title>
-      <creator>
-    <individualName>
-        <givenName>Cory</givenName>
-      <surName>Sheffield</surName>
-    </individualName>
-    <organizationName>Royal Saskatchewan Museum</organizationName>
-    <positionName>Curator of Invertebrate Zoology</positionName>
-    <address>
-        <deliveryPoint>2340 Albert Street</deliveryPoint>
-        <city>Regina</city>
-        <administrativeArea>Saskatchewan</administrativeArea>
-        <postalCode>S4P 2V7</postalCode>
-        <country>CA</country>
-    </address>
-    <phone>306-787-2850</phone>
-    <electronicMailAddress>cory.sheffield@gov.sk.ca</electronicMailAddress>
-    <onlineUrl>http://www.royalsaskmuseum.ca/research-collections/biology/invertebrate-zoology-cory-sheffield</onlineUrl>
-      </creator>
+      <!--<creator> removed for testing schema -->
       <metadataProvider>
     <individualName>
         <givenName>David</givenName>

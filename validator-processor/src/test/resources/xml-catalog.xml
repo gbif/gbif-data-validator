@@ -3,6 +3,8 @@
         "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd">
 
 <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog" prefer="public">
+
+  <!--relative paths are loaded from the classpath-->
   <uri name="http://www.w3.org/2000/09/xmldsig#" uri="w3c/xmldsig-core-schema.xsd"/>
 
   <system systemId="https://raw.githubusercontent.com/tdwg/dwc/master/xsd/tdwg_dwcterms.xsd" uri="dwc/tdwg_dwcterms.xsd" />

@@ -2,6 +2,7 @@ package org.gbif.validation.xml;
 
 import org.gbif.utils.file.FileUtils;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 
 import com.sun.org.apache.xerces.internal.util.XMLCatalogResolver;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
@@ -26,14 +28,12 @@ public class XMLSchemaValidatorProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(XMLSchemaValidatorProvider.class);
 
-
-
   public static final String DWC_META_XML = "dwc_meta_xml";
   public static final String EML = "eml";
   public static final String GBIF_EML = "gbif_eml";
 
   //TODO move this to config and get Stream
-  private static final String DWC_META_XML_SCHEMA = FileUtils.getClasspathFile("xml/dwc/tdwg_dwc_text.xsd").toURI().toString();
+  private static final String DWC_META_XML_SCHEMA = "xml/dwc/tdwg_dwc_text.xsd";
   private static final String EML_SCHEMA = "http://rs.gbif.org/schema/eml-2.1.1/eml.xsd";
   private static final String GBIF_EML_SCHEMA = "http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd";
 
@@ -47,7 +47,8 @@ public class XMLSchemaValidatorProvider {
   }
 
   /**
-   * Build a new XMLSchemaValidatorProvider using a specific XML Catalog
+   * Build a new XMLSchemaValidatorProvider using optionally a XML Catalog.
+   *
    * @param xmlCatalog
    */
   public XMLSchemaValidatorProvider(Optional<Path> xmlCatalog) {
@@ -60,11 +61,27 @@ public class XMLSchemaValidatorProvider {
 
     schemas = Collections.synchronizedMap(new HashMap<String, Schema>());
     try {
-      schemas.put(DWC_META_XML, schemaFactory.newSchema(new StreamSource(DWC_META_XML_SCHEMA)));
-      schemas.put(GBIF_EML, schemaFactory.newSchema(new StreamSource(GBIF_EML_SCHEMA)));
-    } catch (SAXException e) {
+      schemas.put(DWC_META_XML, schemaFactory.newSchema(getStreamSource(DWC_META_XML_SCHEMA)));
+      schemas.put(GBIF_EML, schemaFactory.newSchema(getStreamSource(GBIF_EML_SCHEMA)));
+    } catch (SAXException | IOException e) {
       LOG.error("Can not load XML schema", e);
     }
+  }
+
+  /**
+   * Get a {@link StreamSource} instance for the provided path.
+   * If the path represents an HTTP adress it will be loaded from there otherwise, it will be loaded from the
+   * classpath.
+   * 
+   * @param path
+   * @return
+   * @throws IOException
+   */
+  private static StreamSource getStreamSource(String path) throws IOException {
+    if(StringUtils.startsWith(path, "http")) {
+      return new StreamSource(path);
+    }
+    return new StreamSource(FileUtils.classpathStream(path));
   }
 
   /**

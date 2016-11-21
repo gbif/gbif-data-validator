@@ -48,7 +48,7 @@ import static org.eclipse.jetty.server.Response.SC_BAD_REQUEST;
 import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
 import static org.eclipse.jetty.server.Response.SC_OK;
 
-@Path("/validate")
+@Path("/validate_spark")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
 public class SparkValidationResource {

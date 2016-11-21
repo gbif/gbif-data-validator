@@ -14,6 +14,8 @@ import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -25,14 +27,21 @@ import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Creates instances of RecordProcessor.
  */
 public class EvaluatorFactory {
 
+  private static final Logger LOG = LoggerFactory.getLogger(EvaluatorFactory.class);
+
   private final String apiUrl;
 
+  private static final String XML_CATALOG = "xml-catalog.xml";
+
+  private static final XMLSchemaValidatorProvider XML_SCHEMA_VALIDATOR_PROVIDER = createXMLSchemaValidatorProvider();
   private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
 
   private static final int CLIENT_TO = 600000; // registry client default timeout
@@ -70,9 +79,26 @@ public class EvaluatorFactory {
     Objects.requireNonNull(fileFormat, "fileFormat shall be provided");
 
     switch(fileFormat) {
-      case DWCA: return new DwcaResourceStructureEvaluator(new XMLSchemaValidatorProvider());
+      case DWCA:
+        return new DwcaResourceStructureEvaluator(XML_SCHEMA_VALIDATOR_PROVIDER);
       default: return (dwcFolder, sourceFilename) -> Optional.empty();
     }
+  }
+
+  /**
+   * Try to build a new XMLSchemaValidatorProvider using a XMLCatalog in the classpath.
+   * If the catalog can not be found, return a new XMLSchemaValidatorProvider without XMLCatalog.
+   * @return
+   */
+  private static XMLSchemaValidatorProvider createXMLSchemaValidatorProvider() {
+    //we do not load the XMLCatalog from the classpath since it is required to have a path that resolves on
+    //the filesystem. It can not be loaded from inside a .jar (see XMLCatalogResolver)
+    File xmlCatalog = new File(XML_CATALOG);
+    if(xmlCatalog != null && xmlCatalog.exists()) {
+      return new XMLSchemaValidatorProvider(Optional.of(Paths.get(xmlCatalog.getAbsolutePath())));
+    }
+    LOG.warn("Could not load {} from the classpath. Continuing without XMLCatalog.", XML_CATALOG);
+    return new XMLSchemaValidatorProvider(Optional.empty());
   }
 
   /**

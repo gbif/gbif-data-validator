@@ -6,6 +6,7 @@ import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -19,20 +20,21 @@ import static org.junit.Assert.assertTrue;
  */
 public class EmlResourceStructureEvaluatorTest {
 
-  //private static final String XML_CATALOG = "xml/catalog.xml";
-  private EmlResourceStructureEvaluator emlResourceStructureEvaluator = new EmlResourceStructureEvaluator(new XMLSchemaValidatorProvider());
+  private static final File XML_CATALOG = FileUtils.getClasspathFile("xml/xml-catalog.xml");
+  private EmlResourceStructureEvaluator EML_RESOURCES_STRUCTURE_EVAL =
+          new EmlResourceStructureEvaluator(new XMLSchemaValidatorProvider(Optional.of(Paths.get(XML_CATALOG.getAbsolutePath()))));
 
   @Test
   public void dwcaResourceStructureEvaluatorTest() {
     File dwcaFolder = FileUtils.getClasspathFile("dwca-occurrence");
-    Optional<ValidationResultElement> result = emlResourceStructureEvaluator.evaluate(dwcaFolder.toPath(), "test");
+    Optional<ValidationResultElement> result = EML_RESOURCES_STRUCTURE_EVAL.evaluate(dwcaFolder.toPath(), "test");
     assertFalse(result.isPresent());
   }
 
   @Test
   public void dwcaResourceStructureEvaluatorTestBrokenMetaXml() {
     File dwcaFolder = FileUtils.getClasspathFile("dwca-occurrence-eml-broken");
-    Optional<ValidationResultElement> result = emlResourceStructureEvaluator.evaluate(dwcaFolder.toPath(), "test");
+    Optional<ValidationResultElement> result = EML_RESOURCES_STRUCTURE_EVAL.evaluate(dwcaFolder.toPath(), "test");
     assertTrue(result.isPresent());
     assertEquals(EvaluationType.EML_GBIF_SCHEMA, result.get().getIssues().get(0).getIssue());
   }
