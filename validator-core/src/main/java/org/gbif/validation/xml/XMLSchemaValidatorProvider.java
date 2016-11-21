@@ -3,7 +3,6 @@ package org.gbif.validation.xml;
 import org.gbif.utils.file.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,13 +48,13 @@ public class XMLSchemaValidatorProvider {
   /**
    * Build a new XMLSchemaValidatorProvider using optionally a XML Catalog.
    *
-   * @param xmlCatalog
+   * @param xmlCatalog path to XMLCatalog
    */
-  public XMLSchemaValidatorProvider(Optional<Path> xmlCatalog) {
+  public XMLSchemaValidatorProvider(Optional<String> xmlCatalog) {
 
     SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
     xmlCatalog.ifPresent( xc -> {
-      XMLCatalogResolver resolver = new XMLCatalogResolver(new String[]{xc.toAbsolutePath().toString()});
+      XMLCatalogResolver resolver = new XMLCatalogResolver(new String[]{xc});
       schemaFactory.setResourceResolver(resolver);
     });
 
@@ -72,7 +71,7 @@ public class XMLSchemaValidatorProvider {
    * Get a {@link StreamSource} instance for the provided path.
    * If the path represents an HTTP adress it will be loaded from there otherwise, it will be loaded from the
    * classpath.
-   * 
+   *
    * @param path
    * @return
    * @throws IOException
