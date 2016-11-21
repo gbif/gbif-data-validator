@@ -3,12 +3,13 @@ package org.gbif.validation.ws.resources;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.ValidationErrorCode;
+import org.gbif.validation.api.model.ValidationJobResponse;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
+import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -17,8 +18,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -33,18 +34,16 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.eclipse.jetty.server.Response.SC_BAD_REQUEST;
-import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
-@Path("/validate")
+@Path("/jobserver")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
-public class ValidationResource {
-
-  private final ResourceEvaluationManager resourceEvaluationManager;
+public class ValidationJobServerResource {
 
   private final ServletFileUpload servletBasedFileUpload;
   private final UploadedFileManager fileTransferManager;
+  private final JobServer jobServer;
 
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
 
@@ -52,12 +51,10 @@ public class ValidationResource {
   private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
 
-
   @Inject
-  public ValidationResource(ValidationConfiguration configuration, ResourceEvaluationManager resourceEvaluationManager)
+  public ValidationJobServerResource(ValidationConfiguration configuration, JobServer<ValidationResult> jobServer)
     throws IOException {
-    this.resourceEvaluationManager = resourceEvaluationManager;
-
+    this.jobServer = jobServer;
     fileTransferManager = new UploadedFileManager(configuration.getWorkingDir(), MAX_UPLOAD_SIZE_IN_BYTES);
 
     //TODO clean on startup?
@@ -71,24 +68,25 @@ public class ValidationResource {
     servletBasedFileUpload.setFileSizeMax(MAX_UPLOAD_SIZE_IN_BYTES);
   }
 
+
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/file")
-  public ValidationResult onValidateFile(@Context HttpServletRequest request) {
-    Optional<ValidationResult> result = Optional.empty();
+  @Path("/submit")
+  public ValidationJobResponse onValidateFileAsync(@Context HttpServletRequest request) {
+
     Optional<String> uploadedFileName = Optional.empty();
     try {
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
       Optional<FileItem> uploadFileInputStream = uploadedContent.stream().filter(
-              fileItem -> !fileItem.isFormField() && WsValidationParams.FILE.getParam().equals(fileItem.getFieldName()))
-              .findFirst();
+        fileItem -> !fileItem.isFormField() && WsValidationParams.FILE.getParam().equals(fileItem.getFieldName()))
+        .findFirst();
 
       if(uploadFileInputStream.isPresent()) {
         FileItem uploadFileInputStreamVal = uploadFileInputStream.get();
         uploadedFileName = Optional.ofNullable(uploadFileInputStreamVal.getName());
         Optional<DataFile> dataFile = fileTransferManager.handleFileTransfer(uploadFileInputStreamVal);
-        result =  dataFile.map(dataFileVal -> processFile(dataFileVal.getFilePath(), dataFileVal));
+        return dataFile.map(dataFileVal -> jobServer.submit(dataFileVal)).get();
       }
     }
     catch (FileUploadException fileUploadEx) {
@@ -98,27 +96,16 @@ public class ValidationResource {
       LOG.error("Can't handle uploaded file", ioEx);
       throw errorResponse(uploadedFileName.orElse(""), Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
     }
-
-    String filename = uploadedFileName.orElse(""); //lambdas only accept immutable/final objects
-    return result.orElseThrow(() -> errorResponse(filename, Response.Status.BAD_REQUEST,
-                                                  ValidationErrorCode.UNSUPPORTED_FILE_FORMAT));
-
+    return ValidationJobResponse.FAILED_RESPONSE;
   }
 
 
   @POST
+  @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Path("/url")
-  public ValidationResult onValidateFile(@QueryParam("fileUrl") String fileURL) {
-    try {
-      Optional<DataFile> dataFileDescriptor = fileTransferManager.handleFileDownload(new URL(fileURL));
-      return dataFileDescriptor.map(dataFileDescriptorVal ->
-                                      processFile(dataFileDescriptorVal.getFilePath(), dataFileDescriptor.get())).get();
-    } catch (IOException ioEx) {
-      LOG.error("Can't handle file download from {}", fileURL, ioEx);
-      throw errorResponse(fileURL, Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
-    }
+  @Path("/status/{jobid}")
+  public ValidationJobResponse status(@PathParam("jobid") String jobid) {
+    return jobServer.status(Long.valueOf(jobid));
   }
 
 
@@ -135,27 +122,4 @@ public class ValidationResource {
     repBuilder.entity(ValidationResultBuilders.Builder.withError(uploadFileName, null, errorCode).build());
     return new WebApplicationException(repBuilder.build());
   }
-
-  /**
-   * Applies the validation routines to the input file.
-   */
-  private ValidationResult processFile(java.nio.file.Path dataFilePath, DataFile dataFile)  {
-    try {
-      return resourceEvaluationManager.evaluate(dataFile);
-    } catch (Exception ex) {
-      throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
-    } finally {
-      deletePath(dataFilePath);
-    }
-  }
-
-  private static void deletePath(java.nio.file.Path dataFilePath) {
-    try {
-        Files.delete(dataFilePath);
-    } catch (Exception ex) {
-      LOG.error("Error deleting file {}", dataFilePath, ex);
-    }
-  }
-
-
 }

@@ -9,14 +9,14 @@ import java.util.Optional;
  */
 public class DataJobResult<T> {
 
-  private final DataJob<T> dataJob;
+  private final DataJob<?> dataJob;
 
   private final Optional<T> result;
 
   /**
    * Full constructor.
    */
-  public DataJobResult(DataJob<T> dataJob, T result) {
+  public DataJobResult(DataJob<?> dataJob, T result) {
     this.dataJob = dataJob;
     this.result = Optional.ofNullable(result);
   }
@@ -24,7 +24,7 @@ public class DataJobResult<T> {
   /**
    * Data job performed.
    */
-  public DataJob<T> getDataJob() {
+  public DataJob<?> getDataJob() {
     return dataJob;
   }
 

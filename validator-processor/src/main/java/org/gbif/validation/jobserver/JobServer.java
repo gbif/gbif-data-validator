@@ -23,7 +23,7 @@ import scala.util.Try;
 /**
  * Manages the job submission and statis retrieval.
  */
-public class JobServer {
+public class JobServer<T> {
 
 
 
@@ -39,14 +39,14 @@ public class JobServer {
 
   private final AtomicLong jobIdSeed;
 
-  private final JobStorage<ValidationResult> jobStorage;
+  private final JobStorage<T> jobStorage;
 
   private final ActorRef jobMonitor;
 
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
    */
-  public JobServer(JobStorage<ValidationResult> jobStorage, ActorPropsMapping propsMapping) {
+  public JobServer(JobStorage<T> jobStorage, ActorPropsMapping propsMapping) {
     system = ActorSystem.create("JobServerSystem");
     jobIdSeed = new AtomicLong(new Date().getTime());
     this.jobStorage = jobStorage;
@@ -69,7 +69,7 @@ public class JobServer {
    */
   public ValidationJobResponse status(long jobId) {
     //the job storage is checked first
-    Optional<ValidationResult> result = jobStorage.get(jobId);
+    Optional<T> result = jobStorage.get(jobId);
     if (result.isPresent()) {
       return new ValidationJobResponse(ValidationJobResponse.JobStatus.FINISHED, jobId, result.get());
     }

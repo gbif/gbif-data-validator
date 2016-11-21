@@ -6,6 +6,11 @@ import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.ValidationSparkConf;
+import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.evaluator.EvaluatorFactory;
+import org.gbif.validation.jobserver.JobServer;
+import org.gbif.validation.jobserver.impl.DataValidationActorPropsMapping;
+import org.gbif.validation.jobserver.impl.FileJobStorage;
 import org.gbif.validation.ws.conf.ConfKeys;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
 import org.gbif.ws.app.ConfUtils;
@@ -13,6 +18,7 @@ import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -20,6 +26,7 @@ import java.util.Properties;
 import akka.actor.ActorSystem;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
+import com.google.inject.TypeLiteral;
 import org.apache.commons.lang3.math.NumberUtils;
 
 /**
@@ -68,11 +75,14 @@ public class ValidationWsListener extends GbifServletListener {
         expose(DataValidationClient.class);
       }
 
+      bind(new TypeLiteral<JobServer<ValidationResult>>(){}).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getWorkingDir())),
+                                                       new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()), configuration.getFileSplitSize())));
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
                                                                                      configuration.getFileSplitSize()));
 
+      expose(new TypeLiteral<JobServer<ValidationResult>>(){});
       expose(ValidationConfiguration.class);
       expose(ResourceEvaluationManager.class);
       expose(HttpUtil.class);

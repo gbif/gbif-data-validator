@@ -2,7 +2,7 @@ package org.gbif.validation.api.model;
 
 import org.gbif.validation.api.result.ValidationResult;
 
-public class ValidationJobResponse {
+public class ValidationJobResponse<T> {
 
   public enum JobStatus {
     ACCEPTED, RUNNING, FAILED, FINISHED, NOT_FOUND, KILLED;
@@ -13,7 +13,7 @@ public class ValidationJobResponse {
 
   private JobStatus status;
   private long jobId;
-  private ValidationResult result;
+  private T result;
 
   /**
    * Empty constructor required for serialization.
@@ -22,7 +22,7 @@ public class ValidationJobResponse {
 
   }
 
-  public ValidationJobResponse(JobStatus status, long jobId, ValidationResult result) {
+  public ValidationJobResponse(JobStatus status, long jobId, T result) {
     this.status = status;
     this.jobId = jobId;
     this.result = result;
@@ -42,7 +42,7 @@ public class ValidationJobResponse {
     return jobId;
   }
 
-  public ValidationResult getResult() {
+  public T getResult() {
     return result;
   }
 }
