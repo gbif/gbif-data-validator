@@ -14,8 +14,7 @@ import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
-import java.io.File;
-import java.nio.file.Paths;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +38,7 @@ public class EvaluatorFactory {
 
   private final String apiUrl;
 
-  private static final String XML_CATALOG = "xml-catalog.xml";
+  private static final String XML_CATALOG = "xml/xml-catalog.xml";
 
   private static final XMLSchemaValidatorProvider XML_SCHEMA_VALIDATOR_PROVIDER = createXMLSchemaValidatorProvider();
   private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
@@ -91,11 +90,9 @@ public class EvaluatorFactory {
    * @return
    */
   private static XMLSchemaValidatorProvider createXMLSchemaValidatorProvider() {
-    //we do not load the XMLCatalog from the classpath since it is required to have a path that resolves on
-    //the filesystem. It can not be loaded from inside a .jar (see XMLCatalogResolver)
-    File xmlCatalog = new File(XML_CATALOG);
-    if(xmlCatalog != null && xmlCatalog.exists()) {
-      return new XMLSchemaValidatorProvider(Optional.of(Paths.get(xmlCatalog.getAbsolutePath())));
+    URL xmlCatalog = EvaluatorFactory.class.getClassLoader().getResource(XML_CATALOG);
+    if(xmlCatalog != null) {
+      return new XMLSchemaValidatorProvider(Optional.of(XML_CATALOG));
     }
     LOG.warn("Could not load {} from the classpath. Continuing without XMLCatalog.", XML_CATALOG);
     return new XMLSchemaValidatorProvider(Optional.empty());

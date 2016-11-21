@@ -6,7 +6,6 @@ import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
 import java.io.File;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 import org.junit.Test;
@@ -22,7 +21,7 @@ public class EmlResourceStructureEvaluatorTest {
 
   private static final File XML_CATALOG = FileUtils.getClasspathFile("xml/xml-catalog.xml");
   private EmlResourceStructureEvaluator EML_RESOURCES_STRUCTURE_EVAL =
-          new EmlResourceStructureEvaluator(new XMLSchemaValidatorProvider(Optional.of(Paths.get(XML_CATALOG.getAbsolutePath()))));
+          new EmlResourceStructureEvaluator(new XMLSchemaValidatorProvider(Optional.of(XML_CATALOG.getAbsolutePath())));
 
   @Test
   public void dwcaResourceStructureEvaluatorTest() {
