@@ -4,7 +4,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
 import org.gbif.validation.api.DataFileProcessorAsync;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.api.model.ValidationJobResponse;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResult;
@@ -96,7 +96,7 @@ public class ResourceEvaluationManager {
    * @return
    * @throws IOException
    */
-  public ValidationJobResponse evaluateAsync(DataFile dataFile) throws IOException {
+  public JobStatusResponse evaluateAsync(DataFile dataFile) throws IOException {
 
     //Validate the structure of the resource
     Optional<ValidationResultElement> resourceStructureEvaluationResult =
@@ -104,8 +104,8 @@ public class ResourceEvaluationManager {
         .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
 
     if(resourceStructureEvaluationResult.isPresent()) {
-      return new ValidationJobResponse(ValidationJobResponse.JobStatus.FINISHED, newJobId.get(),
-                                        ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
+      return new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, newJobId.get(),
+                                   ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
                                                                             dataFile.getFileFormat(),
                                                                             ValidationProfile.GBIF_INDEXING_PROFILE)
                                           .withResourceResult(resourceStructureEvaluationResult.get()).build());
@@ -117,8 +117,8 @@ public class ResourceEvaluationManager {
     int maxNumOfLine = preparedDataFiles.stream().mapToInt(df -> df.getNumOfLines()).max().getAsInt();
 
     if (maxNumOfLine <= fileSplitSize) {
-      return new ValidationJobResponse(ValidationJobResponse.JobStatus.FINISHED, newJobId.get(),
-                                       runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles));
+      return new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, newJobId.get(),
+                                   runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles));
     }
 
     return  runEvaluationAsync(preparedDataFiles);
@@ -145,7 +145,7 @@ public class ResourceEvaluationManager {
   /**
    * Run the data validation asynchronously.
    */
-  private ValidationJobResponse runEvaluationAsync(List<DataFile> dataFiles)  {
+  private JobStatusResponse runEvaluationAsync(List<DataFile> dataFiles)  {
     return buildAsyncDataFileProcessor(dataFiles.get(0)).processAsync(dataFiles.get(0));
   }
 

@@ -50,6 +50,9 @@ public class ValidationWsListener extends GbifServletListener {
     private static final int HTTP_CLIENT_THREADS = 20;
     private static final int HTTP_CLIENT_THREADS_PER_ROUTE = 20;
 
+    private static final TypeLiteral<JobServer<ValidationResult>> JOB_SERVER_TYPE_LITERAL =
+      new TypeLiteral<JobServer<ValidationResult>>(){};
+
     ValidationModule(Properties properties) {
       super(PROPERTIES_PREFIX,properties);
     }
@@ -75,14 +78,15 @@ public class ValidationWsListener extends GbifServletListener {
         expose(DataValidationClient.class);
       }
 
-      bind(new TypeLiteral<JobServer<ValidationResult>>(){}).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getWorkingDir())),
-                                                       new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()), configuration.getFileSplitSize())));
       bind(HttpUtil.class).toInstance(httpUtil);
+      bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getWorkingDir())),
+                                                               new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
+                                                                                                   configuration.getFileSplitSize())));
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
                                                                                      configuration.getFileSplitSize()));
 
-      expose(new TypeLiteral<JobServer<ValidationResult>>(){});
+      expose(JOB_SERVER_TYPE_LITERAL);
       expose(ValidationConfiguration.class);
       expose(ResourceEvaluationManager.class);
       expose(HttpUtil.class);

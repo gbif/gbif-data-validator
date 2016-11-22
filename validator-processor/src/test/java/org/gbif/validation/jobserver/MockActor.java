@@ -1,6 +1,7 @@
 package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
@@ -25,12 +26,13 @@ public class MockActor extends AbstractLoggingActor {
         } catch (IllegalMonitorStateException ex) {
 
         }
-        DataJobResult<ValidationResult> result = new DataJobResult<ValidationResult>(dataJob,
-                                                                                     ValidationResultBuilders.Builder
-                                                                                       .of(true, "mockFile",
-                                                                                           FileFormat.TABULAR,
-                                                                                           ValidationProfile.GBIF_INDEXING_PROFILE)
-                                                                                       .build());
+        JobStatusResponse<ValidationResult>
+          result = new JobStatusResponse<ValidationResult>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
+                                                           ValidationResultBuilders.Builder
+                                                                               .of(true, "mockFile",
+                                                                                   FileFormat.TABULAR,
+                                                                                   ValidationProfile.GBIF_INDEXING_PROFILE)
+                                                                               .build());
         sender().tell(result, self());
       })
         .matchAny(this::unhandled)

@@ -1,21 +1,22 @@
 package org.gbif.validation.jobserver;
 
+import org.gbif.validation.api.model.JobStatusResponse;
+
 import java.util.Optional;
 
 /**
  * Interface to decouple how the job result information  is stored.
- * @param <T> type of things being stored
  */
-public interface JobStorage<T> {
+public interface JobStorage {
 
   /**
    * Gets the data stored of jobId.
    */
-  Optional<T> get(long jobId);
+  Optional<JobStatusResponse<?>> get(long jobId);
 
   /**
    * Stores/overwrites the data of a jobId.
    */
-  void put(long jobId, T data);
+  void put(JobStatusResponse<?> data);
 
 }

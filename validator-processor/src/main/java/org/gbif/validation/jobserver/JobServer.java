@@ -1,9 +1,8 @@
 package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.ValidationJobResponse;
-import org.gbif.validation.api.result.ValidationResult;
-import org.gbif.validation.api.model.ValidationJobResponse.JobStatus;
+import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 
 import java.util.Date;
 import java.util.Optional;
@@ -39,14 +38,14 @@ public class JobServer<T> {
 
   private final AtomicLong jobIdSeed;
 
-  private final JobStorage<T> jobStorage;
+  private final JobStorage jobStorage;
 
   private final ActorRef jobMonitor;
 
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
    */
-  public JobServer(JobStorage<T> jobStorage, ActorPropsMapping propsMapping) {
+  public JobServer(JobStorage jobStorage, ActorPropsMapping<?> propsMapping) {
     system = ActorSystem.create("JobServerSystem");
     jobIdSeed = new AtomicLong(new Date().getTime());
     this.jobStorage = jobStorage;
@@ -58,20 +57,20 @@ public class JobServer<T> {
    * Process the submission of a data validation job.
    * If the job is accepted the response contains the new jobId ACCEPTED as the job status.
    */
-  public ValidationJobResponse submit(DataFile dataFile) {
+  public JobStatusResponse<?> submit(DataFile dataFile) {
     long  newJobId = jobIdSeed.getAndIncrement();
-    jobMonitor.tell(new DataJob(newJobId, dataFile), jobMonitor);
-    return new ValidationJobResponse(ValidationJobResponse.JobStatus.ACCEPTED, newJobId);
+    jobMonitor.tell(new DataJob<DataFile>(newJobId, dataFile), jobMonitor);
+    return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId);
   }
 
   /**
-   * Gets the status of a job. If the job is not found ValidationJobResponse.NOT_FOUND is returned.
+   * Gets the status of a job. If the job is not found ValidationJobResponse.NOT_FOUND_RESPONSE is returned.
    */
-  public ValidationJobResponse status(long jobId) {
+  public JobStatusResponse<?> status(long jobId) {
     //the job storage is checked first
-    Optional<T> result = jobStorage.get(jobId);
+    Optional<JobStatusResponse<?>> result = jobStorage.get(jobId);
     if (result.isPresent()) {
-      return new ValidationJobResponse(ValidationJobResponse.JobStatus.FINISHED, jobId, result.get());
+      return result.get();
     }
     //if the job data is not in the storage it might be still running
     return getJobStatus(jobId);
@@ -80,13 +79,13 @@ public class JobServer<T> {
   /**
    * Tries to kill a jobId.
    */
-  public ValidationJobResponse kill(long jobId) {
+  public JobStatusResponse<?> kill(long jobId) {
     Option<Try<ActorRef>> actorRef = getRunningActor(jobId);
     if (!actorRef.isEmpty()) {
       system.stop(actorRef.get().get());
-      return new ValidationJobResponse(JobStatus.KILLED,jobId);
+      return new JobStatusResponse(JobStatus.KILLED, jobId);
     }
-    return new ValidationJobResponse(JobStatus.NOT_FOUND, jobId);
+    return new JobStatusResponse(JobStatus.NOT_FOUND, jobId);
   }
 
   /**
@@ -101,15 +100,15 @@ public class JobServer<T> {
   /**
    * Tries to gets the status from the running instances.
    */
-  private ValidationJobResponse getJobStatus(long jobId) {
+  private JobStatusResponse<?> getJobStatus(long jobId) {
     try {
       //there's a running actor with that jobId name?
-      return new ValidationJobResponse( getRunningActor(jobId).isEmpty() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
-                                       jobId);
+      return new JobStatusResponse(getRunningActor(jobId).isEmpty() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
+                                   jobId);
     } catch (Exception ex) {
       LOG.error("Error  retrieving JobId {} data", jobId, ex);
     }
-    return ValidationJobResponse.NOT_FOUND;
+    return JobStatusResponse.NOT_FOUND_RESPONSE;
   }
 
   /**

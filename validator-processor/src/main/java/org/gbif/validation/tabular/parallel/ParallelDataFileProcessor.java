@@ -8,7 +8,7 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.api.model.ValidationJobResponse;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
@@ -215,11 +215,11 @@ public class ParallelDataFileProcessor implements DataFileProcessor, DataFilePro
    * Process a file asynchronously.
    */
   @Override
-  public ValidationJobResponse processAsync(DataFile dataFile) {
+  public JobStatusResponse processAsync(DataFile dataFile) {
     // create the master
     ActorRef master = createMasterActor();
     master.tell(dataFile, master);
-    return new ValidationJobResponse(ValidationJobResponse.JobStatus.ACCEPTED, jobId);
+    return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, jobId);
   }
 
   /**

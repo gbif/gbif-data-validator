@@ -11,6 +11,9 @@ public class DataJob<T> {
 
   private final T jobData;
 
+  /**
+   * Full constructor.
+   */
   public DataJob(long jobId, T jobData) {
     this.jobId = jobId;
     this.jobData = jobData;

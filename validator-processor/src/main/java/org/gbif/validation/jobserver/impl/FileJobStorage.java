@@ -1,6 +1,6 @@
 package org.gbif.validation.jobserver.impl;
 
-import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.JobStorage;
 
 import java.io.File;
@@ -16,12 +16,12 @@ import org.codehaus.jackson.map.ObjectWriter;
 /**
  * JobStorage implementation that stores and  retrieves json files from a local file system.
  */
-public class FileJobStorage implements JobStorage<ValidationResult> {
+public class FileJobStorage implements JobStorage {
 
   //Jackson instances used to write and read Json files.
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader(ValidationResult.class);
-  private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithType(ValidationResult.class);
+  private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);
+  private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobStatusResponse.class);
 
   //Directory where the JSON files are stored.
   private final Path storePath;
@@ -58,7 +58,7 @@ public class FileJobStorage implements JobStorage<ValidationResult> {
    * Return and Optional.empty() is the file is not found.
    */
   @Override
-  public Optional<ValidationResult> get(long jobId) {
+  public Optional<JobStatusResponse<?>> get(long jobId) {
     try {
       File jobFile = getJobResultFile(jobId);
       if (jobFile.exists()) {
@@ -74,9 +74,9 @@ public class FileJobStorage implements JobStorage<ValidationResult> {
    * Stores the data as Json file in a 'storePath/jobId.json' file.
    */
   @Override
-  public void put(long jobId, ValidationResult data) {
+  public void put(JobStatusResponse<?> data) {
     try {
-      OBJECT_WRITER.writeValue(getJobResultFile(jobId), data);
+      OBJECT_WRITER.writeValue(getJobResultFile(data.getJobId()), data);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

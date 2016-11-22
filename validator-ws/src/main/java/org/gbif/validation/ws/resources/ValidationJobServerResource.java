@@ -1,9 +1,8 @@
 package org.gbif.validation.ws.resources;
 
-import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.ValidationErrorCode;
-import org.gbif.validation.api.model.ValidationJobResponse;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.jobserver.JobServer;
@@ -16,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -73,7 +73,7 @@ public class ValidationJobServerResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/submit")
-  public ValidationJobResponse onValidateFileAsync(@Context HttpServletRequest request) {
+  public JobStatusResponse onValidateFileAsync(@Context HttpServletRequest request) {
 
     Optional<String> uploadedFileName = Optional.empty();
     try {
@@ -96,15 +96,14 @@ public class ValidationJobServerResource {
       LOG.error("Can't handle uploaded file", ioEx);
       throw errorResponse(uploadedFileName.orElse(""), Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
     }
-    return ValidationJobResponse.FAILED_RESPONSE;
+    return JobStatusResponse.FAILED_RESPONSE;
   }
 
 
-  @POST
-  @Consumes(MediaType.MULTIPART_FORM_DATA)
+  @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/status/{jobid}")
-  public ValidationJobResponse status(@PathParam("jobid") String jobid) {
+  public JobStatusResponse status(@PathParam("jobid") String jobid) {
     return jobServer.status(Long.valueOf(jobid));
   }
 

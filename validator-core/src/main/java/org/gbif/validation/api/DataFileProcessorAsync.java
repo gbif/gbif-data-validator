@@ -1,8 +1,8 @@
 package org.gbif.validation.api;
 
-import org.gbif.validation.api.model.ValidationJobResponse;
+import org.gbif.validation.api.model.JobStatusResponse;
 
 public interface DataFileProcessorAsync {
 
-  ValidationJobResponse processAsync(DataFile dataFile);
+  JobStatusResponse processAsync(DataFile dataFile);
 }
