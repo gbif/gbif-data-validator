@@ -9,9 +9,6 @@ public final class ConfKeys {
   public static final String WORKING_DIR_CONF_KEY = "workingDir";
   public static final String FILE_SPLIT_SIZE = "fileSplitSize";
 
-  public static final String LIVY_URL = "livyUrl";
-  public static final String LIVY_JARS = "livyJars";
-
   /**
    * Private constructor.
    */

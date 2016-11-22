@@ -35,7 +35,6 @@
     <module>validator-core</module>
     <module>validator-ws</module>
     <module>validator-processor</module>
-    <module>validator-spark</module>
   </modules>
 
   <properties>
@@ -56,6 +55,7 @@
     <jackson.version>1.9.12</jackson.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
     <guava.version>18.0</guava.version>
+    <jsr305.version>3.0.1</jsr305.version>
 
     <scala-library.version>2.10.5</scala-library.version>
     <commons-lang3.version>3.4</commons-lang3.version>
@@ -142,6 +142,11 @@
         <artifactId>jackson-jaxrs</artifactId>
         <version>${jackson.version}</version>
       </dependency>
+      <dependency>
+        <groupId>org.codehaus.jackson</groupId>
+        <artifactId>jackson-core-asl</artifactId>
+        <version>${jackson.version}</version>
+      </dependency>
 
       <dependency>
         <groupId>org.scala-lang</groupId>
@@ -162,6 +167,11 @@
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
         <version>${guava.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.google.code.findbugs</groupId>
+        <artifactId>jsr305</artifactId>
+        <version>${jsr305.version}</version>
       </dependency>
 
       <!-- Logging -->

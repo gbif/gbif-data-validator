@@ -3,9 +3,7 @@ package org.gbif.validation.ws;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
-import org.gbif.validation.DataValidationClient;
 import org.gbif.validation.ResourceEvaluationManager;
-import org.gbif.validation.ValidationSparkConf;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
@@ -23,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import akka.actor.ActorSystem;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
@@ -66,17 +63,6 @@ public class ValidationWsListener extends GbifServletListener {
                                                        DEFAULT_SPLIT_SIZE));
       HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(HTTP_CLIENT_TO, HTTP_CLIENT_THREADS,
                                                                        HTTP_CLIENT_THREADS_PER_ROUTE));
-
-      if (getProperties().containsKey(ConfKeys.LIVY_URL)) {
-        ValidationSparkConf sparkConf = new ValidationSparkConf(getProperties().getProperty(ConfKeys.LIVY_URL),
-                                                                getProperties().getProperty(ConfKeys.LIVY_JARS),
-                                                                configuration.getApiUrl(),
-                                                                configuration.getWorkingDir());
-        DataValidationClient dataValidationClient = new DataValidationClient(sparkConf);
-        dataValidationClient.init();
-        bind(DataValidationClient.class).toInstance(dataValidationClient);
-        expose(DataValidationClient.class);
-      }
 
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getWorkingDir())),

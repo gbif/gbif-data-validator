@@ -131,62 +131,6 @@
 </repositories>
 
 <dependencies>
-  <dependency>
-    <groupId>org.apache.hadoop</groupId>
-    <artifactId>hadoop-common</artifactId>
-    <version>${hadoop.version}</version>
-    <!-- see https://ileriseviye.wordpress.com/2014/12/04/how-to-fix-class-javax-servlet-filterregistrations-signer-information-does-not-match-signer-information-of-other-classes-in-the-same-package-when-unit-testing-with-spark-streaming/ -->
-    <exclusions>
-      <exclusion>
-        <groupId>javax.servlet</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>org.apache.curator</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-    </exclusions>
-  </dependency>
-  <dependency>
-    <groupId>org.apache.hadoop</groupId>
-    <artifactId>hadoop-hdfs</artifactId>
-    <version>${hadoop.version}</version>
-    <exclusions>
-      <exclusion>
-        <groupId>javax.servlet</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>org.codehaus.jackson</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>com.sun.jersey</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-      <exclusion>
-        <groupId>org.mortbay.jetty</groupId>
-        <artifactId>*</artifactId>
-      </exclusion>
-    </exclusions>
-  </dependency>
-
-  <dependency>
-    <groupId>org.scala-lang</groupId>
-    <artifactId>scala-library</artifactId>
-  </dependency>
 
   <!-- logging -->
   <dependency>
@@ -205,27 +149,8 @@
     <groupId>org.slf4j</groupId>
     <artifactId>jul-to-slf4j</artifactId>
   </dependency>
-  <dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>log4j-over-slf4j</artifactId>
-  </dependency>
-  <!-- needed for zookeeper -->
-  <dependency>
-    <groupId>org.slf4j</groupId>
-    <artifactId>log4j-over-slf4j</artifactId>
-    <version>${slf4j.version}</version>
-    <scope>runtime</scope>
-  </dependency>
 
   <!-- GBIF -->
-  <dependency>
-    <groupId>org.gbif</groupId>
-    <artifactId>gbif-api</artifactId>
-  </dependency>
-  <dependency>
-    <groupId>org.gbif</groupId>
-    <artifactId>dwc-api</artifactId>
-  </dependency>
   <dependency>
     <groupId>org.gbif.validator</groupId>
     <artifactId>validator-core</artifactId>
@@ -234,11 +159,6 @@
   <dependency>
     <groupId>org.gbif.validator</groupId>
     <artifactId>validator-processor</artifactId>
-    <version>${project.version}</version>
-  </dependency>
-  <dependency>
-    <groupId>org.gbif.validator</groupId>
-    <artifactId>validator-spark</artifactId>
     <version>${project.version}</version>
   </dependency>
   <dependency>
@@ -252,6 +172,10 @@
     <version>${gbif-httputils.version}</version>
   </dependency>
 
+  <dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+  </dependency>
   <dependency>
     <!-- dependency:analyze reports a false positive here -->
     <groupId>com.google.inject.extensions</groupId>
@@ -271,18 +195,9 @@
     <version>${commons-fileupload.version}</version>
   </dependency>
   <dependency>
-    <groupId>commons-io</groupId>
-    <artifactId>commons-io</artifactId>
-    <version>${commons-io.version}</version>
-  </dependency>
-  <dependency>
     <groupId> org.apache.commons</groupId>
     <artifactId>commons-compress</artifactId>
     <version>${commons-compress.version}</version>
-  </dependency>
-  <dependency>
-    <groupId> org.apache.commons</groupId>
-    <artifactId>commons-lang3</artifactId>
   </dependency>
   <dependency>
     <groupId>javax.validation</groupId>
