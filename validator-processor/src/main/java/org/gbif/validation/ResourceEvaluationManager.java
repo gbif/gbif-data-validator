@@ -42,9 +42,9 @@ public class ResourceEvaluationManager {
   private final EvaluatorFactory factory;
   private final Integer fileSplitSize;
 
-  private ActorSystem system;
+  private final ActorSystem system;
 
-  private AtomicLong newJobId = new AtomicLong(new Date().getTime());
+  private final AtomicLong newJobId = new AtomicLong(new Date().getTime());
 
   /**
    *
@@ -67,61 +67,26 @@ public class ResourceEvaluationManager {
   public ValidationResult evaluate(DataFile dataFile) throws IOException {
 
     //Validate the structure of the resource
-    Optional<ValidationResultElement> resourceStructureEvaluationResult =
+    Optional<ValidationResultElement> validationResultElement =
       EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
         .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
 
-    if(resourceStructureEvaluationResult.isPresent()) {
+    if(validationResultElement.isPresent()) {
       return ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
                                                  dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-        .withResourceResult(resourceStructureEvaluationResult.get()).build();
+        .withResourceResult(validationResultElement.get()).build();
     }
 
     //prepare the resource
     List<DataFile> preparedDataFiles = RecordSourceFactory.prepareSource(dataFile);
 
-    int maxNumOfLine = preparedDataFiles.stream().mapToInt(df -> df.getNumOfLines()).max().getAsInt();
+    int maxNumOfLine = preparedDataFiles.stream().mapToInt(DataFile::getNumOfLines).max().getAsInt();
 
     if (maxNumOfLine <= fileSplitSize) {
       return runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
     }
 
     return runEvaluationWithSplit(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
-  }
-
-  /**
-   * Trigger the entire evaluation process for a {@link DataFile}.
-   *
-   * @param dataFile
-   * @return
-   * @throws IOException
-   */
-  public JobStatusResponse evaluateAsync(DataFile dataFile) throws IOException {
-
-    //Validate the structure of the resource
-    Optional<ValidationResultElement> resourceStructureEvaluationResult =
-      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
-        .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
-
-    if(resourceStructureEvaluationResult.isPresent()) {
-      return new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, newJobId.get(),
-                                   ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-                                                                            dataFile.getFileFormat(),
-                                                                            ValidationProfile.GBIF_INDEXING_PROFILE)
-                                          .withResourceResult(resourceStructureEvaluationResult.get()).build());
-    }
-
-    //prepare the resource
-    List<DataFile> preparedDataFiles = RecordSourceFactory.prepareSource(dataFile);
-
-    int maxNumOfLine = preparedDataFiles.stream().mapToInt(df -> df.getNumOfLines()).max().getAsInt();
-
-    if (maxNumOfLine <= fileSplitSize) {
-      return new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, newJobId.get(),
-                                   runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles));
-    }
-
-    return  runEvaluationAsync(preparedDataFiles);
   }
 
   /**
@@ -142,12 +107,6 @@ public class ResourceEvaluationManager {
     return blrd.build();
   }
 
-  /**
-   * Run the data validation asynchronously.
-   */
-  private JobStatusResponse runEvaluationAsync(List<DataFile> dataFiles)  {
-    return buildAsyncDataFileProcessor(dataFiles.get(0)).processAsync(dataFiles.get(0));
-  }
 
   /**
    * WIP : exception handling not done properly yet
@@ -202,11 +161,7 @@ public class ResourceEvaluationManager {
     return buildParallelDataFileProcessor(dataFile);
   }
 
-  private DataFileProcessorAsync buildAsyncDataFileProcessor(@NotNull DataFile dataFile) {
-    return buildParallelDataFileProcessor(dataFile);
-  }
-
-  private ParallelDataFileProcessor buildParallelDataFileProcessor(@NotNull DataFile dataFile) {
+  private DataFileProcessor buildParallelDataFileProcessor(@NotNull DataFile dataFile) {
     return new ParallelDataFileProcessor(Arrays.asList(dataFile.getColumns()),
             factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
             CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), true), system, fileSplitSize,

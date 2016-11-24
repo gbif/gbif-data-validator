@@ -36,7 +36,14 @@ class OdsConverter {
   private static final Logger LOG = LoggerFactory.getLogger(OdsConverter.class);
   private static final String DATE_VALUE_TYPE = "date";
 
-  public void convertToCSV(Path workbookFile, Path csvFile) throws IOException {
+  /**
+   * Utility classes can't be instantiated.
+   */
+  private OdsConverter() {
+    //empty constructor
+  }
+
+  public static void convertToCSV(Path workbookFile, Path csvFile) throws IOException {
 
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
          ICsvListWriter csvWriter = new CsvListWriter(new FileWriter(csvFile.toFile()),

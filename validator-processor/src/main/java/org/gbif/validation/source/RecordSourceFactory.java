@@ -37,13 +37,6 @@ import static org.gbif.utils.file.tabular.TabularFiles.newTabularFileReader;
 public class RecordSourceFactory {
 
   /**
-   * Private constructor.
-   */
-  private RecordSourceFactory() {
-    //empty method
-  }
-
-  /**
    * Creates instances of RecordSource from character delimited files.
    */
   public static RecordSource fromDelimited(@NotNull File sourceFile, @NotNull Character delimiterChar,
@@ -69,9 +62,8 @@ public class RecordSourceFactory {
    * @param dataFile
    * @return
    * @throws IOException
-   * @throws IllegalStateException
    */
-  public static Optional<RecordSource> fromDataFile(DataFile dataFile) throws IOException, IllegalStateException {
+  public static Optional<RecordSource> fromDataFile(DataFile dataFile) throws IOException {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
@@ -103,7 +95,7 @@ public class RecordSourceFactory {
    * @throws IOException
    * @throws IllegalStateException
    */
-  public static List<DataFile> prepareSource(DataFile dataFile) throws IOException, IllegalStateException {
+  public static List<DataFile> prepareSource(DataFile dataFile) throws IOException {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
@@ -137,7 +129,6 @@ public class RecordSourceFactory {
     return dataFileList;
   }
 
-
   /**
    * Given a {@link DataFile} pointing to folder containing the extracted DarwinCore archive this method creates
    * a list of {@link DataFile} for each of the data component (core + extensions).
@@ -145,21 +136,20 @@ public class RecordSourceFactory {
    * @param dwcaDataFile
    * @return
    */
-  private static final List<DataFile> prepareDwcA(DataFile dwcaDataFile) throws IOException {
+  private static List<DataFile> prepareDwcA(DataFile dwcaDataFile) throws IOException {
     Validate.isTrue(dwcaDataFile.getFilePath().toFile().isDirectory(), "dwcaDataFile.getFilePath() must point to a directory");
     List<DataFile> dataFileList = new ArrayList<>();
-    DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile());
+    try (DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile())) {
+      //add the core first
+      DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
+      core.setRowType(dwcReader.getRowType());
+      dataFileList.add(core);
 
-    //add the core first
-    DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
-    core.setRowType(dwcReader.getRowType());
-    dataFileList.add(core);
-
-    DataFile extDatafile;
-    for(ArchiveFile ext : dwcReader.getExtensions()){
-      extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
-      extDatafile.setRowType(ext.getRowType());
-      dataFileList.add(extDatafile);
+      for (ArchiveFile ext : dwcReader.getExtensions()) {
+        DataFile extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
+        extDatafile.setRowType(ext.getRowType());
+        dataFileList.add(extDatafile);
+      }
     }
     return dataFileList;
   }
@@ -170,7 +160,7 @@ public class RecordSourceFactory {
    * @return
    * @throws IOException
    */
-  private static final DataFile prepareTabular(DataFile dwcaDataFile) throws IOException {
+  private static DataFile prepareTabular(DataFile dwcaDataFile) throws IOException {
 
     if(dwcaDataFile.getDelimiterChar() == null) {
       dwcaDataFile.setDelimiterChar(getDelimiter(dwcaDataFile.getFilePath()));
@@ -206,7 +196,7 @@ public class RecordSourceFactory {
     Path spreadsheetFile = spreadsheetDataFile.getFilePath();
     String contentType = spreadsheetDataFile.getContentType();
 
-    Path csvFile = spreadsheetFile.getParent().resolve(UUID.randomUUID().toString() + ".csv");
+    Path csvFile = spreadsheetFile.getParent().resolve(UUID.randomUUID() + ".csv");
     if(ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
             ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(contentType)) {
       SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile);
@@ -230,14 +220,14 @@ public class RecordSourceFactory {
    * @param headers
    * @return
    */
-  private static final Optional<Term> determineRowType(List<Term> headers) {
-    if(headers.contains(DwcTerm.occurrenceID)) {
+  private static Optional<Term> determineRowType(List<Term> headers) {
+    if (headers.contains(DwcTerm.occurrenceID)) {
       return Optional.of(DwcTerm.Occurrence);
     }
-    else if (headers.contains(DwcTerm.taxonID)) {
+    if (headers.contains(DwcTerm.taxonID)) {
       return Optional.of(DwcTerm.Taxon);
     }
-    else if(headers.contains(DwcTerm.eventID)) {
+    if (headers.contains(DwcTerm.eventID)) {
       return Optional.of(DwcTerm.Event);
     }
     return Optional.empty();
@@ -246,13 +236,20 @@ public class RecordSourceFactory {
   /**
    * Guesses the delimiter character form the data file.
    */
-  private static Character getDelimiter(java.nio.file.Path dataFilePath) throws UnkownDelimitersException {
+  private static Character getDelimiter(Path dataFilePath) throws UnkownDelimitersException {
     CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
     if (metadata.getDelimiter().length() == 1) {
       return metadata.getDelimiter().charAt(0);
     } else {
       throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
     }
+  }
+
+  /**
+   * Private constructor.
+   */
+  private RecordSourceFactory() {
+    //empty method
   }
 
 }

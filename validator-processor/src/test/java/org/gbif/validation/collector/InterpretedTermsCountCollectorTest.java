@@ -22,7 +22,7 @@ public class InterpretedTermsCountCollectorTest {
 
   @Test
   public void baseTest() {
-    Term[] termToCollect = new Term[]{GbifTerm.taxonKey};
+    Term[] termToCollect = {GbifTerm.taxonKey};
     testInterpretedTermsCountCollector(new InterpretedTermsCountCollector(Arrays.asList(termToCollect), false));
     //just make sure the useConcurrentMap works even if this test do no test concurrency
     testInterpretedTermsCountCollector(new InterpretedTermsCountCollector(Arrays.asList(termToCollect), true));

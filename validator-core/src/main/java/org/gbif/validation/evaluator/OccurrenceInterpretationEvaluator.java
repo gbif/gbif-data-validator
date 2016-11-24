@@ -37,8 +37,8 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
-  private static Predicate<OccurrenceIssue> isIssueMapped = issue -> REMARKS_MAP.containsKey(issue) &&
-                                                                     OCCURRENCE_ISSUE_MAPPING.containsKey(issue);
+  private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> REMARKS_MAP.containsKey(issue) &&
+                                                                       OCCURRENCE_ISSUE_MAPPING.containsKey(issue);
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
@@ -100,14 +100,14 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     builder.withLineNumber(lineNumber);
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
 
-    result.getUpdated().getIssues().stream().filter(isIssueMapped).
+    result.getUpdated().getIssues().stream().filter(IS_MAPPED).
       forEach(issue -> {
 
         Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
                 .stream()
                 .filter(t -> verbatimFields.get(t) != null)
                 .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
-        builder.addInterpretationDetail(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.get(issue),
+        builder.addInterpretationDetail(OCCURRENCE_ISSUE_MAPPING.get(issue),
                 relatedData);
 
     });

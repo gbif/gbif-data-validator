@@ -15,7 +15,7 @@ import org.junit.Test;
  */
 public class JobServerTest {
 
-  private static JobServer jobServer;
+  private static JobServer<?> jobServer;
 
   private static JobStorage jobStorage;
 
@@ -38,7 +38,7 @@ public class JobServerTest {
   @Test
   public void submitTestIT() {
     jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 0L));
-    JobStatusResponse jobResponse = jobServer.submit(new DataFile());
+    JobStatusResponse<?> jobResponse = jobServer.submit(new DataFile());
     Assert.assertEquals(JobStatusResponse.JobStatus.ACCEPTED, jobResponse.getStatus());
     Assert.assertNotEquals(0L, jobResponse.getJobId());
   }
@@ -49,8 +49,8 @@ public class JobServerTest {
   @Test
   public void submitAndGetTestIT() {
     jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 2L));
-    JobStatusResponse initialJobResponse = jobServer.submit(new DataFile());
-    JobStatusResponse jobResponse = jobServer.status(initialJobResponse.getJobId());
+    JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
+    JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
     Assert.assertEquals(jobResponse.getJobId(), initialJobResponse.getJobId());
   }

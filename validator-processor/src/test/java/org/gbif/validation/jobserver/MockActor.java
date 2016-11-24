@@ -27,12 +27,10 @@ public class MockActor extends AbstractLoggingActor {
 
         }
         JobStatusResponse<ValidationResult>
-          result = new JobStatusResponse<ValidationResult>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
-                                                           ValidationResultBuilders.Builder
-                                                                               .of(true, "mockFile",
-                                                                                   FileFormat.TABULAR,
-                                                                                   ValidationProfile.GBIF_INDEXING_PROFILE)
-                                                                               .build());
+          result = new JobStatusResponse<>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
+                                           ValidationResultBuilders.Builder.of(true, "mockFile",FileFormat.TABULAR,
+                                                                               ValidationProfile.GBIF_INDEXING_PROFILE)
+                                             .build());
         sender().tell(result, self());
       })
         .matchAny(this::unhandled)

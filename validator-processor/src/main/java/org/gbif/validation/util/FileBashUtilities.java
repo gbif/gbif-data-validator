@@ -8,7 +8,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class FileBashUtilities {
 
@@ -54,7 +53,7 @@ public class FileBashUtilities {
   public static Integer[] findInFile(String fileName, String value, int column, String separator) throws IOException {
     String[] lines =  executeSimpleCmd(String.format("awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s",
                                                      column,value,separator,fileName));
-    return Arrays.stream(lines).map(lineNr -> Integer.parseInt(lineNr)).toArray(size -> new Integer[size]);
+    return Arrays.stream(lines).map(Integer::parseInt).toArray(Integer[]::new);
   }
 
   /**
@@ -74,7 +73,7 @@ public class FileBashUtilities {
     Process process = Runtime.getRuntime().exec(cmd);
     try (BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
       String line;
-      List<String> out = new ArrayList<String>();
+      List<String> out = new ArrayList<>();
       while ((line = in.readLine()) != null) {
         out.add(line);
       }

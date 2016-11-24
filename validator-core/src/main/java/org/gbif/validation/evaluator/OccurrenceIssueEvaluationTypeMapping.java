@@ -16,6 +16,12 @@ import java.util.stream.Collectors;
  */
 public class OccurrenceIssueEvaluationTypeMapping {
 
+  /**
+   * Utility classes hide constructors.
+   */
+  private OccurrenceIssueEvaluationTypeMapping(){
+    //empty constructor
+  }
   //we do not support deprecated OccurrenceIssue
   public static final List<OccurrenceIssue> UNSUPPORTED_OCCURRENCE_ISSUES = Collections.unmodifiableList(Arrays.asList(
           OccurrenceIssue.COORDINATE_ACCURACY_INVALID,

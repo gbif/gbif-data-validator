@@ -12,6 +12,13 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 public class SpreadsheetConverters {
 
   /**
+   * Utility class can't be instantiated.
+   */
+  private SpreadsheetConverters(){
+    //empty constructor
+  }
+
+  /**
    * Convert an Excel file into a CSV file.
    *
    * @param workbookFile
@@ -19,8 +26,8 @@ public class SpreadsheetConverters {
    * @throws IOException
    */
   public static void convertExcelToCSV(Path workbookFile, Path csvFile) throws IOException {
-    ExcelConverter excelConverter = new ExcelConverter();
     try {
+      ExcelConverter excelConverter = new ExcelConverter();
       excelConverter.convertToCSV(workbookFile, csvFile);
     } catch (InvalidFormatException e) {
       throw new IOException(e);
@@ -35,8 +42,7 @@ public class SpreadsheetConverters {
    * @throws IOException
    */
   public static void convertOdsToCSV(Path workbookFile, Path csvFile) throws IOException {
-    OdsConverter odsConverter = new OdsConverter();
-    odsConverter.convertToCSV(workbookFile, csvFile);
+    OdsConverter.convertToCSV(workbookFile, csvFile);
   }
 
 }

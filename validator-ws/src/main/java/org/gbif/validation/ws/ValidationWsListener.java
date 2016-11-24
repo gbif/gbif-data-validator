@@ -66,8 +66,7 @@ public class ValidationWsListener extends GbifServletListener {
 
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getWorkingDir())),
-                                                               new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
-                                                                                                   configuration.getFileSplitSize())));
+                                                               buildActorPropsMapping(configuration)));
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
                                                                                      configuration.getFileSplitSize()));
@@ -77,7 +76,17 @@ public class ValidationWsListener extends GbifServletListener {
       expose(ResourceEvaluationManager.class);
       expose(HttpUtil.class);
     }
+
+    /**
+     * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
+     */
+    private static DataValidationActorPropsMapping buildActorPropsMapping(ValidationConfiguration configuration) {
+      return new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
+                                                 configuration.getFileSplitSize(),
+                                                 configuration.getWorkingDir());
+    }
   }
+
 
   public ValidationWsListener() throws IOException {
     super(PropertiesUtil.readFromFile(ConfUtils.getAppConfFile(APP_CONF_FILE)), "org.gbif.validation.ws", false);

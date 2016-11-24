@@ -23,10 +23,10 @@ public class DataValidationActorPropsMapping  implements ActorPropsMapping<DataF
   /**
    * Default constructor, the parameters received are used to build actor instances.
    */
-  public DataValidationActorPropsMapping(EvaluatorFactory evaluatorFactory, Integer fileSplitSize) {
+  public DataValidationActorPropsMapping(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir) {
     mapping = new HashMap<FileFormat, Props> () {{
         put(FileFormat.TABULAR,
-                    Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize));
+                    Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize, workingDir));
       }};
   }
 

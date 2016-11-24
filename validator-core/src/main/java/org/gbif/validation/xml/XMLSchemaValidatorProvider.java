@@ -54,11 +54,10 @@ public class XMLSchemaValidatorProvider {
 
     SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
     xmlCatalog.ifPresent( xc -> {
-      XMLCatalogResolver resolver = new XMLCatalogResolver(new String[]{xc});
-      schemaFactory.setResourceResolver(resolver);
+      schemaFactory.setResourceResolver(new XMLCatalogResolver(new String[]{xc}));
     });
 
-    schemas = Collections.synchronizedMap(new HashMap<String, Schema>());
+    schemas = Collections.synchronizedMap(new HashMap<>());
     try {
       schemas.put(DWC_META_XML, schemaFactory.newSchema(getStreamSource(DWC_META_XML_SCHEMA)));
       schemas.put(GBIF_EML, schemaFactory.newSchema(getStreamSource(GBIF_EML_SCHEMA)));
