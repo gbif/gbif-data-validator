@@ -40,7 +40,7 @@ public class ValidationJobServerResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/submit")
-  public JobStatusResponse onValidateFileAsync(@Context HttpServletRequest request) {
+  public JobStatusResponse<?> onValidateFileAsync(@Context HttpServletRequest request) {
     Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(request);
     if (dataFile.isPresent()) {
        return jobServer.submit(dataFile.get());
@@ -52,8 +52,15 @@ public class ValidationJobServerResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/status/{jobid}")
-  public JobStatusResponse status(@PathParam("jobid") String jobid) {
+  public JobStatusResponse<?> status(@PathParam("jobid") String jobid) {
     return jobServer.status(Long.valueOf(jobid));
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/status/{jobid}/kill")
+  public JobStatusResponse<?> kill(@PathParam("jobid") String jobid) {
+    return jobServer.kill(Long.valueOf(jobid));
   }
 
 }

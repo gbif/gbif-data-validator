@@ -94,15 +94,14 @@ public class UploadedFileManager {
 
     try (ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP,
                                                                                       zippedInputStream)) {
-      Optional<ZipArchiveEntry> entry = Optional.ofNullable ((ZipArchiveEntry) ais.getNextEntry());
+      Optional<ZipArchiveEntry> entry = Optional.ofNullable((ZipArchiveEntry)ais.getNextEntry());
       while (entry.isPresent()) {
-        if(entry.get().isDirectory()){
+        if (entry.get().isDirectory()) {
           Files.createDirectory(destinationFile.resolve(entry.get().getName()));
-        }
-        else {
+        } else {
           Files.copy(ais, destinationFile.resolve(entry.get().getName()));
         }
-        entry = Optional.ofNullable ((ZipArchiveEntry) ais.getNextEntry());
+        entry = Optional.ofNullable((ZipArchiveEntry)ais.getNextEntry());
       }
     }
   }
@@ -264,8 +263,7 @@ public class UploadedFileManager {
         LOG.warn("Unsupported file type: {}", contentType);
         return Optional.empty();
       }
-    }
-    catch (IOException ioEx) {
+    } catch (IOException ioEx) {
       LOG.warn("Deleting temporary content of {} after IOException.", filename);
       FileUtils.deleteDirectory(destinationFolder.toFile());
       //propagate exception

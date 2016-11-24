@@ -34,11 +34,20 @@ import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
 @Singleton
 public class ValidationResource {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
   private final ResourceEvaluationManager resourceEvaluationManager;
-
   private final UploadedFileManager fileTransferManager;
 
-  private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
+  /**
+   * Deletes Path silently, any exception is not propagated.
+   */
+  private static void deletePathSilently(java.nio.file.Path path) {
+    try {
+        Files.delete(path);
+    } catch (Exception ex) {
+      LOG.error("Error deleting file {}", path, ex);
+    }
+  }
 
   @Inject
   public ValidationResource(ValidationConfiguration configuration, ResourceEvaluationManager resourceEvaluationManager)
@@ -56,7 +65,6 @@ public class ValidationResource {
     return processFile(dataFile);
   }
 
-
   @POST
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
@@ -71,7 +79,6 @@ public class ValidationResource {
     }
   }
 
-
   /**
    * Applies the validation routines to the input file.
    */
@@ -82,18 +89,10 @@ public class ValidationResource {
       } catch (Exception ex) {
         throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
       } finally {
-        deletePath(dataFile.get().getFilePath());
+        deletePathSilently(dataFile.get().getFilePath());
       }
     }
     throw errorResponse(Response.Status.BAD_REQUEST, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT);
-  }
-
-  private static void deletePath(java.nio.file.Path dataFilePath) {
-    try {
-        Files.delete(dataFilePath);
-    } catch (Exception ex) {
-      LOG.error("Error deleting file {}", dataFilePath, ex);
-    }
   }
 
 
