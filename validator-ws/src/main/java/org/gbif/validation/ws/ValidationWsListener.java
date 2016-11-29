@@ -54,18 +54,26 @@ public class ValidationWsListener extends GbifServletListener {
       super(PROPERTIES_PREFIX,properties);
     }
 
+    private static ValidationConfiguration getConfFromProperties(Properties properties){
+      ValidationConfiguration configuration = new ValidationConfiguration();
+      configuration.setApiUrl(properties.getProperty(ConfKeys.API_URL_CONF_KEY));
+      configuration.setWorkingDir(properties.getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
+      configuration.setFileSplitSize(NumberUtils.toInt(properties.getProperty(ConfKeys.FILE_SPLIT_SIZE),
+                                                       DEFAULT_SPLIT_SIZE));
+      configuration.setApiDataValidationPath(properties.getProperty(ConfKeys.VALIDATION_API_PATH_CONF_KEY));
+      configuration.setJobResultStorageDir(properties.getProperty(ConfKeys.RESULT_STORAGE_DIR_CONF_KEY));
+      return configuration;
+    }
+
     @Override
     protected void configureService() {
-      ValidationConfiguration configuration = new ValidationConfiguration();
-      configuration.setApiUrl(getProperties().getProperty(ConfKeys.API_URL_CONF_KEY));
-      configuration.setWorkingDir(getProperties().getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
-      configuration.setFileSplitSize(NumberUtils.toInt(getProperties().getProperty(ConfKeys.FILE_SPLIT_SIZE),
-                                                       DEFAULT_SPLIT_SIZE));
+      ValidationConfiguration configuration = getConfFromProperties(getProperties());
+
       HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(HTTP_CLIENT_TO, HTTP_CLIENT_THREADS,
                                                                        HTTP_CLIENT_THREADS_PER_ROUTE));
 
       bind(HttpUtil.class).toInstance(httpUtil);
-      bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getWorkingDir())),
+      bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getJobResultStorageDir())),
                                                                buildActorPropsMapping(configuration)));
       bind(ValidationConfiguration.class).toInstance(configuration);
       bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),

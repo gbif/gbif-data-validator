@@ -139,6 +139,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
                                                                                   dataFile.getFileFormat(),
                                                                                   ValidationProfile.GBIF_INDEXING_PROFILE);
       blrd.withResourceResult(collector.toResult(dataFile, dataFile.getSourceFileName()));
+
+      //Tells the JobMonitor(parent()) that the job is done
       context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), blrd.build()), self());
       FileUtils.deleteDirectoryRecursively(workingDir);
       getContext().stop(self());
