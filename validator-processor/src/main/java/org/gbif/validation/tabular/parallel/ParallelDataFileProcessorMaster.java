@@ -77,34 +77,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       match(DataJob.class, dataJobMessage -> {
         dataJob = dataJobMessage;
         workingDir = new File(baseWorkingDir,UUID.randomUUID().toString());
-        DataFile dataFile =  (DataFile)dataJobMessage.getJobData();
-
-        //TODO check why is necessary
-        dataFile.setHasHeaders(Optional.of(true));
-
-        List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
-        List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
-
-        numOfWorkers = 0;
-
-        //prepare everything
-        dataFiles.forEach(df -> {
-          rowTypeCollector.put(df.getRowType(), new ParallelResultCollector(Arrays.asList(df.getColumns()),
-                  CollectorFactory.createInterpretedTermsCountCollector(df.getRowType(), true)));
-          rowTypeDataFile.put(df.getRowType(), df);
-          List<DataFile> splitDataFile = null;
-          try {
-            splitDataFile = splitDataFile(df, fileSplitSize);
-          } catch (IOException ioEx) {
-            LOG.error("Failed to split data", ioEx);
-          }
-          numOfWorkers += splitDataFile.size();
-          dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
-                  factory.create(Arrays.asList(df.getColumns()), df.getRowType())));
-        });
-
-        //now trigger everything
-        processDataFile(dataFilesToEvaluate);
+        processDataFile((DataFile)dataJobMessage.getJobData(),factory,fileSplitSize);
       })
         .match(DataLine.class, dataLine -> {
           rowTypeCollector.get(dataLine.getRowType()).metricsCollector.collect(dataLine.getLine());
@@ -118,7 +91,44 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     );
   }
 
+  private void processDataFile(DataFile dataFile, EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
+    //TODO check why is necessary
+    dataFile.setHasHeaders(Optional.of(true));
+    List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+    List<EvaluationUnit> dataFilesToEvaluate = splitDataFile(dataFiles, factory, fileSplitSize);
+    //now trigger everything
+    processDataFile(dataFilesToEvaluate);
+  }
 
+  /**
+   * Calculates the required splits to process all the datafiles. The variable numOfWorkers is changed with the number
+   * of actors that will be used to process the input file.
+   */
+  private List<EvaluationUnit> splitDataFile(List<DataFile> dataFiles, EvaluatorFactory factory, Integer fileSplitSize) {
+    List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
+
+    numOfWorkers = 0;
+    //prepare everything
+    dataFiles.forEach(df -> {
+      rowTypeCollector.put(df.getRowType(), new ParallelResultCollector(Arrays.asList(df.getColumns()),
+                                                                        CollectorFactory.createInterpretedTermsCountCollector(df.getRowType(), true)));
+      rowTypeDataFile.put(df.getRowType(), df);
+      try {
+        List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
+        numOfWorkers += splitDataFile.size();
+        dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
+                                                   factory.create(Arrays.asList(df.getColumns()), df.getRowType())));
+      } catch (IOException ioEx) {
+        LOG.error("Failed to split data", ioEx);
+      }
+
+    });
+    return dataFilesToEvaluate;
+  }
+
+  /**
+   * Creates a Actor/Worker for each evaluation unit.
+   */
   private void processDataFile(List<EvaluationUnit> dataFilesToEvaluate) {
     dataFilesToEvaluate.forEach(dfte -> {
       ActorRef workerRouter = createWorkerRoutes(dfte.recordEvaluator);
