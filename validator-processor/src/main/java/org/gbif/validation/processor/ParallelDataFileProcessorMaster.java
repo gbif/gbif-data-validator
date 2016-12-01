@@ -50,10 +50,10 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   private File workingDir;
 
   private static class EvaluationUnit {
-    private List<DataFile> dataFiles;
-    private RecordEvaluator recordEvaluator;
-    public EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator) {
-     this.dataFiles = dataFiles;
+    private final List<DataFile> dataFiles;
+    private final RecordEvaluator recordEvaluator;
+    EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator) {
+      this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
     }
   }
