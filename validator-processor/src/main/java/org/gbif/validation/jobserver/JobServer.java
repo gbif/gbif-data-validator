@@ -3,34 +3,25 @@ package org.gbif.validation.jobserver;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
+import org.gbif.validation.jobserver.messages.DataJob;
+
+import static  org.gbif.validation.jobserver.util.ActorSelectionUtil.getRunningActor;
 
 import java.util.Date;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import akka.actor.ActorRef;
-import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
+import akka.actor.Kill;
 import akka.actor.Props;
-import akka.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Option;
-import scala.util.Try;
 
 /**
  * Manages the job submission and statis retrieval.
  */
 public class JobServer<T> {
-
-
-
-  //Path used to find actors in the system of actors
-  private static final String ACTOR_SELECTION_PATH = "/user/JobMonitor/";
-
-  //Default timeout in seconds to get an actor ref
-  private static final int ACTOR_SELECTION_TO = 5;
 
   private static final Logger LOG = LoggerFactory.getLogger(JobServer.class);
 
@@ -59,7 +50,7 @@ public class JobServer<T> {
    */
   public JobStatusResponse<?> submit(DataFile dataFile) {
     long  newJobId = jobIdSeed.getAndIncrement();
-    jobMonitor.tell(new DataJob<DataFile>(newJobId, dataFile), jobMonitor);
+    jobMonitor.tell(new DataJob<>(newJobId, dataFile), jobMonitor);
     return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId);
   }
 
@@ -80,10 +71,14 @@ public class JobServer<T> {
    * Tries to kill a jobId.
    */
   public JobStatusResponse<?> kill(long jobId) {
-    Option<Try<ActorRef>> actorRef = getRunningActor(jobId);
-    if (!actorRef.isEmpty()) {
-      system.stop(actorRef.get().get());
-      return new JobStatusResponse(JobStatus.KILLED, jobId);
+    Optional<ActorRef> actorOpt = getRunningActor(jobId, system);
+    if (actorOpt.isPresent()) {
+      JobStatusResponse<?> response = new JobStatusResponse(JobStatus.KILLED, jobId);
+      ActorRef actorRef = actorOpt.get();
+      actorRef.tell(Kill.getInstance(), jobMonitor);
+      system.stop(actorRef);
+      jobStorage.put(response);   //stores a job result
+      return response;
     }
     return new JobStatusResponse(JobStatus.NOT_FOUND, jobId);
   }
@@ -103,21 +98,12 @@ public class JobServer<T> {
   private JobStatusResponse<?> getJobStatus(long jobId) {
     try {
       //there's a running actor with that jobId name?
-      return new JobStatusResponse(getRunningActor(jobId).isEmpty() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
+      return new JobStatusResponse(getRunningActor(jobId, system).isPresent() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
                                    jobId);
     } catch (Exception ex) {
       LOG.error("Error  retrieving JobId {} data", jobId, ex);
     }
     return JobStatusResponse.NOT_FOUND_RESPONSE;
-  }
-
-  /**
-   * Tries to get the reference of a running Actor in the system.
-   */
-  private Option<Try<ActorRef>> getRunningActor(long jobId) {
-    ActorSelection sel = system.actorSelection(ACTOR_SELECTION_PATH + jobId);
-    Timeout to = new Timeout(ACTOR_SELECTION_TO, TimeUnit.SECONDS);
-    return sel.resolveOne(to).value();
   }
 
 }

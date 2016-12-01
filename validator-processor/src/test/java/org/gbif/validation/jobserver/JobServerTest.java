@@ -15,9 +15,9 @@ import org.junit.Test;
  */
 public class JobServerTest {
 
-  private static JobServer<?> jobServer;
+  private JobServer<?> jobServer;
 
-  private static JobStorage jobStorage;
+  private JobStorage jobStorage;
 
   @Before
   public void init() {
@@ -48,11 +48,32 @@ public class JobServerTest {
    */
   @Test
   public void submitAndGetTestIT() {
-    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 2L));
+    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 2000L));
     JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
     Assert.assertEquals(jobResponse.getJobId(), initialJobResponse.getJobId());
+  }
+
+
+  @Test
+  public void notFoundTestIT() {
+    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 0L));
+    JobStatusResponse<?> jobResponse = jobServer.status(100l);
+    Assert.assertEquals(JobStatusResponse.JobStatus.NOT_FOUND, jobResponse.getStatus());
+  }
+
+  @Test
+  public void killTestIT() throws InterruptedException {
+    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 2000L));
+    JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
+    Thread.sleep(5); //sleep before getting the status of a running actor
+    JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
+    Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
+    JobStatusResponse<?> jobKillResponse = jobServer.kill(initialJobResponse.getJobId());
+    Assert.assertEquals(JobStatusResponse.JobStatus.KILLED, jobKillResponse.getStatus());
+    JobStatusResponse<?> jobSecondKillResponse = jobServer.status(jobKillResponse.getJobId());
+    Assert.assertEquals(JobStatusResponse.JobStatus.KILLED, jobSecondKillResponse.getStatus());
   }
 
 }

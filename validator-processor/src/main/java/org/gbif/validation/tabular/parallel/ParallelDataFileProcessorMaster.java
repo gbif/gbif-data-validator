@@ -9,7 +9,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.collector.CollectorFactory;
 import org.gbif.validation.evaluator.EvaluatorFactory;
-import org.gbif.validation.jobserver.DataJob;
+import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.util.FileBashUtilities;
 

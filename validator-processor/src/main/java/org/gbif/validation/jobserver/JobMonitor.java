@@ -1,7 +1,8 @@
 package org.gbif.validation.jobserver;
 
-
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.jobserver.messages.DataJob;
+
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
@@ -26,9 +27,9 @@ public class JobMonitor extends AbstractLoggingActor {
       }).
       match(JobStatusResponse.class, dataJobResult -> {
         jobStorage.put(dataJobResult);   //stores a job result
-      })
-        .matchAny(this::unhandled)
+      }).matchAny(this::unhandled)
         .build()
     );
   }
+
 }
