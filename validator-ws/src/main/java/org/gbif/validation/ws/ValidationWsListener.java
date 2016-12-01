@@ -16,6 +16,7 @@ import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
@@ -65,10 +66,27 @@ public class ValidationWsListener extends GbifServletListener {
       return configuration;
     }
 
+    /**
+     * Creates the workingDir and the file storage directory.
+     */
+    private void createWorkingDirs(ValidationConfiguration configuration) {
+      try {
+        Files.createDirectories(Paths.get(configuration.getWorkingDir()));
+        Files.createDirectories(Paths.get(configuration.getJobResultStorageDir()));
+      } catch (IOException ioex) {
+        throw new IllegalStateException("Error creating working directories", ioex);
+      }
+    }
+
     @Override
     protected void configureService() {
+      //get configuration settings
       ValidationConfiguration configuration = getConfFromProperties(getProperties());
 
+      //create required directories
+      createWorkingDirs(configuration);
+
+      //Guice bindings
       HttpUtil httpUtil = new HttpUtil(HttpUtil.newMultithreadedClient(HTTP_CLIENT_TO, HTTP_CLIENT_THREADS,
                                                                        HTTP_CLIENT_THREADS_PER_ROUTE));
 
