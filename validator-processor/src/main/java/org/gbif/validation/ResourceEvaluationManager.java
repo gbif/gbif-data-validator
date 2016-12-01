@@ -2,9 +2,7 @@ package org.gbif.validation;
 
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DataFileProcessor;
-import org.gbif.validation.api.DataFileProcessorAsync;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResult;
@@ -13,7 +11,6 @@ import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorFactory;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.source.RecordSourceFactory;
-import org.gbif.validation.tabular.parallel.ParallelDataFileProcessor;
 import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
 import java.io.IOException;
@@ -86,25 +83,7 @@ public class ResourceEvaluationManager {
       return runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
     }
 
-    return runEvaluationWithSplit(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
-  }
-
-  /**
-   * Split files and run evaluation on all of them.
-   *
-   * @param sourceFileName
-   * @param fileFormat
-   * @param dataFiles
-   * @return
-   */
-  private ValidationResult runEvaluationWithSplit(String sourceFileName, FileFormat fileFormat,
-                                                  List<DataFile> dataFiles)  {
-
-    ValidationResultBuilders.Builder blrd = ValidationResultBuilders.Builder.of(true, sourceFileName,
-                                                                                fileFormat, ValidationProfile.GBIF_INDEXING_PROFILE);
-    //FIX ME .get(0) should be a loop when we can create multiples ParallelDataFileProcessor
-    blrd.withResourceResult(buildDataFileProcessorWithSplit(dataFiles.get(0)).process(dataFiles.get(0)));
-    return blrd.build();
+    return null; //runEvaluationWithSplit(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
   }
 
 
@@ -151,22 +130,6 @@ public class ResourceEvaluationManager {
             CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), false));
   }
 
-  /**
-   * Build a {@link DataFileProcessor} instance configured to split source file(s).
-   *
-   * @param dataFile
-   * @return
-   */
-  private DataFileProcessor buildDataFileProcessorWithSplit(@NotNull DataFile dataFile) {
-    return buildParallelDataFileProcessor(dataFile);
-  }
-
-  private DataFileProcessor buildParallelDataFileProcessor(@NotNull DataFile dataFile) {
-    return new ParallelDataFileProcessor(Arrays.asList(dataFile.getColumns()),
-            factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
-            CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), true), system, fileSplitSize,
-            newJobId.getAndIncrement());
-  }
 
 
 }

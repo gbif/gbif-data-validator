@@ -3,7 +3,7 @@ package org.gbif.validation.jobserver.impl;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.ActorPropsMapping;
-import org.gbif.validation.tabular.parallel.ParallelDataFileProcessorMaster;
+import org.gbif.validation.processor.ParallelDataFileProcessorMaster;
 
 import akka.actor.Props;
 

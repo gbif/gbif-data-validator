@@ -1,4 +1,4 @@
-package org.gbif.validation.tabular.parallel;
+package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
 
