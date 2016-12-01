@@ -12,6 +12,7 @@ import com.google.common.base.Preconditions;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.ObjectReader;
 import org.codehaus.jackson.map.ObjectWriter;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * JobStorage implementation that stores and  retrieves json files from a local file system.
@@ -22,6 +23,10 @@ public class FileJobStorage implements JobStorage {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);
   private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobStatusResponse.class);
+
+  static {
+    OBJECT_MAPPER.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+  }
 
   //Directory where the JSON files are stored.
   private final Path storePath;
