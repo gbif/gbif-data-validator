@@ -16,7 +16,7 @@ public class InMemoryJobStorage implements JobStorage {
 
   @Override
   public Optional<JobStatusResponse<?>> get(long jobId) {
-    return store.containsKey(jobId) ? Optional.ofNullable(store.get(jobId)) : Optional.empty();
+    return Optional.ofNullable(store.get(jobId));
   }
 
   @Override

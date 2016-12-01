@@ -1,4 +1,4 @@
-package org.gbif.validation.jobserver;
+package org.gbif.validation.jobserver.messages;
 
 /**
  * Encapsulates the work to be done by a Job.

@@ -10,7 +10,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.collector.CollectorFactory;
 import org.gbif.validation.evaluator.EvaluatorFactory;
-import org.gbif.validation.jobserver.DataJob;
+import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
@@ -188,7 +188,6 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * This can represent en entire file or a part of a file
    */
   private void processResults(DataWorkResult result) {
-
     int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
     if (numberOfWorkersCompleted == numOfWorkers) {
       //prepare validationResultBuilder

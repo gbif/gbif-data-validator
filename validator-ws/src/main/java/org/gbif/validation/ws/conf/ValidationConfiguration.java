@@ -20,12 +20,30 @@ public class ValidationConfiguration {
    */
   private String workingDir;
 
+  /**
+   * Path to the data validation public path.
+   */
+  private String apiDataValidationPath;
+
+  /**
+   * Directory where FileJobStorage stores job results.
+   */
+  private String jobResultStorageDir;
+
   public String getApiUrl() {
     return apiUrl;
   }
 
   public void setApiUrl(String apiUrl) {
     this.apiUrl = apiUrl;
+  }
+
+  public String getApiDataValidationPath() {
+    return apiDataValidationPath;
+  }
+
+  public void setApiDataValidationPath(String apiDataValidationPath) {
+    this.apiDataValidationPath = apiDataValidationPath;
   }
 
   public Integer getFileSplitSize() {
@@ -42,5 +60,13 @@ public class ValidationConfiguration {
 
   public void setWorkingDir(String workingDir) {
     this.workingDir = workingDir;
+  }
+
+  public String getJobResultStorageDir() {
+    return jobResultStorageDir;
+  }
+
+  public void setJobResultStorageDir(String jobResultStorageDir) {
+    this.jobResultStorageDir = jobResultStorageDir;
   }
 }

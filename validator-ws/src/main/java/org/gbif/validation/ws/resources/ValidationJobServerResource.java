@@ -7,6 +7,7 @@ import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -17,22 +18,47 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.sun.jersey.api.client.ClientResponse;
 
 @Path("/jobserver")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
 public class ValidationJobServerResource {
 
+  private static final String STATUS_PATH = "/status/";
+
   private final UploadedFileManager fileTransferManager;
   private final JobServer<?> jobServer;
+  private final ValidationConfiguration configuration;
+
+
+  private URI getJobRedirectUri(long jobId) {
+    return URI.create(configuration.getApiDataValidationPath() + STATUS_PATH + jobId);
+  }
+
+  /**
+   * Builds a Jersey response from a JobStatusResponse instance.
+   */
+  private Response buildResponseFromStatus(JobStatusResponse<?> jobResponse) {
+    if (JobStatusResponse.JobStatus.ACCEPTED == jobResponse.getStatus()) {
+      return Response.seeOther(getJobRedirectUri(jobResponse.getJobId())).status(Response.Status.ACCEPTED)
+                      .entity(jobResponse).build();
+    } else if (JobStatusResponse.JobStatus.NOT_FOUND == jobResponse.getStatus()) {
+      return Response.status(ClientResponse.Status.NOT_FOUND).entity(jobResponse).build();
+    } else {
+      return Response.ok(jobResponse).build();
+    }
+  }
 
   @Inject
   public ValidationJobServerResource(ValidationConfiguration configuration, JobServer<ValidationResult> jobServer)
     throws IOException {
     this.jobServer = jobServer;
+    this.configuration = configuration;
     fileTransferManager = new UploadedFileManager(configuration.getWorkingDir());
   }
 
@@ -40,27 +66,27 @@ public class ValidationJobServerResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/submit")
-  public JobStatusResponse<?> onValidateFileAsync(@Context HttpServletRequest request) {
+  public Response submit(@Context HttpServletRequest request) {
     Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(request);
     if (dataFile.isPresent()) {
-       return jobServer.submit(dataFile.get());
+      return buildResponseFromStatus(jobServer.submit(dataFile.get()));
     }
-    return JobStatusResponse.FAILED_RESPONSE;
+    return Response.status(Response.Status.BAD_REQUEST).entity(JobStatusResponse.FAILED_RESPONSE).build();
   }
 
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/status/{jobid}")
-  public JobStatusResponse<?> status(@PathParam("jobid") String jobid) {
-    return jobServer.status(Long.valueOf(jobid));
+  @Path(STATUS_PATH + "{jobid}")
+  public Response status(@PathParam("jobid") String jobid) {
+    return buildResponseFromStatus(jobServer.status(Long.valueOf(jobid)));
   }
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/status/{jobid}/kill")
-  public JobStatusResponse<?> kill(@PathParam("jobid") String jobid) {
-    return jobServer.kill(Long.valueOf(jobid));
+  public Response kill(@PathParam("jobid") String jobid) {
+    return buildResponseFromStatus(jobServer.kill(Long.valueOf(jobid)));
   }
 
 }
