@@ -77,8 +77,11 @@ public class RecordSourceFactory {
         return Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
                         dataFile.isHasHeaders()));
       case DWCA:
-        if(dataFile.getFileLineOffset().isPresent()){
-          return Optional.of(new DwcReader(dataFile.isAlternateViewOf().get().getFilePath().toFile(),
+        //line off means this file is a portion of the entire file
+        if(dataFile.getFileLineOffset().isPresent()) {
+          //parent file is the complete file, grand-parent file is the archive
+          Path dwcaFolder = dataFile.isAlternateViewOf().get().isAlternateViewOf().get().getFilePath();
+          return Optional.of(new DwcReader(dwcaFolder.toFile(),
                   dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
         }
         return Optional.of(fromDwcA(dataFile.getFilePath().toFile()));

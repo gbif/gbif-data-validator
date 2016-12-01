@@ -20,7 +20,7 @@ import scala.Option;
 import scala.util.Try;
 
 /**
- * Manages the job submission and statis retrieval.
+ * Manages the job submission and status retrieval.
  */
 public class JobServer<T> {
 

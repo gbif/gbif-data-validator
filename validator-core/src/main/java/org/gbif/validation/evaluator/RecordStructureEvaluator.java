@@ -15,10 +15,17 @@ import org.apache.commons.lang3.Validate;
  */
 public class RecordStructureEvaluator implements RecordEvaluator {
 
+  private final Term rowType;
   private final int expectedColumnCount;
 
-  public RecordStructureEvaluator(List<Term> columns) {
+  /**
+   *
+   * @param rowType rowType on which this RecordEvaluator will operate.
+   * @param columns
+   */
+  public RecordStructureEvaluator(Term rowType, List<Term> columns) {
     Validate.notNull(columns, "columns must not be null");
+    this.rowType = rowType;
     expectedColumnCount = columns.size();
   }
 
@@ -38,10 +45,9 @@ public class RecordStructureEvaluator implements RecordEvaluator {
    * @param actualColumnCount
    * @return
    */
-  private static RecordEvaluationResult toColumnCountMismatchResult(Long lineNumber, int expectedColumnCount,
+  private RecordEvaluationResult toColumnCountMismatchResult(Long lineNumber, int expectedColumnCount,
                                                                     int actualColumnCount) {
-    return new RecordEvaluationResult.Builder()
-            .withLineNumber(lineNumber)
+    return RecordEvaluationResult.Builder.of(rowType, lineNumber)
             .addBaseDetail(EvaluationType.COLUMN_MISMATCH, Integer.toString(expectedColumnCount),
                     Integer.toString(actualColumnCount))
             .build();

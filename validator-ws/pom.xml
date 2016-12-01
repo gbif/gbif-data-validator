@@ -10,19 +10,16 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>validator-ws</artifactId>
+  <packaging>jar</packaging>
 
+  <name>Data Validator Web service</name>
 
-
-<packaging>jar</packaging>
-
-<name>Data Validator Web service</name>
-
-<distributionManagement>
-  <site>
-    <id>gh-pages</id>
-    <url>http://gbif.github.io/gbif-data-validator/${project.artifactId}/</url>
-  </site>
-</distributionManagement>
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/gbif-data-validator/${project.artifactId}/</url>
+    </site>
+  </distributionManagement>
 
 <properties>
   <!-- Plugins -->
@@ -176,6 +173,7 @@
     <groupId>com.google.guava</groupId>
     <artifactId>guava</artifactId>
   </dependency>
+
   <dependency>
     <!-- dependency:analyze reports a false positive here -->
     <groupId>com.google.inject.extensions</groupId>

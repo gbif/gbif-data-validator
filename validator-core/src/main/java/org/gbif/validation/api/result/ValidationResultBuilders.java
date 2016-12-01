@@ -7,7 +7,6 @@ import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -90,6 +89,10 @@ public class ValidationResultBuilders {
     }
   }
 
+  /**
+   * Builder for records validation results.
+   *
+   */
   public static class RecordsValidationResultElementBuilder {
     private String fileName;
     private Long numberOfLines;

@@ -18,8 +18,7 @@ public class RecordEvaluationResultTest {
 
   @Test
   public void testFluentBuilder() {
-    RecordEvaluationResult result = new RecordEvaluationResult.Builder()
-            .withLineNumber(1l)
+    RecordEvaluationResult result = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l)
             .addBaseDetail(EvaluationType.COLUMN_MISMATCH, "12", "11")
             .build();
     assertNotNull(result);
@@ -29,12 +28,10 @@ public class RecordEvaluationResultTest {
   public void testMerge() {
     Map<Term, String> relatedData = new HashMap<>();
     relatedData.put(DwcTerm.basisOfRecord, "n/a");
-    RecordEvaluationResult result = new RecordEvaluationResult.Builder()
-            .withLineNumber(1l)
+    RecordEvaluationResult result = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l)
             .addBaseDetail(EvaluationType.COLUMN_MISMATCH, "12", "11")
             .build();
-    RecordEvaluationResult result2 = new RecordEvaluationResult.Builder()
-            .withLineNumber(1l)
+    RecordEvaluationResult result2 = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l)
             .addInterpretationDetail(EvaluationType.BASIS_OF_RECORD_INVALID, relatedData)
             .build();
 

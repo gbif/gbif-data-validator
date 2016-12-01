@@ -26,7 +26,7 @@ public class OccurrenceInterpretationEvaluatorTest {
     //test expected data
     List<Term> columnMapping = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified});
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            columnMapping);
+            DwcTerm.Occurrence, columnMapping);
 
     String[] record = new String[]{"1", "2000-01-01", "2000-01-02"};
     VerbatimOccurrence occ = evaluator.toVerbatimOccurrence(record);
@@ -54,7 +54,7 @@ public class OccurrenceInterpretationEvaluatorTest {
   public void testEvaluate(){
     List<Term> columnMapping = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified});
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            columnMapping);
+            DwcTerm.Occurrence, columnMapping);
     assertNull(evaluator.evaluate(null, null));
   }
 }

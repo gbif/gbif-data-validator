@@ -1,5 +1,6 @@
 package org.gbif.validation.tabular.parallel;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
@@ -41,11 +42,12 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
   private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, ActorRef sender) {
 
     try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
+      Term rowType = dataFile.getRowType();
       long line = dataFile.getFileLineOffset().orElse(0);
       String[] record;
       while ((record = recordSource.read()) != null) {
         line++;
-        sender.tell(new DataLine(record), self());
+        sender.tell(new DataLine(rowType, record), self());
         sender.tell(recordEvaluator.evaluate(line, record), self());
       }
       //add reader aggregated result to the DataWorkResult

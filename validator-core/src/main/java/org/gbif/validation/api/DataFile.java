@@ -46,6 +46,45 @@ public class DataFile {
     this.isAlternateViewOf = Optional.ofNullable(isAlternateViewOf);
   }
 
+  public static DataFile copyFromParent(DataFile parentDataFile) {
+    DataFile newDataFile = new DataFile(parentDataFile);
+    return copyInto(parentDataFile, newDataFile);
+  }
+  /**
+   * Get a copy of a {@link DataFile} .
+   * @param dataFile
+   * @return
+   */
+  public static DataFile copy(DataFile dataFile) {
+    DataFile newDataFile = new DataFile(dataFile.isAlternateViewOf.orElse(null));
+    return copyInto(dataFile, newDataFile);
+  }
+
+  /**
+   * Mutable method to copy all properties of one {@link DataFile} into another.
+   *
+   * @param srcDataFile
+   * @param destDataFile
+   */
+  private static DataFile copyInto(DataFile srcDataFile, DataFile destDataFile) {
+    destDataFile.filePath = srcDataFile.filePath;
+    destDataFile.fileFormat = srcDataFile.fileFormat;
+    destDataFile.contentType = srcDataFile.contentType;
+
+    destDataFile.sourceFileName = srcDataFile.sourceFileName;
+
+    destDataFile.columns = srcDataFile.columns;
+    destDataFile.rowType = srcDataFile.rowType;
+
+    destDataFile.fileLineOffset = srcDataFile.fileLineOffset;
+    destDataFile.hasHeaders = srcDataFile.hasHeaders;
+
+    destDataFile.delimiterChar = srcDataFile.delimiterChar;
+    destDataFile.numOfLines = srcDataFile.numOfLines;
+
+    return destDataFile;
+  }
+
   public Character getDelimiterChar() {
     return delimiterChar;
   }

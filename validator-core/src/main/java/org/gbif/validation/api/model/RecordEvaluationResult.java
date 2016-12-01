@@ -7,7 +7,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -16,21 +15,29 @@ import javax.annotation.Nullable;
  */
 public class RecordEvaluationResult implements Serializable {
 
-  //currently stored inside the details
-  private final String recordId;
+  //2 fields used to uniquely identify an element in the validation
+  private final Term rowType;
+  private final Long lineNumber;
+
   private final Map<Term, Object> interpretedData;
   private final List<EvaluationResultDetails> details;
 
   /**
    * Use {@link Builder} to get an instance.
-   * @param recordId
+   * @param rowType
+   * @param lineNumber
    * @param details
    * @param interpretedData
    */
-  private RecordEvaluationResult(String recordId, List<EvaluationResultDetails> details, Map<Term, Object> interpretedData){
-    this.recordId = recordId;
+  private RecordEvaluationResult(Term rowType, Long lineNumber, List<EvaluationResultDetails> details, Map<Term, Object> interpretedData) {
+    this.lineNumber = lineNumber;
+    this.rowType = rowType;
     this.details = details;
     this.interpretedData = interpretedData;
+  }
+
+  public Term getRowType() {
+    return rowType;
   }
 
   public List<EvaluationResultDetails> getDetails(){
@@ -39,7 +46,7 @@ public class RecordEvaluationResult implements Serializable {
 
   /**
    *
-   * @return suggested data or null
+   * @return interpretedData or null
    */
   public Map<Term, Object> getInterpretedData() {
     return interpretedData;
@@ -47,17 +54,34 @@ public class RecordEvaluationResult implements Serializable {
 
   @Override
   public String toString() {
-    return "recordId: " + recordId + ", details: " + details;
+    return "lineNumber: " + lineNumber + ", details: " + details;
   }
 
   /**
    * Builder class to build a RecordEvaluationResult instance.
    */
   public static class Builder {
+    private Term rowType;
     private Long lineNumber;
     private String recordId;
     private Map<Term, Object> interpretedData;
     private List<EvaluationResultDetails> details;
+
+    /**
+     * rowType + lineNumber is used to uniquely identify a line within the validation routine.
+     *
+     * @param rowType
+     * @param lineNumber
+     * @return
+     */
+    public static Builder of(Term rowType, Long lineNumber){
+      return new Builder(rowType, lineNumber);
+    }
+
+    private Builder(Term rowType, Long lineNumber){
+      this.rowType = rowType;
+      this.lineNumber = lineNumber;
+    }
 
     /**
      * Merge 2 @{link RecordEvaluationResult} into a single one.
@@ -72,14 +96,9 @@ public class RecordEvaluationResult implements Serializable {
       if(rer1 == null || rer2 == null) {
         return rer1 == null ? rer2 : rer1;
       }
-      return new Builder()
+      return new Builder(rer1.rowType, rer1.lineNumber)
               .withExisting(rer1)
               .addDetails(rer2.getDetails()).build();
-    }
-
-    public Builder withLineNumber(@Nullable Long lineNumber){
-      this.lineNumber = lineNumber;
-      return this;
     }
 
     public Builder withRecordId(@Nullable String recordId){
@@ -93,7 +112,7 @@ public class RecordEvaluationResult implements Serializable {
     }
 
     public Builder withExisting(RecordEvaluationResult recordEvaluationResult){
-      recordId = recordEvaluationResult.recordId;
+      lineNumber = recordEvaluationResult.lineNumber;
 
       if(recordEvaluationResult.getDetails() != null){
         details = new ArrayList<>(recordEvaluationResult.getDetails());
@@ -140,7 +159,7 @@ public class RecordEvaluationResult implements Serializable {
     }
 
     public RecordEvaluationResult build(){
-      return new RecordEvaluationResult(recordId, details == null ? new ArrayList<>() : details, interpretedData);
+      return new RecordEvaluationResult(rowType, lineNumber, details == null ? new ArrayList<>() : details, interpretedData);
     }
   }
 

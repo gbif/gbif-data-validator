@@ -1,5 +1,6 @@
 package org.gbif.validation.api.model;
 
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.validation.api.RecordEvaluator;
 
 import java.util.Arrays;
@@ -35,7 +36,7 @@ public class RecordEvaluatorChainTest {
     @Nullable
     @Override
     public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
-      return new RecordEvaluationResult.Builder().withLineNumber(lineNumber).addBaseDetail(
+      return RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, lineNumber).addBaseDetail(
               EvaluationType.COLUMN_MISMATCH, "MyRecordEvaluator1", "MyRecordEvaluator1").build();
     }
   }
@@ -44,7 +45,7 @@ public class RecordEvaluatorChainTest {
     @Nullable
     @Override
     public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
-      return new RecordEvaluationResult.Builder().withLineNumber(lineNumber).addBaseDetail(
+      return RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, lineNumber).addBaseDetail(
               EvaluationType.COLUMN_MISMATCH, "MyRecordEvaluator2", "MyRecordEvaluator2").build();
     }
   }

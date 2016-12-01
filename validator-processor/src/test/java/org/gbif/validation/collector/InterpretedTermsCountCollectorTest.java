@@ -37,14 +37,20 @@ public class InterpretedTermsCountCollectorTest {
     interpretedData.put(DwcTerm.occurrenceID, "1234");
     interpretedData.put(GbifTerm.taxonKey, 4321);
 
-    RecordEvaluationResult.Builder bldr = new RecordEvaluationResult.Builder();
-    tfc.collect(bldr.withLineNumber(1l).withInterpretedData(interpretedData).build());
+    RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l);
+    tfc.collect(bldr.withInterpretedData(interpretedData).build());
+
+    bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 2l);
     interpretedData.put(DwcTerm.eventDate, new Date());
-    tfc.collect(bldr.withLineNumber(2l).withInterpretedData(interpretedData).build());
-    tfc.collect(bldr.withLineNumber(3l).withInterpretedData(interpretedData).build());
+    tfc.collect(bldr.withInterpretedData(interpretedData).build());
+
+    bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 3l);
+    tfc.collect(bldr.withInterpretedData(interpretedData).build());
+
     //remove GbifTerm.taxonKey for the last record
+    bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 4l);
     interpretedData.remove(GbifTerm.taxonKey);
-    tfc.collect(bldr.withLineNumber(4l).withInterpretedData(interpretedData).build());
+    tfc.collect(bldr.withInterpretedData(interpretedData).build());
 
     assertEquals(tfc.getInterpretedCounts().get(GbifTerm.taxonKey).intValue(), 3);
     assertNull("DwcTerm.occurrenceID is not declared as a term to collect",

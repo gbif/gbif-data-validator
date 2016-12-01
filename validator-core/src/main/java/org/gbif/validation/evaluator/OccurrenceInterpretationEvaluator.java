@@ -10,8 +10,6 @@ import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretatio
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
-import static org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition.REMARKS_MAP;
-import static org.gbif.validation.evaluator.OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING;
 
 import java.util.List;
 import java.util.Map;
@@ -27,12 +25,16 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition.REMARKS_MAP;
+import static org.gbif.validation.evaluator.OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING;
+
 /**
  * Class to evaluate an occurrence record using an {@link OccurrenceInterpreter}.
  */
 public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private final OccurrenceInterpreter interpreter;
+  private final Term rowType;
   private final Term[] columnMapping;
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
@@ -46,11 +48,12 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param interpreter occurrence interpreter
    * @param columnMapping
    */
-  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, List<Term> columnMapping) {
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term rowType, List<Term> columnMapping) {
     Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
     Validate.notNull(columnMapping, "columnMapping must not be null");
 
     this.interpreter = interpreter;
+    this.rowType = rowType;
     this.columnMapping = columnMapping.toArray(new Term[columnMapping.size()]);
   }
 
@@ -91,13 +94,12 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param result
    * @return
    */
-  protected static RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
+  protected RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
 
     LOG.info("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
-    RecordEvaluationResult.Builder builder = new RecordEvaluationResult.Builder();
-    Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
+    RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(rowType, lineNumber);
 
-    builder.withLineNumber(lineNumber);
+    Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
 
     result.getUpdated().getIssues().stream().filter(IS_MAPPED).

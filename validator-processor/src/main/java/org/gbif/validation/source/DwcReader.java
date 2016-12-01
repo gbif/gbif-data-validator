@@ -6,6 +6,7 @@ import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
+import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.utils.file.csv.CSVReader;
 import org.gbif.validation.api.RecordSource;
 
@@ -67,6 +68,7 @@ public class DwcReader implements RecordSource {
 
   /**
    * Get a new reader for the core or an extension that uses a portion of the original file obtained after splitting.
+   *
    * @param dwcFolder
    * @param partFile portion of the original file obtained after splitting
    * @param rowType
@@ -77,7 +79,19 @@ public class DwcReader implements RecordSource {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
     archive = ArchiveFactory.openArchive(dwcFolder);
-    darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
+
+    if(archive.getCore() == null) {
+      throw new UnsupportedArchiveException("The archive must have a least a core file.");
+    }
+
+    if(rowType == null) {
+      darwinCoreComponent = archive.getCore();
+    }else{
+      darwinCoreComponent = archive.getCore().getRowType() == rowType ? archive.getCore() : archive.getExtension(rowType);
+    }
+
+    //TODO if darwinCoreComponent is null ?
+
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader =  new CSVReader(partFile, darwinCoreComponent.getEncoding(),
             darwinCoreComponent.getFieldsTerminatedBy(), darwinCoreComponent.getFieldsEnclosedBy(), ignoreHeaderLines ? 1 : 0);

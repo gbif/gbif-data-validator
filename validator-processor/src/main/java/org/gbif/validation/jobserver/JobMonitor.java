@@ -10,13 +10,14 @@ import static akka.japi.pf.ReceiveBuilder.match;
 
 /**
  * Actor that acts as the main controller to coordinate the creation of jobs and store results.
+ * C.G. I would rename this class JobCoordinatorActor
  */
 public class JobMonitor extends AbstractLoggingActor {
 
   /**
    * Creates an MockActor instance that will wait 'waitBeforeDie' before die.
    */
-  public  JobMonitor(ActorPropsMapping propsMapping, JobStorage jobStorage) {
+  public JobMonitor(ActorPropsMapping propsMapping, JobStorage jobStorage) {
     receive(
       match(DataJob.class, dataJob -> {
         //creates a actor that is responsible to handle a this jobData

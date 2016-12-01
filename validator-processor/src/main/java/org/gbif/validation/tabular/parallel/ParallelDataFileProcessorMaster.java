@@ -1,5 +1,6 @@
 package org.gbif.validation.tabular.parallel;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
@@ -16,11 +17,15 @@ import org.gbif.validation.util.FileBashUtilities;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
@@ -35,12 +40,23 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
   private static final Logger LOG = LoggerFactory.getLogger(ParallelDataFileProcessorMaster.class);
 
-  private Set<DataWorkResult> results;
+  private final Map<Term, ParallelResultCollector> rowTypeCollector;
+  private final Map<Term, DataFile> rowTypeDataFile;
+  private final AtomicInteger workerCompleted;
+
   private int numOfWorkers;
+
   private DataJob<DataFile> dataJob;
-  private DataFile dataFile;
-  private ParallelResultCollector collector;
   private File workingDir;
+
+  private static class EvaluationUnit {
+    private List<DataFile> dataFiles;
+    private RecordEvaluator recordEvaluator;
+    public EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator) {
+     this.dataFiles = dataFiles;
+      this.recordEvaluator = recordEvaluator;
+    }
+  }
 
   /**
    * Calculates the number of records that will be processed by each data worker.
@@ -49,25 +65,52 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     return fileSizeInLines / Math.max(fileSizeInLines/fileSplitSize, 1);
   }
 
+
   ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, final String baseWorkingDir) {
+
+    rowTypeCollector = new ConcurrentHashMap<>();
+    rowTypeDataFile = new ConcurrentHashMap<>();
+    workerCompleted = new AtomicInteger(0);
+
     receive(
+      //this should only be called once
       match(DataJob.class, dataJobMessage -> {
         dataJob = dataJobMessage;
         workingDir = new File(baseWorkingDir,UUID.randomUUID().toString());
-        dataFile =  (DataFile)dataJobMessage.getJobData();
+        DataFile dataFile =  (DataFile)dataJobMessage.getJobData();
+
+        //TODO check why is necessary
         dataFile.setHasHeaders(Optional.of(true));
-        dataFile = RecordSourceFactory.prepareSource(dataFile).get(0);
-        RecordEvaluator recordEvaluator = factory.create(Arrays.asList(dataFile.getColumns()),dataFile.getRowType());
-        dataJob = (DataJob<DataFile>) dataJobMessage;
-        collector = new ParallelResultCollector(Arrays.asList(dataFile.getColumns()),
-                                                CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), true));
-        processDataFile(fileSplitSize, recordEvaluator);
+
+        List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+        List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
+
+        numOfWorkers = 0;
+
+        //prepare everything
+        dataFiles.forEach(df -> {
+          rowTypeCollector.put(df.getRowType(), new ParallelResultCollector(Arrays.asList(df.getColumns()),
+                  CollectorFactory.createInterpretedTermsCountCollector(df.getRowType(), true)));
+          rowTypeDataFile.put(df.getRowType(), df);
+          List<DataFile> splitDataFile = null;
+          try {
+            splitDataFile = splitDataFile(df, fileSplitSize);
+          } catch (IOException ioEx) {
+            LOG.error("Failed to split data", ioEx);
+          }
+          numOfWorkers += splitDataFile.size();
+          dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
+                  factory.create(Arrays.asList(df.getColumns()), df.getRowType())));
+        });
+
+        //now trigger everything
+        processDataFile(dataFilesToEvaluate);
       })
         .match(DataLine.class, dataLine -> {
-          collector.metricsCollector.collect(dataLine.getLine());
+          rowTypeCollector.get(dataLine.getRowType()).metricsCollector.collect(dataLine.getLine());
         })
         .match(RecordEvaluationResult.class, recordEvaluationResult -> {
-          collector.recordsCollectors.forEach(c -> c.collect(recordEvaluationResult));
+          rowTypeCollector.get(recordEvaluationResult.getRowType()).recordsCollectors.forEach(c -> c.collect(recordEvaluationResult));
         })
         .match(DataWorkResult.class, dataWorkResult -> {
           processResults(dataWorkResult);
@@ -75,30 +118,58 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     );
   }
 
-  /**
-   *
-   * @param fileSplitSize
-   * @param recordEvaluator
-   */
-  private void processDataFile(Integer fileSplitSize, RecordEvaluator recordEvaluator) {
-    try {
-      int recordsPerSplit = recordsPerSplit(dataFile.getNumOfLines(),fileSplitSize);
-      String outDirPath = workingDir.getAbsolutePath();
-      String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), recordsPerSplit, outDirPath);
-      numOfWorkers = splits.length;
-      results =  new HashSet<>(numOfWorkers);
 
-      ActorRef workerRouter = createWorkerRoutes(recordEvaluator);
-      boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
-      for(int i = 0; i < splits.length; i++) {
-        DataFile dataInputSplitFile = buildDataSplitFile(outDirPath, splits[i],
-                                                         Optional.of(inputHasHeaders && (i == 0)),
-                                                         Optional.of((i * recordsPerSplit) + (inputHasHeaders? 1 : 0)));
-        workerRouter.tell(dataInputSplitFile, self());
-      }
-    } catch (IOException ex) {
-      LOG.error("Error processing file", ex);
-    }
+  private void processDataFile(List<EvaluationUnit> dataFilesToEvaluate) {
+    dataFilesToEvaluate.forEach(dfte -> {
+      ActorRef workerRouter = createWorkerRoutes(dfte.recordEvaluator);
+      dfte.dataFiles.forEach(df -> workerRouter.tell(df, self()));
+    });
+  }
+
+  /**
+   * Split the provided {@link DataFile} into multiple {@link DataFile} if required.
+   * @param dataFile
+   * @param fileSplitSize
+   * @return
+   * @throws IOException
+   */
+  private List<DataFile> splitDataFile(DataFile dataFile, Integer fileSplitSize) throws IOException {
+    int recordsPerSplit = recordsPerSplit(dataFile.getNumOfLines(), fileSplitSize);
+    String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), recordsPerSplit, workingDir.getAbsolutePath());
+    List<DataFile> splitDataFiles = new ArrayList<>();
+    boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
+
+    IntStream.range(0, splits.length)
+            .forEach(idx ->
+                    splitDataFiles.add(newSplitDataFile(dataFile, workingDir.getAbsolutePath(), splits[idx],
+                            Optional.of(inputHasHeaders && (idx == 0)),
+                            Optional.of((idx * recordsPerSplit) + (inputHasHeaders ? 1 : 0))))
+            );
+    return splitDataFiles;
+  }
+
+  /**
+   * Get a new {@link DataFile} instance representing a split of the provided {@link DataFile}.
+   *
+   * @param dataFile
+   * @param baseDir
+   * @param fileName
+   * @param withHeader
+   * @param offset
+   * @return new {@link DataFile} representing a portion of the provided dataFile.
+   */
+  private static DataFile newSplitDataFile(DataFile dataFile, String baseDir, String fileName, Optional<Boolean> withHeader,
+                                      Optional<Integer> offset){
+    //Creates the file to be used
+    File splitFile = new File(baseDir, fileName);
+    splitFile.deleteOnExit();
+
+    //use dataFile as parent dataFile
+    DataFile dataInputSplitFile = DataFile.copyFromParent(dataFile);
+    dataInputSplitFile.setHasHeaders(withHeader);
+    dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
+    dataInputSplitFile.setFileLineOffset(offset);
+    return dataInputSplitFile;
   }
 
   /**
@@ -110,40 +181,26 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       "dataFileRouter");
   }
 
-  /**
-   * Builds a DataFile split that will be assigned to a data worker.
-   */
-  private DataFile buildDataSplitFile(String baseDir, String fileName, Optional<Boolean> withHeader,
-                                      Optional<Integer> offset){
-    //Creates the file to be used
-    File splitFile = new File(baseDir, fileName);
-    splitFile.deleteOnExit();
-    DataFile dataInputSplitFile = new DataFile(dataFile);
-    dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
-    dataInputSplitFile.setSourceFileName(dataInputSplitFile.getSourceFileName());
-    dataInputSplitFile.setColumns(dataFile.getColumns());
-    dataInputSplitFile.setHasHeaders(withHeader);
-    dataInputSplitFile.setFileFormat(dataFile.getFileFormat());
-    dataInputSplitFile.setDelimiterChar(dataFile.getDelimiterChar());
-    dataInputSplitFile.setFileLineOffset(offset);
-    return dataInputSplitFile;
-  }
+
 
   /**
    * Called when a single worker finished its work.
+   * This can represent en entire file or a part of a file
    */
   private void processResults(DataWorkResult result) {
-    results.add(result);
-    if (results.size() == numOfWorkers) {
-      ValidationResultBuilders.Builder blrd = ValidationResultBuilders.Builder.of(true, dataFile.getSourceFileName(),
-                                                                                  dataFile.getFileFormat(),
-                                                                                  ValidationProfile.GBIF_INDEXING_PROFILE);
-      blrd.withResourceResult(collector.toResult(dataFile, dataFile.getSourceFileName()));
-      context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), blrd.build()), self());
+
+    int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
+    if (numberOfWorkersCompleted == numOfWorkers) {
+      //prepare validationResultBuilder
+      ValidationResultBuilders.Builder validationResultBuilder =
+              ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
+              dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
+
+      rowTypeCollector.forEach((rowType, collector) -> validationResultBuilder.withResourceResult(collector
+              .toResult(rowTypeDataFile.get(rowType), rowTypeDataFile.get(rowType).getSourceFileName())));
+      context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), validationResultBuilder.build()), self());
       FileUtils.deleteDirectoryRecursively(workingDir);
       getContext().stop(self());
-      LOG.info("# of lines in the file: {} ", dataFile.getNumOfLines());
-      LOG.info("Results: {}", collector.recordsCollectors);
     }
   }
 

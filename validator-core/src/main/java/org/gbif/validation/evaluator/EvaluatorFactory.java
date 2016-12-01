@@ -59,10 +59,10 @@ public class EvaluatorFactory {
     Objects.requireNonNull(rowType, "rowType shall be provided");
 
     List<RecordEvaluator> evaluators = new ArrayList<>();
-    evaluators.add(new RecordStructureEvaluator(columns));
+    evaluators.add(new RecordStructureEvaluator(rowType, columns));
 
     if(DwcTerm.Occurrence == rowType) {
-      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
+      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), rowType,
               columns));
     }
     return new RecordEvaluatorChain(evaluators);

@@ -4,7 +4,7 @@ import akka.actor.Props;
 
 /**
  * Factory interface to get an instance of Props from a file format.
- * This interface is used to build instances of Akk actors that can be controlled by the JobMonitor actor.
+ * This interface is used to build instances of Akka actors that can be controlled by the JobMonitor actor.
  */
 @FunctionalInterface
 public interface ActorPropsMapping<T> {
