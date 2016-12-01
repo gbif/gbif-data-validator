@@ -3,7 +3,7 @@ package org.gbif.validation.processor;
 import org.gbif.validation.api.DataFile;
 
 /**
- * This class encapsulates the result of processing a file by an Akk actor.
+ * This class encapsulates the result of processing a file by an Akka actor.
  */
 public class DataWorkResult {
 
@@ -22,7 +22,7 @@ public class DataWorkResult {
    * Empty constructor.
    * Required by data serialization.
    */
-  public DataWorkResult() {
+  DataWorkResult() {
     //empty block
   }
 
@@ -30,7 +30,7 @@ public class DataWorkResult {
    * Full constructor.
    * Builds an instance using a dataFile and a result.
    */
-  public DataWorkResult(DataFile dataFile, Result result) {
+  DataWorkResult(DataFile dataFile, Result result) {
     this.dataFile = dataFile;
     this.result = result;
   }

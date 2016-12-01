@@ -10,9 +10,11 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * Represents a single source data in a file. The source of data can be a portion of a bigger source.
+ * Represents data held in a file. It can be a portion of a bigger file.
  * It can also represent a tabular view of other formats (spreadsheet).
  *
+ * A {@link DataFile} can point to a parent (in a conceptual way).
+ * e.g. DarwinCore Archive folder is the parent of its core file.
  */
 public class DataFile {
 
@@ -31,7 +33,7 @@ public class DataFile {
   private Character delimiterChar;
   private Integer numOfLines;
 
-  private final Optional<DataFile> isAlternateViewOf;
+  private final Optional<DataFile> parent;
 
   public DataFile() {
     this(null);
@@ -40,10 +42,10 @@ public class DataFile {
   /**
    * Constructor used to get a new {@link DataFile} that represents an alternative view of another {@link DataFile}.
    *
-   * @param isAlternateViewOf the parent {@link DataFile}
+   * @param parent the parent {@link DataFile}
    */
-  public DataFile(DataFile isAlternateViewOf) {
-    this.isAlternateViewOf = Optional.ofNullable(isAlternateViewOf);
+  public DataFile(DataFile parent) {
+    this.parent = Optional.ofNullable(parent);
   }
 
   public static DataFile copyFromParent(DataFile parentDataFile) {
@@ -51,12 +53,12 @@ public class DataFile {
     return copyInto(parentDataFile, newDataFile);
   }
   /**
-   * Get a copy of a {@link DataFile} .
+   * Get a copy of a {@link DataFile}.
    * @param dataFile
    * @return
    */
   public static DataFile copy(DataFile dataFile) {
-    DataFile newDataFile = new DataFile(dataFile.isAlternateViewOf.orElse(null));
+    DataFile newDataFile = new DataFile(dataFile.parent.orElse(null));
     return copyInto(dataFile, newDataFile);
   }
 
@@ -185,8 +187,8 @@ public class DataFile {
     this.contentType = contentType;
   }
 
-  public Optional<DataFile> isAlternateViewOf() {
-    return isAlternateViewOf;
+  public Optional<DataFile> getParent() {
+    return parent;
   }
 
   @Override
@@ -201,7 +203,7 @@ public class DataFile {
             ", numOfLines=" + numOfLines +
             ", fileLineOffset=" + fileLineOffset +
             ", hasHeaders=" + hasHeaders +
-            ", isAlternateViewOf=" + isAlternateViewOf +
+            ", parent=" + parent +
             '}';
   }
 
@@ -219,7 +221,7 @@ public class DataFile {
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
             Objects.equals(fileLineOffset, dataFile.fileLineOffset) &&
-            Objects.equals(isAlternateViewOf, dataFile.isAlternateViewOf);
+            Objects.equals(parent, dataFile.parent);
   }
 
   @Override
@@ -234,7 +236,7 @@ public class DataFile {
             numOfLines,
             fileLineOffset,
             hasHeaders,
-            isAlternateViewOf);
+            parent);
   }
 
 }

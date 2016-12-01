@@ -21,6 +21,7 @@ import static org.junit.Assert.assertNotNull;
  */
 public class SingleDataFileProcessorTest {
 
+  // FIXME means test can only run outside
   private static final String DEV_API = "http://api.gbif-dev.org/v1";
   private static final String TEST_FILE_LOCATION = "validator_test_file_all_issues.tsv";
   private static final int NUMBER_OF_ISSUES_EXPECTED = 12;

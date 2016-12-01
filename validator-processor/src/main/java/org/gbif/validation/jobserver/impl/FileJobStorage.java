@@ -21,12 +21,13 @@ public class FileJobStorage implements JobStorage {
 
   //Jackson instances used to write and read Json files.
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);
-  private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobStatusResponse.class);
-
   static {
     OBJECT_MAPPER.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
   }
+
+  private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);
+  private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobStatusResponse.class);
+
 
   //Directory where the JSON files are stored.
   private final Path storePath;

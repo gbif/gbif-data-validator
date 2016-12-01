@@ -5,6 +5,9 @@ package org.gbif.validation.ws.conf;
  */
 public class ValidationConfiguration {
 
+  //name of the parameter used when POSTing a file
+  public static final String FILE_POST_PARAM_NAME = "file";
+
   /**
    * Url to the GBIF Rest API.
    */

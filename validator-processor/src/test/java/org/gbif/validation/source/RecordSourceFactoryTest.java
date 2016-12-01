@@ -34,8 +34,8 @@ public class RecordSourceFactoryTest {
     //the test Dwc folder contains 1 core + 2 extensions
     assertEquals(3, preparedDataFiles.size());
 
-    //all components should points to the parent DateFile
-    preparedDataFiles.forEach( df -> assertEquals(dataFile, df.isAlternateViewOf().get()));
+    //all components should points to the parent DataFile
+    preparedDataFiles.forEach( df -> assertEquals(dataFile, df.getParent().get()));
 
   }
 

@@ -80,7 +80,7 @@ public class RecordSourceFactory {
         //line off means this file is a portion of the entire file
         if(dataFile.getFileLineOffset().isPresent()) {
           //parent file is the complete file, grand-parent file is the archive
-          Path dwcaFolder = dataFile.isAlternateViewOf().get().isAlternateViewOf().get().getFilePath();
+          Path dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
           return Optional.of(new DwcReader(dwcaFolder.toFile(),
                   dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
         }

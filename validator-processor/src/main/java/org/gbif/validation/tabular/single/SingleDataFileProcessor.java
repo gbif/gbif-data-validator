@@ -9,7 +9,6 @@ import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.source.RecordSourceFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +32,7 @@ public class SingleDataFileProcessor implements DataFileProcessor {
         dataValidationProcessor.process(record);
       }
 
-      DataFile scopedDataFile = dataFile.isAlternateViewOf().orElse(dataFile);
+      DataFile scopedDataFile = dataFile.getParent().orElse(dataFile);
       return dataValidationProcessor.getValidationResult(
               StringUtils.isNotBlank(dataFile.getSourceFileName()) ? dataFile.getSourceFileName() :
                       scopedDataFile.getSourceFileName(),

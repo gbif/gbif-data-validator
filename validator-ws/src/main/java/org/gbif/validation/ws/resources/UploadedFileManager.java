@@ -3,6 +3,7 @@ package org.gbif.validation.ws.resources;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
+import org.gbif.validation.ws.conf.ValidationConfiguration;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;
@@ -45,8 +46,9 @@ import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
+
+import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
 /**
  * Class responsible to manage files uploaded for validation.
@@ -203,7 +205,7 @@ public class UploadedFileManager {
     try {
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
       Optional<FileItem> uploadFileInputStream = uploadedContent.stream()
-        .filter(fileItem -> !fileItem.isFormField() && WsValidationParams.FILE.getParam().equals(fileItem.getFieldName()))
+        .filter(fileItem -> !fileItem.isFormField() && ValidationConfiguration.FILE_POST_PARAM_NAME.equals(fileItem.getFieldName()))
         .findFirst();
       if (uploadFileInputStream.isPresent()) {
         FileItem uploadFileInputStreamVal = uploadFileInputStream.get();

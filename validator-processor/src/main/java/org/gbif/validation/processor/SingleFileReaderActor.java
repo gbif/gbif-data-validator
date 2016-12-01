@@ -16,7 +16,7 @@ import static akka.japi.pf.ReceiveBuilder.match;
 import static akka.pattern.Patterns.pipe;
 
 /**
- * Akka actor that processes a single occurrence data file.
+ * Akka actor that processes a single {@link DataFile}.
  */
 public class SingleFileReaderActor extends AbstractLoggingActor {
 
@@ -40,20 +40,18 @@ public class SingleFileReaderActor extends AbstractLoggingActor {
    * The sender is sent as parameter because the real sender is only known in the context of receiving messages.
    */
   private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, ActorRef sender) {
-
+    long line = dataFile.getFileLineOffset().orElse(0);
     try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
       Term rowType = dataFile.getRowType();
-      long line = dataFile.getFileLineOffset().orElse(0);
       String[] record;
       while ((record = recordSource.read()) != null) {
         line++;
         sender.tell(new DataLine(rowType, record), self());
         sender.tell(recordEvaluator.evaluate(line, record), self());
       }
-      //add reader aggregated result to the DataWorkResult
       return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS);
     } catch (Exception ex) {
-      LOG.error("", ex);
+      LOG.error("Error while evaluating line {} of {}", line, dataFile.getFilePath(), ex);
       return new DataWorkResult(dataFile, DataWorkResult.Result.FAILED);
     }
   }
