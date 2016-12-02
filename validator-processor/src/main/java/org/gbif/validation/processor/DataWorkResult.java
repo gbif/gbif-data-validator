@@ -5,7 +5,7 @@ import org.gbif.validation.api.DataFile;
 /**
  * This class encapsulates the result of processing a file by an Akka actor.
  */
-public class DataWorkResult {
+class DataWorkResult {
 
   /**
    * Represents the result status of processing a file.

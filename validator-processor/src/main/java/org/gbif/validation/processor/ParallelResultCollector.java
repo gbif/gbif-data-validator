@@ -7,6 +7,7 @@ import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
+import org.gbif.validation.collector.RecordEvaluationResultCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
 
 import java.util.ArrayList;
@@ -16,14 +17,14 @@ import java.util.Optional;
 public class ParallelResultCollector {
 
   final RecordMetricsCollector metricsCollector;
-  final ConcurrentValidationCollector resultsCollector;
+  final RecordEvaluationResultCollector resultsCollector;
   final Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector;
 
   final List<ResultsCollector> recordsCollectors;
 
   public ParallelResultCollector(List<Term> termsColumnsMapping, Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector) {
     metricsCollector = new TermsFrequencyCollector(termsColumnsMapping, true);
-    resultsCollector = new ConcurrentValidationCollector(ConcurrentValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
+    resultsCollector = new RecordEvaluationResultCollector(RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE, true);
     recordsCollectors = new ArrayList<>();
     recordsCollectors.add(resultsCollector);
     this.interpretedTermsCountCollector = interpretedTermsCountCollector;

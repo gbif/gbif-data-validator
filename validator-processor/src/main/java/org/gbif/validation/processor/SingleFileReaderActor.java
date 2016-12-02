@@ -18,7 +18,7 @@ import static akka.pattern.Patterns.pipe;
 /**
  * Akka actor that processes a single {@link DataFile}.
  */
-public class SingleFileReaderActor extends AbstractLoggingActor {
+class SingleFileReaderActor extends AbstractLoggingActor {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingleFileReaderActor.class);
 

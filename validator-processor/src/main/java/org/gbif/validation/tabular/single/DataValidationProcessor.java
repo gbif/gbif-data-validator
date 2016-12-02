@@ -6,6 +6,7 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResultBuilders.RecordsValidationResultElementBuilder;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
+import org.gbif.validation.collector.RecordEvaluationResultCollector;
 import org.gbif.validation.collector.TermsFrequencyCollector;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class DataValidationProcessor  {
 
   private final RecordEvaluator recordEvaluator;
 
-  private final SimpleValidationCollector collector;
+  private final RecordEvaluationResultCollector collector;
   private final TermsFrequencyCollector metricsCollector;
   private final Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector;
 
@@ -24,7 +25,7 @@ public class DataValidationProcessor  {
   public DataValidationProcessor(List<Term> terms, RecordEvaluator recordEvaluator,
                                  Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector) {
     this.recordEvaluator = recordEvaluator;
-    collector = new SimpleValidationCollector(SimpleValidationCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE);
+    collector = new RecordEvaluationResultCollector(RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE, false);
     metricsCollector = new TermsFrequencyCollector(terms, false);
     this.interpretedTermsCountCollector = interpretedTermsCountCollector;
   }
