@@ -5,6 +5,7 @@ import org.gbif.validation.api.result.EvaluationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -86,7 +87,9 @@ public class RecordEvaluationResult implements Serializable {
     /**
      * Merge 2 @{link RecordEvaluationResult} into a single one.
      * The @{link RecordEvaluationResult} are assumed to come from the same record therefore no validation is performed
-     * on the recordId and the one from rer1 will be taken.
+     * on the rowType and lineNumber and those from rer1 will be used.
+     * If there is a collision on keys on the interpretedData map the values from rer2 will be in the
+     * resulting object.
      * @param rer1
      * @param rer2
      * @return
@@ -97,8 +100,10 @@ public class RecordEvaluationResult implements Serializable {
         return rer1 == null ? rer2 : rer1;
       }
       return new Builder(rer1.rowType, rer1.lineNumber)
-              .withExisting(rer1)
-              .addDetails(rer2.getDetails()).build();
+              .fromExisting(rer1)
+              .addDetails(rer2.getDetails())
+              .putAllInterpretedData(rer2.getInterpretedData())
+              .build();
     }
 
     public Builder withRecordId(@Nullable String recordId){
@@ -111,11 +116,17 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
-    public Builder withExisting(RecordEvaluationResult recordEvaluationResult){
-      lineNumber = recordEvaluationResult.lineNumber;
-
+    /**
+     * Internal operation to copy the inner data structures from an existing {@link RecordEvaluationResult}
+     * @param recordEvaluationResult
+     * @return
+     */
+    private Builder fromExisting(RecordEvaluationResult recordEvaluationResult){
       if(recordEvaluationResult.getDetails() != null){
         details = new ArrayList<>(recordEvaluationResult.getDetails());
+      }
+      if(recordEvaluationResult.getInterpretedData() != null) {
+        interpretedData = new HashMap<>(recordEvaluationResult.getInterpretedData());
       }
       return this;
     }
@@ -127,10 +138,31 @@ public class RecordEvaluationResult implements Serializable {
      * @return
      */
     private Builder addDetails(List<EvaluationResultDetails> details) {
+      if(details == null){
+        return this;
+      }
+
       if(this.details == null){
         this.details = new ArrayList<>();
       }
       this.details.addAll(details);
+      return this;
+    }
+
+    /**
+     * Internal operation to copy interpretedData.
+     *
+     * @param interpretedData
+     * @return
+     */
+    private Builder putAllInterpretedData(Map<Term, Object> interpretedData) {
+      if(interpretedData == null){
+        return this;
+      }
+      if(this.interpretedData == null){
+        this.interpretedData = new HashMap<>();
+      }
+      this.interpretedData.putAll(interpretedData);
       return this;
     }
 
