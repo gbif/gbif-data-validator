@@ -104,6 +104,7 @@
                   <exclude>META-INF/*.RSA</exclude>
                   <exclude>hbase-site.xml</exclude>
                   <exclude>logback.xml</exclude>
+                  <exclude>clb-normalizer.yaml</exclude>
                 </excludes>
               </filter>
             </filters>
