@@ -39,6 +39,7 @@
   <commons-fileupload.version>1.3.2</commons-fileupload.version>
   <commons-io.version>2.4</commons-io.version>
   <commons-compress.version>1.4.1</commons-compress.version>
+  <jackson2.version>2.4.2</jackson2.version>
 </properties>
 
 <build>
@@ -159,6 +160,15 @@
     <version>${project.version}</version>
   </dependency>
   <dependency>
+    <groupId>org.gbif.validator</groupId>
+    <artifactId>validator-checklists</artifactId>
+    <version>${project.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>org.gbif.checklistbank</groupId>
+    <artifactId>checklistbank-cli</artifactId>
+  </dependency>
+  <dependency>
     <groupId>org.gbif</groupId>
     <artifactId>gbif-parsers</artifactId>
     <version>${gbif-parsers.version}</version>
@@ -223,9 +233,24 @@
     <version>${servlet-api.version}</version>
   </dependency>
   <dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>servlet-api</artifactId>
+    <version>${servlet-api.version}</version>
+  </dependency>
+  <dependency>
     <groupId>com.sun.jersey.contribs</groupId>
     <artifactId>jersey-multipart</artifactId>
     <version>${jersey.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>com.fasterxml.jackson.dataformat</groupId>
+    <artifactId>jackson-dataformat-yaml</artifactId>
+    <version>${jackson2.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>com.fasterxml.jackson.core</groupId>
+    <artifactId>jackson-databind</artifactId>
+    <version>${jackson2.version}</version>
   </dependency>
 
   <!-- TEST PIECES -->

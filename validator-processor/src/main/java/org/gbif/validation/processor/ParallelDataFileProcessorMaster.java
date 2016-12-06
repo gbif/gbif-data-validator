@@ -31,14 +31,10 @@ import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
 public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ParallelDataFileProcessorMaster.class);
 
   private final Map<Term, ParallelResultCollector> rowTypeCollector;
   private final Map<Term, DataFile> rowTypeDataFile;
@@ -119,7 +115,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
         dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
                                                    factory.create(Arrays.asList(df.getColumns()), df.getRowType())));
       } catch (IOException ioEx) {
-        LOG.error("Failed to split data", ioEx);
+        log().error("Failed to split data", ioEx);
       }
 
     });
