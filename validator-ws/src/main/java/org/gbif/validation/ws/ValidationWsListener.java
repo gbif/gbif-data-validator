@@ -4,7 +4,6 @@ import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
-import org.gbif.validation.ChecklistValidator;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -116,7 +115,8 @@ public class ValidationWsListener extends GbifServletListener {
       try {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         NormalizerConfiguration normalizerConfiguration =
-          mapper.readValue(ChecklistValidator.class.getResourceAsStream(NORMALIZER_CONF), NormalizerConfiguration.class);
+          mapper.readValue(Thread.currentThread().getContextClassLoader().getResource(NORMALIZER_CONF),
+                           NormalizerConfiguration.class);
 
         return new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
                                                    configuration.getFileSplitSize(),
