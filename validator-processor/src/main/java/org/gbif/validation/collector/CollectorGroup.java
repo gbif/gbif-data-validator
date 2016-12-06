@@ -44,12 +44,17 @@ public class CollectorGroup {
     return recordsCollectors;
   }
 
+
   /**
-   * Not a Thread-Safe operation.
+   * Merge all the provided collectors into a single {@link RecordsValidationResultElement}.
    *
+   * Not a Thread-Safe operation.
+   * @param dataFile
+   * @param resultingFileName
+   * @param collectors
    * @return
    */
-  public static RecordsValidationResultElement toResult(DataFile dataFile, String resultingFileName, List<CollectorGroup> collectors) {
+  public static RecordsValidationResultElement mergeAndGetResult(DataFile dataFile, String resultingFileName, List<CollectorGroup> collectors) {
 
     if (collectors.isEmpty()) {
       return null;
@@ -73,6 +78,9 @@ public class CollectorGroup {
               }));
             }
     );
+
+
+    //TODO fix sample size
 
     return ValidationResultBuilders.RecordsValidationResultElementBuilder
             .of(resultingFileName, dataFile.getRowType(),

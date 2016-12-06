@@ -222,7 +222,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
               dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
 
       rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(
-              CollectorGroup.toResult(rowTypeDataFile.get(rowType), rowTypeDataFile.get(rowType).getSourceFileName(),
+              CollectorGroup.mergeAndGetResult(rowTypeDataFile.get(rowType), rowTypeDataFile.get(rowType).getSourceFileName(),
               collectorList)));
       context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), validationResultBuilder.build()), self());
       FileUtils.deleteDirectoryRecursively(workingDir);
