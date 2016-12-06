@@ -1,31 +1,36 @@
 package org.gbif.validation.jobserver.impl;
 
+import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.ActorPropsMapping;
+import org.gbif.validation.processor.ChecklistsProcessorMaster;
 import org.gbif.validation.processor.ParallelDataFileProcessorMaster;
+
+import java.util.HashMap;
+import java.util.Optional;
 
 import akka.actor.Props;
 
 /**
  * This class implements the factory properties to build Actor instances based on {@link DataFile}.
- * TODO review this class
  */
 public class DataValidationActorPropsMapping implements ActorPropsMapping<DataFile>{
 
-  private final Props props;
+  private final HashMap<Term, Props> mapping;
 
   /**
    * Default constructor, the parameters received are used to build actor instances.
    */
-  public DataValidationActorPropsMapping(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir) {
-    //TODO C.G. check if we really need that class if we always use a single Props
-//    mapping = new HashMap<FileFormat, Props> () {{
-//        put(FileFormat.TABULAR,
-//                    Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize, workingDir));
-//      }};
-
-    props =  Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize, workingDir);
+  public DataValidationActorPropsMapping(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir,
+                                         NormalizerConfiguration normalizerConfiguration) {
+    mapping = new HashMap<Term, Props> () {{
+      put(DwcTerm.Occurrence, Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
+                                           workingDir));
+      put(DwcTerm.Taxon,Props.create(ChecklistsProcessorMaster.class, normalizerConfiguration));
+     }};
   }
 
   /**
@@ -33,6 +38,10 @@ public class DataValidationActorPropsMapping implements ActorPropsMapping<DataFi
    */
   @Override
   public Props getActorProps(DataFile dataFile) {
-    return props;
+    if (Optional.ofNullable(dataFile.getRowType()).isPresent()) {
+      return mapping.get(dataFile.getRowType());
+    }
+    //If the dataFile doesn't have a type defined, OCCURRENCE is assumed to be the default
+    return mapping.get(DwcTerm.Occurrence);
   }
 }

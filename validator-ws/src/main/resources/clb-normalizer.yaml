@@ -1,0 +1,17 @@
+poolSize: 2
+ganglia:
+  host: ganglia.gbif.org
+  port: 8649
+neo:
+  neoRepository: /tmp/validation/checklists/neo
+  mappedMemory: 2048
+clb:
+  serverName:
+  databaseName:
+  user:
+  password:
+  maximumPoolSize: 2
+  connectionTimeout: 2000
+  minimumIdle: 0
+  idleTimeout: 60000
+archiveRepository: /tmp/validation/

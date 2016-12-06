@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <parent>
+    <artifactId>validator-motherpom</artifactId>
+    <groupId>org.gbif.validator</groupId>
+    <version>0.1-SNAPSHOT</version>
+  </parent>
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>validator-checklists</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Checkilsts Data Validator</name>
+
+  <distributionManagement>
+    <site>
+      <id>gh-pages</id>
+      <url>http://gbif.github.io/gbif-data-validator/${project.artifactId}/</url>
+    </site>
+  </distributionManagement>
+
+  <properties>
+    <!-- older lucene version required by neo4j -->
+    <lucene.version>3.6.2</lucene.version>
+    <neo4j.version>2.3.6</neo4j.version>
+    <scala-library.version>2.11.7</scala-library.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.gbif.checklistbank</groupId>
+      <artifactId>checklistbank-cli</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.validator</groupId>
+      <artifactId>validator-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId> org.gbif</groupId>
+      <artifactId>gbif-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+      <version>${lucene.version}</version>
+    </dependency>
+    <dependency>
+      <groupId> org.neo4j</groupId>
+      <artifactId>neo4j-kernel</artifactId>
+      <version>${neo4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
+    <!-- Required by neo4j-->
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala-library.version}</version>
+    </dependency>
+  </dependencies>
+</project>

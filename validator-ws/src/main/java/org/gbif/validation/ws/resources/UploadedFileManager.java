@@ -253,7 +253,7 @@ public class UploadedFileManager {
           transferredDataFile.setFileFormat(FileFormat.DWCA);
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
-          throw new IOException(arEx);
+          throw new RuntimeException(arEx);
         }
       } else if (TABULAR_CONTENT_TYPES.contains(contentType)) {
         transferredDataFile.setFilePath(copyInputStream(destinationFolder, inputStream, filename));

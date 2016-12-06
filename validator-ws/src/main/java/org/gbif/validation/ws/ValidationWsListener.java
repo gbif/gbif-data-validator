@@ -1,5 +1,6 @@
 package org.gbif.validation.ws;
 
+import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
@@ -41,6 +44,8 @@ public class ValidationWsListener extends GbifServletListener {
   private static class ValidationModule extends PrivateServiceModule {
 
     private static final String PROPERTIES_PREFIX = "validation.";
+
+    private static final String NORMALIZER_CONF = "clb-normalizer.yaml";
 
     private static final int DEFAULT_SPLIT_SIZE = 10000;
 
@@ -107,9 +112,19 @@ public class ValidationWsListener extends GbifServletListener {
      * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
      */
     private static DataValidationActorPropsMapping buildActorPropsMapping(ValidationConfiguration configuration) {
-      return new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
-                                                 configuration.getFileSplitSize(),
-                                                 configuration.getWorkingDir());
+      try {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        NormalizerConfiguration normalizerConfiguration =
+          mapper.readValue(Thread.currentThread().getContextClassLoader().getResource(NORMALIZER_CONF),
+                           NormalizerConfiguration.class);
+
+        return new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
+                                                   configuration.getFileSplitSize(),
+                                                   configuration.getWorkingDir(),
+                                                   normalizerConfiguration);
+      } catch (IOException ex) {
+        throw new IllegalStateException(ex);
+      }
     }
   }
 

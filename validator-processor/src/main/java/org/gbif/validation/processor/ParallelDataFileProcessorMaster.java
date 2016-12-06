@@ -31,14 +31,10 @@ import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
 public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
-
-  private static final Logger LOG = LoggerFactory.getLogger(ParallelDataFileProcessorMaster.class);
 
   private final Map<Term, DataFile> rowTypeDataFile;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
@@ -128,11 +124,11 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
                 factory.create(columns, df.getRowType()),
                 splitDataFile.size(), new CollectorGroupProvider(df.getRowType(), columns)));
       } catch (IOException ioEx) {
-        LOG.error("Failed to split data", ioEx);
+        log().error("Failed to split data", ioEx);
       }
     });
 
-    LOG.info("Number of workers required: {}", numOfWorkers);
+    log().info("Number of workers required: {}", numOfWorkers);
     return dataFilesToEvaluate;
   }
 
@@ -207,8 +203,9 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void processResults(DataWorkResult result) {
 
+    //FIXME
     if(result.getResult() == DataWorkResult.Result.FAILED) {
-      LOG.error("DataWorkResult = FAILED");
+      log().error("DataWorkResult = FAILED");
     }
 
     int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
@@ -216,7 +213,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       val.add(result.getCollectors());
       return val;
     });
-    LOG.info("Got {} worker response(s)", numberOfWorkersCompleted);
+    log().info("Got {} worker response(s)", numberOfWorkersCompleted);
     if (numberOfWorkersCompleted == numOfWorkers) {
 
       //prepare validationResultBuilder
