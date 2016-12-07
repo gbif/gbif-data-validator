@@ -61,7 +61,12 @@ public class DwcReader implements RecordSource {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
     archive = ArchiveFactory.openArchive(dwcFolder);
-    darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
+    if(rowType != null && rowType != archive.getCore().getRowType()) {
+      darwinCoreComponent = archive.getExtension(rowType);
+    }
+    else{
+      darwinCoreComponent = archive.getCore();
+    }
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
   }
@@ -95,6 +100,10 @@ public class DwcReader implements RecordSource {
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader =  new CSVReader(partFile, darwinCoreComponent.getEncoding(),
             darwinCoreComponent.getFieldsTerminatedBy(), darwinCoreComponent.getFieldsEnclosedBy(), ignoreHeaderLines ? 1 : 0);
+  }
+
+  public ArchiveFile getCore() {
+    return archive.getCore();
   }
 
   /**

@@ -25,9 +25,13 @@ public class DwcReaderTest {
     try(RecordSource source = RecordSourceFactory.fromDwcA(testFolder)) {
       assertEquals(13, source.getHeaders().length);
       assertEquals(DwcTerm.Taxon, ((DwcReader)source).getRowType());
+      assertEquals(13, source.getHeaders().length);
+
       String[] line1 = source.read();
       assertEquals("1559060", line1[0]);
       assertEquals("my-default-value", line1[12]);
+      assertEquals(13, line1.length);
+
     } catch (IOException e) {
       fail(e.getMessage());
     }

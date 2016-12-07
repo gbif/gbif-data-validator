@@ -48,12 +48,28 @@ public class RecordSourceFactory {
   }
 
   /**
-   * Creates instances of RecordSource from a folder containing an extracted DarwinCore archive.
+   * Creates instance of RecordSource from a folder containing an extracted DarwinCore archive.
    */
   public static RecordSource fromDwcA(@NotNull File sourceFolder) throws IOException {
     Objects.requireNonNull(sourceFolder, "sourceFolder shall be provided");
     return new DwcReader(sourceFolder);
   }
+
+  /**
+   * Creates instance of RecordSource from a folder containing an extracted DarwinCore archive and using a specific
+   * component (rowType) of the Archive.
+   * @param sourceFolder
+   * @param rowType
+   * @return
+   * @throws IOException
+   */
+  public static RecordSource fromDwcA(@NotNull File sourceFolder, @NotNull Term rowType) throws IOException {
+    Objects.requireNonNull(sourceFolder, "sourceFolder shall be provided");
+    Objects.requireNonNull(rowType, "rowType shall be provided");
+
+    return new DwcReader(sourceFolder, rowType);
+  }
+
 
   /**
    * Build a new RecordSource matching the {@link DataFile} file format.
@@ -77,14 +93,25 @@ public class RecordSourceFactory {
         return Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
                         dataFile.isHasHeaders()));
       case DWCA:
-        //line off means this file is a portion of the entire file
+        Path dwcaFolder = dataFile.getFilePath();
+        // the DataFile is a folder, get a reader for the entire archive
+        if(dwcaFolder.toFile().isDirectory()) {
+          return Optional.of(fromDwcA(dwcaFolder.toFile()));
+        }
+
+        //line offset means this file is a portion of the entire file
         if(dataFile.getFileLineOffset().isPresent()) {
           //parent file is the complete file, grand-parent file is the archive
-          Path dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
+          dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
           return Optional.of(new DwcReader(dwcaFolder.toFile(),
                   dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
         }
-        return Optional.of(fromDwcA(dataFile.getFilePath().toFile()));
+
+        // normally, the parent file is the archive
+        if(dataFile.getParent().isPresent()) {
+          dwcaFolder = dataFile.getParent().get().getFilePath();
+        }
+        return Optional.of(fromDwcA(dwcaFolder.toFile(), dataFile.getRowType()));
     }
     return Optional.empty();
   }
@@ -146,11 +173,13 @@ public class RecordSourceFactory {
       //add the core first
       DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
       core.setRowType(dwcReader.getRowType());
+      core.setHasHeaders(Optional.of(dwcReader.getCore().getIgnoreHeaderLines() != null && dwcReader.getCore().getIgnoreHeaderLines() > 0));
       dataFileList.add(core);
 
       for (ArchiveFile ext : dwcReader.getExtensions()) {
         DataFile extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
         extDatafile.setRowType(ext.getRowType());
+        extDatafile.setHasHeaders(Optional.of(ext.getIgnoreHeaderLines() != null && ext.getIgnoreHeaderLines() > 0));
         dataFileList.add(extDatafile);
       }
     }
