@@ -6,7 +6,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.ActorPropsMapping;
-import org.gbif.validation.processor.ChecklistsProcessorMaster;
+import org.gbif.validation.processor.ChecklistsValidatorActor;
 import org.gbif.validation.processor.ParallelDataFileProcessorMaster;
 
 import java.util.HashMap;
@@ -19,18 +19,15 @@ import akka.actor.Props;
  */
 public class DataValidationActorPropsMapping implements ActorPropsMapping<DataFile>{
 
-  private final HashMap<Term, Props> mapping;
+  private final Props props;
 
   /**
    * Default constructor, the parameters received are used to build actor instances.
    */
   public DataValidationActorPropsMapping(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir,
                                          NormalizerConfiguration normalizerConfiguration) {
-    mapping = new HashMap<Term, Props> () {{
-      put(DwcTerm.Occurrence, Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
-                                           workingDir));
-      put(DwcTerm.Taxon,Props.create(ChecklistsProcessorMaster.class, normalizerConfiguration));
-     }};
+    props =  Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
+                                           workingDir, normalizerConfiguration);
   }
 
   /**
@@ -38,10 +35,6 @@ public class DataValidationActorPropsMapping implements ActorPropsMapping<DataFi
    */
   @Override
   public Props getActorProps(DataFile dataFile) {
-    if (Optional.ofNullable(dataFile.getRowType()).isPresent()) {
-      return mapping.get(dataFile.getRowType());
-    }
-    //If the dataFile doesn't have a type defined, OCCURRENCE is assumed to be the default
-    return mapping.get(DwcTerm.Occurrence);
+    return props;
   }
 }

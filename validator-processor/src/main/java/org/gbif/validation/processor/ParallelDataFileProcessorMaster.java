@@ -1,7 +1,10 @@
 package org.gbif.validation.processor;
 
+import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.api.ChecklistValidationResult;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
@@ -19,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -32,12 +36,15 @@ import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
 
+import static org.gbif.validation.ChecklistValidator.validate;
+
 import static akka.japi.pf.ReceiveBuilder.match;
 
 public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
   private final Map<Term, ParallelResultCollector> rowTypeCollector;
   private final Map<Term, DataFile> rowTypeDataFile;
+  private final NormalizerConfiguration normalizerConfiguration;
   private final AtomicInteger workerCompleted;
 
   private int numOfWorkers;
@@ -62,18 +69,20 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   }
 
 
-  ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, final String baseWorkingDir) {
+  ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, final String baseWorkingDir,
+                                  NormalizerConfiguration normalizerConfiguration) {
 
     rowTypeCollector = new ConcurrentHashMap<>();
     rowTypeDataFile = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
+    this.normalizerConfiguration = normalizerConfiguration;
 
     receive(
       //this should only be called once
       match(DataJob.class, dataJobMessage -> {
         dataJob = dataJobMessage;
         workingDir = new File(baseWorkingDir,UUID.randomUUID().toString());
-        processDataFile((DataFile)dataJobMessage.getJobData(),factory,fileSplitSize);
+        processDataFile(factory,fileSplitSize);
       })
         .match(DataLine.class, dataLine -> {
           rowTypeCollector.get(dataLine.getRowType()).metricsCollector.collect(dataLine.getLine());
@@ -87,8 +96,9 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     );
   }
 
-  private void processDataFile(DataFile dataFile, EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
+  private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
     //TODO check why is necessary
+    DataFile dataFile = dataJob.getJobData();
     dataFile.setHasHeaders(Optional.of(true));
     List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
     List<EvaluationUnit> dataFilesToEvaluate = splitDataFile(dataFiles, factory, fileSplitSize);
@@ -106,18 +116,25 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     numOfWorkers = 0;
     //prepare everything
     dataFiles.forEach(df -> {
-      rowTypeCollector.put(df.getRowType(), new ParallelResultCollector(Arrays.asList(df.getColumns()),
-                                                                        CollectorFactory.createInterpretedTermsCountCollector(df.getRowType(), true)));
-      rowTypeDataFile.put(df.getRowType(), df);
-      try {
-        List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
-        numOfWorkers += splitDataFile.size();
-        dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
-                                                   factory.create(Arrays.asList(df.getColumns()), df.getRowType())));
-      } catch (IOException ioEx) {
-        log().error("Failed to split data", ioEx);
-      }
+      if(DwcTerm.Taxon != df.getRowType()) {
+        rowTypeCollector.put(df.getRowType(),
+                             new ParallelResultCollector(Arrays.asList(df.getColumns()),
+                                                         CollectorFactory.createInterpretedTermsCountCollector(df.getRowType(),
+                                                                                                               true)));
+        rowTypeDataFile.put(df.getRowType(), df);
 
+        try {
+          List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
+          numOfWorkers += splitDataFile.size();
+          dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
+                                                     factory.create(Arrays.asList(df.getColumns()), df.getRowType())));
+        } catch (IOException ioEx) {
+          log().error("Failed to split data", ioEx);
+        }
+      } else {
+        numOfWorkers += 1;
+        dataFilesToEvaluate.add(new EvaluationUnit(Collections.singletonList(df),null));
+      }
     });
     return dataFilesToEvaluate;
   }
@@ -127,7 +144,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void processDataFile(List<EvaluationUnit> dataFilesToEvaluate) {
     dataFilesToEvaluate.forEach(dfte -> {
-      ActorRef workerRouter = createWorkerRoutes(dfte.recordEvaluator);
+      ActorRef workerRouter = createWorkerRoutes(dfte);
       dfte.dataFiles.forEach(df -> workerRouter.tell(df, self()));
     });
   }
@@ -181,13 +198,16 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates the worker router using the calculated number of workers.
    */
-  private ActorRef createWorkerRoutes(RecordEvaluator recordEvaluator) {
-    return getContext().actorOf(
-      new RoundRobinPool(numOfWorkers).props(Props.create(SingleFileReaderActor.class, recordEvaluator)),
-      "dataFileRouter");
+  private ActorRef createWorkerRoutes(EvaluationUnit evaluationUnit) {
+    //it's a checklist
+    if (evaluationUnit.dataFiles.size() == 1 && DwcTerm.Taxon == evaluationUnit.dataFiles.get(0).getRowType()){
+      return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, normalizerConfiguration),
+                                   "checkListDataFileRouter");
+    }
+      return getContext().actorOf(
+        new RoundRobinPool(numOfWorkers).props(Props.create(SingleFileReaderActor.class, evaluationUnit.recordEvaluator)),
+        "occurrenceDataFileRouter");
   }
-
-
 
   /**
    * Called when a single worker finished its work.

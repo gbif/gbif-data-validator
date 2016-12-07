@@ -6,10 +6,10 @@ neo:
   neoRepository: /tmp/validation/checklists/neo
   mappedMemory: 2048
 clb:
-  serverName:
-  databaseName:
-  user:
-  password:
+  serverName: pg1.gbif-dev.org
+  databaseName: dev_clb
+  user: clb
+  password: "%BBJu2MgstXJ"
   maximumPoolSize: 2
   connectionTimeout: 2000
   minimumIdle: 0

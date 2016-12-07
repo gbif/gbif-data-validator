@@ -16,9 +16,9 @@ import static akka.japi.pf.ReceiveBuilder.match;
 /**
  * Akka actor that wraps the Checklists validation.
  */
-public class ChecklistsProcessorMaster extends AbstractLoggingActor {
+public class ChecklistsValidatorActor extends AbstractLoggingActor {
 
-   public ChecklistsProcessorMaster(NormalizerConfiguration configuration) {
+   public ChecklistsValidatorActor(NormalizerConfiguration configuration) {
      receive(
        //this should only be called once
        match(DataJob.class, dataJobMessage -> {
