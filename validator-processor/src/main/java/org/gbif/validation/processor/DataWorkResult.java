@@ -1,6 +1,7 @@
 package org.gbif.validation.processor;
 
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.collector.CollectorGroup;
 
 /**
  * This class encapsulates the result of processing a file by an Akka actor.
@@ -16,6 +17,7 @@ class DataWorkResult {
 
   private DataFile dataFile;
 
+  private CollectorGroup collectors;
   private Result result;
 
   /**
@@ -30,9 +32,14 @@ class DataWorkResult {
    * Full constructor.
    * Builds an instance using a dataFile and a result.
    */
-  DataWorkResult(DataFile dataFile, Result result) {
+  DataWorkResult(DataFile dataFile, Result result, CollectorGroup collectors) {
     this.dataFile = dataFile;
     this.result = result;
+    this.collectors = collectors;
+  }
+
+  public CollectorGroup getCollectors() {
+    return collectors;
   }
 
   /**

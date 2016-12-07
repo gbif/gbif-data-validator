@@ -1,4 +1,4 @@
-package org.gbif.validation.api;
+package org.gbif.validation.api.result;
 
 import org.gbif.api.model.checklistbank.NameUsage;
 import org.gbif.api.vocabulary.NameUsageIssue;

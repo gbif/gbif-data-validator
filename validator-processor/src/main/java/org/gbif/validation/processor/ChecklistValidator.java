@@ -1,11 +1,11 @@
-package org.gbif.validation;
+package org.gbif.validation.processor;
 
 import org.gbif.api.model.checklistbank.NameUsage;
 import org.gbif.checklistbank.cli.model.GraphFormat;
 import org.gbif.checklistbank.cli.normalizer.Normalizer;
 import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.checklistbank.neo.UsageDao;
-import org.gbif.validation.api.ChecklistValidationResult;
+import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.DataFile;
 
 import java.io.StringWriter;
