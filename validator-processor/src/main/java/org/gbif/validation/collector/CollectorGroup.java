@@ -82,13 +82,10 @@ public class CollectorGroup {
             }
     );
 
-
-    //Fix sample size
+    //Fix sample size after merging
     Map<EvaluationType, List<LineBasedEvaluationResultDetails>> resampledMergedSamples = mergedSamples.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey,
-            e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
-            //.map((entry -> entry.getValue().stream().sorted())
-
+                    e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
 
     return ValidationResultBuilders.RecordsValidationResultElementBuilder
             .of(resultingFileName, dataFile.getRowType(),
@@ -99,9 +96,18 @@ public class CollectorGroup {
             .build();
   }
 
+  /**
+   * Take a list of {@link LineBasedEvaluationResultDetails} and make sure the sample size is not greater than
+   * maxSample.
+   *
+   * @param resultDetails
+   * @param maxSample
+   *
+   * @return
+   */
   private static List<LineBasedEvaluationResultDetails> resample(List<LineBasedEvaluationResultDetails> resultDetails, int maxSample) {
     return resultDetails.stream()
-            .sorted( (lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
+            .sorted((lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
             .limit(maxSample)
             .collect(Collectors.toList());
   }
