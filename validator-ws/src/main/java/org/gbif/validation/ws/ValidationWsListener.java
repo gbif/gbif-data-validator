@@ -4,7 +4,6 @@ import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
-import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -100,12 +99,9 @@ public class ValidationWsListener extends GbifServletListener {
       bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getJobResultStorageDir())),
                                                                buildActorPropsMapping(configuration)));
       bind(ValidationConfiguration.class).toInstance(configuration);
-      bind(ResourceEvaluationManager.class).toInstance(new ResourceEvaluationManager(configuration.getApiUrl(),
-                                                                                     configuration.getFileSplitSize()));
 
       expose(JOB_SERVER_TYPE_LITERAL);
       expose(ValidationConfiguration.class);
-      expose(ResourceEvaluationManager.class);
       expose(HttpUtil.class);
     }
 
