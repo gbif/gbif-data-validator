@@ -11,6 +11,7 @@ import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.checklists.ChecklistValidator;
+import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -54,11 +55,15 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   //current working directory for the current validation
   private File workingDir;
 
+  /**
+   * Simple container class to hold data between initialization and processing phase.
+   */
   private static class EvaluationUnit {
     private final List<DataFile> dataFiles;
     private final RecordEvaluator recordEvaluator;
     private final int numOfActors;
     private final CollectorGroupProvider collectorsProvider;
+
     EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors, CollectorGroupProvider collectorsProvider) {
       this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
