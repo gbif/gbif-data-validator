@@ -118,7 +118,7 @@ public class ValidationResultBuilders {
     private Map<Term, Long> termsFrequency;
     private Map<Term, Long> interpretedValueCounts;
 
-    public static RecordsValidationResultElementBuilder of(String fileName, Term rowType, Long numberOfLines){
+    public static RecordsValidationResultElementBuilder of(String fileName, Term rowType, Long numberOfLines) {
       return new RecordsValidationResultElementBuilder(fileName, rowType, numberOfLines);
     }
 

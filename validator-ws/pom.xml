@@ -161,11 +161,6 @@
     <version>${project.version}</version>
   </dependency>
   <dependency>
-    <groupId>org.gbif.validator</groupId>
-    <artifactId>validator-checklists</artifactId>
-    <version>${project.version}</version>
-  </dependency>
-  <dependency>
     <groupId>org.gbif.checklistbank</groupId>
     <artifactId>checklistbank-cli</artifactId>
   </dependency>

@@ -11,7 +11,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  *
@@ -32,7 +32,8 @@ public class TabularFileReaderTest {
 
     //all components should points to the parent DataFile
     Optional<RecordSource> rc = RecordSourceFactory.fromDataFile(dataFile);
-
-    assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", rc.get().read()[0]);
+    try(RecordSource recordSource = rc.get()) {
+      assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read()[0]);
+    }
   }
 }

@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -21,7 +21,7 @@ public class RecordEvaluatorChainTest {
     MyRecordEvaluator1 myRecordEvaluator1 = new MyRecordEvaluator1();
     MyRecordEvaluator2 myRecordEvaluator2 = new MyRecordEvaluator2();
 
-    RecordEvaluatorChain recordEvaluatorChain = new RecordEvaluatorChain(Arrays.asList(myRecordEvaluator1, myRecordEvaluator2));
+    RecordEvaluator recordEvaluatorChain = new RecordEvaluatorChain(Arrays.asList(myRecordEvaluator1, myRecordEvaluator2));
 
     RecordEvaluationResult result = recordEvaluatorChain.evaluate(1l, new String[0]);
 

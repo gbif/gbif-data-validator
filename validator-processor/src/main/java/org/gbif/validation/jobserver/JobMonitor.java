@@ -3,9 +3,11 @@ package org.gbif.validation.jobserver;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.messages.DataJob;
 
+import java.util.function.Supplier;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
+import akka.actor.Props;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
@@ -18,11 +20,11 @@ public class JobMonitor extends AbstractLoggingActor {
   /**
    * Creates an MockActor instance that will wait 'waitBeforeDie' before die.
    */
-  public JobMonitor(ActorPropsMapping propsMapping, JobStorage jobStorage) {
+  public JobMonitor(Supplier<Props> propsSupplier, JobStorage jobStorage) {
     receive(
       match(DataJob.class, dataJob -> {
         //creates a actor that is responsible to handle a this jobData
-        ActorRef jobMaster = getContext().actorOf(propsMapping.getActorProps(dataJob.getJobData()),
+        ActorRef jobMaster = getContext().actorOf(propsSupplier.get(),
                                                    String.valueOf(dataJob.getJobId())); //the jobId used as Actor's name
         jobMaster.tell(dataJob, self());
       }).

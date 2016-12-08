@@ -9,7 +9,7 @@ import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
-import org.gbif.validation.jobserver.impl.DataValidationActorPropsMapping;
+import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
 import org.gbif.validation.jobserver.impl.FileJobStorage;
 import org.gbif.validation.ws.conf.ConfKeys;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
@@ -112,11 +112,11 @@ public class ValidationWsListener extends GbifServletListener {
     /**
      * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
      */
-    private static DataValidationActorPropsMapping buildActorPropsMapping(ValidationConfiguration configuration) {
-        return new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
-                                                   configuration.getFileSplitSize(),
-                                                   configuration.getWorkingDir(),
-                                                   new ChecklistValidator(getNormalizerConfiguration()));
+    private static ActorPropsSupplier buildActorPropsMapping(ValidationConfiguration configuration) {
+        return new ActorPropsSupplier(new EvaluatorFactory(configuration.getApiUrl()),
+                                      configuration.getFileSplitSize(),
+                                      configuration.getWorkingDir(),
+                                      new ChecklistValidator(getNormalizerConfiguration()));
 
     }
 

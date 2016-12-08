@@ -12,7 +12,7 @@ import java.util.List;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -28,7 +28,7 @@ public class OccurrenceInterpretationEvaluatorTest {
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
             DwcTerm.Occurrence, columnMapping);
 
-    String[] record = new String[]{"1", "2000-01-01", "2000-01-02"};
+    String[] record = {"1", "2000-01-01", "2000-01-02"};
     VerbatimOccurrence occ = evaluator.toVerbatimOccurrence(record);
 
     assertEquals("1", occ.getVerbatimField(DwcTerm.occurrenceID));

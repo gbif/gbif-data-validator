@@ -10,6 +10,7 @@ import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +34,7 @@ public class CollectorGroup {
     recordsCollectors = new ArrayList<>();
     recordsCollectors.add(resultsCollector);
     this.interpretedTermsCountCollector = interpretedTermsCountCollector;
-    interpretedTermsCountCollector.ifPresent(c -> recordsCollectors.add(c));
+    interpretedTermsCountCollector.ifPresent(recordsCollectors::add);
   }
 
   public RecordMetricsCollector getMetricsCollector() {
@@ -63,8 +64,8 @@ public class CollectorGroup {
     CollectorGroup baseCollector = collectors.get(0);
 
     Map<Term, Long> mergedTermFrequency = new HashMap<>(baseCollector.metricsCollector.getTermFrequency());
-    Map<EvaluationType, Long> mergedAggregatedCounts = new HashMap<>(baseCollector.resultsCollector.getAggregatedCounts());
-    Map<EvaluationType, List<EvaluationResultDetails>> mergedSamples = new HashMap<>(baseCollector.resultsCollector.getSamples());
+    Map<EvaluationType, Long> mergedAggregatedCounts = new EnumMap<>(baseCollector.resultsCollector.getAggregatedCounts());
+    Map<EvaluationType, List<EvaluationResultDetails>> mergedSamples = new EnumMap<>(baseCollector.resultsCollector.getSamples());
     Map<Term, Long> mergedInterpretedTermsCount = baseCollector.interpretedTermsCountCollector.get().getInterpretedCounts();
 
     collectors.stream().skip(1).forEach(coll -> {

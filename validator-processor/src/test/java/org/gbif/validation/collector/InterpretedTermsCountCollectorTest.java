@@ -12,8 +12,8 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * Basic unit tests for {@link InterpretedTermsCountCollectorTest}.
@@ -32,7 +32,7 @@ public class InterpretedTermsCountCollectorTest {
    * Test a single TermsFrequencyCollector instance.
    * @param tfc
    */
-  private void testInterpretedTermsCountCollector(InterpretedTermsCountCollector tfc) {
+  private static void testInterpretedTermsCountCollector(InterpretedTermsCountCollector tfc) {
     Map<Term, Object> interpretedData = new HashMap<>();
     interpretedData.put(DwcTerm.occurrenceID, "1234");
     interpretedData.put(GbifTerm.taxonKey, 4321);
@@ -52,7 +52,7 @@ public class InterpretedTermsCountCollectorTest {
     interpretedData.remove(GbifTerm.taxonKey);
     tfc.collect(bldr.withInterpretedData(interpretedData).build());
 
-    assertEquals(tfc.getInterpretedCounts().get(GbifTerm.taxonKey).intValue(), 3);
+    assertEquals(3, tfc.getInterpretedCounts().get(GbifTerm.taxonKey).intValue());
     assertNull("DwcTerm.occurrenceID is not declared as a term to collect",
             tfc.getInterpretedCounts().get(DwcTerm.occurrenceID));
   }

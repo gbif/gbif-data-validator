@@ -26,11 +26,6 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.gbif.validator</groupId>
-      <artifactId>validator-checklists</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
@@ -97,18 +92,34 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId> org.gbif</groupId>
+      <artifactId>gbif-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId> org.neo4j</groupId>
+      <artifactId>neo4j-kernel</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.checklistbank</groupId>
+      <artifactId>checklistbank-cli</artifactId>
+    </dependency>
+
 
     <!-- TEST PIECES -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-    </dependency>
-
-    <dependency>
-      <groupId>org.apache.commons</groupId>
-      <artifactId>commons-lang3</artifactId>
-      <version>${commons-lang.version}</version>
-      <scope>test</scope>
     </dependency>
 
   </dependencies>

@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 public class DwcaResourceStructureEvaluatorTest {
 
   private static final File XML_CATALOG = FileUtils.getClasspathFile("xml/xml-catalog.xml");
-  private DwcaResourceStructureEvaluator DWCA_RESOURCES_STRUCTURE_EVAL =
+  private static final DwcaResourceStructureEvaluator DWCA_RESOURCES_STRUCTURE_EVAL =
           new DwcaResourceStructureEvaluator(new XMLSchemaValidatorProvider(Optional.of(XML_CATALOG.getAbsolutePath())));
 
   @Test

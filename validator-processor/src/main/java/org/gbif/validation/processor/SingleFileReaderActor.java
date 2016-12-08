@@ -22,7 +22,7 @@ class SingleFileReaderActor extends AbstractLoggingActor {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingleFileReaderActor.class);
 
-  public SingleFileReaderActor(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider) {
+  SingleFileReaderActor(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider) {
     receive(
             match(DataFile.class, dataFile -> {
               pipe(
@@ -48,7 +48,7 @@ class SingleFileReaderActor extends AbstractLoggingActor {
         line++;
         collectors.getMetricsCollector().collect(record);
         long finalLine = line;
-        String[] finalRecord = record;
+        String[] finalRecord = record; //required to be used in lambda expressions
         collectors.getRecordsCollectors().forEach(c -> c.collect(recordEvaluator.evaluate(finalLine, finalRecord)));
       }
       return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS, collectors);

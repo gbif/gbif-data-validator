@@ -1,6 +1,5 @@
 package org.gbif.validation.processor;
 
-import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.checklists.ChecklistValidator;

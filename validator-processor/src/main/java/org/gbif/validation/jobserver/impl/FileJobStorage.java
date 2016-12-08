@@ -41,11 +41,11 @@ public class FileJobStorage implements JobStorage {
   }
 
   /**
-   * Checks that the storePath is a directory, if it doesn't exists it tries to create it.
-   * An IllegalArgumentException is thrown if the storePath is not a directory or if it can't be created.
+   * Checks that the directoryStorePath is a directory, if it doesn't exists it tries to create it.
+   * An IllegalArgumentException is thrown if the directoryStorePath is not a directory or if it can't be created.
    */
-  private static void createStorePath(Path storePath) {
-    File storePathFile = storePath.toFile();
+  private static void createStorePath(Path directoryStorePath) {
+    File storePathFile = directoryStorePath.toFile();
     Preconditions.checkArgument(storePathFile.isDirectory(), "Path is not a directory");
     if (!storePathFile.exists()){
       Preconditions.checkArgument(storePathFile.mkdirs(), "Store path can't be created");

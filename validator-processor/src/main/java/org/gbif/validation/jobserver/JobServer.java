@@ -10,6 +10,7 @@ import static  org.gbif.validation.jobserver.util.ActorSelectionUtil.getRunningA
 import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -36,11 +37,11 @@ public class JobServer<T> {
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
    */
-  public JobServer(JobStorage jobStorage, ActorPropsMapping<?> propsMapping) {
+  public JobServer(JobStorage jobStorage, Supplier<Props> propsSupplier) {
     system = ActorSystem.create("JobServerSystem");
     jobIdSeed = new AtomicLong(new Date().getTime());
     this.jobStorage = jobStorage;
-    jobMonitor = system.actorOf(Props.create(JobMonitor.class,propsMapping,jobStorage),"JobMonitor");
+    jobMonitor = system.actorOf(Props.create(JobMonitor.class, propsSupplier, jobStorage), "JobMonitor");
     LOG.info("New jobServer instance created");
   }
 

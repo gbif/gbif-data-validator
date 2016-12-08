@@ -267,8 +267,9 @@ public class RecordSourceFactory {
 
   /**
    * Guesses the delimiter character form the data file.
+   * @throws UnkownDelimitersException
    */
-  private static Character getDelimiter(Path dataFilePath) throws UnkownDelimitersException {
+  private static Character getDelimiter(Path dataFilePath) {
     CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
     if (metadata.getDelimiter().length() == 1) {
       return metadata.getDelimiter().charAt(0);

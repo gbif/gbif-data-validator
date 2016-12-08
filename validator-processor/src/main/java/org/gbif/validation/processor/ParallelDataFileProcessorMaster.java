@@ -6,6 +6,7 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.result.ValidationResult;
@@ -102,20 +103,29 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
-    //TODO check why is necessary
     DataFile dataFile = dataJob.getJobData();
-    dataFile.setHasHeaders(Optional.of(true));
-    List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
-    List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
-    //now trigger everything
-    processDataFile(dataFilesToEvaluate);
+    Optional<ValidationResultElement> validationResultElement =
+      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+        .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
+    if (validationResultElement.isPresent()) {
+      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
+                                                ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
+                                                                                    dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
+                                                  .withResourceResult(validationResultElement.get()).build()));
+    } else {
+      dataFile.setHasHeaders(Optional.of(true));
+      List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+      List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
+      //now trigger everything
+      processDataFile(dataFilesToEvaluate);
+    }
   }
 
   /**
    * Calculates the required splits to process all the datafiles. The variable numOfWorkers is changed with the number
    * of actors that will be used to process the input file.
    */
-  private List<EvaluationUnit> prepareDataFile(List<DataFile> dataFiles, EvaluatorFactory factory,
+  private List<EvaluationUnit> prepareDataFile(Iterable<DataFile> dataFiles, EvaluatorFactory factory,
                                                Integer fileSplitSize) {
 
     List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
@@ -169,19 +179,18 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     List<DataFile> splitDataFiles = new ArrayList<>();
     if(dataFile.getNumOfLines() <= fileSplitSize) {
       splitDataFiles.add(dataFile);
-      return splitDataFiles;
+    } else {
+      String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
+      String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
+
+      boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
+      IntStream.range(0, splits.length)
+        .forEach(idx -> splitDataFiles.add(newSplitDataFile(dataFile,
+                                                            splitFolder,
+                                                            splits[idx],
+                                                            Optional.of(inputHasHeaders && (idx == 0)),
+                                                            Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0)))));
     }
-
-    String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
-    String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
-
-    boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
-    IntStream.range(0, splits.length)
-            .forEach(idx ->
-                    splitDataFiles.add(newSplitDataFile(dataFile, splitFolder, splits[idx],
-                            Optional.of(inputHasHeaders && (idx == 0)),
-                            Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0))))
-            );
     return splitDataFiles;
   }
 
@@ -240,11 +249,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
     collectResult(result);
 
-
     if (numberOfWorkersCompleted == numOfWorkers) {
-      context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), buildResult()), self());
-      getContext().stop(self());
-      deleteWorkingDir();
+      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(), buildResult()));
     }
   }
 
@@ -269,7 +275,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     ValidationResultBuilders.Builder validationResultBuilder =
       ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
                                           dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
-    checklistsResults.stream().forEach(checklistsResult -> validationResultBuilder.withChecklistValidationResult(checklistsResult));
+    checklistsResults.stream().forEach(validationResultBuilder::withChecklistValidationResult);
     rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(CollectorGroup.mergeAndGetResult(
       rowTypeDataFile.get(rowType),
       rowTypeDataFile.get(rowType).getSourceFileName(),
@@ -278,12 +284,20 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Deletes the workind directory if it exists.
+   * Emit the provided response to the parent Actor and stop this Actor.
+   */
+  private void emitResponseAndStop(JobStatusResponse<?> response) {
+    context().parent().tell(response, self());
+    deleteWorkingDir();
+    getContext().stop(self());
+  }
+
+  /**
+   * Deletes the working directory if it exists.
    */
   private void deleteWorkingDir() {
     if (workingDir.exists()) {
       FileUtils.deleteDirectoryRecursively(workingDir);
     }
   }
-
 }
