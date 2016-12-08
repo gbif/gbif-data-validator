@@ -113,7 +113,7 @@ public class ValidationResultBuilders {
 
     public RecordsValidationResultElementBuilder withIssues(Map<EvaluationType, Long> issueCounter,
                                                             Map<EvaluationType,
-                                                            List<EvaluationResultDetails>> issueSampling) {
+                                                            List<LineBasedEvaluationResultDetails>> issueSampling) {
       issueCounter.forEach(
               (k, v) ->
                       issues.add(new ValidationIssueSampling(k, v, issueSampling.get(k)))

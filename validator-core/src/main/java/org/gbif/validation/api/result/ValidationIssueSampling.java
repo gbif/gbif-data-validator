@@ -9,14 +9,14 @@ import java.util.List;
  */
 public class ValidationIssueSampling extends ValidationIssue {
 
-  private final List<EvaluationResultDetails> sample;
+  private final List<LineBasedEvaluationResultDetails> sample;
 
-  ValidationIssueSampling(EvaluationType issue, long count, List<EvaluationResultDetails> sample) {
+  ValidationIssueSampling(EvaluationType issue, long count, List<LineBasedEvaluationResultDetails> sample) {
     super(issue, count);
     this.sample = sample;
   }
 
-  public List<EvaluationResultDetails> getSample() {
+  public List<LineBasedEvaluationResultDetails> getSample() {
     return sample;
   }
 }

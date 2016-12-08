@@ -5,7 +5,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.result.EvaluationResultDetails;
+import org.gbif.validation.api.result.LineBasedEvaluationResultDetails;
 import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 
@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * The {@link CollectorGroup} is used to simplify passing all the collectors around as different entities since they
@@ -64,7 +65,7 @@ public class CollectorGroup {
 
     Map<Term, Long> mergedTermFrequency = new HashMap<>(baseCollector.metricsCollector.getTermFrequency());
     Map<EvaluationType, Long> mergedAggregatedCounts = new HashMap<>(baseCollector.resultsCollector.getAggregatedCounts());
-    Map<EvaluationType, List<EvaluationResultDetails>> mergedSamples = new HashMap<>(baseCollector.resultsCollector.getSamples());
+    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> mergedSamples = new HashMap<>(baseCollector.resultsCollector.getSamples());
     Map<Term, Long> mergedInterpretedTermsCount = baseCollector.interpretedTermsCountCollector.get().getInterpretedCounts();
 
     collectors.stream().skip(1).forEach(coll -> {
@@ -72,7 +73,7 @@ public class CollectorGroup {
               coll.resultsCollector.getAggregatedCounts().forEach((k, v) -> mergedAggregatedCounts.merge(k, v, Long::sum));
               coll.interpretedTermsCountCollector.get().getInterpretedCounts().forEach((k, v) -> mergedInterpretedTermsCount.merge(k, v, Long::sum));
               coll.resultsCollector.getSamples().forEach((k, v) -> mergedSamples.merge(k, v, (o, n) -> {
-                List<EvaluationResultDetails> a = new ArrayList<>(o);
+                List<LineBasedEvaluationResultDetails> a = new ArrayList<>(o);
                 a.addAll(n);
                 return a;
               }));
@@ -80,15 +81,27 @@ public class CollectorGroup {
     );
 
 
-    //TODO fix sample size
+    //Fix sample size
+    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> resampledMergedSamples = mergedSamples.entrySet().stream()
+            .collect(Collectors.toMap(Map.Entry::getKey,
+            e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
+            //.map((entry -> entry.getValue().stream().sorted())
+
 
     return ValidationResultBuilders.RecordsValidationResultElementBuilder
             .of(resultingFileName, dataFile.getRowType(),
                     dataFile.getNumOfLines() - (dataFile.isHasHeaders().orElse(false) ? 1l : 0l))
-            .withIssues(mergedAggregatedCounts, mergedSamples)
+            .withIssues(mergedAggregatedCounts, resampledMergedSamples)
             .withTermsFrequency(mergedTermFrequency)
             .withInterpretedValueCounts(mergedInterpretedTermsCount)
             .build();
+  }
+
+  private static List<LineBasedEvaluationResultDetails> resample(List<LineBasedEvaluationResultDetails> resultDetails, int maxSample) {
+    return resultDetails.stream()
+            .sorted( (lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
+            .limit(maxSample)
+            .collect(Collectors.toList());
   }
 
 }

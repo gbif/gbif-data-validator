@@ -1,7 +1,7 @@
 package org.gbif.validation.api.model;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.result.EvaluationResultDetails;
+import org.gbif.validation.api.result.LineBasedEvaluationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -21,7 +21,7 @@ public class RecordEvaluationResult implements Serializable {
   private final Long lineNumber;
 
   private final Map<Term, Object> interpretedData;
-  private final List<EvaluationResultDetails> details;
+  private final List<LineBasedEvaluationResultDetails> details;
 
   /**
    * Use {@link Builder} to get an instance.
@@ -30,7 +30,7 @@ public class RecordEvaluationResult implements Serializable {
    * @param details
    * @param interpretedData
    */
-  private RecordEvaluationResult(Term rowType, Long lineNumber, List<EvaluationResultDetails> details, Map<Term, Object> interpretedData) {
+  private RecordEvaluationResult(Term rowType, Long lineNumber, List<LineBasedEvaluationResultDetails> details, Map<Term, Object> interpretedData) {
     this.lineNumber = lineNumber;
     this.rowType = rowType;
     this.details = details;
@@ -41,7 +41,7 @@ public class RecordEvaluationResult implements Serializable {
     return rowType;
   }
 
-  public List<EvaluationResultDetails> getDetails(){
+  public List<LineBasedEvaluationResultDetails> getDetails(){
     return details;
   }
 
@@ -66,7 +66,7 @@ public class RecordEvaluationResult implements Serializable {
     private Long lineNumber;
     private String recordId;
     private Map<Term, Object> interpretedData;
-    private List<EvaluationResultDetails> details;
+    private List<LineBasedEvaluationResultDetails> details;
 
     /**
      * rowType + lineNumber is used to uniquely identify a line within the validation routine.
@@ -137,7 +137,7 @@ public class RecordEvaluationResult implements Serializable {
      * @param details
      * @return
      */
-    private Builder addDetails(List<EvaluationResultDetails> details) {
+    private Builder addDetails(List<LineBasedEvaluationResultDetails> details) {
       if(details == null){
         return this;
       }
@@ -199,7 +199,7 @@ public class RecordEvaluationResult implements Serializable {
   /**
    * Base evaluation result details with "expected" and "found".
    */
-  public static class BaseEvaluationResultDetails implements EvaluationResultDetails, Serializable {
+  public static class BaseEvaluationResultDetails implements LineBasedEvaluationResultDetails, Serializable {
     protected final Long lineNumber;
     protected final String recordId;
     protected final EvaluationType evaluationType;
@@ -220,6 +220,7 @@ public class RecordEvaluationResult implements Serializable {
       this.found = found;
     }
 
+    @Override
     public Long getLineNumber(){
       return lineNumber;
     }

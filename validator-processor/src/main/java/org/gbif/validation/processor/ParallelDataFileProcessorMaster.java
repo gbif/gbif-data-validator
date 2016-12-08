@@ -105,6 +105,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     }
 
     List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+    //TODO ensure we have a rowType
     List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
     //now trigger everything
     processDataFile(dataFilesToEvaluate);

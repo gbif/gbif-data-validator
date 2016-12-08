@@ -3,7 +3,7 @@ package org.gbif.validation.collector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.api.result.EvaluationResultDetails;
+import org.gbif.validation.api.result.LineBasedEvaluationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -45,15 +45,15 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
 
   private interface InnerRecordEvaluationResultCollector {
     void countAndPrepare(EvaluationType type);
-    void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<EvaluationResultDetails>, Collection<EvaluationResultDetails>>
+    void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<LineBasedEvaluationResultDetails>, Collection<LineBasedEvaluationResultDetails>>
             samplingFunction);
     Map<EvaluationType, Long> getAggregatedCounts();
-    Map<EvaluationType, List<EvaluationResultDetails>> getSamples();
+    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> getSamples();
   }
 
   private static class RecordEvaluationResultCollectorSingleThread implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, Long> issueCounter;
-    private final Map<EvaluationType, Collection<EvaluationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Collection<LineBasedEvaluationResultDetails>> issueSampling;
 
     RecordEvaluationResultCollectorSingleThread(Integer maxNumberOfSample) {
       issueCounter = new EnumMap<>(EvaluationType.class);
@@ -65,12 +65,12 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       issueSampling.putIfAbsent(type, new ArrayList<>());
     }
 
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<EvaluationResultDetails>, Collection<EvaluationResultDetails>>
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<LineBasedEvaluationResultDetails>, Collection<LineBasedEvaluationResultDetails>>
                                  samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
-    public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
+    public Map<EvaluationType, List<LineBasedEvaluationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec ->  new ArrayList<>(rec.getValue()))); //Value
     }
@@ -83,7 +83,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
 
   private static class RecordEvaluationResultCollectorConcurrent implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, LongAdder> issueCounter;
-    private final Map<EvaluationType, Collection<EvaluationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Collection<LineBasedEvaluationResultDetails>> issueSampling;
 
     RecordEvaluationResultCollectorConcurrent(Integer maxNumberOfSample) {
       issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
@@ -95,7 +95,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       issueSampling.putIfAbsent(type, new ConcurrentLinkedQueue<>());
     }
 
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<EvaluationResultDetails>, Collection<EvaluationResultDetails>>
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<LineBasedEvaluationResultDetails>, Collection<LineBasedEvaluationResultDetails>>
             samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
@@ -112,7 +112,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
      *
      * @return a copy of the internal evaluation samples.
      */
-    public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
+    public Map<EvaluationType, List<LineBasedEvaluationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec ->  new ArrayList<>(rec.getValue()))); //Value
     }
@@ -136,7 +136,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
   }
 
 
-  public Map<EvaluationType, List<EvaluationResultDetails>> getSamples() {
+  public Map<EvaluationType, List<LineBasedEvaluationResultDetails>> getSamples() {
     return innerImpl.getSamples();
   }
 
