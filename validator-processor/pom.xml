@@ -16,6 +16,7 @@
     <apache-odftoolkit.version>0.8.1-incubating</apache-odftoolkit.version>
     <akka-actor.version>2.3.15</akka-actor.version>
     <typesafe-config.version>1.0.2</typesafe-config.version>
+    <commons-lang.version>3.0.1</commons-lang.version>
   </properties>
 
   <dependencies>
@@ -25,20 +26,13 @@
       <version>${project.version}</version>
     </dependency>
     <dependency>
-      <groupId>org.gbif.validator</groupId>
-      <artifactId>validator-checklists</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
     </dependency>
-
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
     </dependency>
-
     <dependency>
       <groupId>org.apache.poi</groupId>
       <artifactId>poi</artifactId>
@@ -57,7 +51,7 @@
 
     <dependency>
       <groupId>com.typesafe.akka</groupId>
-      <artifactId>akka-actor_2.10</artifactId>
+      <artifactId>akka-actor_2.11</artifactId>
       <version>${akka-actor.version}</version>
     </dependency>
     <dependency>
@@ -98,6 +92,29 @@
       <groupId>org.geotools</groupId>
       <artifactId>gt-main</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId> org.gbif</groupId>
+      <artifactId>gbif-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.lucene</groupId>
+      <artifactId>lucene-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId> org.neo4j</groupId>
+      <artifactId>neo4j-kernel</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.gbif.checklistbank</groupId>
+      <artifactId>checklistbank-cli</artifactId>
+    </dependency>
+
 
     <!-- TEST PIECES -->
     <dependency>

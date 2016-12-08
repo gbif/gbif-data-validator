@@ -1,12 +1,17 @@
 package org.gbif.validation.processor;
 
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.model.ValidationProfile;
+import org.gbif.validation.api.result.ChecklistValidationResult;
+import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
+import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
@@ -20,6 +25,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +45,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
   private final Map<Term, DataFile> rowTypeDataFile;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
+  private final List<ChecklistValidationResult> checklistsResults;
+  private final ChecklistValidator checklistValidator;
   private final AtomicInteger workerCompleted;
 
   private int numOfWorkers;
@@ -66,72 +74,82 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   *
-   * @param factory
-   * @param fileSplitSize
-   * @param baseWorkingDir base working directory under which a new folder will be created for the validation (using a random UUID)
+   * Calculates the number of records that will be processed by each data worker.
    */
-  ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, final String baseWorkingDir) {
+  private static int recordsPerSplit(int fileSizeInLines, int fileSplitSize){
+    return fileSizeInLines / Math.max(fileSizeInLines/fileSplitSize, 1);
+  }
+
+
+  ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
+                                  ChecklistValidator  checklistValidator) {
 
     rowTypeDataFile = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
+    checklistsResults = Collections.synchronizedList(new ArrayList<>());
+    this.checklistValidator = checklistValidator;
+
 
     receive(
             //this should only be called once
             match(DataJob.class, dataJobMessage -> {
-              dataJob = dataJobMessage;
+              dataJob = (DataJob<DataFile>)dataJobMessage;
               workingDir = new File(baseWorkingDir, UUID.randomUUID().toString());
-              processDataFile((DataFile) dataJobMessage.getJobData(), factory, fileSplitSize);
+              processDataFile(factory, fileSplitSize);
             })
-                    .match(DataWorkResult.class, dataWorkResult -> {
-                      processResults(dataWorkResult);
-                    }).build()
+              .match(DataWorkResult.class, this::processResults).build()
     );
   }
 
-  private void processDataFile(DataFile dataFile, EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
-
-    //Validate the structure of the resource
+  private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
+    DataFile dataFile = dataJob.getJobData();
     Optional<ValidationResultElement> validationResultElement =
-            EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
-                    .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
+      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+        .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
     if (validationResultElement.isPresent()) {
-      emitResponseAndStop(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
-              ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-                      dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-                      .withResourceResult(validationResultElement.get()).build()));
-      return;
+      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
+                                                ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
+                                                                                    dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
+                                                  .withResourceResult(validationResultElement.get()).build()));
+    } else {
+      dataFile.setHasHeaders(Optional.of(true));
+      List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+      List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
+      //now trigger everything
+      processDataFile(dataFilesToEvaluate);
     }
-
-    List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
-    //TODO ensure we have a rowType
-    List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
-    //now trigger everything
-    processDataFile(dataFilesToEvaluate);
   }
 
   /**
    * Calculates the required splits to process all the datafiles. The variable numOfWorkers is changed with the number
    * of actors that will be used to process the input file.
    */
-  private List<EvaluationUnit> prepareDataFile(List<DataFile> dataFiles, EvaluatorFactory factory, Integer fileSplitSize) {
+  private List<EvaluationUnit> prepareDataFile(Iterable<DataFile> dataFiles, EvaluatorFactory factory,
+                                               Integer fileSplitSize) {
+
     List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
 
     numOfWorkers = 0;
     //prepare everything
     dataFiles.forEach(df -> {
-      rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
-      rowTypeDataFile.put(df.getRowType(), df);
-      try {
-        List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
-        numOfWorkers += splitDataFile.size();
-        List<Term> columns = Arrays.asList(df.getColumns());
-        dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
-                factory.create(columns, df.getRowType()),
-                splitDataFile.size(), new CollectorGroupProvider(df.getRowType(), columns)));
-      } catch (IOException ioEx) {
-        log().error("Failed to split data", ioEx);
+      if (DwcTerm.Taxon == df.getRowType()) {
+        numOfWorkers += 1;
+        dataFilesToEvaluate.add(new EvaluationUnit(Collections.singletonList(df),null,df.getNumOfLines(),null));
+      } else {
+        rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
+        rowTypeDataFile.put(df.getRowType(), df);
+        try {
+          List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
+          numOfWorkers += splitDataFile.size();
+          List<Term> columns = Arrays.asList(df.getColumns());
+          dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
+                                                     factory.create(columns, df.getRowType()),
+                                                     splitDataFile.size(),
+                                                     new CollectorGroupProvider(df.getRowType(), columns)));
+        } catch (IOException ioEx) {
+          log().error("Failed to split data", ioEx);
+        }
       }
     });
 
@@ -142,10 +160,10 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates a Actor/Worker for each evaluation unit.
    */
-  private void processDataFile(List<EvaluationUnit> dataFilesToEvaluate) {
-    dataFilesToEvaluate.forEach(dfte -> {
-      ActorRef workerRouter = createWorkerRoutes(dfte.recordEvaluator, dfte.collectorsProvider, dfte.numOfActors);
-      dfte.dataFiles.forEach(df -> workerRouter.tell(df, self()));
+  private void processDataFile(Iterable<EvaluationUnit> dataFilesToEvaluate) {
+    dataFilesToEvaluate.forEach(evaluationUnit -> {
+      ActorRef workerRouter = createWorkerRoutes(evaluationUnit);
+      evaluationUnit.dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
     });
   }
 
@@ -161,19 +179,18 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     List<DataFile> splitDataFiles = new ArrayList<>();
     if(dataFile.getNumOfLines() <= fileSplitSize) {
       splitDataFiles.add(dataFile);
-      return splitDataFiles;
+    } else {
+      String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
+      String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
+
+      boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
+      IntStream.range(0, splits.length)
+        .forEach(idx -> splitDataFiles.add(newSplitDataFile(dataFile,
+                                                            splitFolder,
+                                                            splits[idx],
+                                                            Optional.of(inputHasHeaders && (idx == 0)),
+                                                            Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0)))));
     }
-
-    String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
-    String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
-
-    boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
-    IntStream.range(0, splits.length)
-            .forEach(idx ->
-                    splitDataFiles.add(newSplitDataFile(dataFile, splitFolder, splits[idx],
-                            Optional.of(inputHasHeaders && (idx == 0)),
-                            Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0))))
-            );
     return splitDataFiles;
   }
 
@@ -204,10 +221,16 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates the worker router using the calculated number of workers.
    */
-  private ActorRef createWorkerRoutes(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider, int numOfActors) {
+  private ActorRef createWorkerRoutes(EvaluationUnit evaluationUnit) {
+    String actorName =  "dataFileRouter_" + UUID.randomUUID();
+    if (evaluationUnit.dataFiles.size() == 1 && DwcTerm.Taxon == evaluationUnit.dataFiles.get(0).getRowType()) {
+      return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, checklistValidator),actorName);
+    }
     return getContext().actorOf(
-            new RoundRobinPool(numOfActors).props(Props.create(SingleFileReaderActor.class, recordEvaluator, collectorsProvider)),
-            "dataFileRouter_" + UUID.randomUUID().toString());
+            new RoundRobinPool(evaluationUnit.numOfActors).props(Props.create(SingleFileReaderActor.class,
+                                                                              evaluationUnit.recordEvaluator,
+                                                                              evaluationUnit.collectorsProvider)),
+            actorName);
   }
 
   /**
@@ -217,39 +240,64 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   private void processResults(DataWorkResult result) {
 
     //FIXME
-    if(result.getResult() == DataWorkResult.Result.FAILED) {
-      log().error("DataWorkResult = FAILED");
+    if(DataWorkResult.Result.FAILED == result.getResult()) {
+      log().error("DataWorkResult = FAILED: {}", result);
     }
 
     int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
-    rowTypeCollectors.compute(result.getDataFile().getRowType(), (key, val) -> {
-      val.add(result.getCollectors());
-      return val;
-    });
     log().info("Got {} worker response(s)", numberOfWorkersCompleted);
+
+    collectResult(result);
+
     if (numberOfWorkersCompleted == numOfWorkers) {
-
-      //prepare validationResultBuilder
-      ValidationResultBuilders.Builder validationResultBuilder =
-              ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
-              dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
-
-      rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(
-              CollectorGroup.mergeAndGetResult(rowTypeDataFile.get(rowType), rowTypeDataFile.get(rowType).getSourceFileName(),
-              collectorList)));
-      emitResponseAndStop(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), validationResultBuilder.build()));
+      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(), buildResult()));
     }
   }
 
   /**
-   * Emit the provided response to the parent Actor and stop this Actor.
-   *
-   * @param response
+   * Collects individual results and aggregates them in the internal data structures.
    */
-  private void emitResponseAndStop(JobStatusResponse response) {
+  private void collectResult(DataWorkResult result) {
+    if (DwcTerm.Occurrence == result.getDataFile().getRowType()) {
+      rowTypeCollectors.compute(result.getDataFile().getRowType(), (key, val) -> {
+        val.add(result.getCollectors());
+        return val;
+      });
+    } else if (DwcTerm.Taxon == result.getDataFile().getRowType()) {
+      checklistsResults.add(result.getChecklistValidationResult());
+    }
+  }
+
+  /**
+   * Builds the ValidationResult from the aggregated data.
+   */
+  private ValidationResult buildResult() {
+    ValidationResultBuilders.Builder validationResultBuilder =
+      ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
+                                          dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
+    checklistsResults.stream().forEach(validationResultBuilder::withChecklistValidationResult);
+    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(CollectorGroup.mergeAndGetResult(
+      rowTypeDataFile.get(rowType),
+      rowTypeDataFile.get(rowType).getSourceFileName(),
+      collectorList)));
+    return validationResultBuilder.build();
+  }
+
+  /**
+   * Emit the provided response to the parent Actor and stop this Actor.
+   */
+  private void emitResponseAndStop(JobStatusResponse<?> response) {
     context().parent().tell(response, self());
-    FileUtils.deleteDirectoryRecursively(workingDir);
+    deleteWorkingDir();
     getContext().stop(self());
   }
 
+  /**
+   * Deletes the working directory if it exists.
+   */
+  private void deleteWorkingDir() {
+    if (workingDir.exists()) {
+      FileUtils.deleteDirectoryRecursively(workingDir);
+    }
+  }
 }

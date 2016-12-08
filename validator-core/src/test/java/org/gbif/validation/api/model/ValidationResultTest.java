@@ -11,7 +11,7 @@ import java.util.Map;
 
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Tests related to {@link ValidationResult}.
@@ -36,9 +36,9 @@ public class ValidationResultTest {
                             .withInterpretedValueCounts(interpretedValuesCount).build())
                     .build();
 
-    assertEquals(new Long(18l), ((RecordsValidationResultElement) result.getResults().get(0))
+    assertEquals(Long.valueOf(18L), ((RecordsValidationResultElement) result.getResults().get(0))
             .getTermsFrequency().get(DwcTerm.scientificName));
-    assertEquals(new Long(4l), ((RecordsValidationResultElement) result.getResults().get(1))
+    assertEquals(Long.valueOf(4L), ((RecordsValidationResultElement) result.getResults().get(1))
             .getInterpretedValueCounts().get(DwcTerm.scientificName));
   }
 }

@@ -6,7 +6,7 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Unit tests related to {@link RecordEvaluationResultCollector}.
@@ -33,7 +33,7 @@ public class RecordEvaluationResultCollectorTest {
    *
    * @param collector expected to have maxNumberOfSample == 1
    */
-  private void testCollectorSamplingLimit(RecordEvaluationResultCollector collector) {
+  private static void testCollectorSamplingLimit(RecordEvaluationResultCollector collector) {
     RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, "2", "3");
     collector.collect(bldr.build());

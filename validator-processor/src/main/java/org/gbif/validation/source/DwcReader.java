@@ -61,7 +61,7 @@ public class DwcReader implements RecordSource {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
     archive = ArchiveFactory.openArchive(dwcFolder);
-    if(rowType != null && rowType != archive.getCore().getRowType()) {
+    if(rowType != null && !rowType.equals(archive.getCore().getRowType())) {
       darwinCoreComponent = archive.getExtension(rowType);
     }
     else{
@@ -92,7 +92,7 @@ public class DwcReader implements RecordSource {
     if(rowType == null) {
       darwinCoreComponent = archive.getCore();
     }else{
-      darwinCoreComponent = archive.getCore().getRowType() == rowType ? archive.getCore() : archive.getExtension(rowType);
+      darwinCoreComponent = archive.getCore().getRowType().equals(rowType) ? archive.getCore() : archive.getExtension(rowType);
     }
 
     //TODO if darwinCoreComponent is null ?
@@ -124,7 +124,7 @@ public class DwcReader implements RecordSource {
 
     //+1 for the id column (not included on archiveFields list)
     int expectedNumberOfColumns = archiveFields.size() + 1;
-    int maxIndex = archiveFields.stream().filter(af -> af.getIndex() != null).mapToInt(af -> af.getIndex()).max().getAsInt();
+    int maxIndex = archiveFields.stream().filter(af -> af.getIndex() != null).mapToInt(ArchiveField::getIndex).max().getAsInt();
     maxIndex = Math.max(maxIndex, darwinCoreComponent.getId().getIndex());
 
     //defense against wrongly declared index number

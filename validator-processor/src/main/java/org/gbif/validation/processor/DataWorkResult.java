@@ -1,6 +1,7 @@
 package org.gbif.validation.processor;
 
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.collector.CollectorGroup;
 
 /**
@@ -18,6 +19,9 @@ class DataWorkResult {
   private DataFile dataFile;
 
   private CollectorGroup collectors;
+
+  private ChecklistValidationResult checklistValidationResult;
+
   private Result result;
 
   /**
@@ -62,6 +66,14 @@ class DataWorkResult {
 
   public void setResult(Result result) {
     this.result = result;
+  }
+
+  public ChecklistValidationResult getChecklistValidationResult() {
+    return checklistValidationResult;
+  }
+
+  public void setChecklistValidationResult(ChecklistValidationResult checklistValidationResult) {
+    this.checklistValidationResult = checklistValidationResult;
   }
 
   @Override

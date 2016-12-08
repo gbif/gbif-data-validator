@@ -3,8 +3,8 @@ package org.gbif.validation.collector;
 import org.gbif.dwc.terms.Term;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -30,7 +30,7 @@ public class CollectorUtils {
   /**
    * Initializes a Map<Term,Long> using the List<Terms> for keys and zeroes for all the values.
    */
-  public static Map<Term, Long> getZeroTermFrequency(List<Term> terms, boolean useConcurrentMap) {
+  public static Map<Term, Long> getZeroTermFrequency(Collection<Term> terms, boolean useConcurrentMap) {
     return getZeroTermFrequency(terms.stream(),terms.size(),useConcurrentMap);
   }
 

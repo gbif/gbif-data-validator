@@ -39,10 +39,6 @@ public class ResourceEvaluationManager {
   private final EvaluatorFactory factory;
   private final Integer fileSplitSize;
 
-  private final ActorSystem system;
-
-  private final AtomicLong newJobId = new AtomicLong(new Date().getTime());
-
   /**
    *
    * @param apiUrl
@@ -51,7 +47,6 @@ public class ResourceEvaluationManager {
   public ResourceEvaluationManager(String apiUrl, Integer fileSplitSize){
     factory = new EvaluatorFactory(apiUrl);
     this.fileSplitSize = fileSplitSize;
-    system = ActorSystem.create("DataFileProcessorSystem");
   }
 
   /**
@@ -129,7 +124,5 @@ public class ResourceEvaluationManager {
             factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
             CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), false));
   }
-
-
 
 }

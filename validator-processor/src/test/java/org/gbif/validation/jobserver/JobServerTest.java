@@ -37,7 +37,7 @@ public class JobServerTest {
    */
   @Test
   public void submitTestIT() {
-    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 0L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L));
     JobStatusResponse<?> jobResponse = jobServer.submit(new DataFile());
     Assert.assertEquals(JobStatusResponse.JobStatus.ACCEPTED, jobResponse.getStatus());
     Assert.assertNotEquals(0L, jobResponse.getJobId());
@@ -48,7 +48,7 @@ public class JobServerTest {
    */
   @Test
   public void submitAndGetTestIT() {
-    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 2000L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L));
     JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
@@ -58,14 +58,14 @@ public class JobServerTest {
 
   @Test
   public void notFoundTestIT() {
-    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 0L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L));
     JobStatusResponse<?> jobResponse = jobServer.status(100l);
     Assert.assertEquals(JobStatusResponse.JobStatus.NOT_FOUND, jobResponse.getStatus());
   }
 
   @Test
   public void killTestIT() throws InterruptedException {
-    jobServer = new JobServer(jobStorage, x -> Props.create(MockActor.class, 2000L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L));
     JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
     Thread.sleep(5); //sleep before getting the status of a running actor
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());

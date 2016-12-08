@@ -9,7 +9,7 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -50,8 +50,6 @@ public class RecordEvaluationResultTest {
 
   @Test
   public void testMergeWithNulls() {
-    Map<Term, String> relatedData = new HashMap<>();
-    relatedData.put(DwcTerm.basisOfRecord, "n/a");
     RecordEvaluationResult result = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l)
             .build();
 

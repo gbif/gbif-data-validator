@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -43,7 +43,7 @@ public class RecordSourceFactoryTest {
     // the filePath should point to the component file
     assertTrue(StringUtils.endsWith(preparedDataFiles.get(0).getFilePath().toString(), ".txt"));
   }
-  
+
   @Test
   public void testfromDataFile() throws IOException {
     DataFile dataFile = new DataFile();

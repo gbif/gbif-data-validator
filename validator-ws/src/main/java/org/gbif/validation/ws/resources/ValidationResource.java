@@ -1,99 +1,92 @@
 package org.gbif.validation.ws.resources;
 
-import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.ValidationErrorCode;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
 
 import java.io.IOException;
-import java.net.URL;
-import java.nio.file.Files;
+import java.net.URI;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.sun.jersey.api.client.ClientResponse;
 
-import static org.eclipse.jetty.server.Response.SC_INTERNAL_SERVER_ERROR;
-import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
-
-@Path("/validate")
+@Path("/jobserver")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
 public class ValidationResource {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
-  private final ResourceEvaluationManager resourceEvaluationManager;
+  private static final String STATUS_PATH = "/status/";
+
   private final UploadedFileManager fileTransferManager;
+  private final JobServer<?> jobServer;
+  private final ValidationConfiguration configuration;
+
+
+  private URI getJobRedirectUri(long jobId) {
+    return URI.create(configuration.getApiDataValidationPath() + STATUS_PATH + jobId);
+  }
 
   /**
-   * Deletes Path silently, any exception is not propagated.
+   * Builds a Jersey response from a JobStatusResponse instance.
    */
-  private static void deletePathSilently(java.nio.file.Path path) {
-    try {
-        Files.delete(path);
-    } catch (Exception ex) {
-      LOG.error("Error deleting file {}", path, ex);
+  private Response buildResponseFromStatus(JobStatusResponse<?> jobResponse) {
+    if (JobStatusResponse.JobStatus.ACCEPTED == jobResponse.getStatus()) {
+      return Response.seeOther(getJobRedirectUri(jobResponse.getJobId())).status(Response.Status.ACCEPTED)
+                      .entity(jobResponse).build();
+    } else if (JobStatusResponse.JobStatus.NOT_FOUND == jobResponse.getStatus()) {
+      return Response.status(ClientResponse.Status.NOT_FOUND).entity(jobResponse).build();
+    } else {
+      return Response.ok(jobResponse).build();
     }
   }
 
   @Inject
-  public ValidationResource(ValidationConfiguration configuration, ResourceEvaluationManager resourceEvaluationManager)
+  public ValidationResource(ValidationConfiguration configuration, JobServer<ValidationResult> jobServer)
     throws IOException {
-    this.resourceEvaluationManager = resourceEvaluationManager;
+    this.jobServer = jobServer;
+    this.configuration = configuration;
     fileTransferManager = new UploadedFileManager(configuration.getWorkingDir());
   }
 
   @POST
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/file")
-  public ValidationResult onValidateFile(@Context HttpServletRequest request) {
+  @Path("/submit")
+  public Response submit(@Context HttpServletRequest request) {
     Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(request);
-    return processFile(dataFile);
-  }
-
-  @POST
-  @Produces(MediaType.APPLICATION_JSON)
-  @Consumes(MediaType.APPLICATION_JSON)
-  @Path("/url")
-  public ValidationResult onValidateFile(@QueryParam("fileUrl") String fileURL) {
-    try {
-      Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(new URL(fileURL));
-      return processFile(dataFile);
-    } catch (IOException ioEx) {
-      LOG.error("Can't handle file download from {}", fileURL, ioEx);
-      throw errorResponse(fileURL, Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
-    }
-  }
-
-  /**
-   * Applies the validation routines to the input file.
-   */
-  private ValidationResult processFile(Optional<DataFile> dataFile)  {
     if (dataFile.isPresent()) {
-      try {
-        return resourceEvaluationManager.evaluate(dataFile.get());
-      } catch (Exception ex) {
-        throw new WebApplicationException(ex, SC_INTERNAL_SERVER_ERROR);
-      } finally {
-        deletePathSilently(dataFile.get().getFilePath());
-      }
+      return buildResponseFromStatus(jobServer.submit(dataFile.get()));
     }
-    throw errorResponse(Response.Status.BAD_REQUEST, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT);
+    return Response.status(Response.Status.BAD_REQUEST).entity(JobStatusResponse.FAILED_RESPONSE).build();
   }
 
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path(STATUS_PATH + "{jobid}")
+  public Response status(@PathParam("jobid") String jobid) {
+    return buildResponseFromStatus(jobServer.status(Long.valueOf(jobid)));
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/status/{jobid}/kill")
+  public Response kill(@PathParam("jobid") String jobid) {
+    return buildResponseFromStatus(jobServer.kill(Long.valueOf(jobid)));
+  }
 
 }
