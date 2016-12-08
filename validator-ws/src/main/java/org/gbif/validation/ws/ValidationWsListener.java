@@ -6,6 +6,7 @@ import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.ResourceEvaluationManager;
 import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.jobserver.impl.DataValidationActorPropsMapping;
@@ -112,22 +113,26 @@ public class ValidationWsListener extends GbifServletListener {
      * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
      */
     private static DataValidationActorPropsMapping buildActorPropsMapping(ValidationConfiguration configuration) {
-      try {
-        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-        NormalizerConfiguration normalizerConfiguration =
-          mapper.readValue(Thread.currentThread().getContextClassLoader().getResource(NORMALIZER_CONF),
-                           NormalizerConfiguration.class);
-
         return new DataValidationActorPropsMapping(new EvaluatorFactory(configuration.getApiUrl()),
                                                    configuration.getFileSplitSize(),
                                                    configuration.getWorkingDir(),
-                                                   normalizerConfiguration);
+                                                   new ChecklistValidator(getNormalizerConfiguration()));
+
+    }
+
+    /**
+     * Reads the NormalizerConfiguration from the file NORMALIZER_CONF.
+     */
+    private static NormalizerConfiguration getNormalizerConfiguration() {
+      try {
+        ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+        return mapper.readValue(Thread.currentThread().getContextClassLoader().getResource(NORMALIZER_CONF),
+                                NormalizerConfiguration.class);
       } catch (IOException ex) {
         throw new IllegalStateException(ex);
       }
     }
   }
-
 
   public ValidationWsListener() throws IOException {
     super(PropertiesUtil.readFromFile(ConfUtils.getAppConfFile(APP_CONF_FILE)), "org.gbif.validation.ws", false);

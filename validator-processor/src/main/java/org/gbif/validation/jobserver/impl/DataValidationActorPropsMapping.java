@@ -1,16 +1,10 @@
 package org.gbif.validation.jobserver.impl;
 
-import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
-import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.ActorPropsMapping;
-import org.gbif.validation.processor.ChecklistsValidatorActor;
 import org.gbif.validation.processor.ParallelDataFileProcessorMaster;
-
-import java.util.HashMap;
-import java.util.Optional;
 
 import akka.actor.Props;
 
@@ -25,9 +19,9 @@ public class DataValidationActorPropsMapping implements ActorPropsMapping<DataFi
    * Default constructor, the parameters received are used to build actor instances.
    */
   public DataValidationActorPropsMapping(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir,
-                                         NormalizerConfiguration normalizerConfiguration) {
+                                         ChecklistValidator checklistValidator) {
     props =  Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
-                                           workingDir, normalizerConfiguration);
+                                           workingDir, checklistValidator);
   }
 
   /**

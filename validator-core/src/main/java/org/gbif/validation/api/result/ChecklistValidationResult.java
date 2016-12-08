@@ -10,6 +10,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
+/**
+ *
+ */
+@JsonIgnoreProperties(ignoreUnknown=true)
 public class ChecklistValidationResult {
 
   private Map<NameUsageIssue,Set<NameUsage>> issues;
@@ -18,8 +25,13 @@ public class ChecklistValidationResult {
 
   private String graph;
 
+  @JsonIgnore
   private final int sampleSize;
 
+  /**
+   *
+   * @param sampleSize maximum number of samples to store/display
+   */
   public ChecklistValidationResult(int sampleSize) {
     issues = new HashMap<>();
     this.sampleSize = sampleSize;
@@ -37,11 +49,16 @@ public class ChecklistValidationResult {
     Optional<Set<NameUsage>> currentSamples = Optional.ofNullable(issues.get(issue));
     Set<NameUsage> samples = currentSamples.orElse(new HashSet<>());
     if (samples.size() < sampleSize) {
+      //Issues are not stored since the response is grouped by issues already
+      nameUsage.getIssues().clear();
       samples.add(nameUsage);
       issues.put(issue, samples);
     }
   }
 
+  /**
+   * Statistics collected by the checklist normalizer.
+   */
   public NormalizerStats getStats() {
     return stats;
   }
@@ -50,6 +67,9 @@ public class ChecklistValidationResult {
     this.stats = stats;
   }
 
+  /**
+   * Hierarchical representation of the validated checklist data.
+   */
   public String getGraph() {
     return graph;
   }
@@ -58,6 +78,9 @@ public class ChecklistValidationResult {
     this.graph = graph;
   }
 
+  /**
+   * Maximum number of samples to be stored for each NameUsageIssue.
+   */
   public int getSampleSize() {
     return sampleSize;
   }

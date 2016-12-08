@@ -14,4 +14,4 @@ clb:
   connectionTimeout: 2000
   minimumIdle: 0
   idleTimeout: 60000
-archiveRepository: /tmp/validation/
+archiveRepository: /tmp/validation/fileupload/

@@ -53,6 +53,10 @@
     <gbif-occurrence.version>0.59-SNAPSHOT</gbif-occurrence.version>
     <gbif-checklistbank.version>2.46</gbif-checklistbank.version>
 
+    <!-- older lucene version required by checklistbank normalizer -->
+    <lucene.version>3.6.2</lucene.version>
+    <neo4j.version>2.3.6</neo4j.version>
+
     <jersey.version>1.19</jersey.version>
     <jackson.version>1.9.12</jackson.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
@@ -60,7 +64,7 @@
     <jsr305.version>3.0.1</jsr305.version>
     <geotools.version>12.1</geotools.version>
 
-    <scala-library.version>2.10.5</scala-library.version>
+    <scala-library.version>2.11.7</scala-library.version>
     <commons-lang3.version>3.4</commons-lang3.version>
 
     <slf4j.version>1.7.16</slf4j.version>
@@ -138,6 +142,24 @@
         <groupId>org.gbif.checklistbank</groupId>
         <artifactId>checklistbank-cli</artifactId>
         <version>${gbif-checklistbank.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.gbif</groupId>
+            <artifactId>gbif-common-search</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.gbif.checklistbank</groupId>
+            <artifactId>checklistbank-solr</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-analyzers-common</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -228,6 +250,18 @@
         <groupId>com.google.code.findbugs</groupId>
         <artifactId>jsr305</artifactId>
         <version>${jsr305.version}</version>
+      </dependency>
+
+      <!-- Required by neo4j and checklist validation-->
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-core</artifactId>
+        <version>${lucene.version}</version>
+      </dependency>
+      <dependency>
+        <groupId> org.neo4j</groupId>
+        <artifactId>neo4j-kernel</artifactId>
+        <version>${neo4j.version}</version>
       </dependency>
 
       <!-- Logging -->

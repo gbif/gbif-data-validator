@@ -26,6 +26,8 @@ public class ValidationResult implements Serializable {
   //TODO maybe we should store the concrete type to allow typed getter?
   private final List<ValidationResultElement> results;
 
+  private final ChecklistValidationResult checklist;
+
   /**
    * Use {@link ValidationResultBuilders} to get new instances.
    *
@@ -35,13 +37,14 @@ public class ValidationResult implements Serializable {
    * @param errorCode
    */
   ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                   List<ValidationResultElement> results, ValidationErrorCode errorCode) {
+                   List<ValidationResultElement> results, ValidationErrorCode errorCode, ChecklistValidationResult checklist) {
     this.indexeable = indexeable;
     this.fileName = fileName;
     this.fileFormat = fileFormat;
     this.validationProfile = validationProfile;
     this.results = results;
     this.errorCode = errorCode;
+    this.checklist = checklist;
   }
 
   public Boolean isIndexeable() {
@@ -68,4 +71,7 @@ public class ValidationResult implements Serializable {
     return errorCode;
   }
 
+  public ChecklistValidationResult getChecklist() {
+    return checklist;
+  }
 }

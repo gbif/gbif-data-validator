@@ -31,6 +31,8 @@ public class ValidationResultBuilders {
     //only used in case of general error with the input file
     private ValidationErrorCode errorCode;
 
+    private ChecklistValidationResult checklistValidationResult;
+
     /**
      * Returns a Builder of {@link ValidationResult} when a validation can be performed and finished.
      *
@@ -40,7 +42,8 @@ public class ValidationResultBuilders {
      *
      * @return
      */
-    public static Builder of(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
+    public static Builder of(Boolean indexeable, String fileName, FileFormat fileFormat,
+                             ValidationProfile validationProfile) {
       return new Builder(indexeable, fileName, fileFormat, validationProfile);
     }
 
@@ -53,6 +56,15 @@ public class ValidationResultBuilders {
      */
     public static Builder withError(String fileName, @Nullable FileFormat fileFormat, ValidationErrorCode errorCode) {
       return new Builder(fileName, fileFormat, errorCode);
+    }
+
+    private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
+                    ChecklistValidationResult checklistValidationResult) {
+      this.indexeable = indexeable;
+      this.fileName = fileName;
+      this.fileFormat = fileFormat;
+      this.validationProfile = validationProfile;
+      this.checklistValidationResult = checklistValidationResult;
     }
 
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
@@ -83,9 +95,14 @@ public class ValidationResultBuilders {
       return this;
     }
 
+    public Builder withChecklistValidationResult(ChecklistValidationResult checklistValidationResult) {
+      this.checklistValidationResult = checklistValidationResult;
+      return this;
+    }
+
     public ValidationResult build() {
       return new ValidationResult(indexeable, fileName, fileFormat, validationProfile, validationResultElements,
-              errorCode);
+              errorCode, checklistValidationResult);
     }
   }
 

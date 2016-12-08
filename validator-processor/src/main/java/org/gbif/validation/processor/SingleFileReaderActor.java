@@ -39,7 +39,7 @@ class SingleFileReaderActor extends AbstractLoggingActor {
    * Process a datafile using a record processor.
    * The sender is sent as parameter because the real sender is only known in the context of receiving messages.
    */
-  private DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
+  private static DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
     long line = dataFile.getFileLineOffset().orElse(0);
     try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
       //Term rowType = dataFile.getRowType();
