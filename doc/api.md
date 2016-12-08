@@ -40,7 +40,7 @@ Specifications of the GBIF Data Validator API response.
 - `"numberOfLines"` : Number of lines in the file
 - `"rowType"` : rowType based on DarwinCore term
 - `"termsFrequency"` : Contains frequency of all terms in the provided resource
-- `"interpretedValueCounts" : Contains counts of a preselected interpreted values
+- `"interpretedValueCounts"` : Contains counts of a preselected interpreted values
 - `"issues"` : List of all issues found in the provided resource
 
 ## Issues structure
@@ -78,8 +78,7 @@ Structure of the result of an evaluation of the structure of the resource.
         "line:": "1",
         "identifier": "occ-1",
         "expected": "90",
-        "found": "89",
-        "message": " Expected 90 columns but found 89"
+        "found": "89"
       }
     }
   ]
