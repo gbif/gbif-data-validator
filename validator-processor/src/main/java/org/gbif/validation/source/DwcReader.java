@@ -61,7 +61,12 @@ public class DwcReader implements RecordSource {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
     archive = ArchiveFactory.openArchive(dwcFolder);
-    darwinCoreComponent = Optional.ofNullable(rowType).isPresent() ? archive.getExtension(rowType) : archive.getCore();
+    if(rowType != null && rowType != archive.getCore().getRowType()) {
+      darwinCoreComponent = archive.getExtension(rowType);
+    }
+    else{
+      darwinCoreComponent = archive.getCore();
+    }
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
   }
@@ -97,6 +102,10 @@ public class DwcReader implements RecordSource {
             darwinCoreComponent.getFieldsTerminatedBy(), darwinCoreComponent.getFieldsEnclosedBy(), ignoreHeaderLines ? 1 : 0);
   }
 
+  public ArchiveFile getCore() {
+    return archive.getCore();
+  }
+
   /**
    * Get a Set of the extensions registered in this archive.
    *
@@ -113,19 +122,32 @@ public class DwcReader implements RecordSource {
       return null;
     }
 
+    //+1 for the id column (not included on archiveFields list)
+    int expectedNumberOfColumns = archiveFields.size() + 1;
+    int maxIndex = archiveFields.stream().filter(af -> af.getIndex() != null).mapToInt(af -> af.getIndex()).max().getAsInt();
+    maxIndex = Math.max(maxIndex, darwinCoreComponent.getId().getIndex());
+
+    //defense against wrongly declared index number
+    if (maxIndex + 1 > expectedNumberOfColumns) {
+      throw new UnsupportedArchiveException("Number of column declared doesn't match the indices declared");
+    }
+
+    Term[] terms = new Term[expectedNumberOfColumns];
     List<ArchiveField> termsWithDefaultValues = new ArrayList<>();
+
     // handle id column
     Term idColumnTerm =  Optional.ofNullable(darwinCoreComponent.getId().getTerm()).orElse(DEFAULT_ID_TERM);
+    terms[darwinCoreComponent.getId().getIndex()] = idColumnTerm;
 
-    List<Term> terms = new ArrayList<>(archiveFields.size());
-    terms.add(darwinCoreComponent.getId().getIndex(), idColumnTerm);
-
+    int defaultValueIdx = maxIndex + 1;
     for(ArchiveField af : archiveFields) {
       if(af.getIndex() != null){
-        terms.add(af.getIndex(), af.getTerm());
+        terms[af.getIndex()] = af.getTerm();
       }
       else{
         termsWithDefaultValues.add(af);
+        terms[defaultValueIdx] = af.getTerm();
+        defaultValueIdx++;
       }
     }
 
@@ -134,13 +156,11 @@ public class DwcReader implements RecordSource {
       defaultValuesTerm = new Term[termsWithDefaultValues.size()];
       defaultValues = new String[termsWithDefaultValues.size()];
       for (int i = 0; i < termsWithDefaultValues.size(); i++) {
-        terms.add(termsWithDefaultValues.get(i).getTerm());
         defaultValuesTerm[i] = termsWithDefaultValues.get(i).getTerm();
         defaultValues[i] = termsWithDefaultValues.get(i).getDefaultValue();
       }
     }
-
-    return terms.toArray(new Term[terms.size()]);
+    return terms;
   }
 
   @Override

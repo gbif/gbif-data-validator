@@ -47,6 +47,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   private int numOfWorkers;
 
   private DataJob<DataFile> dataJob;
+
+  //current working directory for the current validation
   private File workingDir;
 
   private static class EvaluationUnit {
@@ -94,7 +96,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     DataFile dataFile = dataJob.getJobData();
     dataFile.setHasHeaders(Optional.of(true));
     List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
-    List<EvaluationUnit> dataFilesToEvaluate = splitDataFile(dataFiles, factory, fileSplitSize);
+    List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
     //now trigger everything
     processDataFile(dataFilesToEvaluate);
   }
@@ -145,22 +147,28 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
   /**
    * Split the provided {@link DataFile} into multiple {@link DataFile} if required.
+   * If no split is required the returning list will contain the provided {@link DataFile}.
    * @param dataFile
    * @param fileSplitSize
    * @return
    * @throws IOException
    */
   private List<DataFile> splitDataFile(DataFile dataFile, Integer fileSplitSize) throws IOException {
-    int recordsPerSplit = recordsPerSplit(dataFile.getNumOfLines(), fileSplitSize);
-    String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), recordsPerSplit, workingDir.getAbsolutePath());
     List<DataFile> splitDataFiles = new ArrayList<>();
-    boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
+    if(dataFile.getNumOfLines() <= fileSplitSize) {
+      splitDataFiles.add(dataFile);
+      return splitDataFiles;
+    }
 
+    String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
+    String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
+
+    boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
     IntStream.range(0, splits.length)
             .forEach(idx ->
-                    splitDataFiles.add(newSplitDataFile(dataFile, workingDir.getAbsolutePath(), splits[idx],
+                    splitDataFiles.add(newSplitDataFile(dataFile, splitFolder, splits[idx],
                             Optional.of(inputHasHeaders && (idx == 0)),
-                            Optional.of((idx * recordsPerSplit) + (inputHasHeaders ? 1 : 0))))
+                            Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0))))
             );
     return splitDataFiles;
   }
