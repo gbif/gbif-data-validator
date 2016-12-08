@@ -31,7 +31,7 @@ public class ValidationResultBuilders {
     //only used in case of general error with the input file
     private ValidationErrorCode errorCode;
 
-    private ChecklistValidationResult checklistValidationResult;
+    private List<ChecklistValidationResult> checklistValidationResults;
 
     /**
      * Returns a Builder of {@link ValidationResult} when a validation can be performed and finished.
@@ -59,12 +59,12 @@ public class ValidationResultBuilders {
     }
 
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                    ChecklistValidationResult checklistValidationResult) {
+                    List<ChecklistValidationResult> checklistValidationResults) {
       this.indexeable = indexeable;
       this.fileName = fileName;
       this.fileFormat = fileFormat;
       this.validationProfile = validationProfile;
-      this.checklistValidationResult = checklistValidationResult;
+      this.checklistValidationResults = checklistValidationResults;
     }
 
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
@@ -96,13 +96,13 @@ public class ValidationResultBuilders {
     }
 
     public Builder withChecklistValidationResult(ChecklistValidationResult checklistValidationResult) {
-      this.checklistValidationResult = checklistValidationResult;
+      checklistValidationResults.add(checklistValidationResult);
       return this;
     }
 
     public ValidationResult build() {
       return new ValidationResult(indexeable, fileName, fileFormat, validationProfile, validationResultElements,
-              errorCode, checklistValidationResult);
+              errorCode, checklistValidationResults);
     }
   }
 

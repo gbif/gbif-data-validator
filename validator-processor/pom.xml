@@ -16,6 +16,7 @@
     <apache-odftoolkit.version>0.8.1-incubating</apache-odftoolkit.version>
     <akka-actor.version>2.3.15</akka-actor.version>
     <typesafe-config.version>1.0.2</typesafe-config.version>
+    <commons-lang.version>3.0.1</commons-lang.version>
   </properties>
 
   <dependencies>
@@ -101,6 +102,13 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-lang3</artifactId>
+      <version>${commons-lang.version}</version>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>

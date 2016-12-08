@@ -7,6 +7,8 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
+import org.gbif.validation.api.result.ChecklistValidationResult;
+import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.collector.CollectorGroup;
@@ -41,6 +43,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
   private final Map<Term, DataFile> rowTypeDataFile;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
+  private final List<ChecklistValidationResult> checklistsResults;
   private final ChecklistValidator checklistValidator;
   private final AtomicInteger workerCompleted;
 
@@ -78,7 +81,9 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     rowTypeDataFile = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
+    checklistsResults = Collections.synchronizedList(new ArrayList<>());
     this.checklistValidator = checklistValidator;
+
 
     receive(
             //this should only be called once
@@ -105,7 +110,9 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * Calculates the required splits to process all the datafiles. The variable numOfWorkers is changed with the number
    * of actors that will be used to process the input file.
    */
-  private List<EvaluationUnit> splitDataFile(List<DataFile> dataFiles, EvaluatorFactory factory, Integer fileSplitSize) {
+  private List<EvaluationUnit> prepareDataFile(List<DataFile> dataFiles, EvaluatorFactory factory,
+                                               Integer fileSplitSize) {
+
     List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
 
     numOfWorkers = 0;
@@ -224,30 +231,53 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     }
 
     int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
-    if (DwcTerm.Taxon != result.getDataFile().getRowType()) {
+    log().info("Got {} worker response(s)", numberOfWorkersCompleted);
+
+    collectResult(result);
+
+
+    if (numberOfWorkersCompleted == numOfWorkers) {
+      context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), buildResult()), self());
+      getContext().stop(self());
+      deleteWorkingDir();
+    }
+  }
+
+  /**
+   * Collects individual results and aggregates them in the internal data structures.
+   */
+  private void collectResult(DataWorkResult result) {
+    if (DwcTerm.Occurrence == result.getDataFile().getRowType()) {
       rowTypeCollectors.compute(result.getDataFile().getRowType(), (key, val) -> {
         val.add(result.getCollectors());
         return val;
       });
+    } else if (DwcTerm.Taxon == result.getDataFile().getRowType()) {
+      checklistsResults.add(result.getChecklistValidationResult());
     }
-    log().info("Got {} worker response(s)", numberOfWorkersCompleted);
-    if (numberOfWorkersCompleted == numOfWorkers) {
+  }
 
-      //prepare validationResultBuilder
-      ValidationResultBuilders.Builder validationResultBuilder =
-              ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
-              dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
-      if (DwcTerm.Taxon == result.getDataFile().getRowType()) {
-        validationResultBuilder.withChecklistValidationResult(result.getChecklistValidationResult());
-      } else {
-        rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(CollectorGroup.mergeAndGetResult(
-          rowTypeDataFile.get(rowType),
-          rowTypeDataFile.get(rowType).getSourceFileName(),
-          collectorList)));
-        FileUtils.deleteDirectoryRecursively(workingDir);
-      }
-      context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), validationResultBuilder.build()), self());
-      getContext().stop(self());
+  /**
+   * Builds the ValidationResult from the aggregated data.
+   */
+  private ValidationResult buildResult() {
+    ValidationResultBuilders.Builder validationResultBuilder =
+      ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
+                                          dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
+    checklistsResults.stream().forEach(checklistsResult -> validationResultBuilder.withChecklistValidationResult(checklistsResult));
+    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(CollectorGroup.mergeAndGetResult(
+      rowTypeDataFile.get(rowType),
+      rowTypeDataFile.get(rowType).getSourceFileName(),
+      collectorList)));
+    return validationResultBuilder.build();
+  }
+
+  /**
+   * Deletes the workind directory if it exists.
+   */
+  private void deleteWorkingDir() {
+    if (workingDir.exists()) {
+      FileUtils.deleteDirectoryRecursively(workingDir);
     }
   }
 
