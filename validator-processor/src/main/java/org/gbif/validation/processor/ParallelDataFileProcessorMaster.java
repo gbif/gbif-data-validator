@@ -7,6 +7,7 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResultBuilders;
+import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -47,11 +48,15 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   //current working directory for the current validation
   private File workingDir;
 
+  /**
+   * Simple container class to hold data between initialization and processing phase.
+   */
   private static class EvaluationUnit {
     private final List<DataFile> dataFiles;
     private final RecordEvaluator recordEvaluator;
     private final int numOfActors;
     private final CollectorGroupProvider collectorsProvider;
+
     EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors, CollectorGroupProvider collectorsProvider) {
       this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
@@ -88,17 +93,17 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   private void processDataFile(DataFile dataFile, EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
 
     //Validate the structure of the resource
-//    Optional<ValidationResultElement> validationResultElement =
-//            EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
-//                    .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
-//
-//    if(validationResultElement.isPresent()) {
-//      return ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-//              dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
-//              .withResourceResult(validationResultElement.get()).build();
-//    }
-    //TODO check why is necessary
-    dataFile.setHasHeaders(Optional.of(true));
+    Optional<ValidationResultElement> validationResultElement =
+            EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+                    .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
+    if (validationResultElement.isPresent()) {
+      emitResponseAndStop(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
+              ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
+                      dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
+                      .withResourceResult(validationResultElement.get()).build()));
+      return;
+    }
+
     List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
     List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
     //now trigger everything
@@ -231,10 +236,19 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(
               CollectorGroup.mergeAndGetResult(rowTypeDataFile.get(rowType), rowTypeDataFile.get(rowType).getSourceFileName(),
               collectorList)));
-      context().parent().tell(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), validationResultBuilder.build()), self());
-      FileUtils.deleteDirectoryRecursively(workingDir);
-      getContext().stop(self());
+      emitResponseAndStop(new JobStatusResponse(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(), validationResultBuilder.build()));
     }
+  }
+
+  /**
+   * Emit the provided response to the parent Actor and stop this Actor.
+   *
+   * @param response
+   */
+  private void emitResponseAndStop(JobStatusResponse response) {
+    context().parent().tell(response, self());
+    FileUtils.deleteDirectoryRecursively(workingDir);
+    getContext().stop(self());
   }
 
 }
