@@ -58,14 +58,6 @@ public class ValidationResultBuilders {
       return new Builder(fileName, fileFormat, errorCode);
     }
 
-    private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                    List<ChecklistValidationResult> checklistValidationResults) {
-      this.indexeable = indexeable;
-      this.fileName = fileName;
-      this.fileFormat = fileFormat;
-      this.validationProfile = validationProfile;
-    }
-
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
       this.indexeable = indexeable;
       this.fileName = fileName;
@@ -186,7 +178,8 @@ public class ValidationResultBuilders {
      * @param exception
      * @return
      */
-    public DefaultValidationResultElementBuilder addExceptionResultDetails(EvaluationType evaluationType, String exception) {
+    public DefaultValidationResultElementBuilder addExceptionResultDetails(EvaluationType evaluationType,
+                                                                           String exception) {
       if(issues == null){
         issues = new ArrayList<>();
       }

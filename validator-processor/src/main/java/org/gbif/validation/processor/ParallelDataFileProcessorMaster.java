@@ -7,7 +7,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
-import org.gbif.validation.api.model.ValidationProfile;
+import static org.gbif.validation.api.model.ValidationProfile.GBIF_INDEXING_PROFILE;
 import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
@@ -69,7 +69,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     private final int numOfActors;
     private final CollectorGroupProvider collectorsProvider;
 
-    EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors, CollectorGroupProvider collectorsProvider) {
+    EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors,
+                   CollectorGroupProvider collectorsProvider) {
       this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
       this.numOfActors = numOfActors;
@@ -109,7 +110,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     if (validationResultElement.isPresent()) {
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
                                                 ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-                                                                                    dataFile.getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE)
+                                                                                    dataFile.getFileFormat(),
+                                                                                    GBIF_INDEXING_PROFILE)
                                                   .withResourceResult(validationResultElement.get()).build()));
     } else {
       dataFile.setHasHeaders(Optional.of(true));
@@ -203,8 +205,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * @param offset
    * @return new {@link DataFile} representing a portion of the provided dataFile.
    */
-  private static DataFile newSplitDataFile(DataFile dataFile, String baseDir, String fileName, Optional<Boolean> withHeader,
-                                      Optional<Integer> offset){
+  private static DataFile newSplitDataFile(DataFile dataFile, String baseDir, String fileName,
+                                           Optional<Boolean> withHeader, Optional<Integer> offset){
     //Creates the file to be used
     File splitFile = new File(baseDir, fileName);
     splitFile.deleteOnExit();
@@ -274,12 +276,14 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   private ValidationResult buildResult() {
     ValidationResultBuilders.Builder validationResultBuilder =
       ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
-                                          dataJob.getJobData().getFileFormat(), ValidationProfile.GBIF_INDEXING_PROFILE);
+                                          dataJob.getJobData().getFileFormat(), GBIF_INDEXING_PROFILE);
     checklistsResults.stream().forEach(validationResultBuilder::withChecklistValidationResult);
-    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(CollectorGroup.mergeAndGetResult(
-      rowTypeDataFile.get(rowType),
-      rowTypeDataFile.get(rowType).getSourceFileName(),
-      collectorList)));
+    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(
+                                                            CollectorGroup.mergeAndGetResult(
+                                                            rowTypeDataFile.get(rowType),
+                                                            rowTypeDataFile.get(rowType).getSourceFileName(),
+                                                            collectorList)
+    ));
     return validationResultBuilder.build();
   }
 

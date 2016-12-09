@@ -48,7 +48,8 @@ public class DataValidationProcessor  {
             .of(fileName, rowType, line)
             .withIssues(collector.getAggregatedCounts(), collector.getSamples())
             .withTermsFrequency(metricsCollector.getTermFrequency())
-            .withInterpretedValueCounts(interpretedTermsCountCollector.isPresent() ? interpretedTermsCountCollector.get().getInterpretedCounts() : null)
+            .withInterpretedValueCounts(interpretedTermsCountCollector.isPresent() ?
+                                          interpretedTermsCountCollector.get().getInterpretedCounts() : null)
             .build();
   }
 

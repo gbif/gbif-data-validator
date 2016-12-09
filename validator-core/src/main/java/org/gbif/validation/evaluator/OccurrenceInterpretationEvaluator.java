@@ -39,8 +39,8 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
-  private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> REMARKS_MAP.containsKey(issue) &&
-                                                                       OCCURRENCE_ISSUE_MAPPING.containsKey(issue);
+  private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> REMARKS_MAP.containsKey(issue)
+                                                                       && OCCURRENCE_ISSUE_MAPPING.containsKey(issue);
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
@@ -60,7 +60,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   @Override
   public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
     LOG.info("Evaluating line {} and record {}", lineNumber, record);
-    if(record == null || record.length == 0) {
+    if (record == null || record.length == 0) {
       return null;
     }
 
@@ -79,10 +79,10 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param record
    * @return new VerbatimOccurrence, never null
    */
-  protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record){
+  protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     IntStream.range(0, Math.min(record.length, columnMapping.length))
-      .forEach( i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
+      .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
     return verbatimOccurrence;
   }
 
@@ -112,7 +112,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
         builder.addInterpretationDetail(OCCURRENCE_ISSUE_MAPPING.get(issue),
                 relatedData);
 
-    });
+      });
     return builder.build();
   }
 

@@ -17,7 +17,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 /**
  *
  */
-@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ChecklistValidationResult implements Serializable {
 
   private Map<NameUsageIssue,Set<NameUsage>> issues;

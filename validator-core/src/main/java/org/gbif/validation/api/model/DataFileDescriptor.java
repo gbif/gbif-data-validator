@@ -15,11 +15,11 @@ public class DataFileDescriptor {
 
   private Charset encoding;
 
-  private String linesTerminatedBy="\r\n";
+  private String linesTerminatedBy = "\r\n";
 
-  private Character fieldsTerminatedBy= ',';
+  private Character fieldsTerminatedBy = ',';
 
-  private Character fieldsEnclosedBy='"';
+  private Character fieldsEnclosedBy = '"';
 
   private String dateFormat;
 

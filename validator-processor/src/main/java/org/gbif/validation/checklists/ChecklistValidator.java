@@ -15,6 +15,7 @@ import java.io.Writer;
 import java.util.UUID;
 import java.util.stream.StreamSupport;
 
+import com.google.common.base.Preconditions;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ public class ChecklistValidator {
    * The NormalizerConfiguration instance is used to run a single Normalizer each time this method is executed.
    */
   public ChecklistValidationResult validate(DataFile dataFile) {
+    Preconditions.checkNotNull(dataFile.getFilePath(),"DataFile is not defined");
     //The dataset key is obtained from the temporary directory name which is assumed to be an UUID
     UUID datasetKey = UUID.fromString(dataFile.getFilePath().getParent().getFileName().toString());
     try {
@@ -53,7 +55,7 @@ public class ChecklistValidator {
       result.setStats(normalizer.getStats());
       collectUsagesData(datasetKey, result);
       return result;
-    } catch(Exception ex) {
+    } catch (Exception ex) {
       LOG.error("Error running checklist normalizer", ex);
       throw new RuntimeException(ex);
     } finally {
@@ -73,9 +75,9 @@ public class ChecklistValidator {
         usage.getIssues().stream().forEach( issue -> result.addIssue(issue, usage));
       });
       //get the graph/tree
-      result.setGraph(getTree(dao,GraphFormat.TEXT));
+      result.setGraph(getTree(dao, GraphFormat.TEXT));
     } finally {
-      if(dao != null) {
+      if (dao != null) {
         dao.close();
       }
     }
@@ -90,7 +92,7 @@ public class ChecklistValidator {
       dao.printTree(writer, format);
       return  writer.toString();
     } catch (Exception ex) {
-      LOG.error("Error producing checklist graph",ex);
+      LOG.error("Error producing checklist graph", ex);
       throw new RuntimeException(ex);
     }
   }
@@ -112,7 +114,9 @@ public class ChecklistValidator {
       if(file.isDirectory()) {
         FileUtils.deleteDirectoryRecursively(file);
       } else {
-        file.delete();
+        if(!file.delete()) {
+          LOG.warn("Error deleting file {}", file);
+        }
       }
     }
   }

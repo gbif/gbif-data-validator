@@ -19,12 +19,7 @@ public class WebErrorUtils {
   }
 
   /**
-   * Prepare a {@link Response} object.
-   *
-   * @param uploadFileName
-   * @param status
-   * @param errorCode
-   * @return
+   * Builds a WebApplicationException using the supplied parameters.
    */
   public static WebApplicationException errorResponse(String uploadFileName, Response.Status status,
                                                       ValidationErrorCode errorCode) {
@@ -33,8 +28,11 @@ public class WebErrorUtils {
     return new WebApplicationException(repBuilder.build());
   }
 
+  /**
+   * Builds a WebApplicationException using the supplied parameters.
+   */
   public static WebApplicationException errorResponse(Response.Status status,
                                                       ValidationErrorCode errorCode) {
-    return errorResponse(null,status,errorCode);
+    return errorResponse(null, status, errorCode);
   }
 }

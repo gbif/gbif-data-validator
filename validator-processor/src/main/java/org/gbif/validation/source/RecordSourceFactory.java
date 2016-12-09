@@ -44,7 +44,8 @@ public class RecordSourceFactory {
     Objects.requireNonNull(sourceFile, "sourceFile shall be provided");
     Objects.requireNonNull(delimiterChar, "delimiterChar shall be provided");
     return new TabularFileReader(sourceFile.toPath(), newTabularFileReader(new FileInputStream(sourceFile),
-                                                                           delimiterChar, headerIncluded.orElse(false)));
+                                                                           delimiterChar,
+                                                                           headerIncluded.orElse(false)));
   }
 
   /**
@@ -87,31 +88,30 @@ public class RecordSourceFactory {
             "FileFormat.SPREADSHEET can not be read directly. Use prepareSource().");
     Validate.validState(FileFormat.TABULAR != dataFile.getFileFormat() || dataFile.getDelimiterChar() != null,
             "FileFormat.TABULAR shall also provide delimiterChar");
+    if (FileFormat.TABULAR == dataFile.getFileFormat()) {
+      return Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
+                                       dataFile.isHasHeaders()));
+    }
+    if (FileFormat.DWCA == dataFile.getFileFormat()) {
+      Path dwcaFolder = dataFile.getFilePath();
+      // the DataFile is a folder, get a reader for the entire archive
+      if (dwcaFolder.toFile().isDirectory()) {
+        return Optional.of(fromDwcA(dwcaFolder.toFile()));
+      }
 
-    switch (dataFile.getFileFormat()) {
-      case TABULAR:
-        return Optional.of(fromDelimited(dataFile.getFilePath().toFile(), dataFile.getDelimiterChar(),
-                        dataFile.isHasHeaders()));
-      case DWCA:
-        Path dwcaFolder = dataFile.getFilePath();
-        // the DataFile is a folder, get a reader for the entire archive
-        if(dwcaFolder.toFile().isDirectory()) {
-          return Optional.of(fromDwcA(dwcaFolder.toFile()));
-        }
+      //line offset means this file is a portion of the entire file
+      if (dataFile.getFileLineOffset().isPresent()) {
+        //parent file is the complete file, grand-parent file is the archive
+        dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
+        return Optional.of(new DwcReader(dwcaFolder.toFile(),
+                                         dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
+      }
 
-        //line offset means this file is a portion of the entire file
-        if(dataFile.getFileLineOffset().isPresent()) {
-          //parent file is the complete file, grand-parent file is the archive
-          dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
-          return Optional.of(new DwcReader(dwcaFolder.toFile(),
-                  dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
-        }
-
-        // normally, the parent file is the archive
-        if(dataFile.getParent().isPresent()) {
-          dwcaFolder = dataFile.getParent().get().getFilePath();
-        }
-        return Optional.of(fromDwcA(dwcaFolder.toFile(), dataFile.getRowType()));
+      // normally, the parent file is the archive
+      if (dataFile.getParent().isPresent()) {
+        dwcaFolder = dataFile.getParent().get().getFilePath();
+      }
+      return Optional.of(fromDwcA(dwcaFolder.toFile(), dataFile.getRowType()));
     }
     return Optional.empty();
   }
@@ -130,26 +130,25 @@ public class RecordSourceFactory {
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
     List<DataFile> dataFileList = new ArrayList<>();
-    switch(dataFile.getFileFormat()) {
+    switch (dataFile.getFileFormat()) {
       case SPREADSHEET:
         dataFileList.add(handleSpreadsheetConversion(dataFile));
-          break;
+        break;
       case DWCA:
         dataFileList.addAll(prepareDwcA(dataFile));
         break;
       case TABULAR:
-      default :
         dataFileList.add(prepareTabular(dataFile));
     }
 
-    for(DataFile currDataFile : dataFileList) {
+    for (DataFile currDataFile : dataFileList) {
       currDataFile.setNumOfLines(FileBashUtilities.countLines(currDataFile.getFilePath().toAbsolutePath().toString()));
       try (RecordSource rs = fromDataFile(currDataFile).orElse(null)) {
         if (rs != null) {
           currDataFile.setColumns(rs.getHeaders());
 
           //if the rowType is not provided and we have headers we can try to guess it
-          if(currDataFile.getColumns() != null && currDataFile.getRowType() == null) {
+          if (currDataFile.getColumns() != null && currDataFile.getRowType() == null) {
             currDataFile.setRowType(determineRowType(Arrays.asList(currDataFile.getColumns())).orElse(null));
           }
         }
@@ -167,13 +166,15 @@ public class RecordSourceFactory {
    * @return
    */
   private static List<DataFile> prepareDwcA(DataFile dwcaDataFile) throws IOException {
-    Validate.isTrue(dwcaDataFile.getFilePath().toFile().isDirectory(), "dwcaDataFile.getFilePath() must point to a directory");
+    Validate.isTrue(dwcaDataFile.getFilePath().toFile().isDirectory(),
+                    "dwcaDataFile.getFilePath() must point to a directory");
     List<DataFile> dataFileList = new ArrayList<>();
     try (DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile())) {
       //add the core first
       DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
       core.setRowType(dwcReader.getRowType());
-      core.setHasHeaders(Optional.of(dwcReader.getCore().getIgnoreHeaderLines() != null && dwcReader.getCore().getIgnoreHeaderLines() > 0));
+      core.setHasHeaders(Optional.of(dwcReader.getCore().getIgnoreHeaderLines() != null
+                                     && dwcReader.getCore().getIgnoreHeaderLines() > 0));
       dataFileList.add(core);
 
       for (ArchiveFile ext : dwcReader.getExtensions()) {
@@ -194,7 +195,7 @@ public class RecordSourceFactory {
    */
   private static DataFile prepareTabular(DataFile dwcaDataFile) throws IOException {
 
-    if(dwcaDataFile.getDelimiterChar() == null) {
+    if (dwcaDataFile.getDelimiterChar() == null) {
       dwcaDataFile.setDelimiterChar(getDelimiter(dwcaDataFile.getFilePath()));
     }
     return dwcaDataFile;
@@ -229,7 +230,7 @@ public class RecordSourceFactory {
     String contentType = spreadsheetDataFile.getContentType();
 
     Path csvFile = spreadsheetFile.getParent().resolve(UUID.randomUUID() + ".csv");
-    if(ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
+    if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
             ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(contentType)) {
       SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile);
     } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(contentType)) {

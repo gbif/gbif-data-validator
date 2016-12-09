@@ -22,15 +22,16 @@ public class JobMonitor extends AbstractLoggingActor {
    */
   public JobMonitor(Supplier<Props> propsSupplier, JobStorage jobStorage) {
     receive(
-      match(DataJob.class, dataJob -> {
-        //creates a actor that is responsible to handle a this jobData
-        ActorRef jobMaster = getContext().actorOf(propsSupplier.get(),
-                                                   String.valueOf(dataJob.getJobId())); //the jobId used as Actor's name
-        jobMaster.tell(dataJob, self());
-      }).
-      match(JobStatusResponse.class, dataJobResult -> {
-        jobStorage.put(dataJobResult);   //stores a job result
-      }).matchAny(this::unhandled)
+        match(DataJob.class, dataJob -> {
+          //creates a actor that is responsible to handle a this jobData
+          ActorRef jobMaster = getContext().actorOf(propsSupplier.get(),
+                                                     String.valueOf(dataJob.getJobId())); //the jobId used as Actor's name
+          jobMaster.tell(dataJob, self());
+        }).
+        match(JobStatusResponse.class, dataJobResult -> {
+          jobStorage.put(dataJobResult);   //stores a job result
+        })
+        .matchAny(this::unhandled)
         .build()
     );
   }
