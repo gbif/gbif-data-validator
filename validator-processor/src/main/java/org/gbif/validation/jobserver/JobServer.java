@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Manages the job submission and status retrieval.
+ * @param <T> type of elements that this job servers handles
  */
 public class JobServer<T> {
 

@@ -35,38 +35,11 @@ import org.slf4j.LoggerFactory;
 public class EvaluatorFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(EvaluatorFactory.class);
-
-  private final String apiUrl;
-
   private static final String XML_CATALOG = "xml/xml-catalog.xml";
-
   private static final XMLSchemaValidatorProvider XML_SCHEMA_VALIDATOR_PROVIDER = createXMLSchemaValidatorProvider();
-  private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
-
   private static final int CLIENT_TO = 600000; // registry client default timeout
-
-  public EvaluatorFactory(String apiUrl) {
-    this.apiUrl = apiUrl;
-  }
-
-  /**
-   * Create an OccurrenceLineProcessor.
-   *
-   * @return new instance
-   */
-  public RecordEvaluator create(List<Term> columns, Term rowType) {
-    Objects.requireNonNull(columns, "columns shall be provided");
-    Objects.requireNonNull(rowType, "rowType shall be provided");
-
-    List<RecordEvaluator> evaluators = new ArrayList<>();
-    evaluators.add(new RecordStructureEvaluator(rowType, columns));
-
-    if(DwcTerm.Occurrence == rowType) {
-      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), rowType,
-              columns));
-    }
-    return new RecordEvaluatorChain(evaluators);
-  }
+  private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
+  private final String apiUrl;
 
   /**
    * Create a {@link ResourceStructureEvaluator} instance for a specific {@link FileFormat}.
@@ -111,6 +84,29 @@ public class EvaluatorFactory {
     JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
 
     return ApacheHttpClient.create(cc);
+  }
+
+  public EvaluatorFactory(String apiUrl) {
+    this.apiUrl = apiUrl;
+  }
+
+  /**
+   * Create an OccurrenceLineProcessor.
+   *
+   * @return new instance
+   */
+  public RecordEvaluator create(List<Term> columns, Term rowType) {
+    Objects.requireNonNull(columns, "columns shall be provided");
+    Objects.requireNonNull(rowType, "rowType shall be provided");
+
+    List<RecordEvaluator> evaluators = new ArrayList<>();
+    evaluators.add(new RecordStructureEvaluator(rowType, columns));
+
+    if(DwcTerm.Occurrence == rowType) {
+      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), DwcTerm.Occurrence,
+                                                           columns));
+    }
+    return new RecordEvaluatorChain(evaluators);
   }
 
   /**

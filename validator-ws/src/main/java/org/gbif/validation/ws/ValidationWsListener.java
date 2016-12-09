@@ -74,7 +74,7 @@ public class ValidationWsListener extends GbifServletListener {
     /**
      * Creates the workingDir and the file storage directory.
      */
-    private void createWorkingDirs(ValidationConfiguration configuration) {
+    private static void createWorkingDirs(ValidationConfiguration configuration) {
       try {
         Files.createDirectories(Paths.get(configuration.getWorkingDir()));
         Files.createDirectories(Paths.get(configuration.getJobResultStorageDir()));

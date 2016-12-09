@@ -14,7 +14,7 @@ import java.util.Map;
 public class OccurrenceToTermsHelper {
 
   /**
-   * We only have this method to avoid using reflexion (for performance reason)
+   * We only have this method to avoid using reflexion (for performance reason).
    * @param occurrence
    * @return
    */

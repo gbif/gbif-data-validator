@@ -8,11 +8,11 @@ import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /**
- * Interface representing a source of records (file, map ...)
+ * Interface representing a source of records (file, map ...).
  */
 public interface RecordSource extends Closeable {
   /**
-   * Return the headers of the file
+   * Return the headers of the file.
    * @return headers or null
    */
   @Nullable
@@ -22,7 +22,7 @@ public interface RecordSource extends Closeable {
   String[] read() throws IOException;
 
   /**
-   * Get the path of the underlying File (if any)
+   * Get the path of the underlying File (if any).
    * @return
    */
   @Nullable

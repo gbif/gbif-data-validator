@@ -15,16 +15,13 @@ import org.gbif.validation.tabular.single.SingleDataFileProcessor;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
-import akka.actor.ActorSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +41,7 @@ public class ResourceEvaluationManager {
    * @param apiUrl
    * @param fileSplitSize threshold (in number of lines) until we use the parallel processing.
    */
-  public ResourceEvaluationManager(String apiUrl, Integer fileSplitSize){
+  public ResourceEvaluationManager(String apiUrl, Integer fileSplitSize) {
     factory = new EvaluatorFactory(apiUrl);
     this.fileSplitSize = fileSplitSize;
   }
@@ -78,7 +75,7 @@ public class ResourceEvaluationManager {
       return runEvaluation(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
     }
 
-    return null; //runEvaluationWithSplit(dataFile.getSourceFileName(), dataFile.getFileFormat(), preparedDataFiles);
+    return null;
   }
 
 
@@ -95,9 +92,7 @@ public class ResourceEvaluationManager {
 
     List<CompletableFuture<RecordsValidationResultElement>> completableEvaluations =
       dataFiles.stream().map(df -> CompletableFuture.supplyAsync(() ->  buildDataFileProcessor(df).process(df)))
-                          .collect(Collectors.toList());
-
-    //.exceptionally();
+        .collect(Collectors.toList());
 
     CompletableFuture.allOf(completableEvaluations.toArray(new CompletableFuture[completableEvaluations.size()])).join();
 
@@ -121,8 +116,8 @@ public class ResourceEvaluationManager {
    */
   private DataFileProcessor buildDataFileProcessor(@NotNull DataFile dataFile) {
     return new SingleDataFileProcessor(Arrays.asList(dataFile.getColumns()),
-            factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
-            CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), false));
+                                       factory.create(Arrays.asList(dataFile.getColumns()), dataFile.getRowType()),
+                                       CollectorFactory.createInterpretedTermsCountCollector(dataFile.getRowType(), false));
   }
 
 }
