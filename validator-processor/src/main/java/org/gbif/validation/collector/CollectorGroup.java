@@ -10,8 +10,6 @@ import org.gbif.validation.api.result.RecordsValidationResultElement;
 import org.gbif.validation.api.result.ValidationResultBuilders;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -64,11 +62,16 @@ public class CollectorGroup {
 
     CollectorGroup baseCollector = collectors.get(0);
 
-    Map<Term, Long> mergedTermFrequency = new HashMap<>(baseCollector.metricsCollector.getTermFrequency());
-    Map<EvaluationType, Long> mergedAggregatedCounts = new EnumMap<>(baseCollector.resultsCollector.getAggregatedCounts());
-    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> mergedSamples = new EnumMap<>(baseCollector.resultsCollector.getSamples());
+    Map<Term, Long> mergedTermFrequency = CollectorUtils.newHashMapInit(
+            baseCollector.metricsCollector.getTermFrequency());
+    Map<EvaluationType, Long> mergedAggregatedCounts = CollectorUtils.
+            newEvaluationTypeEnumMap(baseCollector.resultsCollector.getAggregatedCounts());
+    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> mergedSamples = CollectorUtils.
+            newEvaluationTypeEnumMap(baseCollector.resultsCollector.getSamples());
 
-    Map<Term, Long> mergedInterpretedTermsCount = baseCollector.interpretedTermsCountCollector.get().getInterpretedCounts();
+    Map<Term, Long> mergedInterpretedTermsCount = CollectorUtils.
+            newHashMapInit(baseCollector.interpretedTermsCountCollector.map(
+                    InterpretedTermsCountCollector::getInterpretedCounts));
 
     collectors.stream().skip(1).forEach(coll -> {
               coll.metricsCollector.getTermFrequency().forEach((k, v) -> mergedTermFrequency.merge(k, v, Long::sum));
@@ -95,6 +98,7 @@ public class CollectorGroup {
             .withInterpretedValueCounts(mergedInterpretedTermsCount)
             .build();
   }
+
 
   /**
    * Take a list of {@link LineBasedEvaluationResultDetails} and make sure the sample size is not greater than

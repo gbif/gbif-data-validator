@@ -8,6 +8,7 @@ import org.gbif.validation.ws.conf.ValidationConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.util.Optional;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -16,6 +17,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -23,6 +25,8 @@ import javax.ws.rs.core.Response;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.sun.jersey.api.client.ClientResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *  Asynchronous web resource to process data validations.
@@ -33,6 +37,7 @@ import com.sun.jersey.api.client.ClientResponse;
 @Singleton
 public class ValidationResource {
 
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
   private static final String STATUS_PATH = "/status/";
 
   private final UploadedFileManager fileTransferManager;
@@ -78,6 +83,20 @@ public class ValidationResource {
     return Response.status(Response.Status.BAD_REQUEST).entity(JobStatusResponse.FAILED_RESPONSE).build();
   }
 
+  @POST
+  @Produces(MediaType.APPLICATION_JSON)
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Path("/submiturl")
+  public Response onValidateFile(@QueryParam("fileUrl") String fileURL) {
+    try {
+      //this should also become asynchronous at some point
+      Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(new URL(fileURL));
+      return buildResponseFromStatus(jobServer.submit(dataFile.get()));
+    } catch (IOException ioEx) {
+      LOG.warn("Can not download file submitted", ioEx);
+    }
+    return Response.status(Response.Status.BAD_REQUEST).entity(JobStatusResponse.FAILED_RESPONSE).build();
+  }
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)

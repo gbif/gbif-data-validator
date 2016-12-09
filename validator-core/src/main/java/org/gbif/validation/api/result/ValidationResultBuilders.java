@@ -7,7 +7,6 @@ import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -87,7 +86,16 @@ public class ValidationResultBuilders {
       this.errorCode = errorCode;
     }
 
-    public Builder withResourceResult(ValidationResultElement validationResourceResult) {
+    /**
+     * Add a {@link ValidationResultElement}.
+     * This method accepts null.
+     * @param validationResourceResult
+     * @return the current builder
+     */
+    public Builder withResourceResult(@Nullable ValidationResultElement validationResourceResult) {
+      if(validationResourceResult == null) {
+        return this;
+      }
       if (validationResultElements == null) {
         validationResultElements = new ArrayList<>();
       }

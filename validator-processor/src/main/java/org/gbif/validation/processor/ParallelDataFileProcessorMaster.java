@@ -257,12 +257,13 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * Collects individual results and aggregates them in the internal data structures.
    */
   private void collectResult(DataWorkResult result) {
-    if (DwcTerm.Occurrence == result.getDataFile().getRowType()) {
+    //FIXME we should only use one collector
+    if (DwcTerm.Taxon != result.getDataFile().getRowType()) {
       rowTypeCollectors.compute(result.getDataFile().getRowType(), (key, val) -> {
         val.add(result.getCollectors());
         return val;
       });
-    } else if (DwcTerm.Taxon == result.getDataFile().getRowType()) {
+    } else {
       checklistsResults.add(result.getChecklistValidationResult());
     }
   }
