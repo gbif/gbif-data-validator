@@ -73,13 +73,6 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     }
   }
 
-  /**
-   * Calculates the number of records that will be processed by each data worker.
-   */
-  private static int recordsPerSplit(int fileSizeInLines, int fileSplitSize){
-    return fileSizeInLines / Math.max(fileSizeInLines/fileSplitSize, 1);
-  }
-
 
   ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
                                   ChecklistValidator  checklistValidator) {
