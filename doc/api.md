@@ -46,7 +46,7 @@ Specifications of the GBIF Data Validator API response.
 ## Issues structure
 
 ### Resource structure
-Structure of the result of an evaluation of the structure of the resource.
+Represents the result of an evaluation of the structure of the entire resource.
 
 ```json
 {
@@ -67,6 +67,7 @@ Structure of the result of an evaluation of the structure of the resource.
 ```
 
 ### Record structure
+Represents the result of an evaluation of the structure of a single record
 ```json
 {
   "issue": "COLUMN_COUNT_MISMATCH",
@@ -86,10 +87,11 @@ Structure of the result of an evaluation of the structure of the resource.
 ```
 
 ### Record interpretation
-Structure of the result of the interpretation of a record.
+Represents the result of an evaluation evaluation of an interpretation remark of a record.
 ```json
 {
   "issue": "RECORDED_DATE_MISMATCH",
+  "issueCategory": "OCC_INTERPRETATION_BASED",
   "count": 1,
   "identifierTerm": "dwc:occurrenceId",
   "sample": [

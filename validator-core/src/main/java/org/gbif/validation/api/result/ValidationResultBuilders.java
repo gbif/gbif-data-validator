@@ -7,6 +7,7 @@ import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -20,10 +21,10 @@ public class ValidationResultBuilders {
    * Fluent builder for {@link ValidationResult}
    */
   public static class Builder {
-    private Boolean indexeable;
+    private final Boolean indexeable;
 
-    private String fileName;
-    private FileFormat fileFormat;
+    private final String fileName;
+    private final FileFormat fileFormat;
     private ValidationProfile validationProfile;
 
     private List<ValidationResultElement> validationResultElements;
@@ -64,7 +65,6 @@ public class ValidationResultBuilders {
       this.fileName = fileName;
       this.fileFormat = fileFormat;
       this.validationProfile = validationProfile;
-      this.checklistValidationResults = checklistValidationResults;
     }
 
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
@@ -88,7 +88,7 @@ public class ValidationResultBuilders {
     }
 
     public Builder withResourceResult(ValidationResultElement validationResourceResult) {
-      if(validationResultElements == null) {
+      if (validationResultElements == null) {
         validationResultElements = new ArrayList<>();
       }
       validationResultElements.add(validationResourceResult);
@@ -96,6 +96,9 @@ public class ValidationResultBuilders {
     }
 
     public Builder withChecklistValidationResult(ChecklistValidationResult checklistValidationResult) {
+      if (checklistValidationResults == null) {
+        checklistValidationResults = new ArrayList<>();
+      }
       checklistValidationResults.add(checklistValidationResult);
       return this;
     }
@@ -111,10 +114,10 @@ public class ValidationResultBuilders {
    *
    */
   public static class RecordsValidationResultElementBuilder {
-    private String fileName;
-    private Long numberOfLines;
-    private Term rowType;
-    private List<ValidationIssue> issues = new ArrayList<>();
+    private final String fileName;
+    private final Long numberOfLines;
+    private final Term rowType;
+    private final List<ValidationIssue> issues = new ArrayList<>();
     private Map<Term, Long> termsFrequency;
     private Map<Term, Long> interpretedValueCounts;
 

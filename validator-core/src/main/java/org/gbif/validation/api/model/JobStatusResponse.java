@@ -5,6 +5,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 /**
  * Response of job status request.
+ * @param <T> type of the content embedded in this response
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
 public class JobStatusResponse<T> {
@@ -32,7 +33,7 @@ public class JobStatusResponse<T> {
    * Empty constructor required for serialization.
    */
   public JobStatusResponse() {
-
+    //empty constructor
   }
 
   /**
@@ -50,7 +51,6 @@ public class JobStatusResponse<T> {
   public JobStatusResponse(JobStatus status, long jobId) {
     this.status = status;
     this.jobId = jobId;
-    result = null;
   }
 
   /**

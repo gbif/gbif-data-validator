@@ -59,14 +59,9 @@ public class DwcReader implements RecordSource {
    */
   DwcReader(File dwcFolder, @Nullable Term rowType) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
-
     archive = ArchiveFactory.openArchive(dwcFolder);
-    if(rowType != null && !rowType.equals(archive.getCore().getRowType())) {
-      darwinCoreComponent = archive.getExtension(rowType);
-    }
-    else{
-      darwinCoreComponent = archive.getCore();
-    }
+    darwinCoreComponent = archive.getCore().getRowType().equals(rowType)? archive.getCore() :
+                                                                          archive.getExtension(rowType);
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
   }

@@ -43,7 +43,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
   }
 
-  private interface InnerRecordEvaluationResultCollector {
+  private interface InnerRecordEvaluationResultCollector extends Serializable {
     void countAndPrepare(EvaluationType type);
     void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<LineBasedEvaluationResultDetails>, Collection<LineBasedEvaluationResultDetails>>
             samplingFunction);
@@ -60,21 +60,25 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       issueSampling = new EnumMap<>(EvaluationType.class);
     }
 
+    @Override
     public void countAndPrepare(EvaluationType type) {
       issueCounter.compute(type, (k, v) -> (v == null) ? 1 : ++v);
       issueSampling.putIfAbsent(type, new ArrayList<>());
     }
 
+    @Override
     public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<LineBasedEvaluationResultDetails>, Collection<LineBasedEvaluationResultDetails>>
                                  samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
+    @Override
     public Map<EvaluationType, List<LineBasedEvaluationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec ->  new ArrayList<>(rec.getValue()))); //Value
     }
 
+    @Override
     public Map<EvaluationType, Long> getAggregatedCounts() {
       return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               Map.Entry::getValue)); //Value
@@ -90,11 +94,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
     }
 
+    @Override
     public void countAndPrepare(EvaluationType type) {
       issueCounter.computeIfAbsent(type, k -> new LongAdder()).increment();
       issueSampling.putIfAbsent(type, new ConcurrentLinkedQueue<>());
     }
 
+    @Override
     public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<LineBasedEvaluationResultDetails>, Collection<LineBasedEvaluationResultDetails>>
             samplingFunction) {
       issueSampling.compute(type, samplingFunction);
@@ -103,6 +109,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     /**
      * @return a copy of the inter aggregated counts.
      */
+    @Override
     public Map<EvaluationType, Long> getAggregatedCounts() {
       return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec -> rec.getValue().longValue())); //Value
@@ -112,6 +119,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
      *
      * @return a copy of the internal evaluation samples.
      */
+    @Override
     public Map<EvaluationType, List<LineBasedEvaluationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec ->  new ArrayList<>(rec.getValue()))); //Value

@@ -127,7 +127,7 @@ class ExcelConverter {
     Row headerRow = sheet.getRow(0);
     //we want to loop until maxColumnIdx (if provided) even if it's greater than getLastCellNum()
     //we shall have the same number of entries on every line in the CSV
-    List<String> headers = rowToCSV(headerRow, evaluator, Short.valueOf(headerRow.getLastCellNum()).intValue());
+    List<String> headers = rowToCSV(headerRow, evaluator, headerRow.getLastCellNum());
 
     //reverse iteration (from the right side of the Workbook) to remove empty columns
     ListIterator<String> iterator = headers.listIterator(headers.size());

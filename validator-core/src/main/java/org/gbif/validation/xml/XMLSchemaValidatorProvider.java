@@ -28,12 +28,10 @@ public class XMLSchemaValidatorProvider {
   private static final Logger LOG = LoggerFactory.getLogger(XMLSchemaValidatorProvider.class);
 
   public static final String DWC_META_XML = "dwc_meta_xml";
-  public static final String EML = "eml";
   public static final String GBIF_EML = "gbif_eml";
 
   //TODO move this to config and get Stream
   private static final String DWC_META_XML_SCHEMA = "xml/dwc/tdwg_dwc_text.xsd";
-  private static final String EML_SCHEMA = "http://rs.gbif.org/schema/eml-2.1.1/eml.xsd";
   private static final String GBIF_EML_SCHEMA = "http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd";
 
   private final Map<String, Schema> schemas;

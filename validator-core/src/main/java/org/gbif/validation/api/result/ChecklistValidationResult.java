@@ -4,6 +4,7 @@ import org.gbif.api.model.checklistbank.NameUsage;
 import org.gbif.api.vocabulary.NameUsageIssue;
 import org.gbif.checklistbank.cli.normalizer.NormalizerStats;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,7 +18,7 @@ import org.codehaus.jackson.annotate.JsonIgnoreProperties;
  *
  */
 @JsonIgnoreProperties(ignoreUnknown=true)
-public class ChecklistValidationResult {
+public class ChecklistValidationResult implements Serializable {
 
   private Map<NameUsageIssue,Set<NameUsage>> issues;
 

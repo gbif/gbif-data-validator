@@ -11,7 +11,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Probably a Temporary class
+ * Probably a Temporary class.
  */
 public class TabularFileReader implements RecordSource {
 

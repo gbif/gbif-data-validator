@@ -24,6 +24,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.sun.jersey.api.client.ClientResponse;
 
+/**
+ *  Asynchronous web resource to process data validations.
+ *  Internally, redirects all the requests to a JobServer instances that coordinates all data validations.
+ */
 @Path("/jobserver")
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton

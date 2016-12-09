@@ -6,6 +6,9 @@ import org.gbif.validation.api.result.ValidationResultBuilders;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
+/**
+ * Utility class to build error responses.
+ */
 public class WebErrorUtils {
 
   /**
