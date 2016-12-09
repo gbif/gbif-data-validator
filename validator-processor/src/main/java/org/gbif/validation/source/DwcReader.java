@@ -47,21 +47,24 @@ public class DwcReader implements RecordSource {
    * @throws IOException
    */
   DwcReader(File dwcFolder) throws IOException {
-    this(dwcFolder, null);
+    this(dwcFolder, Optional.empty());
   }
 
   /**
-   * Get a new Reader for an extension of the Dwc-A.
+   * Get a new Reader for an extension of the Dwc-A or the core if rowType is not provided.
    *
    * @param dwcFolder
    * @param rowType can be null to get the core
    * @throws IOException
    */
-  DwcReader(File dwcFolder, @Nullable Term rowType) throws IOException {
+  DwcReader(File dwcFolder, Optional<Term> rowType) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
     archive = ArchiveFactory.openArchive(dwcFolder);
-    darwinCoreComponent = archive.getCore().getRowType().equals(rowType)? archive.getCore() :
-                                                                          archive.getExtension(rowType);
+
+    darwinCoreComponent = (!rowType.isPresent() || archive.getCore().getRowType().equals(rowType.get())) ?
+            archive.getCore() :
+            archive.getExtension(rowType.get());
+
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
   }

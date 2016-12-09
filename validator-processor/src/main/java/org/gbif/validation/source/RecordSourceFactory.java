@@ -67,7 +67,7 @@ public class RecordSourceFactory {
     Objects.requireNonNull(sourceFolder, "sourceFolder shall be provided");
     Objects.requireNonNull(rowType, "rowType shall be provided");
 
-    return new DwcReader(sourceFolder, rowType);
+    return new DwcReader(sourceFolder, Optional.of(rowType));
   }
 
 
