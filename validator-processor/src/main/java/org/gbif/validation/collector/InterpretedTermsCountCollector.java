@@ -5,13 +5,10 @@ import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import org.apache.commons.lang3.Validate;
 
@@ -47,7 +44,8 @@ public class InterpretedTermsCountCollector implements ResultsCollector, Seriali
 
   @Override
   public void collect(RecordEvaluationResult result) {
-    BiConsumer<Term,Map<Term, Object>> increment = (term, terms) -> interpretedValueCounter.compute(term, (k, v) -> terms.get(term) != null ? ++v : v);
+    BiConsumer<Term,Map<Term, Object>> increment = (term, terms) -> interpretedValueCounter.compute(term, (k, v) ->
+                                                                    terms.get(term) != null ? ++v : v);
     Optional.ofNullable(result)
       .ifPresent(r -> Optional.ofNullable(r.getInterpretedData())
         .ifPresent(terms -> targetedTerms.stream().forEach(term -> increment.accept(term,terms))));

@@ -14,7 +14,7 @@ public class SpreadsheetConverters {
   /**
    * Utility class can't be instantiated.
    */
-  private SpreadsheetConverters(){
+  private SpreadsheetConverters() {
     //empty constructor
   }
 

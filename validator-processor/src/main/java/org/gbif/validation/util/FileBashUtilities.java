@@ -9,7 +9,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This class contains functions that encapsulate Linux commands.
+ */
 public class FileBashUtilities {
+
+  //command to find content in a specific column of a file
+  private static final String FIND_FILE_CMD = "awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s";
 
   /**
    * Private constructor.
@@ -51,8 +57,7 @@ public class FileBashUtilities {
    * It returns the lines number where the pattern occurs.
    */
   public static Integer[] findInFile(String fileName, String value, int column, String separator) throws IOException {
-    String[] lines =  executeSimpleCmd(String.format("awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s",
-                                                     column,value,separator,fileName));
+    String[] lines =  executeSimpleCmd(String.format(FIND_FILE_CMD, column, value, separator, fileName));
     return Arrays.stream(lines).map(Integer::parseInt).toArray(Integer[]::new);
   }
 
@@ -68,7 +73,7 @@ public class FileBashUtilities {
   /**
    * Executes a bash command and collect its result in a string array.
    */
-  private static String[] executeSimpleCmd(String bashCmd) throws  IOException {
+  private static String[] executeSimpleCmd(String bashCmd) throws IOException {
     String[] cmd = { "/bin/sh", "-c", bashCmd };
     Process process = Runtime.getRuntime().exec(cmd);
     try (BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {

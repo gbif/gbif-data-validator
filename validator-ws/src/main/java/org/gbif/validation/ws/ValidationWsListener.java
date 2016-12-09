@@ -8,6 +8,7 @@ import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
+import org.gbif.validation.jobserver.JobStorage;
 import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
 import org.gbif.validation.jobserver.impl.FileJobStorage;
 import org.gbif.validation.ws.conf.ConfKeys;
@@ -83,6 +84,14 @@ public class ValidationWsListener extends GbifServletListener {
       }
     }
 
+    /**
+     * Creates an instance of a JobServer using  the provided configuration.
+     */
+    private static JobServer<ValidationResult> getJobServerInstance(ValidationConfiguration configuration) {
+      return new JobServer<>(new FileJobStorage(Paths.get(configuration.getJobResultStorageDir())),
+                             buildActorPropsMapping(configuration));
+    }
+
     @Override
     protected void configureService() {
       //get configuration settings
@@ -96,8 +105,7 @@ public class ValidationWsListener extends GbifServletListener {
                                                                        HTTP_CLIENT_THREADS_PER_ROUTE));
 
       bind(HttpUtil.class).toInstance(httpUtil);
-      bind(JOB_SERVER_TYPE_LITERAL).toInstance(new JobServer<>(new FileJobStorage(Paths.get(configuration.getJobResultStorageDir())),
-                                                               buildActorPropsMapping(configuration)));
+      bind(JOB_SERVER_TYPE_LITERAL).toInstance(getJobServerInstance(configuration));
       bind(ValidationConfiguration.class).toInstance(configuration);
 
       expose(JOB_SERVER_TYPE_LITERAL);
@@ -109,10 +117,10 @@ public class ValidationWsListener extends GbifServletListener {
      * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
      */
     private static ActorPropsSupplier buildActorPropsMapping(ValidationConfiguration configuration) {
-        return new ActorPropsSupplier(new EvaluatorFactory(configuration.getApiUrl()),
-                                      configuration.getFileSplitSize(),
-                                      configuration.getWorkingDir(),
-                                      new ChecklistValidator(getNormalizerConfiguration()));
+      return new ActorPropsSupplier(new EvaluatorFactory(configuration.getApiUrl()),
+                                    configuration.getFileSplitSize(),
+                                    configuration.getWorkingDir(),
+                                    new ChecklistValidator(getNormalizerConfiguration()));
 
     }
 

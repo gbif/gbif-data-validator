@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.apache.commons.lang3.StringUtils;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.table.Cell;
@@ -68,7 +69,8 @@ class OdsConverter {
    * @param csvWriter
    * @throws IOException
    */
-  private static void convertToCSV(SpreadsheetDocument spreadsheetDocument, ICsvListWriter csvWriter) throws IOException {
+  private static void convertToCSV(SpreadsheetDocument spreadsheetDocument, ICsvListWriter csvWriter)
+    throws IOException {
     Objects.requireNonNull(spreadsheetDocument, "spreadsheetDocument shall be provided");
     Objects.requireNonNull(csvWriter, "csvWriter shall be provided");
 
@@ -82,7 +84,7 @@ class OdsConverter {
 
     Table table = spreadsheetDocument.getSheetByIndex(0);
 
-    List<String> headers = extractWhile(table, 0, cell -> cell != null && StringUtils.isNotBlank(cell.getStringValue()));
+    List<String> headers = extractWhile(table, 0, cell -> cell != null && isNotBlank(cell.getStringValue()));
     csvWriter.writeHeader(headers.toArray(new String[headers.size()]));
 
     boolean hasContent = true;

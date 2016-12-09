@@ -17,9 +17,9 @@ public class ChecklistsValidatorActor extends AbstractLoggingActor {
 
   private final ChecklistValidator validator;
 
-   public ChecklistsValidatorActor(ChecklistValidator validator) {
-     this.validator = validator;
-     receive(
+  public ChecklistsValidatorActor(ChecklistValidator validator) {
+   this.validator = validator;
+   receive(
        //this should only be called once
        match(DataFile.class, dataFileMessage -> {
          pipe(
@@ -27,8 +27,8 @@ public class ChecklistsValidatorActor extends AbstractLoggingActor {
            getContext().dispatcher()
          ).to(sender());
        }).build()
-     );
-   }
+   );
+  }
 
   /**
    * Runs the validation and converts the result into a DataWorkResult.

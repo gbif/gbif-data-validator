@@ -66,6 +66,6 @@ public class EnumerationResource {
   @GET
   @NullToNotFound
   public Enum<?>[] getEnumeration(@PathParam("name") @NotNull String name) {
-    return PATH_MAPPING.getOrDefault(name,null);
+    return PATH_MAPPING.getOrDefault(name, null);
   }
 }

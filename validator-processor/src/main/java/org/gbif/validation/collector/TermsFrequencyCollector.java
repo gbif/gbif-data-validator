@@ -36,7 +36,7 @@ public class TermsFrequencyCollector implements RecordMetricsCollector, Serializ
   @Override
   public void collect(String[] recordData) {
     IntStream.range(0, Math.min(recordData.length, columnHeaders.length))
-      .filter( i -> StringUtils.isNotBlank(recordData[i]))
+      .filter(i -> StringUtils.isNotBlank(recordData[i]))
       .forEach(i -> termFrequencyCounter.compute(columnHeaders[i], (k, v) -> ++v));
   }
 

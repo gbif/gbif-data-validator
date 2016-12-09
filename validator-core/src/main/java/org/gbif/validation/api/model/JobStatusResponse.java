@@ -7,7 +7,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
  * Response of job status request.
  * @param <T> type of the content embedded in this response
  */
-@JsonIgnoreProperties(ignoreUnknown=true)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class JobStatusResponse<T> {
 
   /**

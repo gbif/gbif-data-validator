@@ -27,7 +27,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.sun.jersey.multipart.file.DefaultMediaTypePredictor;
+import com.sun.jersey.multipart.file.DefaultMediaTypePredictor.CommonMediaTypes;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -59,18 +59,19 @@ public class UploadedFileManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
-  private static final String ZIP_CONTENT_TYPE = DefaultMediaTypePredictor.CommonMediaTypes.ZIP.getMediaType().toString();
+  private static final String ZIP_CONTENT_TYPE = CommonMediaTypes.ZIP.getMediaType().toString();
 
   private static final Pattern FILENAME_PATTERN = Pattern.compile("filename[ ]*=[ ]*[\\S]+",Pattern.CASE_INSENSITIVE);
   private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
 
-  private static final List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN, ExtraMediaTypes.TEXT_CSV,
-          ExtraMediaTypes.TEXT_TSV);
+  private static final List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN,
+                                                                          ExtraMediaTypes.TEXT_CSV,
+                                                                          ExtraMediaTypes.TEXT_TSV);
 
   private static final List<String> SPREADSHEET_CONTENT_TYPES = Arrays.asList(
-          ExtraMediaTypes.APPLICATION_EXCEL,
-          ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET,
-          ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET);
+    ExtraMediaTypes.APPLICATION_EXCEL,
+    ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET,
+    ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET);
 
   private static final int FILE_DOWNLOAD_TIMEOUT_MS = 10000;
 
@@ -119,9 +120,9 @@ public class UploadedFileManager {
     Objects.requireNonNull(contentDisposition, "contentDisposition shall not be null");
 
     return Arrays.stream(contentDisposition.split(";"))
-            .filter(el ->  FILENAME_PATTERN.matcher(el.trim()).matches())
-            .map(el ->  QUOTE_PATTERN.matcher(el.split("=")[1].trim()).replaceAll(""))
-            .findFirst();
+      .filter(el ->  FILENAME_PATTERN.matcher(el.trim()).matches())
+      .map(el ->  QUOTE_PATTERN.matcher(el.split("=")[1].trim()).replaceAll(""))
+      .findFirst();
   }
 
   /**
@@ -133,7 +134,8 @@ public class UploadedFileManager {
    * @return
    * @throws IOException
    */
-  private static Path copyInputStream(Path destinationFolder, InputStream inputStream, String filename) throws IOException {
+  private static Path copyInputStream(Path destinationFolder, InputStream inputStream, String filename)
+    throws IOException {
     String fileExt = FilenameUtils.getExtension(filename);
     Path uploadedResourcePath = destinationFolder.resolve(UUID.randomUUID() + "." + fileExt);
     Files.copy(inputStream, uploadedResourcePath);
@@ -192,7 +194,8 @@ public class UploadedFileManager {
       Files.createDirectory(this.workingDirectory);
     }
 
-    DiskFileItemFactory diskFileItemFactory = new DiskFileItemFactory(MAX_SIZE_BEFORE_DISK_IN_BYTES, workingDirectoryFile);
+    DiskFileItemFactory diskFileItemFactory = new DiskFileItemFactory(MAX_SIZE_BEFORE_DISK_IN_BYTES,
+                                                                      workingDirectoryFile);
     servletBasedFileUpload = new ServletFileUpload(diskFileItemFactory);
     servletBasedFileUpload.setFileSizeMax(MAX_UPLOAD_SIZE_IN_BYTES);
   }
@@ -205,7 +208,8 @@ public class UploadedFileManager {
     try {
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
       Optional<FileItem> uploadFileInputStream = uploadedContent.stream()
-        .filter(fileItem -> !fileItem.isFormField() && ValidationConfiguration.FILE_POST_PARAM_NAME.equals(fileItem.getFieldName()))
+        .filter(fileItem -> !fileItem.isFormField()
+                            && ValidationConfiguration.FILE_POST_PARAM_NAME.equals(fileItem.getFieldName()))
         .findFirst();
       if (uploadFileInputStream.isPresent()) {
         FileItem uploadFileInputStreamVal = uploadFileInputStream.get();
@@ -235,7 +239,8 @@ public class UploadedFileManager {
    * @return a {@link DataFile} instance that represents the file that was transferred.
    * @throws IOException
    */
-  private Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream) throws IOException {
+  private Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream)
+    throws IOException {
 
     Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
 
@@ -318,8 +323,8 @@ public class UploadedFileManager {
     @Override
     protected void raiseError(long pSizeMax, long pCount) throws IOException {
       throw new FileDownloadSizeException(
-              String.format("Download was rejected because its size (%s) exceeds the configured maximum (%s)",
-                            pCount, pSizeMax));
+        String.format("Download was rejected because its size (%s) exceeds the configured maximum (%s)",
+                      pCount, pSizeMax));
     }
   }
 

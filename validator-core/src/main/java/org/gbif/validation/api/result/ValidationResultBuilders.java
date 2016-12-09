@@ -7,7 +7,6 @@ import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -57,14 +56,6 @@ public class ValidationResultBuilders {
      */
     public static Builder withError(String fileName, @Nullable FileFormat fileFormat, ValidationErrorCode errorCode) {
       return new Builder(fileName, fileFormat, errorCode);
-    }
-
-    private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                    List<ChecklistValidationResult> checklistValidationResults) {
-      this.indexeable = indexeable;
-      this.fileName = fileName;
-      this.fileFormat = fileFormat;
-      this.validationProfile = validationProfile;
     }
 
     private Builder(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile) {
@@ -178,7 +169,8 @@ public class ValidationResultBuilders {
      * @param exception
      * @return
      */
-    public DefaultValidationResultElementBuilder addExceptionResultDetails(EvaluationType evaluationType, String exception) {
+    public DefaultValidationResultElementBuilder addExceptionResultDetails(EvaluationType evaluationType,
+                                                                           String exception) {
       if(issues == null){
         issues = new ArrayList<>();
       }

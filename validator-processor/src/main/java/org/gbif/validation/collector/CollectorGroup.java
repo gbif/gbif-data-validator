@@ -56,7 +56,8 @@ public class CollectorGroup {
    * @param collectors
    * @return
    */
-  public static RecordsValidationResultElement mergeAndGetResult(DataFile dataFile, String resultingFileName, List<CollectorGroup> collectors) {
+  public static RecordsValidationResultElement mergeAndGetResult(DataFile dataFile, String resultingFileName,
+                                                                 List<CollectorGroup> collectors) {
 
     if (collectors.isEmpty()) {
       return null;
@@ -105,7 +106,8 @@ public class CollectorGroup {
    *
    * @return
    */
-  private static List<LineBasedEvaluationResultDetails> resample(List<LineBasedEvaluationResultDetails> resultDetails, int maxSample) {
+  private static List<LineBasedEvaluationResultDetails> resample(List<LineBasedEvaluationResultDetails> resultDetails,
+                                                                 int maxSample) {
     return resultDetails.stream()
             .sorted((lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
             .limit(maxSample)

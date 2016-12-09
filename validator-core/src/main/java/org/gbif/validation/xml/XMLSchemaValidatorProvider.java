@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import javax.xml.XMLConstants;
+import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -51,9 +52,7 @@ public class XMLSchemaValidatorProvider {
   public XMLSchemaValidatorProvider(Optional<String> xmlCatalog) {
 
     SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
-    xmlCatalog.ifPresent( xc -> {
-      schemaFactory.setResourceResolver(new XMLCatalogResolver(new String[]{xc}));
-    });
+    xmlCatalog.ifPresent(xc -> schemaFactory.setResourceResolver(new XMLCatalogResolver(new String[]{xc})));
 
     schemas = Collections.synchronizedMap(new HashMap<>());
     try {
@@ -73,11 +72,9 @@ public class XMLSchemaValidatorProvider {
    * @return
    * @throws IOException
    */
-  private static StreamSource getStreamSource(String path) throws IOException {
-    if(StringUtils.startsWith(path, "http")) {
-      return new StreamSource(path);
-    }
-    return new StreamSource(FileUtils.classpathStream(path));
+  private static Source getStreamSource(String path) throws IOException {
+    return StringUtils.startsWith(path, "http")? new StreamSource(path) :
+                                                 new StreamSource(FileUtils.classpathStream(path));
   }
 
   /**
@@ -86,9 +83,6 @@ public class XMLSchemaValidatorProvider {
    * @return a new instance of {@link Validator} or null if the key can not be found
    */
   public Validator getXmlValidator(String key) {
-    if(schemas.containsKey(key)) {
-      return schemas.get(key).newValidator();
-    }
-    return null;
+    return schemas.containsKey(key)? schemas.get(key).newValidator() : null;
   }
 }
