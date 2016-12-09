@@ -61,9 +61,8 @@ public class DwcReader implements RecordSource {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
     archive = ArchiveFactory.openArchive(dwcFolder);
 
-    darwinCoreComponent = (!rowType.isPresent() || archive.getCore().getRowType().equals(rowType.get())) ?
-            archive.getCore() :
-            archive.getExtension(rowType.get());
+    darwinCoreComponent = (!rowType.isPresent() || archive.getCore().getRowType().equals(rowType.get()))?
+                                                  archive.getCore() : archive.getExtension(rowType.get());
 
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
@@ -83,13 +82,13 @@ public class DwcReader implements RecordSource {
 
     archive = ArchiveFactory.openArchive(dwcFolder);
 
-    if(archive.getCore() == null) {
+    if (archive.getCore() == null) {
       throw new UnsupportedArchiveException("The archive must have a least a core file.");
     }
 
-    if(rowType == null) {
+    if (rowType == null) {
       darwinCoreComponent = archive.getCore();
-    }else{
+    } else {
       darwinCoreComponent = archive.getCore().getRowType().equals(rowType) ? archive.getCore() : archive.getExtension(rowType);
     }
 
@@ -116,13 +115,14 @@ public class DwcReader implements RecordSource {
   @Nullable
   @Override
   public Term[] getHeaders() {
-    if(archiveFields == null) {
+    if (archiveFields == null) {
       return null;
     }
 
     //+1 for the id column (not included on archiveFields list)
     int expectedNumberOfColumns = archiveFields.size() + 1;
-    int maxIndex = archiveFields.stream().filter(af -> af.getIndex() != null).mapToInt(ArchiveField::getIndex).max().getAsInt();
+    int maxIndex = archiveFields.stream().filter(af -> af.getIndex() != null)
+                                          .mapToInt(ArchiveField::getIndex).max().getAsInt();
     maxIndex = Math.max(maxIndex, darwinCoreComponent.getId().getIndex());
 
     //defense against wrongly declared index number
@@ -138,11 +138,10 @@ public class DwcReader implements RecordSource {
     terms[darwinCoreComponent.getId().getIndex()] = idColumnTerm;
 
     int defaultValueIdx = maxIndex + 1;
-    for(ArchiveField af : archiveFields) {
-      if(af.getIndex() != null){
+    for (ArchiveField af : archiveFields) {
+      if (af.getIndex() != null){
         terms[af.getIndex()] = af.getTerm();
-      }
-      else{
+      } else {
         termsWithDefaultValues.add(af);
         terms[defaultValueIdx] = af.getTerm();
         defaultValueIdx++;
@@ -150,7 +149,7 @@ public class DwcReader implements RecordSource {
     }
 
     //handle default values (if any)
-    if(!termsWithDefaultValues.isEmpty()) {
+    if (!termsWithDefaultValues.isEmpty()) {
       defaultValuesTerm = new Term[termsWithDefaultValues.size()];
       defaultValues = new String[termsWithDefaultValues.size()];
       for (int i = 0; i < termsWithDefaultValues.size(); i++) {
@@ -163,7 +162,7 @@ public class DwcReader implements RecordSource {
 
   @Override
   public String[] read() throws IOException {
-    if(defaultValuesTerm == null) {
+    if (defaultValuesTerm == null) {
       return csvReader.next();
     }
 
@@ -179,14 +178,14 @@ public class DwcReader implements RecordSource {
   @Nullable
   @Override
   public Path getFileSource() {
-    if(darwinCoreComponent == null) {
+    if (darwinCoreComponent == null) {
       return null;
     }
     return darwinCoreComponent.getLocationFile().toPath();
   }
 
   public Term getRowType() {
-    if(darwinCoreComponent == null) {
+    if (darwinCoreComponent == null) {
       return null;
     }
     return darwinCoreComponent.getRowType();
