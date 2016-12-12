@@ -7,12 +7,11 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
-import static org.gbif.validation.api.model.ValidationProfile.GBIF_INDEXING_PROFILE;
 import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultBuilders;
-import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -38,6 +37,8 @@ import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
+
+import static org.gbif.validation.api.model.ValidationProfile.GBIF_INDEXING_PROFILE;
 
 import static akka.japi.pf.ReceiveBuilder.match;
 
@@ -106,7 +107,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     DataFile dataFile = dataJob.getJobData();
     Optional<ValidationResultElement> validationResultElement =
       EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
-        .evaluate(dataFile.getFilePath(), dataFile.getSourceFileName());
+        .evaluate(dataFile);
     if (validationResultElement.isPresent()) {
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
                                                 ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
