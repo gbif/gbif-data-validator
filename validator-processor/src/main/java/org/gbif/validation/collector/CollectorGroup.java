@@ -77,7 +77,7 @@ public class CollectorGroup {
     collectors.stream().skip(1).forEach(coll -> {
               coll.metricsCollector.getTermFrequency().forEach((k, v) -> mergedTermFrequency.merge(k, v, Long::sum));
               coll.resultsCollector.getAggregatedCounts().forEach((k, v) -> mergedAggregatedCounts.merge(k, v, Long::sum));
-              coll.interpretedTermsCountCollector.get().getInterpretedCounts().forEach((k, v) -> mergedInterpretedTermsCount.merge(k, v, Long::sum));
+              coll.interpretedTermsCountCollector.ifPresent(itcc -> itcc.getInterpretedCounts().forEach((k, v) -> mergedInterpretedTermsCount.merge(k, v, Long::sum)));
               coll.resultsCollector.getSamples().forEach((k, v) -> mergedSamples.merge(k, v, (o, n) -> {
                 List<LineBasedEvaluationResultDetails> a = new ArrayList<>(o);
                 a.addAll(n);
