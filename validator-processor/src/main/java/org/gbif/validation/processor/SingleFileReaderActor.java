@@ -40,7 +40,7 @@ class SingleFileReaderActor extends AbstractLoggingActor {
    * The sender is sent as parameter because the real sender is only known in the context of receiving messages.
    */
   private static DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
-    long line = dataFile.getFileLineOffset().orElse(0);
+    long line = dataFile.getFileLineOffset().orElse(0) + 1; //we report line number starting at 1
     try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
       //Term rowType = dataFile.getRowType();
       String[] record;
