@@ -107,7 +107,7 @@ public class ValidationResource {
 
   @GET
   @Produces(MediaType.APPLICATION_JSON)
-  @Path("/status/{jobid}/kill")
+  @Path(STATUS_PATH + "{jobid}/kill")
   public Response kill(@PathParam("jobid") String jobid) {
     return buildResponseFromStatus(jobServer.kill(Long.valueOf(jobid)));
   }

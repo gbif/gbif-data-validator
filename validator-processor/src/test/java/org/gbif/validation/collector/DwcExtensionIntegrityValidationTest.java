@@ -1,6 +1,6 @@
 package org.gbif.validation.collector;
 
-import org.gbif.validation.api.model.DataFileDescriptor;
+import org.gbif.validation.api.DataFile;
 import static  org.gbif.validation.collector.DwcExtensionIntegrityValidation.collectUnlinkedExtensions;
 
 import java.io.IOException;
@@ -8,6 +8,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.junit.Assert;
@@ -23,27 +24,27 @@ public class DwcExtensionIntegrityValidationTest {
   /**
    * Gets a test core file from the specified testDir.
    */
-  private static DataFileDescriptor getCoreTestFileDescriptor(String testDir) {
+  private static DataFile getCoreTestFileDescriptor(String testDir) {
     return getTestFileDescriptor(testDir, "core.txt");
   }
 
   /**
    * Gets a test extension file from the specified testDir.
    */
-  private static DataFileDescriptor getExtensionTestFileDescriptor(String testDir) {
+  private static DataFile getExtensionTestFileDescriptor(String testDir) {
     return getTestFileDescriptor(testDir, "ext.txt");
   }
 
   /**
    * Utility class to create data file descriptors from tests files.
    */
-  private static DataFileDescriptor getTestFileDescriptor(String testDir, String testFileName) {
+  private static DataFile getTestFileDescriptor(String testDir, String testFileName) {
     try {
       URL testFileUrl = Resources.getResource(Paths.get(RESOURCES_DIR, testDir, testFileName).toString());
-      DataFileDescriptor dataFileDescriptor = new DataFileDescriptor();
-      dataFileDescriptor.setFieldsTerminatedBy(',');
-      dataFileDescriptor.setHasHeaders(true);
-      dataFileDescriptor.setSubmittedFile(Paths.get(testFileUrl.toURI()).toString());
+      DataFile dataFileDescriptor = new DataFile();
+      dataFileDescriptor.setDelimiterChar(',');
+      dataFileDescriptor.setHasHeaders(Optional.of(true));
+      dataFileDescriptor.setSourceFileName(Paths.get(testFileUrl.toURI()).toString());
       return dataFileDescriptor;
     } catch (URISyntaxException ex) {
       throw new RuntimeException(ex);

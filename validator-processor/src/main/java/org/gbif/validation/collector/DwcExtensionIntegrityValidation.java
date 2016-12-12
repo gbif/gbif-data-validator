@@ -1,6 +1,6 @@
 package org.gbif.validation.collector;
 
-import org.gbif.validation.api.model.DataFileDescriptor;
+import org.gbif.validation.api.DataFile;
 import static  org.gbif.validation.util.FileBashUtilities.findInFile;
 
 import java.io.IOException;
@@ -28,14 +28,14 @@ public class DwcExtensionIntegrityValidation {
    * extracting the column extColumn of extDescriptor.getSubmittedFile and matching it agains coreColumn of
    * coreDescriptor.getSubmittedFile.
    */
-  public static List<String> collectUnlinkedExtensions(DataFileDescriptor coreDescriptor, int coreColumn,
-                                                      DataFileDescriptor extDescriptor, int extColumn,
-                                                      long maxSampleSize) throws IOException {
+  public static List<String> collectUnlinkedExtensions(DataFile coreDescriptor, int coreColumn,
+                                                       DataFile extDescriptor, int extColumn,
+                                                       long maxSampleSize) throws IOException {
 
-    try(Stream<String> lines = Files.lines(Paths.get(extDescriptor.getSubmittedFile()))) {
+    try (Stream<String> lines = Files.lines(Paths.get(extDescriptor.getSourceFileName()))) {
 
-      return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)
-                  .filter(line -> getColumnValue(line, extColumn, extDescriptor.getFieldsTerminatedBy().toString())
+      return lines.skip(extDescriptor.isHasHeaders().orElse(false) ? 1 : 0)
+                  .filter(line -> getColumnValue(line, extColumn, extDescriptor.getDelimiterChar().toString())
                                   .map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
                   .limit(maxSampleSize)
                   .collect(Collectors.toList());
@@ -46,16 +46,15 @@ public class DwcExtensionIntegrityValidation {
    * Validates if the String function parameter exists in any line[column] of the descriptor.getSubmittedFile.
    * It was created to maintain readability in the collectUnlinkedExtension method.
    */
-  private static Function<String,Boolean> valueIsNotInFile(DataFileDescriptor descriptor, int column){
+  private static Function<String,Boolean> valueIsNotInFile(DataFile descriptor, int column) {
     return val -> {
-        try {
-          return findInFile(descriptor.getSubmittedFile(), val, column + 1, //bash uses 1-based indexes
-                            StringEscapeUtils.escapeJava(descriptor.getFieldsTerminatedBy().toString())).length == 0;
-        } catch (Exception ex) {
-          throw new RuntimeException(ex);
-        }
-      };
-
+      try {
+        return findInFile(descriptor.getSourceFileName(), val, column + 1, //bash uses 1-based indexes
+                          StringEscapeUtils.escapeJava(descriptor.getDelimiterChar().toString())).length == 0;
+      } catch (Exception ex) {
+        throw new RuntimeException(ex);
+      }
+    };
   }
 
   /**

@@ -74,7 +74,7 @@ public class FileBashUtilities {
    * Executes a bash command and collect its result in a string array.
    */
   private static String[] executeSimpleCmd(String bashCmd) throws IOException {
-    String[] cmd = { "/bin/sh", "-c", bashCmd };
+    String[] cmd = {"/bin/sh", "-c", bashCmd};
     Process process = Runtime.getRuntime().exec(cmd);
     try (BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
       String line;
