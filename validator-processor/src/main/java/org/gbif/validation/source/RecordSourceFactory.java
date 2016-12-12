@@ -175,12 +175,14 @@ public class RecordSourceFactory {
       core.setRowType(dwcReader.getRowType());
       core.setHasHeaders(Optional.of(dwcReader.getCore().getIgnoreHeaderLines() != null
                                      && dwcReader.getCore().getIgnoreHeaderLines() > 0));
+      core.setDelimiterChar(dwcReader.getCore().getFieldsTerminatedBy().charAt(0));
       dataFileList.add(core);
 
       for (ArchiveFile ext : dwcReader.getExtensions()) {
         DataFile extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
         extDatafile.setRowType(ext.getRowType());
         extDatafile.setHasHeaders(Optional.of(ext.getIgnoreHeaderLines() != null && ext.getIgnoreHeaderLines() > 0));
+        extDatafile.setDelimiterChar(ext.getFieldsTerminatedBy().charAt(0));
         dataFileList.add(extDatafile);
       }
     }

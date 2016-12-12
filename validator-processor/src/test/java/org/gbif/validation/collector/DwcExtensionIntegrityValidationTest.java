@@ -1,7 +1,6 @@
 package org.gbif.validation.collector;
 
 import org.gbif.validation.api.DataFile;
-import static  org.gbif.validation.collector.DwcExtensionIntegrityValidation.collectUnlinkedExtensions;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -13,6 +12,8 @@ import java.util.Optional;
 import com.google.common.io.Resources;
 import org.junit.Assert;
 import org.junit.Test;
+
+import static org.gbif.validation.collector.DwcExtensionIntegrityValidation.collectUnlinkedExtensions;
 
 /**
  * Tests class to validate data integrity in Dwc files.
@@ -44,7 +45,7 @@ public class DwcExtensionIntegrityValidationTest {
       DataFile dataFileDescriptor = new DataFile();
       dataFileDescriptor.setDelimiterChar(',');
       dataFileDescriptor.setHasHeaders(Optional.of(true));
-      dataFileDescriptor.setSourceFileName(Paths.get(testFileUrl.toURI()).toString());
+      dataFileDescriptor.setFilePath(Paths.get(testFileUrl.toURI()));
       return dataFileDescriptor;
     } catch (URISyntaxException ex) {
       throw new RuntimeException(ex);
