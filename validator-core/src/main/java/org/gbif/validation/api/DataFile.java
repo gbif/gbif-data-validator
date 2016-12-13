@@ -27,8 +27,10 @@ public class DataFile {
   private Term[] columns;
   private Term rowType;
 
+  private boolean isCore = true;
+
   private Optional<Integer> fileLineOffset = Optional.empty();
-  private Optional<Boolean> hasHeaders = Optional.empty();
+  private boolean hasHeaders = false;
 
   private Character delimiterChar;
   private Integer numOfLines;
@@ -77,6 +79,7 @@ public class DataFile {
 
     destDataFile.columns = srcDataFile.columns;
     destDataFile.rowType = srcDataFile.rowType;
+    destDataFile.isCore = srcDataFile.isCore;
 
     destDataFile.fileLineOffset = srcDataFile.fileLineOffset;
     destDataFile.hasHeaders = srcDataFile.hasHeaders;
@@ -110,6 +113,21 @@ public class DataFile {
   public void setRowType(Term rowType) {
     this.rowType = rowType;
   }
+
+  /**
+   * Does this {@link DataFile} represent the "core" of a DarwinCore start schema representation.
+   * If the {@link DataFile} is not inside DarwinCore Archive it is considered the "core" file.
+   * Default value: true
+   * @return
+   */
+  public boolean isCore() {
+    return isCore;
+  }
+
+  public void setCore(boolean core) {
+    isCore = core;
+  }
+
 
   public void setFilePath(Path filePath) {
     this.filePath = filePath;
@@ -171,11 +189,16 @@ public class DataFile {
     this.fileFormat = fileFormat;
   }
 
-  public Optional<Boolean> isHasHeaders() {
+  /**
+   * Does this {@link DataFile} contain headers on the first row.
+   * Default value: false
+   * @return
+   */
+  public boolean isHasHeaders() {
     return hasHeaders;
   }
 
-  public void setHasHeaders(Optional<Boolean> hasHeaders) {
+  public void setHasHeaders(boolean hasHeaders) {
     this.hasHeaders = hasHeaders;
   }
 
@@ -199,6 +222,7 @@ public class DataFile {
             ", sourceFileName=" + sourceFileName +
             ", columns=" + Arrays.toString(columns) +
             ", rowType=" + rowType +
+            ", isCore=" + isCore +
             ", delimiterChar='" + delimiterChar + '\'' +
             ", numOfLines=" + numOfLines +
             ", fileLineOffset=" + fileLineOffset +
@@ -216,6 +240,7 @@ public class DataFile {
             Objects.equals(delimiterChar, dataFile.delimiterChar) &&
             Arrays.equals(columns, dataFile.columns) &&
             Objects.equals(rowType, dataFile.rowType) &&
+            Objects.equals(isCore, dataFile.isCore) &&
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
@@ -232,6 +257,7 @@ public class DataFile {
             sourceFileName,
             columns,
             rowType,
+            isCore,
             delimiterChar,
             numOfLines,
             fileLineOffset,

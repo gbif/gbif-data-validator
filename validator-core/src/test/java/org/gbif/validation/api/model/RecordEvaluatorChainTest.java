@@ -27,9 +27,9 @@ public class RecordEvaluatorChainTest {
 
     assertNotNull(result);
     //the order should be preserved MyRecordEvaluator1 first
-    assertEquals("MyRecordEvaluator1", ((RecordEvaluationResult.BaseEvaluationResultDetails) result.getDetails().get(0)).getExpected());
+    assertEquals("MyRecordEvaluator1", (result.getDetails().get(0)).getExpected());
     // MyRecordEvaluator2 second
-    assertEquals("MyRecordEvaluator2", ((RecordEvaluationResult.BaseEvaluationResultDetails) result.getDetails().get(1)).getExpected());
+    assertEquals("MyRecordEvaluator2", (result.getDetails().get(1)).getExpected());
   }
 
   private static class MyRecordEvaluator1 implements RecordEvaluator {

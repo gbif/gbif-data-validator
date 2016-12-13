@@ -40,12 +40,11 @@ public class RecordSourceFactory {
    * Creates instances of RecordSource from character delimited files.
    */
   public static RecordSource fromDelimited(@NotNull File sourceFile, @NotNull Character delimiterChar,
-                                           Optional<Boolean> headerIncluded) throws IOException {
+                                           boolean headerIncluded) throws IOException {
     Objects.requireNonNull(sourceFile, "sourceFile shall be provided");
     Objects.requireNonNull(delimiterChar, "delimiterChar shall be provided");
     return new TabularFileReader(sourceFile.toPath(), newTabularFileReader(new FileInputStream(sourceFile),
-                                                                           delimiterChar,
-                                                                           headerIncluded.orElse(false)));
+                                                                           delimiterChar, headerIncluded));
   }
 
   /**
@@ -104,7 +103,7 @@ public class RecordSourceFactory {
         //parent file is the complete file, grand-parent file is the archive
         dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
         return Optional.of(new DwcReader(dwcaFolder.toFile(),
-                                         dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders().orElse(false)));
+                                         dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders()));
       }
 
       // normally, the parent file is the archive
@@ -173,14 +172,18 @@ public class RecordSourceFactory {
       //add the core first
       DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
       core.setRowType(dwcReader.getRowType());
-      core.setHasHeaders(Optional.of(dwcReader.getCore().getIgnoreHeaderLines() != null
-                                     && dwcReader.getCore().getIgnoreHeaderLines() > 0));
+      core.setCore(true);
+      core.setHasHeaders(dwcReader.getCore().getIgnoreHeaderLines() != null
+                                     && dwcReader.getCore().getIgnoreHeaderLines() > 0);
+      core.setDelimiterChar(dwcReader.getCore().getFieldsTerminatedBy().charAt(0));
       dataFileList.add(core);
 
       for (ArchiveFile ext : dwcReader.getExtensions()) {
         DataFile extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
         extDatafile.setRowType(ext.getRowType());
-        extDatafile.setHasHeaders(Optional.of(ext.getIgnoreHeaderLines() != null && ext.getIgnoreHeaderLines() > 0));
+        extDatafile.setCore(false);
+        extDatafile.setHasHeaders(ext.getIgnoreHeaderLines() != null && ext.getIgnoreHeaderLines() > 0);
+        extDatafile.setDelimiterChar(ext.getFieldsTerminatedBy().charAt(0));
         dataFileList.add(extDatafile);
       }
     }
@@ -239,7 +242,7 @@ public class RecordSourceFactory {
 
     DataFile dataFile = new DataFile(spreadsheetDataFile);
     dataFile.setFilePath(csvFile);
-    dataFile.setHasHeaders(Optional.of(true));
+    dataFile.setHasHeaders(true);
     dataFile.setDelimiterChar(',');
     dataFile.setContentType(ExtraMediaTypes.TEXT_CSV);
     dataFile.setFileFormat(FileFormat.TABULAR);

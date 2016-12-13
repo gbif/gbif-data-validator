@@ -9,7 +9,6 @@ import org.gbif.validation.api.model.FileFormat;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public class RecordSourceFactoryTest {
     DataFile dataFile = new DataFile();
     dataFile.setFileFormat(FileFormat.TABULAR);
     dataFile.setFilePath(testFile.toPath());
-    dataFile.setHasHeaders(Optional.of(true));
+    dataFile.setHasHeaders(true);
 
     List<DataFile> preparedDataFiles = RecordSourceFactory.prepareSource(dataFile);
 

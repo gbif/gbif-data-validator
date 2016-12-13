@@ -53,7 +53,7 @@ public class EvaluatorFactory {
     switch(fileFormat) {
       case DWCA:
         return new DwcaResourceStructureEvaluator(XML_SCHEMA_VALIDATOR_PROVIDER);
-      default: return (dwcFolder, sourceFilename) -> Optional.empty();
+      default: return (dataFile) -> Optional.empty();
     }
   }
 

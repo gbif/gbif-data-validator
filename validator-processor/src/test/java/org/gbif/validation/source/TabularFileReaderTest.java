@@ -27,7 +27,7 @@ public class TabularFileReaderTest {
     DataFile dataFile = new DataFile();
     dataFile.setFileFormat(FileFormat.TABULAR);
     dataFile.setFilePath(testFile.toPath());
-    dataFile.setHasHeaders(Optional.of(true));
+    dataFile.setHasHeaders(true);
     dataFile.setDelimiterChar('\t');
 
     //all components should points to the parent DataFile
