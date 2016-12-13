@@ -192,7 +192,7 @@ public class RecordEvaluationResult implements Serializable {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new RecordInterpretationResultDetails(issueFlag, relatedData));
+      details.add(new EvaluationResultDetails(issueFlag, relatedData));
       return this;
     }
 
@@ -208,7 +208,7 @@ public class RecordEvaluationResult implements Serializable {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new BaseEvaluationResultDetails(evaluationType, expected, found));
+      details.add(new EvaluationResultDetails(evaluationType, expected, found));
       return this;
     }
 
@@ -218,63 +218,5 @@ public class RecordEvaluationResult implements Serializable {
     }
   }
 
-
-  /**
-   * Base evaluation result details with "expected" and "found".
-   */
-  public static class BaseEvaluationResultDetails implements EvaluationResultDetails, Serializable {
-    protected final EvaluationType evaluationType;
-
-    protected final String expected;
-    protected final String found;
-
-    BaseEvaluationResultDetails(EvaluationType evaluationType){
-      this(evaluationType, null, null);
-    }
-
-    BaseEvaluationResultDetails(EvaluationType evaluationType,
-                                String expected, String found){
-      this.evaluationType = evaluationType;
-      this.expected = expected;
-      this.found = found;
-    }
-
-    public String getExpected() {
-      return expected;
-    }
-
-    public String getFound() {
-      return found;
-    }
-
-
-    @Override
-    public EvaluationType getEvaluationType() {
-      return evaluationType;
-    }
-
-    @Override
-    public String toString() {
-      return "evaluationType: " + evaluationType;
-    }
-  }
-
-
-  /**
-   * Contains details of a RecordInterpretationResult.
-   */
-  public static class RecordInterpretationResultDetails extends BaseEvaluationResultDetails implements Serializable {
-
-    private final Map<Term, String> relatedData;
-
-    RecordInterpretationResultDetails(EvaluationType issueFlag, Map<Term, String> relatedData) {
-      super(issueFlag);
-      this.relatedData = relatedData;
-    }
-
-    public Map<Term, String> getRelatedData() {
-      return relatedData;
-    }
-  }
 
 }

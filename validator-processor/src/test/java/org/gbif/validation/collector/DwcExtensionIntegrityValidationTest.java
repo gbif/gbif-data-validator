@@ -7,7 +7,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.io.Resources;
 import org.junit.Assert;
@@ -44,7 +43,7 @@ public class DwcExtensionIntegrityValidationTest {
       URL testFileUrl = Resources.getResource(Paths.get(RESOURCES_DIR, testDir, testFileName).toString());
       DataFile dataFileDescriptor = new DataFile();
       dataFileDescriptor.setDelimiterChar(',');
-      dataFileDescriptor.setHasHeaders(Optional.of(true));
+      dataFileDescriptor.setHasHeaders(true);
       dataFileDescriptor.setFilePath(Paths.get(testFileUrl.toURI()));
       return dataFileDescriptor;
     } catch (URISyntaxException ex) {

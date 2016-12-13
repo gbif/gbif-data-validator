@@ -5,6 +5,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.result.ChecklistValidationResult;
@@ -14,6 +15,7 @@ import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
+import org.gbif.validation.evaluator.structure.ReferentialIntegrityEvaluator;
 import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.util.FileBashUtilities;
@@ -30,6 +32,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import akka.actor.AbstractLoggingActor;
@@ -90,7 +93,6 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     checklistsResults = Collections.synchronizedList(new ArrayList<>());
     this.checklistValidator = checklistValidator;
 
-
     receive(
             //this should only be called once
             match(DataJob.class, dataJobMessage -> {
@@ -102,20 +104,27 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     );
   }
 
+  /**
+   * Starting point of the entire processing of a {@link DataFile}.
+   *
+   * @param factory
+   * @param fileSplitSize
+   * @throws IOException
+   */
   private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
     DataFile dataFile = dataJob.getJobData();
-    Optional<ValidationResultElement> validationResultElement =
-      EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
-        .evaluate(dataFile);
-    if (validationResultElement.isPresent()) {
-      List<ValidationResultElement> validationResultElementList = new ArrayList<>(1);
-      validationResultElementList.add(validationResultElement.get());
-      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-              new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                      GBIF_INDEXING_PROFILE, validationResultElementList, null, null)));
-    } else {
-      dataFile.setHasHeaders(Optional.of(true));
+
+    if(evaluateResourceStructure(dataFile)){
       List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+
+      //FIXME should run in Akka and ideally use the CollectorGroup
+      List<ValidationResultElement> resourceIntegrityResult = evaluateResourceIntegrity(dataFile, dataFiles);
+      if(!resourceIntegrityResult.isEmpty()){
+        emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
+                new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                        GBIF_INDEXING_PROFILE, resourceIntegrityResult, null, null)));
+      }
+
       List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
       //now trigger everything
       processDataFile(dataFilesToEvaluate);
@@ -159,6 +168,56 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
+   * Evaluate the structure of the resource represented by the provided {@link DataFile}.
+   * If an issue is found, the JobStatusResponse will be emitted and this actor will be stopped.
+   *
+   * @param dataFile
+   * @return is the resource structurally valid or not (should the validation continue or not)
+   */
+  private boolean evaluateResourceStructure(DataFile dataFile) {
+    Optional<ValidationResultElement> validationResultElement =
+            EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+                    .evaluate(dataFile);
+
+    if (validationResultElement.isPresent()) {
+      List<ValidationResultElement> validationResultElementList = new ArrayList<>(1);
+      validationResultElementList.add(validationResultElement.get());
+      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
+              new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                      GBIF_INDEXING_PROFILE, validationResultElementList, null, null)));
+      return false;
+    }
+    return true;
+  }
+
+
+  /**
+   * Evaluate the integrity of the resource. This evaluation will only run on DarwinCore Archive.
+   * TODO: run using Akka, run uniqueness
+   *
+   * @param dwcaDataFile
+   * @param dataFiles
+   * @return all ValidationResultElement or an empty list, never null
+   */
+  private List<ValidationResultElement> evaluateResourceIntegrity(DataFile dwcaDataFile, List<DataFile> dataFiles) {
+    if(FileFormat.DWCA == dwcaDataFile.getFileFormat()) {
+      return new ArrayList<>();
+    }
+
+    List<ReferentialIntegrityEvaluator> riEvaluator =
+            dataFiles.stream()
+                    .filter(df -> !df.isCore())
+                    .map(df -> new ReferentialIntegrityEvaluator(df.getRowType()))
+                    .collect(Collectors.toList());
+
+    return riEvaluator.stream()
+            .map( rie -> rie.evaluate(dwcaDataFile))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .collect(Collectors.toList());
+  }
+
+  /**
    * Creates a Actor/Worker for each evaluation unit.
    */
   private void processDataFile(Iterable<EvaluationUnit> dataFilesToEvaluate) {
@@ -184,12 +243,12 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
       String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
 
-      boolean inputHasHeaders = dataFile.isHasHeaders().orElse(false);
+      boolean inputHasHeaders = dataFile.isHasHeaders();
       IntStream.range(0, splits.length)
         .forEach(idx -> splitDataFiles.add(newSplitDataFile(dataFile,
                                                             splitFolder,
                                                             splits[idx],
-                                                            Optional.of(inputHasHeaders && (idx == 0)),
+                                                            inputHasHeaders && (idx == 0),
                                                             Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0)))));
     }
     return splitDataFiles;
@@ -206,7 +265,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * @return new {@link DataFile} representing a portion of the provided dataFile.
    */
   private static DataFile newSplitDataFile(DataFile dataFile, String baseDir, String fileName,
-                                           Optional<Boolean> withHeader, Optional<Integer> offset){
+                                           boolean withHeader, Optional<Integer> offset){
     //Creates the file to be used
     File splitFile = new File(baseDir, fileName);
     splitFile.deleteOnExit();

@@ -27,6 +27,13 @@ public class ValidationResultElement implements Serializable {
   private final Map<Term, Long> termsFrequency;
   private final Map<Term, Long> interpretedValueCounts;
 
+  /**
+   * Get a new {@link ValidationResultElement} that represents an exception linked to a {@link EvaluationType}.
+   * @param fileName
+   * @param evaluationType
+   * @param exception
+   * @return
+   */
   public static ValidationResultElement onException(String fileName, EvaluationType evaluationType, String exception){
     //EvaluationType evaluationType
     List<ValidationIssue> issues = new ArrayList<>();

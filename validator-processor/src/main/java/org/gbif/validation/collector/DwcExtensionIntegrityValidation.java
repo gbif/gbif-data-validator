@@ -34,7 +34,7 @@ public class DwcExtensionIntegrityValidation {
 
     try (Stream<String> lines = Files.lines(extDescriptor.getFilePath())) {
 
-      return lines.skip(extDescriptor.isHasHeaders().orElse(false) ? 1 : 0)
+      return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)
                   .filter(line -> getColumnValue(line, extColumn, extDescriptor.getDelimiterChar().toString())
                                   .map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
                   .limit(maxSampleSize)
