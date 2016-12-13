@@ -14,6 +14,9 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringEscapeUtils;
 
+/**
+ * This class validates data integrity between extension and core files in a DarwinCore archive.ce
+ */
 public class DwcExtensionIntegrityValidation {
 
   /**
@@ -34,7 +37,7 @@ public class DwcExtensionIntegrityValidation {
 
     try (Stream<String> lines = Files.lines(Paths.get(extDescriptor.getSourceFileName()))) {
 
-      return lines.skip(extDescriptor.isHasHeaders().orElse(false) ? 1 : 0)
+      return lines.skip(extDescriptor.isHasHeaders().orElse(false) ? 1 : 0)  //skip the header, it it exists
                   .filter(line -> getColumnValue(line, extColumn, extDescriptor.getDelimiterChar().toString())
                                   .map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
                   .limit(maxSampleSize)
