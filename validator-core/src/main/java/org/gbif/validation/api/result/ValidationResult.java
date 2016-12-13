@@ -6,6 +6,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.annotation.Nullable;
 
 
 /**
@@ -28,15 +29,19 @@ public class ValidationResult implements Serializable {
 
   private final List<ChecklistValidationResult> checklists;
 
+  public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat, ValidationErrorCode errorCode) {
+    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode, null);
+  }
+
   /**
-   * Use {@link ValidationResultBuilders} to get new instances.
+   *
    *
    * @param indexeable
    * @param fileFormat
    * @param validationProfile
    * @param errorCode
    */
-  ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
+  public ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
                    List<ValidationResultElement> results, ValidationErrorCode errorCode,
                    List<ChecklistValidationResult> checklists) {
     this.indexeable = indexeable;

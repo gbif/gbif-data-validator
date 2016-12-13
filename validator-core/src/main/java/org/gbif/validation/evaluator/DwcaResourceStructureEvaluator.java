@@ -6,7 +6,6 @@ import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
@@ -67,8 +66,7 @@ public class DwcaResourceStructureEvaluator implements ResourceStructureEvaluato
   }
 
   private static ValidationResultElement buildResult(String sourceFilename, EvaluationType type, String msg){
-    return ValidationResultBuilders.DefaultValidationResultElementBuilder
-            .of(sourceFilename).addExceptionResultDetails(type, msg).build();
+    return ValidationResultElement.onException(sourceFilename, type, msg);
   }
 
 }

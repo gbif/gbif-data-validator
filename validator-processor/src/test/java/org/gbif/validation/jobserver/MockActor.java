@@ -4,7 +4,6 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
-import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.jobserver.messages.DataJob;
 
 import akka.actor.AbstractLoggingActor;
@@ -25,9 +24,8 @@ public class MockActor extends AbstractLoggingActor {
         Thread.sleep(waitBeforeDie);
         JobStatusResponse<ValidationResult>
           result = new JobStatusResponse<>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
-                                           ValidationResultBuilders.Builder.of(true, "mockFile",FileFormat.TABULAR,
-                                                                               ValidationProfile.GBIF_INDEXING_PROFILE)
-                                             .build());
+                new ValidationResult(true, "mockFile", FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE,
+                        null, null, null));
         sender().tell(result, self());
       }).matchAny(this::unhandled)
         .build()

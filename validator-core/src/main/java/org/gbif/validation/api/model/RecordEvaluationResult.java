@@ -1,17 +1,18 @@
 package org.gbif.validation.api.model;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.result.LineBasedEvaluationResultDetails;
+import org.gbif.validation.api.result.EvaluationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
- * Represents the result of an evaluation of a single record.
+ * Represents the result of an evaluation of a single record produced by RecordEvaluator.
+ * This is the view of the result for a single line/record with possibly multiple EvaluationType via EvaluationResultDetails.
+ *
  * Immutable once built.
  */
 public class RecordEvaluationResult implements Serializable {
@@ -19,9 +20,10 @@ public class RecordEvaluationResult implements Serializable {
   //2 fields used to uniquely identify an element in the validation
   private final Term rowType;
   private final Long lineNumber;
+  private final String recordId;
 
   private final Map<Term, Object> interpretedData;
-  private final List<LineBasedEvaluationResultDetails> details;
+  private final List<EvaluationResultDetails> details;
 
   /**
    * Use {@link Builder} to get an instance.
@@ -30,18 +32,27 @@ public class RecordEvaluationResult implements Serializable {
    * @param details
    * @param interpretedData
    */
-  private RecordEvaluationResult(Term rowType, Long lineNumber, List<LineBasedEvaluationResultDetails> details, Map<Term, Object> interpretedData) {
+  private RecordEvaluationResult(Term rowType, Long lineNumber, String recordId, List<EvaluationResultDetails> details, Map<Term, Object> interpretedData) {
     this.lineNumber = lineNumber;
+    this.recordId = recordId;
     this.rowType = rowType;
     this.details = details;
     this.interpretedData = interpretedData;
+  }
+
+  public Long getLineNumber() {
+    return lineNumber;
+  }
+
+  public String getRecordId() {
+    return recordId;
   }
 
   public Term getRowType() {
     return rowType;
   }
 
-  public List<LineBasedEvaluationResultDetails> getDetails(){
+  public List<EvaluationResultDetails> getDetails(){
     return details;
   }
 
@@ -66,7 +77,11 @@ public class RecordEvaluationResult implements Serializable {
     private Long lineNumber;
     private String recordId;
     private Map<Term, Object> interpretedData;
-    private List<LineBasedEvaluationResultDetails> details;
+    private List<EvaluationResultDetails> details;
+
+    public static Builder of(Term rowType, Long lineNumber, String recordId){
+      return new Builder(rowType, lineNumber, recordId);
+    }
 
     /**
      * rowType + lineNumber is used to uniquely identify a line within the validation routine.
@@ -76,12 +91,24 @@ public class RecordEvaluationResult implements Serializable {
      * @return
      */
     public static Builder of(Term rowType, Long lineNumber){
-      return new Builder(rowType, lineNumber);
+      return of(rowType, lineNumber, null);
     }
 
-    private Builder(Term rowType, Long lineNumber){
+    /**
+     * rowType + recordId is used to uniquely identify a line within the validation routine.
+     *
+     * @param rowType
+     * @param recordId
+     * @return
+     */
+    public static Builder of(Term rowType, String recordId){
+      return of(rowType, null, recordId);
+    }
+
+    private Builder(Term rowType, Long lineNumber, String recordId){
       this.rowType = rowType;
       this.lineNumber = lineNumber;
+      this.recordId = recordId;
     }
 
     /**
@@ -99,16 +126,11 @@ public class RecordEvaluationResult implements Serializable {
       if(rer1 == null || rer2 == null) {
         return rer1 == null ? rer2 : rer1;
       }
-      return new Builder(rer1.rowType, rer1.lineNumber)
+      return new Builder(rer1.rowType, rer1.lineNumber, rer1.recordId)
               .fromExisting(rer1)
               .addDetails(rer2.getDetails())
               .putAllInterpretedData(rer2.getInterpretedData())
               .build();
-    }
-
-    public Builder withRecordId(@Nullable String recordId){
-      this.recordId = recordId;
-      return this;
     }
 
     public Builder withInterpretedData(Map<Term, Object> interpretedData) {
@@ -137,7 +159,7 @@ public class RecordEvaluationResult implements Serializable {
      * @param details
      * @return
      */
-    private Builder addDetails(List<LineBasedEvaluationResultDetails> details) {
+    private Builder addDetails(List<EvaluationResultDetails> details) {
       if(details == null){
         return this;
       }
@@ -170,7 +192,7 @@ public class RecordEvaluationResult implements Serializable {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new RecordInterpretationResultDetails(lineNumber, recordId, issueFlag, relatedData));
+      details.add(new RecordInterpretationResultDetails(issueFlag, relatedData));
       return this;
     }
 
@@ -186,12 +208,13 @@ public class RecordEvaluationResult implements Serializable {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new BaseEvaluationResultDetails(lineNumber, recordId, evaluationType, expected, found));
+      details.add(new BaseEvaluationResultDetails(evaluationType, expected, found));
       return this;
     }
 
     public RecordEvaluationResult build(){
-      return new RecordEvaluationResult(rowType, lineNumber, details == null ? new ArrayList<>() : details, interpretedData);
+      return new RecordEvaluationResult(rowType, lineNumber, recordId,
+              details == null ? new ArrayList<>() : details, interpretedData);
     }
   }
 
@@ -199,34 +222,21 @@ public class RecordEvaluationResult implements Serializable {
   /**
    * Base evaluation result details with "expected" and "found".
    */
-  public static class BaseEvaluationResultDetails implements LineBasedEvaluationResultDetails, Serializable {
-    protected final Long lineNumber;
-    protected final String recordId;
+  public static class BaseEvaluationResultDetails implements EvaluationResultDetails, Serializable {
     protected final EvaluationType evaluationType;
 
     protected final String expected;
     protected final String found;
 
-    BaseEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType){
-      this(lineNumber, recordId, evaluationType, null, null);
+    BaseEvaluationResultDetails(EvaluationType evaluationType){
+      this(evaluationType, null, null);
     }
 
-    BaseEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType evaluationType,
+    BaseEvaluationResultDetails(EvaluationType evaluationType,
                                 String expected, String found){
-      this.lineNumber = lineNumber;
-      this.recordId = recordId;
       this.evaluationType = evaluationType;
       this.expected = expected;
       this.found = found;
-    }
-
-    @Override
-    public Long getLineNumber(){
-      return lineNumber;
-    }
-
-    public String getRecordId() {
-      return recordId;
     }
 
     public String getExpected() {
@@ -251,33 +261,14 @@ public class RecordEvaluationResult implements Serializable {
 
 
   /**
-   * TODO decide if we should keep it
-   * Evaluation result related to completeness.
-   */
-  public static class CompletenessEvaluationResultDetails extends BaseEvaluationResultDetails implements Serializable {
-    private Term[] terms;
-
-    CompletenessEvaluationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
-                                        Term[] terms) {
-      super(lineNumber, recordId, issueFlag);
-      this.terms = terms;
-    }
-
-    public Term[] getTerms() {
-      return terms;
-    }
-  }
-
-  /**
    * Contains details of a RecordInterpretationResult.
    */
   public static class RecordInterpretationResultDetails extends BaseEvaluationResultDetails implements Serializable {
 
     private final Map<Term, String> relatedData;
 
-    RecordInterpretationResultDetails(Long lineNumber, String recordId, EvaluationType issueFlag,
-                                             Map<Term, String> relatedData) {
-      super(lineNumber, recordId, issueFlag);
+    RecordInterpretationResultDetails(EvaluationType issueFlag, Map<Term, String> relatedData) {
+      super(issueFlag);
       this.relatedData = relatedData;
     }
 

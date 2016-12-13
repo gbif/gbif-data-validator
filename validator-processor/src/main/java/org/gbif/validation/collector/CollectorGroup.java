@@ -5,9 +5,9 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.result.LineBasedEvaluationResultDetails;
-import org.gbif.validation.api.result.RecordsValidationResultElement;
-import org.gbif.validation.api.result.ValidationResultBuilders;
+import org.gbif.validation.api.result.EvaluationResultDetails;
+import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.collector.RecordEvaluationResultCollector.SampledEvaluationResultDetails;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class CollectorGroup {
 
 
   /**
-   * Merge all the provided collectors into a single {@link RecordsValidationResultElement}.
+   * Merge all the provided collectors into a single {@link ValidationResultElement}.
    *
    * Not a Thread-Safe operation.
    * @param dataFile
@@ -54,8 +54,8 @@ public class CollectorGroup {
    * @param collectors
    * @return
    */
-  public static RecordsValidationResultElement mergeAndGetResult(DataFile dataFile, String resultingFileName,
-                                                                 List<CollectorGroup> collectors) {
+  public static ValidationResultElement mergeAndGetResult(DataFile dataFile, String resultingFileName,
+                                                          List<CollectorGroup> collectors) {
 
     if (collectors.isEmpty()) {
       return null;
@@ -67,7 +67,7 @@ public class CollectorGroup {
             baseCollector.metricsCollector.getTermFrequency());
     Map<EvaluationType, Long> mergedAggregatedCounts = CollectorUtils.
             newEvaluationTypeEnumMap(baseCollector.resultsCollector.getAggregatedCounts());
-    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> mergedSamples = CollectorUtils.
+    Map<EvaluationType, List<SampledEvaluationResultDetails>> mergedSamples = CollectorUtils.
             newEvaluationTypeEnumMap(baseCollector.resultsCollector.getSamples());
 
     Map<Term, Long> mergedInterpretedTermsCount = CollectorUtils.
@@ -79,7 +79,7 @@ public class CollectorGroup {
               coll.resultsCollector.getAggregatedCounts().forEach((k, v) -> mergedAggregatedCounts.merge(k, v, Long::sum));
               coll.interpretedTermsCountCollector.ifPresent(itcc -> itcc.getInterpretedCounts().forEach((k, v) -> mergedInterpretedTermsCount.merge(k, v, Long::sum)));
               coll.resultsCollector.getSamples().forEach((k, v) -> mergedSamples.merge(k, v, (o, n) -> {
-                List<LineBasedEvaluationResultDetails> a = new ArrayList<>(o);
+                List<SampledEvaluationResultDetails> a = new ArrayList<>(o);
                 a.addAll(n);
                 return a;
               }));
@@ -87,22 +87,21 @@ public class CollectorGroup {
     );
 
     //Fix sample size after merging
-    Map<EvaluationType, List<LineBasedEvaluationResultDetails>> resampledMergedSamples = mergedSamples.entrySet().stream()
+    Map<EvaluationType, List<EvaluationResultDetails>> resampledMergedSamples = mergedSamples.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey,
                     e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
 
-    return ValidationResultBuilders.RecordsValidationResultElementBuilder
-            .of(resultingFileName, dataFile.getRowType(),
-                    dataFile.getNumOfLines() - (dataFile.isHasHeaders().orElse(false) ? 1l : 0l))
-            .withIssues(mergedAggregatedCounts, resampledMergedSamples)
-            .withTermsFrequency(mergedTermFrequency)
-            .withInterpretedValueCounts(mergedInterpretedTermsCount)
-            .build();
+    return new ValidationResultElement(resultingFileName,
+            dataFile.getNumOfLines() - (dataFile.isHasHeaders().orElse(false) ? 1l : 0l),
+            dataFile.getRowType(),
+            mergedAggregatedCounts, resampledMergedSamples,
+            mergedTermFrequency,
+            mergedInterpretedTermsCount);
   }
 
 
   /**
-   * Take a list of {@link LineBasedEvaluationResultDetails} and make sure the sample size is not greater than
+   * Take a list of {@link EvaluationResultDetails} and make sure the sample size is not greater than
    * maxSample.
    *
    * @param resultDetails
@@ -110,11 +109,12 @@ public class CollectorGroup {
    *
    * @return
    */
-  private static List<LineBasedEvaluationResultDetails> resample(List<LineBasedEvaluationResultDetails> resultDetails,
+  private static List<EvaluationResultDetails> resample(List<SampledEvaluationResultDetails> resultDetails,
                                                                  int maxSample) {
     return resultDetails.stream()
             .sorted((lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
             .limit(maxSample)
+            .map(SampledEvaluationResultDetails::getDetails)
             .collect(Collectors.toList());
   }
 

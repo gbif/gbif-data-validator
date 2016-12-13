@@ -9,7 +9,6 @@ import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.result.ValidationResult;
-import org.gbif.validation.api.result.ValidationResultBuilders;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.collector.CollectorGroup;
@@ -109,11 +108,11 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
         .evaluate(dataFile);
     if (validationResultElement.isPresent()) {
+      List<ValidationResultElement> validationResultElementList = new ArrayList<>(1);
+      validationResultElementList.add(validationResultElement.get());
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-                                                ValidationResultBuilders.Builder.of(false, dataFile.getSourceFileName(),
-                                                                                    dataFile.getFileFormat(),
-                                                                                    GBIF_INDEXING_PROFILE)
-                                                  .withResourceResult(validationResultElement.get()).build()));
+              new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                      GBIF_INDEXING_PROFILE, validationResultElementList, null, null)));
     } else {
       dataFile.setHasHeaders(Optional.of(true));
       List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
@@ -275,17 +274,15 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * Builds the ValidationResult from the aggregated data.
    */
   private ValidationResult buildResult() {
-    ValidationResultBuilders.Builder validationResultBuilder =
-      ValidationResultBuilders.Builder.of(true, dataJob.getJobData().getSourceFileName(),
-                                          dataJob.getJobData().getFileFormat(), GBIF_INDEXING_PROFILE);
-    checklistsResults.stream().forEach(validationResultBuilder::withChecklistValidationResult);
-    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultBuilder.withResourceResult(
+    List<ValidationResultElement> validationResultElements = new ArrayList<>();
+    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultElements.add(
                                                             CollectorGroup.mergeAndGetResult(
                                                             rowTypeDataFile.get(rowType),
                                                             rowTypeDataFile.get(rowType).getSourceFileName(),
                                                             collectorList)
     ));
-    return validationResultBuilder.build();
+    return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
+            GBIF_INDEXING_PROFILE, validationResultElements, null, checklistsResults);
   }
 
   /**
