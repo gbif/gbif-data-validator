@@ -1,7 +1,6 @@
 package org.gbif.validation.collector;
 
 import org.gbif.validation.api.DataFile;
-import static  org.gbif.validation.util.FileBashUtilities.findInFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,6 +12,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+
+import static org.gbif.validation.util.FileBashUtilities.findInFile;
 
 /**
  * This class validates data integrity between extension and core files in a DarwinCore archive.ce
@@ -35,7 +36,7 @@ public class DwcExtensionIntegrityValidation {
                                                        DataFile extDescriptor, int extColumn,
                                                        long maxSampleSize) throws IOException {
 
-    try (Stream<String> lines = Files.lines(Paths.get(extDescriptor.getSourceFileName()))) {
+    try (Stream<String> lines = Files.lines(Paths.get(extDescriptor.getFilePath().toString()))) {
 
       return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)  //skip the header, it it exists
                   .filter(line -> getColumnValue(line, extColumn, extDescriptor.getDelimiterChar().toString())
@@ -52,7 +53,7 @@ public class DwcExtensionIntegrityValidation {
   private static Function<String,Boolean> valueIsNotInFile(DataFile descriptor, int column) {
     return val -> {
       try {
-        return findInFile(descriptor.getSourceFileName(), val, column + 1, //bash uses 1-based indexes
+        return findInFile(descriptor.getFilePath().toString(), val, column + 1, //bash uses 1-based indexes
                           StringEscapeUtils.escapeJava(descriptor.getDelimiterChar().toString())).length == 0;
       } catch (Exception ex) {
         throw new RuntimeException(ex);
