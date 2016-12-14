@@ -3,7 +3,7 @@ package org.gbif.validation.collector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
-import org.gbif.validation.api.result.EvaluationResultDetails;
+import org.gbif.validation.api.result.ValidationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -43,17 +43,20 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
   }
 
+  /**
+   * Internal interface that defined the behavior of an internal RecordEvaluationResultCollector.
+   */
   private interface InnerRecordEvaluationResultCollector extends Serializable {
     void countAndPrepare(EvaluationType type);
-    void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<SampledEvaluationResultDetails>,
-            Collection<SampledEvaluationResultDetails>> samplingFunction);
+    void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<ValidationResultDetails>,
+            Collection<ValidationResultDetails>> samplingFunction);
     Map<EvaluationType, Long> getAggregatedCounts();
-    Map<EvaluationType, List<SampledEvaluationResultDetails>> getSamples();
+    Map<EvaluationType, List<ValidationResultDetails>> getSamples();
   }
 
   private static class RecordEvaluationResultCollectorSingleThread implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, Long> issueCounter;
-    private final Map<EvaluationType, Collection<SampledEvaluationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Collection<ValidationResultDetails>> issueSampling;
 
     RecordEvaluationResultCollectorSingleThread(Integer maxNumberOfSample) {
       issueCounter = new EnumMap<>(EvaluationType.class);
@@ -67,13 +70,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
 
     @Override
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<SampledEvaluationResultDetails>,
-            Collection<SampledEvaluationResultDetails>> samplingFunction) {
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<ValidationResultDetails>,
+            Collection<ValidationResultDetails>> samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
     @Override
-    public Map<EvaluationType, List<SampledEvaluationResultDetails>> getSamples() {
+    public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec ->  new ArrayList<>(rec.getValue()))); //Value
     }
@@ -87,7 +90,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
 
   private static class RecordEvaluationResultCollectorConcurrent implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, LongAdder> issueCounter;
-    private final Map<EvaluationType, Collection<SampledEvaluationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Collection<ValidationResultDetails>> issueSampling;
 
     RecordEvaluationResultCollectorConcurrent(Integer maxNumberOfSample) {
       issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
@@ -101,8 +104,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
 
     @Override
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<SampledEvaluationResultDetails>,
-            Collection<SampledEvaluationResultDetails>> samplingFunction) {
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<ValidationResultDetails>,
+            Collection<ValidationResultDetails>> samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
@@ -120,12 +123,11 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
      * @return a copy of the internal evaluation samples.
      */
     @Override
-    public Map<EvaluationType, List<SampledEvaluationResultDetails>> getSamples() {
+    public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
               rec ->  new ArrayList<>(rec.getValue()))); //Value
     }
   }
-
 
   @Override
   public void collect(RecordEvaluationResult result) {
@@ -135,7 +137,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
         innerImpl.countAndPrepare(detail.getEvaluationType());
         innerImpl.computeSampling(detail.getEvaluationType(), (type, queue) -> {
           if (queue.size() < maxNumberOfSample) {
-            queue.add(new SampledEvaluationResultDetails(result.getLineNumber(), result.getRecordId(), detail));
+            queue.add(new ValidationResultDetails(result.getLineNumber(), result.getRecordId(), detail.getExpected(),
+                    detail.getFound(), detail.getRelatedData()));
           }
           return queue;
         });
@@ -144,41 +147,12 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
   }
 
 
-  public Map<EvaluationType, List<SampledEvaluationResultDetails>> getSamples() {
+  public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
     return innerImpl.getSamples();
   }
 
   public Map<EvaluationType, Long> getAggregatedCounts() {
     return innerImpl.getAggregatedCounts();
-  }
-
-  /**
-   * Wrapper class around EvaluationResultDetails to keep the context of the {@link EvaluationResultDetails}
-   * when aggregated by issue type.
-   */
-  static class SampledEvaluationResultDetails {
-
-    private String recordId;
-    private Long lineNumber;
-    private EvaluationResultDetails details;
-
-    SampledEvaluationResultDetails(Long lineNumber, String recordId, EvaluationResultDetails details){
-      this.lineNumber = lineNumber;
-      this.recordId = recordId;
-      this.details = details;
-    }
-
-    public String getRecordId(){
-      return recordId;
-    }
-
-    public Long getLineNumber(){
-      return lineNumber;
-    }
-
-    public EvaluationResultDetails getDetails(){
-      return details;
-    }
   }
 
 }

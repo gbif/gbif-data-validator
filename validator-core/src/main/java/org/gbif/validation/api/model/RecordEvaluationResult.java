@@ -1,7 +1,6 @@
 package org.gbif.validation.api.model;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.result.EvaluationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,7 +10,7 @@ import java.util.Map;
 
 /**
  * Represents the result of an evaluation of a single record produced by RecordEvaluator.
- * This is the view of the result for a single line/record with possibly multiple EvaluationType via EvaluationResultDetails.
+ * This is the view of the result for a single line/record with possibly multiple EvaluationType via RecordEvaluationResultDetails.
  *
  * Immutable once built.
  */
@@ -23,7 +22,7 @@ public class RecordEvaluationResult implements Serializable {
   private final String recordId;
 
   private final Map<Term, Object> interpretedData;
-  private final List<EvaluationResultDetails> details;
+  private final List<RecordEvaluationResultDetails> details;
 
   /**
    * Use {@link Builder} to get an instance.
@@ -32,7 +31,7 @@ public class RecordEvaluationResult implements Serializable {
    * @param details
    * @param interpretedData
    */
-  private RecordEvaluationResult(Term rowType, Long lineNumber, String recordId, List<EvaluationResultDetails> details, Map<Term, Object> interpretedData) {
+  private RecordEvaluationResult(Term rowType, Long lineNumber, String recordId, List<RecordEvaluationResultDetails> details, Map<Term, Object> interpretedData) {
     this.lineNumber = lineNumber;
     this.recordId = recordId;
     this.rowType = rowType;
@@ -52,7 +51,7 @@ public class RecordEvaluationResult implements Serializable {
     return rowType;
   }
 
-  public List<EvaluationResultDetails> getDetails(){
+  public List<RecordEvaluationResultDetails> getDetails(){
     return details;
   }
 
@@ -77,7 +76,7 @@ public class RecordEvaluationResult implements Serializable {
     private Long lineNumber;
     private String recordId;
     private Map<Term, Object> interpretedData;
-    private List<EvaluationResultDetails> details;
+    private List<RecordEvaluationResultDetails> details;
 
     public static Builder of(Term rowType, Long lineNumber, String recordId){
       return new Builder(rowType, lineNumber, recordId);
@@ -159,7 +158,7 @@ public class RecordEvaluationResult implements Serializable {
      * @param details
      * @return
      */
-    private Builder addDetails(List<EvaluationResultDetails> details) {
+    private Builder addDetails(List<RecordEvaluationResultDetails> details) {
       if(details == null){
         return this;
       }
@@ -192,7 +191,7 @@ public class RecordEvaluationResult implements Serializable {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new EvaluationResultDetails(issueFlag, relatedData));
+      details.add(new RecordEvaluationResultDetails(issueFlag, relatedData));
       return this;
     }
 
@@ -208,7 +207,7 @@ public class RecordEvaluationResult implements Serializable {
       if(details == null){
         details = new ArrayList<>();
       }
-      details.add(new EvaluationResultDetails(evaluationType, expected, found));
+      details.add(new RecordEvaluationResultDetails(evaluationType, expected, found));
       return this;
     }
 

@@ -48,7 +48,7 @@ public class ValidationResultElement implements Serializable {
 
   public ValidationResultElement(String fileName, Long numberOfLines, Term rowType,
                           Map<EvaluationType, Long> issueCounter,
-                          Map<EvaluationType, List<EvaluationResultDetails>> issueSampling,
+                          Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
                           Map<Term, Long> termsFrequency,
                           Map<Term, Long> interpretedValueCounts) {
     this(fileName, numberOfLines, rowType, new ArrayList<>(), termsFrequency, interpretedValueCounts);
@@ -116,7 +116,7 @@ public class ValidationResultElement implements Serializable {
 
     private final EvaluationType issue;
     private final long count;
-    private final List<EvaluationResultDetails> sample;
+    private final List<ValidationResultDetails> sample;
     private final String exception;
 
     ValidationIssue(EvaluationType issue, long count) {
@@ -127,11 +127,11 @@ public class ValidationResultElement implements Serializable {
       this(issue, count, null, exception);
     }
 
-    ValidationIssue(EvaluationType issue, long count, List<EvaluationResultDetails> sample) {
+    ValidationIssue(EvaluationType issue, long count, List<ValidationResultDetails> sample) {
       this(issue, count, sample, null);
     }
 
-    ValidationIssue(EvaluationType issue, long count, List<EvaluationResultDetails> sample, String exception) {
+    ValidationIssue(EvaluationType issue, long count, List<ValidationResultDetails> sample, String exception) {
       this.issue = issue;
       this.count = count;
       this.sample = sample;
@@ -154,7 +154,7 @@ public class ValidationResultElement implements Serializable {
     }
 
     @Nullable
-    public List<EvaluationResultDetails> getSample() {
+    public List<ValidationResultDetails> getSample() {
       return sample;
     }
 

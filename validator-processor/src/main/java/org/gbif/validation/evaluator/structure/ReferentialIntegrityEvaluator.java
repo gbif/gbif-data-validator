@@ -8,7 +8,7 @@ import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.result.EvaluationResultDetails;
+import org.gbif.validation.api.result.ValidationResultDetails;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.DwcExtensionIntegrityValidation;
 import org.gbif.validation.source.RecordSourceFactory;
@@ -82,13 +82,12 @@ public class ReferentialIntegrityEvaluator implements ResourceStructureEvaluator
   }
 
   private static ValidationResultElement buildResult(DataFile dataFile, List<String> unlinkedId){
-    List<EvaluationResultDetails> resultDetails = new ArrayList<>();
+    List<ValidationResultDetails> resultDetails = new ArrayList<>();
     unlinkedId.forEach(id ->
-            resultDetails.add(new EvaluationResultDetails(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION,
-                    null, id)));
+            resultDetails.add(ValidationResultDetails.recordIdOnly(id)));
 
     Map<EvaluationType, Long> issueCounter = new EnumMap<>(EvaluationType.class);
-    Map<EvaluationType, List<EvaluationResultDetails>> issueSampling = new EnumMap<>(EvaluationType.class);
+    Map<EvaluationType, List<ValidationResultDetails>> issueSampling = new EnumMap<>(EvaluationType.class);
     issueCounter.put(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION, (long) unlinkedId.size());
     issueSampling.put(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION, resultDetails);
 

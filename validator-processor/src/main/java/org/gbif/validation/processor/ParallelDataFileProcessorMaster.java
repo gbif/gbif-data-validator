@@ -123,6 +123,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
         emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
                 new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
                         GBIF_INDEXING_PROFILE, resourceIntegrityResult, null, null)));
+        //since we already emitted the response we need to return but this should be fixed
+        return;
       }
 
       List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
@@ -200,8 +202,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * @return all ValidationResultElement or an empty list, never null
    */
   private List<ValidationResultElement> evaluateResourceIntegrity(DataFile dwcaDataFile, List<DataFile> dataFiles) {
-    if(FileFormat.DWCA == dwcaDataFile.getFileFormat()) {
-      return new ArrayList<>();
+    if(FileFormat.DWCA != dwcaDataFile.getFileFormat()) {
+      return Collections.emptyList();
     }
 
     List<ReferentialIntegrityEvaluator> riEvaluator =
