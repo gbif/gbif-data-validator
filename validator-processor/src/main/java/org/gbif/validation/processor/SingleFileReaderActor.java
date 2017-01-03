@@ -16,17 +16,26 @@ import static akka.japi.pf.ReceiveBuilder.match;
 import static akka.pattern.Patterns.pipe;
 
 /**
- * Akka actor that processes a single {@link DataFile}.
+ * Akka actor that processes a single {@link DataFile} at the record level.
+ *
  */
 class SingleFileReaderActor extends AbstractLoggingActor {
 
   private static final Logger LOG = LoggerFactory.getLogger(SingleFileReaderActor.class);
 
+  /**
+   * Creates a new instance of {@link SingleFileReaderActor} that can receive {@link DataFile} messages.
+   *
+   * @param recordEvaluator    {@link RecordEvaluator} to use on each record of the {@link DataFile}
+   * @param collectorsProvider provider of {@link CollectorGroup} to get an new instance for each {@link DataFile}
+   *                           messages.
+   */
   SingleFileReaderActor(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider) {
     receive(
             match(DataFile.class, dataFile -> {
               pipe(
-                      future(() -> processDataFile(dataFile, recordEvaluator, collectorsProvider.newCollectorGroup()), getContext().dispatcher()),
+                      future(() -> processDataFile(dataFile, recordEvaluator, collectorsProvider.newCollectorGroup()),
+                              getContext().dispatcher()),
                       getContext().dispatcher()
               ).to(sender());
             })
@@ -36,8 +45,13 @@ class SingleFileReaderActor extends AbstractLoggingActor {
   }
 
   /**
-   * Process a datafile using a record processor.
-   * The sender is sent as parameter because the real sender is only known in the context of receiving messages.
+   * Process a {@link DataFile} by opening a {@link RecordSource} and evaluating all records
+   * using a {@link RecordEvaluator}. All records and evaluation results are also sent to the {@link CollectorGroup}.
+   *
+   * @param dataFile
+   * @param recordEvaluator
+   * @param collectors
+   * @return
    */
   private static DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
     long line = dataFile.getFileLineOffset().orElse(0) + 1; //we report line number starting at 1
@@ -46,10 +60,8 @@ class SingleFileReaderActor extends AbstractLoggingActor {
       String[] record;
       while ((record = recordSource.read()) != null) {
         line++;
-        collectors.getMetricsCollector().collect(record);
-        long finalLine = line;
-        String[] finalRecord = record; //required to be used in lambda expressions
-        collectors.getRecordsCollectors().forEach(c -> c.collect(recordEvaluator.evaluate(finalLine, finalRecord)));
+        collectors.collectMetrics(record);
+        collectors.collectResult(recordEvaluator.evaluate(line, record));
       }
       return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS, collectors);
     } catch (Exception ex) {

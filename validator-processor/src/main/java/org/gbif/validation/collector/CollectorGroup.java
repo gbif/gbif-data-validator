@@ -5,6 +5,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
 import org.gbif.validation.api.result.ValidationResultDetails;
 import org.gbif.validation.api.result.ValidationResultElement;
@@ -36,14 +37,21 @@ public class CollectorGroup {
     interpretedTermsCountCollector.ifPresent(recordsCollectors::add);
   }
 
-  public RecordMetricsCollector getMetricsCollector() {
-    return metricsCollector;
+  /**
+   * Call collect on all metrics collector(s)
+   * @param record
+   */
+  public void collectMetrics(String[] record) {
+    metricsCollector.collect(record);
   }
 
-  public List<ResultsCollector> getRecordsCollectors() {
-    return recordsCollectors;
+  /**
+   * Call collect() on all record collector(s).
+   * @param result
+   */
+  public void collectResult(RecordEvaluationResult result) {
+    recordsCollectors.forEach(c -> c.collect(result));
   }
-
 
   /**
    * Merge all the provided collectors into a single {@link ValidationResultElement}.
