@@ -15,7 +15,7 @@ public interface ResourceStructureEvaluator {
    * Evaluate a {@link DataFile} and optionally produce a {@link ValidationResultElement}.
    *
    * @param dataFile where the resource is located
-   * @return
+   * @return for the moment {@link ValidationResultElement} is returned directly simply because it is not aggregated
    */
   Optional<ValidationResultElement> evaluate(@NotNull DataFile dataFile);
 }
