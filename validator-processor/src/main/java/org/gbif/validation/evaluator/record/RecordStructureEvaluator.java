@@ -1,4 +1,4 @@
-package org.gbif.validation.evaluator;
+package org.gbif.validation.evaluator.record;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.RecordEvaluator;

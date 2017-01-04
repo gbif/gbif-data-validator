@@ -8,7 +8,6 @@ import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
-import org.gbif.validation.jobserver.JobStorage;
 import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
 import org.gbif.validation.jobserver.impl.FileJobStorage;
 import org.gbif.validation.ws.conf.ConfKeys;

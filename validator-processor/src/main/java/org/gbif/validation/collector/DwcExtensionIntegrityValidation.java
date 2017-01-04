@@ -4,11 +4,10 @@ import org.gbif.validation.api.DataFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -16,7 +15,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import static org.gbif.validation.util.FileBashUtilities.findInFile;
 
 /**
- * This class validates data integrity between extension and core files in a DarwinCore archive.ce
+ * This class validates data integrity between extension and core files in a DarwinCore archive.
  */
 public class DwcExtensionIntegrityValidation {
 
@@ -36,13 +35,15 @@ public class DwcExtensionIntegrityValidation {
                                                        DataFile extDescriptor, int extColumn,
                                                        long maxSampleSize) throws IOException {
 
-    try (Stream<String> lines = Files.lines(Paths.get(extDescriptor.getFilePath().toString()))) {
+    try (Stream<String> lines = Files.lines(extDescriptor.getFilePath())) {
 
-      return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)  //skip the header, it it exists
-                  .filter(line -> getColumnValue(line, extColumn, extDescriptor.getDelimiterChar().toString())
-                                  .map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
-                  .limit(maxSampleSize)
-                  .collect(Collectors.toList());
+      //collect result of getColumnValue and not the entire line
+      return lines.skip(extDescriptor.isHasHeaders() ? 1 : 0)  //skip the header, if it exists
+              .map(line -> getColumnValue(line, extColumn, extDescriptor.getDelimiterChar().toString()))
+              .filter(col -> col.map(valueIsNotInFile(coreDescriptor, coreColumn)).orElse(false))
+              .limit(maxSampleSize)
+              .collect(ArrayList::new, (list, el) -> list.add(el.get()),
+                      (left, right) -> left.addAll(right));
     }
   }
 

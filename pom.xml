@@ -32,7 +32,6 @@
   </distributionManagement>
 
   <modules>
-    <module>validator-core</module>
     <module>validator-ws</module>
     <module>validator-processor</module>
   </modules>

@@ -1,4 +1,4 @@
-package org.gbif.validation.evaluator;
+package org.gbif.validation.evaluator.structure;
 
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
@@ -22,16 +22,16 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.SAXException;
 
 /**
- * Class to evaluate the structure of an EML file.
- * That includes xml schema validation.
+ * Class to evaluate the structure of a DarwinCore Archive.
+ * That includes meta.xml schema validation.
  */
-public class EmlResourceStructureEvaluator implements ResourceStructureEvaluator {
+public class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(EmlResourceStructureEvaluator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DwcaResourceStructureEvaluator.class);
 
   private final XMLSchemaValidatorProvider xmlSchemaValidatorProvider;
 
-  public EmlResourceStructureEvaluator(XMLSchemaValidatorProvider xmlSchemaValidatorProvider) {
+  public DwcaResourceStructureEvaluator(XMLSchemaValidatorProvider xmlSchemaValidatorProvider) {
     this.xmlSchemaValidatorProvider = xmlSchemaValidatorProvider;
   }
 
@@ -42,39 +42,31 @@ public class EmlResourceStructureEvaluator implements ResourceStructureEvaluator
     Objects.requireNonNull(dataFile.getSourceFileName(), "DataFile sourceFileName shall be provided");
 
     try {
-      Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
-      File datasetMetadataFile = archive.getMetadataLocationFile();
-      if (datasetMetadataFile.exists()) {
+      ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+      File metaXmlFile = new File(dataFile.getFilePath().toFile(), Archive.META_FN);
+      if (metaXmlFile.exists()){
         try {
-          getMetaXMLValidator().validate(new StreamSource(datasetMetadataFile.getAbsolutePath()));
+          getMetaXMLValidator().validate(new StreamSource(metaXmlFile.getAbsolutePath()));
         } catch (SAXException e) {
-          return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_GBIF_SCHEMA, e.getMessage()));
+          return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.DWCA_META_XML_SCHEMA, e.getMessage()));
         }
       }
       else{
-        return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_NOT_FOUND, null));
+        return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.DWCA_META_XML_NOT_FOUND, null));
       }
     } catch (IOException | UnsupportedArchiveException uaEx) {
-      LOG.debug("Can't evaluate EML file", uaEx);
-      //this is a tricky one since it is not really possible to know if the error is coming from the EML
-      return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_NOT_FOUND, uaEx.getMessage()));
+      LOG.debug("Can't evaluate Dwca", uaEx);
+      return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.DWCA_UNREADABLE, uaEx.getMessage()));
     }
-
     return Optional.empty();
   }
 
   private Validator getMetaXMLValidator() {
-    return xmlSchemaValidatorProvider.getXmlValidator(XMLSchemaValidatorProvider.GBIF_EML);
+    return xmlSchemaValidatorProvider.getXmlValidator(XMLSchemaValidatorProvider.DWC_META_XML);
   }
 
-  /**
-   *
-   * @param sourceFilename
-   * @param type
-   * @param msg
-   * @return
-   */
   private static ValidationResultElement buildResult(String sourceFilename, EvaluationType type, String msg){
     return ValidationResultElement.onException(sourceFilename, type, msg);
   }
+
 }
