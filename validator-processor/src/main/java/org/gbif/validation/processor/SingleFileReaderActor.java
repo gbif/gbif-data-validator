@@ -63,10 +63,10 @@ class SingleFileReaderActor extends AbstractLoggingActor {
         collectors.collectMetrics(record);
         collectors.collectResult(recordEvaluator.evaluate(line, record));
       }
-      return new DataWorkResult(dataFile, DataWorkResult.Result.SUCCESS, collectors);
+      return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.SUCCESS, collectors);
     } catch (Exception ex) {
       LOG.error("Error while evaluating line {} of {}", line, dataFile.getFilePath(), ex);
-      return new DataWorkResult(dataFile, DataWorkResult.Result.FAILED, collectors);
+      return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.FAILED, collectors);
     }
   }
 

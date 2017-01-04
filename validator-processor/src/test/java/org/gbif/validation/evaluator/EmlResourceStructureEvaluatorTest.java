@@ -1,4 +1,4 @@
-package org.gbif.validation.evaluator.structure;
+package org.gbif.validation.evaluator;
 
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationResultElement;
@@ -9,7 +9,7 @@ import java.util.Optional;
 import org.junit.Test;
 
 import static org.gbif.validation.TestUtils.XML_CATALOG;
-import static org.gbif.validation.evaluator.structure.DwcaResourceStructureEvaluatorTest.getDataFile;
+import static org.gbif.validation.evaluator.DwcaResourceStructureEvaluatorTest.getDataFile;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

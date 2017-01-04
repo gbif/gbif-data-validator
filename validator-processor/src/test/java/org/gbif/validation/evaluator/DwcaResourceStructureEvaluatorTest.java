@@ -1,4 +1,4 @@
-package org.gbif.validation.evaluator.structure;
+package org.gbif.validation.evaluator;
 
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;

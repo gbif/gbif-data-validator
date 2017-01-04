@@ -28,7 +28,7 @@ public class CollectorGroup {
 
   private final List<ResultsCollector> recordsCollectors;
 
-  public CollectorGroup(List<Term> termsColumnsMapping, Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector) {
+  CollectorGroup(List<Term> termsColumnsMapping, Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector) {
     metricsCollector = new TermsFrequencyCollector(termsColumnsMapping, true);
     resultsCollector = new RecordEvaluationResultCollector(RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE, true);
     recordsCollectors = new ArrayList<>();

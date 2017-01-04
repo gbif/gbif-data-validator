@@ -152,11 +152,6 @@
   <!-- GBIF -->
   <dependency>
     <groupId>org.gbif.validator</groupId>
-    <artifactId>validator-core</artifactId>
-    <version>${project.version}</version>
-  </dependency>
-  <dependency>
-    <groupId>org.gbif.validator</groupId>
     <artifactId>validator-processor</artifactId>
     <version>${project.version}</version>
   </dependency>

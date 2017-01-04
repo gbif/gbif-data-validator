@@ -170,7 +170,7 @@ public class RecordSourceFactory {
     List<DataFile> dataFileList = new ArrayList<>();
     try (DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile())) {
       //add the core first
-      DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getFileSource());
+      DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getCore().getLocationFile().toPath());
       core.setRowType(dwcReader.getRowType());
       core.setCore(true);
       core.setHasHeaders(dwcReader.getCore().getIgnoreHeaderLines() != null

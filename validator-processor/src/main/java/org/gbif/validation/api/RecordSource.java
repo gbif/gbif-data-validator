@@ -4,7 +4,6 @@ import org.gbif.dwc.terms.Term;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 /**
@@ -21,10 +20,4 @@ public interface RecordSource extends Closeable {
   @Nullable
   String[] read() throws IOException;
 
-  /**
-   * Get the path of the underlying File (if any).
-   * @return
-   */
-  @Nullable
-  Path getFileSource();
 }

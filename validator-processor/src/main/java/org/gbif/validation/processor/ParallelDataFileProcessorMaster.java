@@ -5,6 +5,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
@@ -15,7 +16,6 @@ import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
-import org.gbif.validation.evaluator.structure.ReferentialIntegrityEvaluator;
 import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.RecordSourceFactory;
 import org.gbif.validation.util.FileBashUtilities;
@@ -51,6 +51,7 @@ import static akka.japi.pf.ReceiveBuilder.match;
 public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
   private final Map<Term, DataFile> rowTypeDataFile;
+  private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
   private final List<ChecklistValidationResult> checklistsResults;
   private final ChecklistValidator checklistValidator;
@@ -81,6 +82,20 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     }
   }
 
+  private static class IntegrityEvaluationUnit {
+    private final Term context;
+    private final RecordCollectionEvaluator resourceRecordIntegrityEvaluator;
+    private final CollectorGroupProvider collectorsProvider;
+
+    IntegrityEvaluationUnit(Term context,
+                            RecordCollectionEvaluator resourceRecordIntegrityEvaluator,
+                            CollectorGroupProvider collectorsProvider) {
+      this.context = context;
+      this.resourceRecordIntegrityEvaluator = resourceRecordIntegrityEvaluator;
+      this.collectorsProvider = collectorsProvider;
+    }
+  }
+
   /**
    * Full constructor.
    */
@@ -88,6 +103,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
                                   ChecklistValidator  checklistValidator) {
 
     rowTypeDataFile = new ConcurrentHashMap<>();
+    rowTypeCollectorProviders = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
     checklistsResults = Collections.synchronizedList(new ArrayList<>());
@@ -117,19 +133,14 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
     if(evaluateResourceStructure(dataFile)){
       List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
 
-      //FIXME should run in Akka and ideally use the CollectorGroup
-      List<ValidationResultElement> resourceIntegrityResult = evaluateResourceIntegrity(dataFile, dataFiles);
-      if(!resourceIntegrityResult.isEmpty()){
-        emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-                new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                        GBIF_INDEXING_PROFILE, resourceIntegrityResult, null, null)));
-        //since we already emitted the response we need to return but this should be fixed
-        return;
-      }
-
       List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
+
+      List<IntegrityEvaluationUnit> integrity = prepareResourceIntegrity(dataFile, dataFiles);
+      numOfWorkers += integrity.size();
+
       //now trigger everything
-      processDataFile(dataFilesToEvaluate);
+      processIntegrityEvaluationUnit(dataFile, integrity);
+      processEvaluationUnit(dataFilesToEvaluate);
     }
   }
 
@@ -142,7 +153,6 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
 
     List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
 
-    numOfWorkers = 0;
     //prepare everything
     dataFiles.forEach(df -> {
       if (DwcTerm.Taxon == df.getRowType()) {
@@ -151,14 +161,17 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       } else {
         rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
         rowTypeDataFile.put(df.getRowType(), df);
+
+        List<Term> columns = Arrays.asList(df.getColumns());
+        rowTypeCollectorProviders.put(df.getRowType(), new CollectorGroupProvider(df.getRowType(), columns));
         try {
           List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
           numOfWorkers += splitDataFile.size();
-          List<Term> columns = Arrays.asList(df.getColumns());
+
           dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
-                                                     factory.create(columns, df.getRowType()),
-                                                     splitDataFile.size(),
-                                                     new CollectorGroupProvider(df.getRowType(), columns)));
+                  factory.create(columns, df.getRowType()),
+                  splitDataFile.size(),
+                  rowTypeCollectorProviders.get(df.getRowType())));
         } catch (IOException ioEx) {
           log().error("Failed to split data", ioEx);
         }
@@ -201,28 +214,34 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * @param dataFiles
    * @return all ValidationResultElement or an empty list, never null
    */
-  private List<ValidationResultElement> evaluateResourceIntegrity(DataFile dwcaDataFile, List<DataFile> dataFiles) {
+  private List<IntegrityEvaluationUnit> prepareResourceIntegrity(DataFile dwcaDataFile, List<DataFile> dataFiles) {
     if(FileFormat.DWCA != dwcaDataFile.getFileFormat()) {
       return Collections.emptyList();
     }
 
-    List<ReferentialIntegrityEvaluator> riEvaluator =
+    return
             dataFiles.stream()
                     .filter(df -> !df.isCore())
-                    .map(df -> new ReferentialIntegrityEvaluator(df.getRowType()))
+                    .map(df -> new IntegrityEvaluationUnit(
+                            df.getRowType(),
+                            EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
+                            rowTypeCollectorProviders.get(df.getRowType())))
                     .collect(Collectors.toList());
 
-    return riEvaluator.stream()
-            .map( rie -> rie.evaluate(dwcaDataFile))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .collect(Collectors.toList());
   }
+
+  private void processIntegrityEvaluationUnit(DataFile dwcaDataFile, Iterable<IntegrityEvaluationUnit> integrityEvaluators) {
+    integrityEvaluators.forEach(integrityEvaluator -> {
+      ActorRef actor = createSingleActor(integrityEvaluator);
+      actor.tell(dwcaDataFile, self());
+    });
+  }
+
 
   /**
    * Creates a Actor/Worker for each evaluation unit.
    */
-  private void processDataFile(Iterable<EvaluationUnit> dataFilesToEvaluate) {
+  private void processEvaluationUnit(Iterable<EvaluationUnit> dataFilesToEvaluate) {
     dataFilesToEvaluate.forEach(evaluationUnit -> {
       ActorRef workerRouter = createWorkerRoutes(evaluationUnit);
       evaluationUnit.dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
@@ -296,6 +315,17 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
+   * Creates the worker router using the calculated number of workers.
+   */
+  private ActorRef createSingleActor(IntegrityEvaluationUnit integrityEvaluationUnit) {
+    String actorName =  "IntegrityEvaluationUnitActor_" + UUID.randomUUID();
+      return getContext().actorOf(Props.create(ResourceRecordStructureActor.class,
+              integrityEvaluationUnit.context,
+              integrityEvaluationUnit.resourceRecordIntegrityEvaluator,
+              integrityEvaluationUnit.collectorsProvider), actorName);
+  }
+
+  /**
    * Called when a single worker finished its work.
    * This can represent en entire file or a part of a file
    */
@@ -320,9 +350,10 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
    * Collects individual results and aggregates them in the internal data structures.
    */
   private void collectResult(DataWorkResult result) {
+
     //FIXME we should only use one collector
-    if (DwcTerm.Taxon != result.getDataFile().getRowType()) {
-      rowTypeCollectors.compute(result.getDataFile().getRowType(), (key, val) -> {
+    if (DwcTerm.Taxon != result.getRowType()) {
+      rowTypeCollectors.compute(result.getRowType(), (key, val) -> {
         val.add(result.getCollectors());
         return val;
       });

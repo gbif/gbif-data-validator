@@ -12,7 +12,6 @@ import org.gbif.validation.api.RecordSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -173,15 +172,6 @@ public class DwcReader implements RecordSource {
     }
 
     return line;
-  }
-
-  @Nullable
-  @Override
-  public Path getFileSource() {
-    if (darwinCoreComponent == null) {
-      return null;
-    }
-    return darwinCoreComponent.getLocationFile().toPath();
   }
 
   public Term getRowType() {

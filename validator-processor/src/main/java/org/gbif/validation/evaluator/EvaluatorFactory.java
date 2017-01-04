@@ -6,13 +6,14 @@ import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
+import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
 import org.gbif.validation.evaluator.record.OccurrenceInterpretationEvaluator;
 import org.gbif.validation.evaluator.record.RecordStructureEvaluator;
-import org.gbif.validation.evaluator.structure.DwcaResourceStructureEvaluator;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
@@ -58,6 +59,19 @@ public class EvaluatorFactory {
         return new DwcaResourceStructureEvaluator(XML_SCHEMA_VALIDATOR_PROVIDER);
       default: return (dataFile) -> Optional.empty();
     }
+  }
+
+  /**
+   * Create a {@link RecordCollectionEvaluator} instance for a specific rowType.
+   * Given a {@link DataFile} that represents the entire Dwc-A, this {@link RecordCollectionEvaluator} instance
+   * will check for referential integrity issues between the given extension (rowType) and the core.
+   *
+   * @param rowType
+   * @return
+   */
+  public static RecordCollectionEvaluator<DataFile> createReferentialIntegrityEvaluator(Term rowType) {
+    Objects.requireNonNull(rowType, "rowType shall be provided");
+    return new ReferentialIntegrityEvaluator(rowType);
   }
 
   /**

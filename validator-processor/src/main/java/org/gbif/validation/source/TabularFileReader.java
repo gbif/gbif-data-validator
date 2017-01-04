@@ -43,12 +43,6 @@ public class TabularFileReader implements RecordSource {
     return null;
   }
 
-  @Nullable
-  @Override
-  public Path getFileSource() {
-    return filePath;
-  }
-
   @Override
   public void close() throws IOException {
     wrapped.close();

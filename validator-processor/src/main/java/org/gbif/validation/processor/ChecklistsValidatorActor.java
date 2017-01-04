@@ -35,7 +35,7 @@ public class ChecklistsValidatorActor extends AbstractLoggingActor {
    */
   private DataWorkResult processDataFile(DataFile dataFile) {
     DataWorkResult dataWorkResult = new DataWorkResult();
-    dataWorkResult.setDataFile(dataFile);
+    dataWorkResult.setRowType(dataFile.getRowType());
     try {
       ChecklistValidationResult result = validator.validate(dataFile);
       dataWorkResult.setChecklistValidationResult(result);

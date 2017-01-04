@@ -1,5 +1,6 @@
 package org.gbif.validation.processor;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.collector.CollectorGroup;
@@ -17,6 +18,7 @@ class DataWorkResult {
   }
 
   private DataFile dataFile;
+  private Term rowType;
 
   private CollectorGroup collectors;
 
@@ -36,8 +38,8 @@ class DataWorkResult {
    * Full constructor.
    * Builds an instance using a dataFile and a result.
    */
-  DataWorkResult(DataFile dataFile, Result result, CollectorGroup collectors) {
-    this.dataFile = dataFile;
+  DataWorkResult(Term rowType, Result result, CollectorGroup collectors) {
+    this.rowType = rowType;
     this.result = result;
     this.collectors = collectors;
   }
@@ -53,9 +55,17 @@ class DataWorkResult {
     return dataFile;
   }
 
-  public void setDataFile(DataFile dataFile) {
-    this.dataFile = dataFile;
+  public Term getRowType() {
+    return rowType;
   }
+
+  public void setRowType(Term rowType) {
+    this.rowType = rowType;
+  }
+
+//  public void setDataFile(DataFile dataFile) {
+//    this.dataFile = dataFile;
+//  }
 
   /**
    * Status result of processing a data file.
