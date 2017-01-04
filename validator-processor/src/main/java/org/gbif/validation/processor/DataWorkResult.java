@@ -63,9 +63,6 @@ class DataWorkResult {
     this.rowType = rowType;
   }
 
-//  public void setDataFile(DataFile dataFile) {
-//    this.dataFile = dataFile;
-//  }
 
   /**
    * Status result of processing a data file.

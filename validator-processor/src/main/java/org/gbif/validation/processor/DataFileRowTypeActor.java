@@ -20,7 +20,7 @@ import static akka.pattern.Patterns.pipe;
  * Simple actor that receives a {@link DataFile} representing a complete Dwc-A
  * and produces a {@link DataWorkResult} by calling the given {@link RecordCollectionEvaluator} instance.
  */
-public class ResourceRecordStructureActor extends AbstractLoggingActor {
+public class DataFileRowTypeActor extends AbstractLoggingActor {
 
   /**
    *
@@ -28,8 +28,8 @@ public class ResourceRecordStructureActor extends AbstractLoggingActor {
    * @param evaluator
    * @param collector
    */
-  public ResourceRecordStructureActor(Term rowType, RecordCollectionEvaluator<DataFile> evaluator,
-                                      CollectorGroupProvider collector) {
+  public DataFileRowTypeActor(Term rowType, RecordCollectionEvaluator<DataFile> evaluator,
+                              CollectorGroupProvider collector) {
     receive(
             //this should only be called once
             match(DataFile.class, dataFileMessage -> {

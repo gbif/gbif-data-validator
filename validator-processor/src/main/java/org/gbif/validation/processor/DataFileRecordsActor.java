@@ -19,18 +19,18 @@ import static akka.pattern.Patterns.pipe;
  * Akka actor that processes a single {@link DataFile} at the record level.
  *
  */
-class SingleFileReaderActor extends AbstractLoggingActor {
+class DataFileRecordsActor extends AbstractLoggingActor {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SingleFileReaderActor.class);
+  private static final Logger LOG = LoggerFactory.getLogger(DataFileRecordsActor.class);
 
   /**
-   * Creates a new instance of {@link SingleFileReaderActor} that can receive {@link DataFile} messages.
+   * Creates a new instance of {@link DataFileRecordsActor} that can receive {@link DataFile} messages.
    *
    * @param recordEvaluator    {@link RecordEvaluator} to use on each record of the {@link DataFile}
    * @param collectorsProvider provider of {@link CollectorGroup} to get an new instance for each {@link DataFile}
    *                           messages.
    */
-  SingleFileReaderActor(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider) {
+  DataFileRecordsActor(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider) {
     receive(
             match(DataFile.class, dataFile -> {
               pipe(

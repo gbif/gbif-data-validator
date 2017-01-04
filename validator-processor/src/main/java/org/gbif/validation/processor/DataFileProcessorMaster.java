@@ -48,7 +48,7 @@ import static akka.japi.pf.ReceiveBuilder.match;
  * Akka actor that acts as the central coordinator of parallel data processing.
  * This class decides if the data input should be split into smaller pieces to be processed by worker actors..
  */
-public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
+public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   private final Map<Term, DataFile> rowTypeDataFile;
   private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
@@ -99,8 +99,8 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Full constructor.
    */
-  ParallelDataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
-                                  ChecklistValidator  checklistValidator) {
+  DataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
+                          ChecklistValidator  checklistValidator) {
 
     rowTypeDataFile = new ConcurrentHashMap<>();
     rowTypeCollectorProviders = new ConcurrentHashMap<>();
@@ -308,7 +308,7 @@ public class ParallelDataFileProcessorMaster extends AbstractLoggingActor {
       return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, checklistValidator),actorName);
     }
     return getContext().actorOf(
-            new RoundRobinPool(evaluationUnit.numOfActors).props(Props.create(SingleFileReaderActor.class,
+            new RoundRobinPool(evaluationUnit.numOfActors).props(Props.create(DataFileRecordsActor.class,
                                                                               evaluationUnit.recordEvaluator,
                                                                               evaluationUnit.collectorsProvider)),
             actorName);

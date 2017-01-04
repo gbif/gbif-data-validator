@@ -25,7 +25,7 @@ import org.xml.sax.SAXException;
  * Class to evaluate the structure of an EML file.
  * That includes xml schema validation.
  */
-public class EmlResourceStructureEvaluator implements ResourceStructureEvaluator {
+class EmlResourceStructureEvaluator implements ResourceStructureEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(EmlResourceStructureEvaluator.class);
 

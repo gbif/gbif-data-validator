@@ -74,29 +74,7 @@ public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator<
       return Optional.of(unlinkedId.stream().map(rec -> buildResult(extensionRowType, rec)));
   }
 
-//  private static ValidationResultElement buildResult(DataFile dataFile, List<String> unlinkedId){
-//    List<ValidationResultDetails> resultDetails = new ArrayList<>();
-//    unlinkedId.forEach(id ->
-//            resultDetails.add(ValidationResultDetails.recordIdOnly(id)));
-//
-//    Map<EvaluationType, Long> issueCounter = new EnumMap<>(EvaluationType.class);
-//    Map<EvaluationType, List<ValidationResultDetails>> issueSampling = new EnumMap<>(EvaluationType.class);
-//    issueCounter.put(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION, (long) unlinkedId.size());
-//    issueSampling.put(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION, resultDetails);
-//
-//    return new ValidationResultElement(dataFile.getSourceFileName(), (long) dataFile.getNumOfLines(),
-//            dataFile.getRowType(), issueCounter, issueSampling, null, null);
-//  }
-
   private static RecordEvaluationResult buildResult(Term rowType, String unlinkedId){
-    List<RecordEvaluationResultDetails>resultDetails = new ArrayList<>(1);
-    resultDetails.add(new RecordEvaluationResultDetails(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION,
-            null, null));
-
-    return new RecordEvaluationResult(rowType, null,  unlinkedId, resultDetails,null);
-  }
-
-  private static RecordEvaluationResult buildExceptionResult(Term rowType, String unlinkedId){
     List<RecordEvaluationResultDetails>resultDetails = new ArrayList<>(1);
     resultDetails.add(new RecordEvaluationResultDetails(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION,
             null, null));

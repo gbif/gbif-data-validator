@@ -25,7 +25,7 @@ public class ParallelDataFileProcessorMasterTest {
 
     EvaluatorFactory EVALUATOR_FACTORY = new EvaluatorFactory(UAT_API);
 
-//    Props props =  Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
+//    Props props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
 //            workingDir, checklistValidator);
 //
 //    //creates a actor that is responsible to handle a this jobData

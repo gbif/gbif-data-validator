@@ -3,7 +3,7 @@ package org.gbif.validation.jobserver.impl;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
-import org.gbif.validation.processor.ParallelDataFileProcessorMaster;
+import org.gbif.validation.processor.DataFileProcessorMaster;
 
 import java.util.function.Supplier;
 
@@ -21,7 +21,7 @@ public class ActorPropsSupplier implements Supplier<Props> {
    */
   public ActorPropsSupplier(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir,
                             ChecklistValidator checklistValidator) {
-    props =  Props.create(ParallelDataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
+    props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
                                            workingDir, checklistValidator);
   }
 

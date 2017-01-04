@@ -25,7 +25,7 @@ import org.xml.sax.SAXException;
  * Class to evaluate the structure of a DarwinCore Archive.
  * That includes meta.xml schema validation.
  */
-public class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
+class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DwcaResourceStructureEvaluator.class);
 
