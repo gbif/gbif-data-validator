@@ -16,7 +16,8 @@ import static akka.japi.pf.ReceiveBuilder.match;
 import static akka.pattern.Patterns.pipe;
 
 /**
- * Akka actor that processes a single {@link DataFile} at the record level.
+ * Akka actor that processes a single {@link DataFile} (representing a fragment or a complete set of records)
+ * at the record level.
  *
  */
 class DataFileRecordsActor extends AbstractLoggingActor {
@@ -56,7 +57,6 @@ class DataFileRecordsActor extends AbstractLoggingActor {
   private static DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
     long line = dataFile.getFileLineOffset().orElse(0) + 1; //we report line number starting at 1
     try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
-      //Term rowType = dataFile.getRowType();
       String[] record;
       while ((record = recordSource.read()) != null) {
         line++;

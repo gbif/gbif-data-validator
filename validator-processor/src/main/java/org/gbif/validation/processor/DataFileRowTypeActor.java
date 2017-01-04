@@ -19,6 +19,8 @@ import static akka.pattern.Patterns.pipe;
 /**
  * Simple actor that receives a {@link DataFile} representing a complete Dwc-A
  * and produces a {@link DataWorkResult} by calling the given {@link RecordCollectionEvaluator} instance.
+ * {@link DataFileRowTypeActor} works on a specific rowType but expect the dataFile to represent the complete
+ * Dwc-A.
  */
 public class DataFileRowTypeActor extends AbstractLoggingActor {
 

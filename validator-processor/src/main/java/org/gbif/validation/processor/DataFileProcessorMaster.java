@@ -39,6 +39,7 @@ import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
+import org.apache.commons.lang3.mutable.MutableInt;
 
 import static org.gbif.validation.api.model.ValidationProfile.GBIF_INDEXING_PROFILE;
 
@@ -67,13 +68,13 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Simple container class to hold data between initialization and processing phase.
    */
-  private static class EvaluationUnit {
+  private static class RecordEvaluationUnit {
     private final List<DataFile> dataFiles;
     private final RecordEvaluator recordEvaluator;
     private final int numOfActors;
     private final CollectorGroupProvider collectorsProvider;
 
-    EvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors,
+    RecordEvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors,
                    CollectorGroupProvider collectorsProvider) {
       this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
@@ -82,15 +83,15 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     }
   }
 
-  private static class IntegrityEvaluationUnit {
-    private final Term context;
+  private static class RowTypeEvaluationUnit {
+    private final Term rowType;
     private final RecordCollectionEvaluator resourceRecordIntegrityEvaluator;
     private final CollectorGroupProvider collectorsProvider;
 
-    IntegrityEvaluationUnit(Term context,
+    RowTypeEvaluationUnit(Term rowType,
                             RecordCollectionEvaluator resourceRecordIntegrityEvaluator,
                             CollectorGroupProvider collectorsProvider) {
-      this.context = context;
+      this.rowType = rowType;
       this.resourceRecordIntegrityEvaluator = resourceRecordIntegrityEvaluator;
       this.collectorsProvider = collectorsProvider;
     }
@@ -133,42 +134,62 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     if(evaluateResourceStructure(dataFile)){
       List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
 
-      List<EvaluationUnit> dataFilesToEvaluate = prepareDataFile(dataFiles, factory, fileSplitSize);
+      init(dataFiles);
 
-      List<IntegrityEvaluationUnit> integrity = prepareResourceIntegrity(dataFile, dataFiles);
-      numOfWorkers += integrity.size();
+      final MutableInt numOfWorkers = new MutableInt(0);
+      List<RecordEvaluationUnit> dataFilesToEvaluate = prepareRecordBasedEvaluations(dataFiles, factory, fileSplitSize,
+              numOfWorkers);
+
+      List<RowTypeEvaluationUnit> integrity = prepareRowTypeBasedEvaluations(dataFile, dataFiles);
+      numOfWorkers.add(integrity.size());
+
+      this.numOfWorkers = numOfWorkers.intValue();
 
       //now trigger everything
-      processIntegrityEvaluationUnit(dataFile, integrity);
+      processRowTypeEvaluationUnit(dataFile, integrity);
       processEvaluationUnit(dataFilesToEvaluate);
     }
   }
 
   /**
-   * Calculates the required splits to process all the datafiles. The variable numOfWorkers is changed with the number
-   * of actors that will be used to process the input file.
+   * Initialize all member variables based on the list of {@link DataFile}.
+   * @param dataFiles
    */
-  private List<EvaluationUnit> prepareDataFile(Iterable<DataFile> dataFiles, EvaluatorFactory factory,
-                                               Integer fileSplitSize) {
+  private void init(Iterable<DataFile> dataFiles){
+    dataFiles.forEach(df -> {
+      rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
+      rowTypeDataFile.put(df.getRowType(), df);
+      List<Term> columns = Arrays.asList(df.getColumns());
+      rowTypeCollectorProviders.put(df.getRowType(), new CollectorGroupProvider(df.getRowType(), columns));
+    });
+  }
 
-    List<EvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
+  /**
+   * Calculates the required splits to process all the {@link DataFile}.
+   * This method expect {@link #init(Iterable)} to be already called.
+   * @param dataFiles all files to evaluate. For DarwinCore it also includes all extensions.
+   * @param factory
+   * @param fileSplitSize
+   * @param numOfWorkers
+   * @return
+   */
+  private List<RecordEvaluationUnit> prepareRecordBasedEvaluations(Iterable<DataFile> dataFiles, EvaluatorFactory factory,
+                                                                   Integer fileSplitSize, final MutableInt numOfWorkers) {
+
+    List<RecordEvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
 
     //prepare everything
     dataFiles.forEach(df -> {
       if (DwcTerm.Taxon == df.getRowType()) {
-        numOfWorkers += 1;
-        dataFilesToEvaluate.add(new EvaluationUnit(Collections.singletonList(df),null,df.getNumOfLines(),null));
+        numOfWorkers.increment();
+        dataFilesToEvaluate.add(new RecordEvaluationUnit(Collections.singletonList(df), null, df.getNumOfLines(), null));
       } else {
-        rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
-        rowTypeDataFile.put(df.getRowType(), df);
-
         List<Term> columns = Arrays.asList(df.getColumns());
-        rowTypeCollectorProviders.put(df.getRowType(), new CollectorGroupProvider(df.getRowType(), columns));
         try {
           List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
-          numOfWorkers += splitDataFile.size();
+          numOfWorkers.add(splitDataFile.size());
 
-          dataFilesToEvaluate.add(new EvaluationUnit(splitDataFile,
+          dataFilesToEvaluate.add(new RecordEvaluationUnit(splitDataFile,
                   factory.create(columns, df.getRowType()),
                   splitDataFile.size(),
                   rowTypeCollectorProviders.get(df.getRowType())));
@@ -180,6 +201,32 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
     log().info("Number of workers required: {}", numOfWorkers);
     return dataFilesToEvaluate;
+  }
+
+
+  /**
+   * Prepares the RowTypeEvaluationUnit if required (only on DarwinCore Archive for now).
+   * TODO: run uniqueness
+   *
+   * @param dwcaDataFile
+   * @param dataFiles
+   *
+   * @return all ValidationResultElement or an empty list, never null
+   */
+  private List<RowTypeEvaluationUnit> prepareRowTypeBasedEvaluations(DataFile dwcaDataFile, List<DataFile> dataFiles) {
+    if (FileFormat.DWCA != dwcaDataFile.getFileFormat()) {
+      return Collections.emptyList();
+    }
+
+    return
+            dataFiles.stream()
+                    .filter(df -> !df.isCore())
+                    .map(df -> new RowTypeEvaluationUnit(
+                            df.getRowType(),
+                            EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
+                            rowTypeCollectorProviders.get(df.getRowType())))
+                    .collect(Collectors.toList());
+
   }
 
   /**
@@ -205,34 +252,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     return true;
   }
 
-
-  /**
-   * Evaluate the integrity of the resource. This evaluation will only run on DarwinCore Archive.
-   * TODO: run using Akka, run uniqueness
-   *
-   * @param dwcaDataFile
-   * @param dataFiles
-   * @return all ValidationResultElement or an empty list, never null
-   */
-  private List<IntegrityEvaluationUnit> prepareResourceIntegrity(DataFile dwcaDataFile, List<DataFile> dataFiles) {
-    if(FileFormat.DWCA != dwcaDataFile.getFileFormat()) {
-      return Collections.emptyList();
-    }
-
-    return
-            dataFiles.stream()
-                    .filter(df -> !df.isCore())
-                    .map(df -> new IntegrityEvaluationUnit(
-                            df.getRowType(),
-                            EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
-                            rowTypeCollectorProviders.get(df.getRowType())))
-                    .collect(Collectors.toList());
-
-  }
-
-  private void processIntegrityEvaluationUnit(DataFile dwcaDataFile, Iterable<IntegrityEvaluationUnit> integrityEvaluators) {
-    integrityEvaluators.forEach(integrityEvaluator -> {
-      ActorRef actor = createSingleActor(integrityEvaluator);
+  private void processRowTypeEvaluationUnit(DataFile dwcaDataFile, Iterable<RowTypeEvaluationUnit> rowTypeEvaluators) {
+    rowTypeEvaluators.forEach(rtEvaluator -> {
+      ActorRef actor = createSingleActor(rtEvaluator);
       actor.tell(dwcaDataFile, self());
     });
   }
@@ -241,7 +263,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates a Actor/Worker for each evaluation unit.
    */
-  private void processEvaluationUnit(Iterable<EvaluationUnit> dataFilesToEvaluate) {
+  private void processEvaluationUnit(Iterable<RecordEvaluationUnit> dataFilesToEvaluate) {
     dataFilesToEvaluate.forEach(evaluationUnit -> {
       ActorRef workerRouter = createWorkerRoutes(evaluationUnit);
       evaluationUnit.dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
@@ -302,7 +324,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates the worker router using the calculated number of workers.
    */
-  private ActorRef createWorkerRoutes(EvaluationUnit evaluationUnit) {
+  private ActorRef createWorkerRoutes(RecordEvaluationUnit evaluationUnit) {
     String actorName =  "dataFileRouter_" + UUID.randomUUID();
     if (evaluationUnit.dataFiles.size() == 1 && DwcTerm.Taxon == evaluationUnit.dataFiles.get(0).getRowType()) {
       return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, checklistValidator),actorName);
@@ -315,14 +337,14 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Creates the worker router using the calculated number of workers.
+   * Creates an Actor for the provided {@link RowTypeEvaluationUnit}.
    */
-  private ActorRef createSingleActor(IntegrityEvaluationUnit integrityEvaluationUnit) {
-    String actorName =  "IntegrityEvaluationUnitActor_" + UUID.randomUUID();
-      return getContext().actorOf(Props.create(ResourceRecordStructureActor.class,
-              integrityEvaluationUnit.context,
-              integrityEvaluationUnit.resourceRecordIntegrityEvaluator,
-              integrityEvaluationUnit.collectorsProvider), actorName);
+  private ActorRef createSingleActor(RowTypeEvaluationUnit rowTypeEvaluationUnit) {
+    String actorName =  "RowTypeEvaluationUnitActor_" + UUID.randomUUID();
+      return getContext().actorOf(Props.create(DataFileRowTypeActor.class,
+              rowTypeEvaluationUnit.rowType,
+              rowTypeEvaluationUnit.resourceRecordIntegrityEvaluator,
+              rowTypeEvaluationUnit.collectorsProvider), actorName);
   }
 
   /**
