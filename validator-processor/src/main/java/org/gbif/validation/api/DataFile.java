@@ -5,6 +5,7 @@ import org.gbif.validation.api.model.FileFormat;
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -26,6 +27,7 @@ public class DataFile {
 
   private Term[] columns;
   private Term rowType;
+  private Optional<Map<Term, String>> defaultValues = Optional.empty();
 
   private boolean isCore = true;
 
@@ -79,6 +81,7 @@ public class DataFile {
 
     destDataFile.columns = srcDataFile.columns;
     destDataFile.rowType = srcDataFile.rowType;
+    destDataFile.defaultValues = srcDataFile.defaultValues;
     destDataFile.isCore = srcDataFile.isCore;
 
     destDataFile.fileLineOffset = srcDataFile.fileLineOffset;
@@ -108,6 +111,18 @@ public class DataFile {
 
   public Term getRowType() {
     return rowType;
+  }
+
+  public void setDefaultValues(Optional<Map<Term, String>> defaultValues) {
+    this.defaultValues = defaultValues;
+  }
+
+  /**
+   * Get the default value to use for some terms (if defined).
+   * @return
+   */
+  public Optional<Map<Term, String>> getDefaultValues() {
+    return defaultValues;
   }
 
   public void setRowType(Term rowType) {
@@ -222,6 +237,7 @@ public class DataFile {
             ", sourceFileName=" + sourceFileName +
             ", columns=" + Arrays.toString(columns) +
             ", rowType=" + rowType +
+            ", defaultValues=" + defaultValues +
             ", isCore=" + isCore +
             ", delimiterChar='" + delimiterChar + '\'' +
             ", numOfLines=" + numOfLines +
@@ -240,6 +256,7 @@ public class DataFile {
             Objects.equals(delimiterChar, dataFile.delimiterChar) &&
             Arrays.equals(columns, dataFile.columns) &&
             Objects.equals(rowType, dataFile.rowType) &&
+            Objects.equals(defaultValues, dataFile.defaultValues) &&
             Objects.equals(isCore, dataFile.isCore) &&
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
@@ -257,6 +274,7 @@ public class DataFile {
             sourceFileName,
             columns,
             rowType,
+            defaultValues,
             isCore,
             delimiterChar,
             numOfLines,
