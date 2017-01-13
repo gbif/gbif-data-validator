@@ -22,7 +22,7 @@ import static org.junit.Assert.assertTrue;
 public class RecordSourceFactoryTest {
 
   private static final String TEST_TSV_FILE_LOCATION = "validator_test_file_all_issues.tsv";
-  private static final String TEST_DWC_FILE_LOCATION = "dwc-archive";
+  private static final String TEST_DWC_FILE_LOCATION = "dwca/dwca-taxon";
 
   @Test
   public void testPrepareSourceDwc() throws IOException {
