@@ -190,7 +190,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
           numOfWorkers.add(splitDataFile.size());
 
           dataFilesToEvaluate.add(new RecordEvaluationUnit(splitDataFile,
-                  factory.create(columns, df.getRowType()),
+                  factory.create(df.getRowType(), columns, df.getDefaultValues()),
                   splitDataFile.size(),
                   rowTypeCollectorProviders.get(df.getRowType())));
         } catch (IOException ioEx) {
@@ -266,7 +266,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private void processEvaluationUnit(Iterable<RecordEvaluationUnit> dataFilesToEvaluate) {
     dataFilesToEvaluate.forEach(evaluationUnit -> {
       ActorRef workerRouter = createWorkerRoutes(evaluationUnit);
-      evaluationUnit.dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
+      evaluationUnit.dataFiles.forEach(dataFile -> {
+        workerRouter.tell(dataFile, self());
+      });
     });
   }
 
@@ -330,7 +332,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, checklistValidator),actorName);
     }
     return getContext().actorOf(
-            new RoundRobinPool(evaluationUnit.numOfActors).props(Props.create(DataFileRecordsActor.class,
+            new RoundRobinPool(10).props(Props.create(DataFileRecordsActor.class,
                                                                               evaluationUnit.recordEvaluator,
                                                                               evaluationUnit.collectorsProvider)),
             actorName);

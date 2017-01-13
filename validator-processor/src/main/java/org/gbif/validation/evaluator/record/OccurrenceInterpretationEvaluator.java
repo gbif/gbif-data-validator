@@ -13,6 +13,7 @@ import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -36,6 +37,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   private final OccurrenceInterpreter interpreter;
   private final Term rowType;
   private final Term[] columnMapping;
+  private final Optional<Map<Term, String>> defaultValues;
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
@@ -48,13 +50,15 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param interpreter occurrence interpreter
    * @param columnMapping
    */
-  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term rowType, List<Term> columnMapping) {
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term rowType,
+                                           List<Term> columnMapping, Optional<Map<Term, String>> defaultValues ) {
     Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
     Validate.notNull(columnMapping, "columnMapping must not be null");
 
     this.interpreter = interpreter;
     this.rowType = rowType;
     this.columnMapping = columnMapping.toArray(new Term[columnMapping.size()]);
+    this.defaultValues = defaultValues;
   }
 
   @Override
@@ -83,6 +87,8 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     IntStream.range(0, Math.min(record.length, columnMapping.length))
       .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
+
+    defaultValues.ifPresent(map -> map.forEach( (k,v) -> verbatimOccurrence.setVerbatimField(k,v)));
     return verbatimOccurrence;
   }
 

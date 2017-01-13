@@ -21,6 +21,7 @@ import org.gbif.ws.mixin.Mixins;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -112,7 +113,8 @@ public class EvaluatorFactory {
    *
    * @return new instance
    */
-  public RecordEvaluator create(List<Term> columns, Term rowType) {
+  public RecordEvaluator create(Term rowType, List<Term> columns,
+                                Optional<Map<Term, String>> defaultValues) {
     Objects.requireNonNull(columns, "columns shall be provided");
     Objects.requireNonNull(rowType, "rowType shall be provided");
 
@@ -120,8 +122,8 @@ public class EvaluatorFactory {
     evaluators.add(new RecordStructureEvaluator(rowType, columns));
 
     if(DwcTerm.Occurrence == rowType) {
-      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(), DwcTerm.Occurrence,
-                                                           columns));
+      evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
+              DwcTerm.Occurrence, columns, defaultValues));
     }
     return new RecordEvaluatorChain(evaluators);
   }

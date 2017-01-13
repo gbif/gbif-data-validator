@@ -12,12 +12,13 @@ import org.gbif.validation.api.RecordSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -36,8 +37,7 @@ public class DwcReader implements RecordSource {
   private final List<ArchiveField> archiveFields;
   private final CSVReader csvReader;
 
-  private Term[] defaultValuesTerm;
-  private String[] defaultValues;
+  private Optional<Map<Term, String>> defaultValues = Optional.empty();
 
   /**
    * Get a new Reader for the core component of the Dwc-A.
@@ -65,6 +65,10 @@ public class DwcReader implements RecordSource {
 
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader = darwinCoreComponent.getCSVReader();
+
+    //check if there is default value(s) defined
+    archiveFields.stream().filter(af -> af.getIndex() == null)
+            .forEach(af -> addDefaultValue(af.getTerm(), af.getDefaultValue()));
   }
 
   /**
@@ -92,10 +96,14 @@ public class DwcReader implements RecordSource {
     }
 
     //TODO if darwinCoreComponent is null ?
-
     archiveFields = darwinCoreComponent.getFieldsSorted();
     csvReader =  new CSVReader(partFile, darwinCoreComponent.getEncoding(),
             darwinCoreComponent.getFieldsTerminatedBy(), darwinCoreComponent.getFieldsEnclosedBy(), ignoreHeaderLines ? 1 : 0);
+
+    //check if there is default value(s) defined
+    archiveFields.stream().filter(af -> af.getIndex() == null)
+            .forEach(af -> addDefaultValue(af.getTerm(), af.getDefaultValue()));
+
   }
 
   public ArchiveFile getCore() {
@@ -118,60 +126,52 @@ public class DwcReader implements RecordSource {
       return null;
     }
 
-    //+1 for the id column (not included on archiveFields list)
-    int expectedNumberOfColumns = archiveFields.size() + 1;
-    int maxIndex = archiveFields.stream().filter(af -> af.getIndex() != null)
-                                          .mapToInt(ArchiveField::getIndex).max().getAsInt();
+    List<ArchiveField> archiveFieldsWithIndex = archiveFields.stream().filter(af -> af.getIndex() != null)
+            .collect(Collectors.toList());
+
+    //we assume the id is provided (it is mandatory by the schema)
+    Integer idIndex = darwinCoreComponent.getId().getIndex();
+    boolean idAssignedToTerm = archiveFieldsWithIndex.stream()
+            .anyMatch(af -> af.getIndex().equals(idIndex));
+
+    int declaredNumberOfColumn = archiveFieldsWithIndex.size() + (idAssignedToTerm ? 0 : 1);
+
+    // if the id column is NOT assigned to a term, add 1 to the expected number of column
+   // int expectedNumberOfColumn = archiveFields.size() + (idAssignedToTerm ? 0 : 1);
+    int maxIndex = archiveFieldsWithIndex.stream()
+            .mapToInt(ArchiveField::getIndex).max().getAsInt();
     maxIndex = Math.max(maxIndex, darwinCoreComponent.getId().getIndex());
 
     //defense against wrongly declared index number
-    if (maxIndex + 1 > expectedNumberOfColumns) {
+    if (maxIndex + 1 > declaredNumberOfColumn) {
       throw new UnsupportedArchiveException("Number of column declared doesn't match the indices declared");
     }
 
-    Term[] terms = new Term[expectedNumberOfColumns];
-    List<ArchiveField> termsWithDefaultValues = new ArrayList<>();
+    Term[] terms = new Term[declaredNumberOfColumn];
 
-    // handle id column
-    Term idColumnTerm =  Optional.ofNullable(darwinCoreComponent.getId().getTerm()).orElse(DEFAULT_ID_TERM);
-    terms[darwinCoreComponent.getId().getIndex()] = idColumnTerm;
+    // handle id column, assign default Term, it will be rewritten below if assigned to a term
+    terms[idIndex] = DEFAULT_ID_TERM;
 
-    int defaultValueIdx = maxIndex + 1;
-    for (ArchiveField af : archiveFields) {
-      if (af.getIndex() != null){
-        terms[af.getIndex()] = af.getTerm();
-      } else {
-        termsWithDefaultValues.add(af);
-        terms[defaultValueIdx] = af.getTerm();
-        defaultValueIdx++;
-      }
-    }
+    archiveFieldsWithIndex.stream().forEach(af -> terms[af.getIndex()] = af.getTerm());
 
-    //handle default values (if any)
-    if (!termsWithDefaultValues.isEmpty()) {
-      defaultValuesTerm = new Term[termsWithDefaultValues.size()];
-      defaultValues = new String[termsWithDefaultValues.size()];
-      for (int i = 0; i < termsWithDefaultValues.size(); i++) {
-        defaultValuesTerm[i] = termsWithDefaultValues.get(i).getTerm();
-        defaultValues[i] = termsWithDefaultValues.get(i).getDefaultValue();
-      }
-    }
     return terms;
+  }
+
+  private void addDefaultValue(Term term, String value){
+    if(!defaultValues.isPresent()){
+      defaultValues = Optional.of(new HashMap<>());
+    }
+    defaultValues.get().put(term, value);
+  }
+
+  @Override
+  public Optional<Map<Term, String>> getDefaultValues() {
+    return defaultValues;
   }
 
   @Override
   public String[] read() throws IOException {
-    if (defaultValuesTerm == null) {
       return csvReader.next();
-    }
-
-    String[] line = csvReader.next();
-    if (line != null) {
-      line = Arrays.copyOf(line, line.length + defaultValuesTerm.length);
-      System.arraycopy(defaultValues, 0, line, line.length - 1, defaultValuesTerm.length);
-    }
-
-    return line;
   }
 
   public Term getRowType() {

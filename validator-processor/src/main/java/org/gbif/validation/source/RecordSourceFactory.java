@@ -145,6 +145,7 @@ public class RecordSourceFactory {
       try (RecordSource rs = fromDataFile(currDataFile).orElse(null)) {
         if (rs != null) {
           currDataFile.setColumns(rs.getHeaders());
+          currDataFile.setDefaultValues(rs.getDefaultValues());
 
           //if the rowType is not provided and we have headers we can try to guess it
           if (currDataFile.getColumns() != null && currDataFile.getRowType() == null) {

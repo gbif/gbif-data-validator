@@ -8,6 +8,8 @@ import org.gbif.validation.util.TempTermsUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -35,6 +37,11 @@ public class TabularFileReader implements RecordSource {
   }
 
   @Override
+  public Optional<Map<Term, String>> getDefaultValues() {
+    return Optional.empty();
+  }
+
+  @Override
   public String[] read() throws IOException {
     List<String> row = wrapped.read();
     if(row != null) {
@@ -42,6 +49,8 @@ public class TabularFileReader implements RecordSource {
     }
     return null;
   }
+
+
 
   @Override
   public void close() throws IOException {
