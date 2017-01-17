@@ -2,7 +2,6 @@ package org.gbif.validation.processor;
 
 import org.gbif.validation.evaluator.EvaluatorFactory;
 
-import akka.actor.ActorSystem;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -18,7 +17,7 @@ public class ParallelDataFileProcessorMasterTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-  private final ActorSystem system = ActorSystem.create("ParallelDataFileProcessorMasterTestSystem");
+ // private final ActorSystem system = ActorSystem.create("ParallelDataFileProcessorMasterTestSystem");
 
   @Test
   public void test(){
@@ -34,24 +33,5 @@ public class ParallelDataFileProcessorMasterTest {
 //    jobMaster.tell(dataJob, self());
   }
 
-//  public void testSingleFileValidation() throws IOException {
-//
-//    File testFile = FileUtils.getClasspathFile(TEST_FILE_LOCATION);
-//
-//    ResourceEvaluationManager manager = new ResourceEvaluationManager(DEV_API, 1000);
-//    DataFile datafile = new DataFile();
-//    datafile.setHasHeaders(Optional.of(true));
-//    datafile.setDelimiterChar('\t');
-//    datafile.setSourceFileName("myfile.tsv");
-//    datafile.setRowType(DwcTerm.Occurrence);
-//    datafile.setFileFormat(FileFormat.TABULAR);
-//    datafile.setFilePath(testFile.toPath());
-//
-//    ValidationResult result = manager.evaluate(datafile);
-//
-//    assertNotNull(result.getResults());
-//    // we should have 1 ValidationResourceResult which should matches NUMBER_OF_ISSUES_EXPECTED
-//    assertEquals(NUMBER_OF_ISSUES_EXPECTED, result.getResults().get(0).getIssues().size());
-//  }
 
 }

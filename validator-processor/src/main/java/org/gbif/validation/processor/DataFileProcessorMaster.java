@@ -4,8 +4,8 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
@@ -18,11 +18,9 @@ import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.RecordSourceFactory;
-import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,7 +31,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
@@ -50,6 +47,8 @@ import static akka.japi.pf.ReceiveBuilder.match;
  * This class decides if the data input should be split into smaller pieces to be processed by worker actors..
  */
 public class DataFileProcessorMaster extends AbstractLoggingActor {
+
+  private static final int MAX_WORKER = Runtime.getRuntime().availableProcessors() * 50;
 
   private final Map<Term, DataFile> rowTypeDataFile;
   private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
@@ -71,14 +70,12 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private static class RecordEvaluationUnit {
     private final List<DataFile> dataFiles;
     private final RecordEvaluator recordEvaluator;
-    private final int numOfActors;
     private final CollectorGroupProvider collectorsProvider;
 
-    RecordEvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator, int numOfActors,
+    RecordEvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator,
                    CollectorGroupProvider collectorsProvider) {
       this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
-      this.numOfActors = numOfActors;
       this.collectorsProvider = collectorsProvider;
     }
   }
@@ -167,10 +164,12 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Calculates the required splits to process all the {@link DataFile}.
    * This method expect {@link #init(Iterable)} to be already called.
-   * @param dataFiles all files to evaluate. For DarwinCore it also includes all extensions.
+   *
+   * @param dataFiles     all files to evaluate. For DarwinCore it also includes all extensions.
    * @param factory
    * @param fileSplitSize
    * @param numOfWorkers
+   *
    * @return
    */
   private List<RecordEvaluationUnit> prepareRecordBasedEvaluations(Iterable<DataFile> dataFiles, EvaluatorFactory factory,
@@ -182,16 +181,15 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     dataFiles.forEach(df -> {
       if (DwcTerm.Taxon == df.getRowType()) {
         numOfWorkers.increment();
-        dataFilesToEvaluate.add(new RecordEvaluationUnit(Collections.singletonList(df), null, df.getNumOfLines(), null));
+        dataFilesToEvaluate.add(new RecordEvaluationUnit(Collections.singletonList(df), null, null));
       } else {
         List<Term> columns = Arrays.asList(df.getColumns());
         try {
-          List<DataFile> splitDataFile = splitDataFile(df, fileSplitSize);
+          List<DataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
           numOfWorkers.add(splitDataFile.size());
 
           dataFilesToEvaluate.add(new RecordEvaluationUnit(splitDataFile,
                   factory.create(df.getRowType(), columns, df.getDefaultValues()),
-                  splitDataFile.size(),
                   rowTypeCollectorProviders.get(df.getRowType())));
         } catch (IOException ioEx) {
           log().error("Failed to split data", ioEx);
@@ -259,7 +257,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     });
   }
 
-
   /**
    * Creates a Actor/Worker for each evaluation unit.
    */
@@ -273,57 +270,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Split the provided {@link DataFile} into multiple {@link DataFile} if required.
-   * If no split is required the returning list will contain the provided {@link DataFile}.
-   * @param dataFile
-   * @param fileSplitSize
-   * @return
-   * @throws IOException
-   */
-  private List<DataFile> splitDataFile(DataFile dataFile, Integer fileSplitSize) throws IOException {
-    List<DataFile> splitDataFiles = new ArrayList<>();
-    if(dataFile.getNumOfLines() <= fileSplitSize) {
-      splitDataFiles.add(dataFile);
-    } else {
-      String splitFolder = workingDir.toPath().resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
-      String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
-
-      boolean inputHasHeaders = dataFile.isHasHeaders();
-      IntStream.range(0, splits.length)
-        .forEach(idx -> splitDataFiles.add(newSplitDataFile(dataFile,
-                                                            splitFolder,
-                                                            splits[idx],
-                                                            inputHasHeaders && (idx == 0),
-                                                            Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0)))));
-    }
-    return splitDataFiles;
-  }
-
-  /**
-   * Get a new {@link DataFile} instance representing a split of the provided {@link DataFile}.
-   *
-   * @param dataFile
-   * @param baseDir
-   * @param fileName
-   * @param withHeader
-   * @param offset
-   * @return new {@link DataFile} representing a portion of the provided dataFile.
-   */
-  private static DataFile newSplitDataFile(DataFile dataFile, String baseDir, String fileName,
-                                           boolean withHeader, Optional<Integer> offset){
-    //Creates the file to be used
-    File splitFile = new File(baseDir, fileName);
-    splitFile.deleteOnExit();
-
-    //use dataFile as parent dataFile
-    DataFile dataInputSplitFile = DataFile.copyFromParent(dataFile);
-    dataInputSplitFile.setHasHeaders(withHeader);
-    dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
-    dataInputSplitFile.setFileLineOffset(offset);
-    return dataInputSplitFile;
-  }
-
-  /**
    * Creates the worker router using the calculated number of workers.
    */
   private ActorRef createWorkerRoutes(RecordEvaluationUnit evaluationUnit) {
@@ -332,7 +278,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, checklistValidator),actorName);
     }
     return getContext().actorOf(
-            new RoundRobinPool(10).props(Props.create(DataFileRecordsActor.class,
+            new RoundRobinPool(Math.min(evaluationUnit.dataFiles.size(), MAX_WORKER)).props(Props.create(DataFileRecordsActor.class,
                                                                               evaluationUnit.recordEvaluator,
                                                                               evaluationUnit.collectorsProvider)),
             actorName);

@@ -25,20 +25,20 @@ public class DwcExtensionIntegrityValidationTest {
    * Gets a test core file from the specified testDir.
    */
   private static DataFile getCoreTestFileDescriptor(String testDir) {
-    return getTestFileDescriptor(testDir, "core.txt");
+    return getTestDataFile(testDir, "core.txt");
   }
 
   /**
    * Gets a test extension file from the specified testDir.
    */
   private static DataFile getExtensionTestFileDescriptor(String testDir) {
-    return getTestFileDescriptor(testDir, "ext.txt");
+    return getTestDataFile(testDir, "ext.txt");
   }
 
   /**
    * Utility class to create data file descriptors from tests files.
    */
-  private static DataFile getTestFileDescriptor(String testDir, String testFileName) {
+  private static DataFile getTestDataFile(String testDir, String testFileName) {
     try {
       URL testFileUrl = Resources.getResource(Paths.get(RESOURCES_DIR, testDir, testFileName).toString());
       DataFile dataFileDescriptor = new DataFile();
@@ -96,7 +96,6 @@ public class DwcExtensionIntegrityValidationTest {
   public void collectUnlinkedExtensionsNoInitialColumnsTest() throws IOException {
     buildIntegrityTest("integrityOn3rdColumn", 2, 1, 2);
   }
-
 
   /**
    * Tests that 2 extension columns are missing in columns different to the first columns in core and extension files.

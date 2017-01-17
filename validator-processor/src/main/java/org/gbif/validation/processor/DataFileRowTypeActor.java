@@ -22,7 +22,7 @@ import static akka.pattern.Patterns.pipe;
  * {@link DataFileRowTypeActor} works on a specific rowType but expect the dataFile to represent the complete
  * Dwc-A.
  */
-public class DataFileRowTypeActor extends AbstractLoggingActor {
+class DataFileRowTypeActor extends AbstractLoggingActor {
 
   /**
    *
