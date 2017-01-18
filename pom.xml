@@ -48,8 +48,13 @@
     <gbif-api.version>0.50-SNAPSHOT</gbif-api.version>
     <gbif-common.version>0.31</gbif-common.version>
     <gbif-common-ws.version>0.38-SNAPSHOT</gbif-common-ws.version>
-    <gbif-occurrence.version>0.59</gbif-occurrence.version>
+    <gbif-occurrence.version>0.61-SNAPSHOT</gbif-occurrence.version>
     <gbif-checklistbank.version>2.50</gbif-checklistbank.version>
+
+    <!-- GBIF libraries -->
+    <gbif-microservice.version>0.6-SNAPSHOT</gbif-microservice.version>
+    <gbif-parsers.version>0.30</gbif-parsers.version>
+    <gbif-httputils.version>0.10</gbif-httputils.version>
 
     <!-- older lucene version required by checklistbank normalizer -->
     <lucene.version>3.6.2</lucene.version>
@@ -158,6 +163,11 @@
             <artifactId>lucene-analyzers-common</artifactId>
           </exclusion>
         </exclusions>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif</groupId>
+        <artifactId>gbif-parsers</artifactId>
+        <version>${gbif-parsers.version}</version>
       </dependency>
 
       <dependency>

@@ -27,10 +27,8 @@ public class ValidationResult implements Serializable {
   //TODO maybe we should store the concrete type to allow typed getter?
   private final List<ValidationResultElement> results;
 
-  private final List<ChecklistValidationResult> checklists;
-
   public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat, ValidationErrorCode errorCode) {
-    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode, null);
+    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode);
   }
 
   /**
@@ -42,15 +40,13 @@ public class ValidationResult implements Serializable {
    * @param errorCode
    */
   public ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                   List<ValidationResultElement> results, ValidationErrorCode errorCode,
-                   List<ChecklistValidationResult> checklists) {
+                   List<ValidationResultElement> results, ValidationErrorCode errorCode) {
     this.indexeable = indexeable;
     this.fileName = fileName;
     this.fileFormat = fileFormat;
     this.validationProfile = validationProfile;
     this.results = results;
     this.errorCode = errorCode;
-    this.checklists = checklists;
   }
 
   public Boolean isIndexeable() {
@@ -77,7 +73,4 @@ public class ValidationResult implements Serializable {
     return errorCode;
   }
 
-  public List<ChecklistValidationResult> getChecklists() {
-    return checklists;
-  }
 }

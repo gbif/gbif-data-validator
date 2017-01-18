@@ -25,11 +25,6 @@
   <!-- Plugins -->
   <maven-shade-plugin.version>2.4</maven-shade-plugin.version>
 
-  <!-- GBIF libraries -->
-  <gbif-microservice.version>0.6-SNAPSHOT</gbif-microservice.version>
-  <gbif-parsers.version>0.29-SNAPSHOT</gbif-parsers.version>
-  <gbif-httputils.version>0.10</gbif-httputils.version>
-
   <!-- External libraries -->
   <servlet-api.version>3.1.0</servlet-api.version>
   <javassist.version>3.19.0-GA</javassist.version>
@@ -162,7 +157,6 @@
   <dependency>
     <groupId>org.gbif</groupId>
     <artifactId>gbif-parsers</artifactId>
-    <version>${gbif-parsers.version}</version>
   </dependency>
   <dependency>
     <groupId>org.gbif</groupId>

@@ -59,7 +59,7 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
 
       return new DataWorkResult(rowType, DataWorkResult.Result.SUCCESS, collector);
     } catch (Exception ex) {
-      log().error("Error checking records integrity, datafile {}", dwcaDataFile, ex);
+      log().error(ex, "Error checking records integrity, datafile {}", dwcaDataFile);
       return new DataWorkResult(rowType, DataWorkResult.Result.FAILED, collector);
     }
   }

@@ -1,7 +1,6 @@
 package org.gbif.validation.jobserver.impl;
 
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.processor.DataFileProcessorMaster;
 
@@ -19,10 +18,8 @@ public class ActorPropsSupplier implements Supplier<Props> {
   /**
    * Default constructor, the parameters received are used to build actor instances.
    */
-  public ActorPropsSupplier(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir,
-                            ChecklistValidator checklistValidator) {
-    props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
-                                           workingDir, checklistValidator);
+  public ActorPropsSupplier(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir) {
+    props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize, workingDir);
   }
 
   /**

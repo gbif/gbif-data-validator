@@ -9,10 +9,8 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
-import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultElement;
-import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -53,8 +51,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private final Map<Term, DataFile> rowTypeDataFile;
   private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
-  private final List<ChecklistValidationResult> checklistsResults;
-  private final ChecklistValidator checklistValidator;
   private final AtomicInteger workerCompleted;
 
   private int numOfWorkers;
@@ -97,15 +93,12 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Full constructor.
    */
-  DataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
-                          ChecklistValidator  checklistValidator) {
+  DataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir) {
 
     rowTypeDataFile = new ConcurrentHashMap<>();
     rowTypeCollectorProviders = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
-    checklistsResults = Collections.synchronizedList(new ArrayList<>());
-    this.checklistValidator = checklistValidator;
 
     receive(
             //this should only be called once
@@ -133,17 +126,18 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
       init(dataFiles);
 
+      //numOfWorkers is used to know how many responses we are expecting
       final MutableInt numOfWorkers = new MutableInt(0);
       List<RecordEvaluationUnit> dataFilesToEvaluate = prepareRecordBasedEvaluations(dataFiles, factory, fileSplitSize,
               numOfWorkers);
 
-      List<RowTypeEvaluationUnit> integrity = prepareRowTypeBasedEvaluations(dataFile, dataFiles);
-      numOfWorkers.add(integrity.size());
+      List<RowTypeEvaluationUnit> rowTypeBasedEvaluations = prepareRowTypeBasedEvaluations(dataFile, dataFiles, factory);
+      numOfWorkers.add(rowTypeBasedEvaluations.size());
 
       this.numOfWorkers = numOfWorkers.intValue();
 
       //now trigger everything
-      processRowTypeEvaluationUnit(dataFile, integrity);
+      processRowTypeEvaluationUnit(dataFile, rowTypeBasedEvaluations);
       processEvaluationUnit(dataFilesToEvaluate);
     }
   }
@@ -179,21 +173,16 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
     //prepare everything
     dataFiles.forEach(df -> {
-      if (DwcTerm.Taxon == df.getRowType()) {
-        numOfWorkers.increment();
-        dataFilesToEvaluate.add(new RecordEvaluationUnit(Collections.singletonList(df), null, null));
-      } else {
-        List<Term> columns = Arrays.asList(df.getColumns());
-        try {
-          List<DataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
-          numOfWorkers.add(splitDataFile.size());
+      List<Term> columns = Arrays.asList(df.getColumns());
+      try {
+        List<DataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
+        numOfWorkers.add(splitDataFile.size());
 
-          dataFilesToEvaluate.add(new RecordEvaluationUnit(splitDataFile,
-                  factory.create(df.getRowType(), columns, df.getDefaultValues()),
-                  rowTypeCollectorProviders.get(df.getRowType())));
-        } catch (IOException ioEx) {
-          log().error("Failed to split data", ioEx);
-        }
+        dataFilesToEvaluate.add(new RecordEvaluationUnit(splitDataFile,
+                factory.create(df.getRowType(), columns, df.getDefaultValues()),
+                rowTypeCollectorProviders.get(df.getRowType())));
+      } catch (IOException ioEx) {
+        log().error("Failed to split data", ioEx);
       }
     });
 
@@ -211,19 +200,31 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    *
    * @return all ValidationResultElement or an empty list, never null
    */
-  private List<RowTypeEvaluationUnit> prepareRowTypeBasedEvaluations(DataFile dwcaDataFile, List<DataFile> dataFiles) {
+  private List<RowTypeEvaluationUnit> prepareRowTypeBasedEvaluations(DataFile dwcaDataFile, List<DataFile> dataFiles,
+                                                                     EvaluatorFactory factory) {
     if (FileFormat.DWCA != dwcaDataFile.getFileFormat()) {
       return Collections.emptyList();
     }
 
-    return
+    List<RowTypeEvaluationUnit> rowTypeEvaluationUnits =
             dataFiles.stream()
-                    .filter(df -> !df.isCore())
-                    .map(df -> new RowTypeEvaluationUnit(
-                            df.getRowType(),
-                            EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
-                            rowTypeCollectorProviders.get(df.getRowType())))
-                    .collect(Collectors.toList());
+            .filter(df -> !df.isCore())
+            .map(df -> new RowTypeEvaluationUnit(
+                    df.getRowType(),
+                    EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
+                    rowTypeCollectorProviders.get(df.getRowType())))
+            .collect(Collectors.toList());
+
+    dataFiles.stream().filter( df -> DwcTerm.Taxon.equals(df.getRowType()))
+            .findFirst()
+            .ifPresent(df -> rowTypeEvaluationUnits.add(
+                    new RowTypeEvaluationUnit(
+                            DwcTerm.Taxon,
+                            factory.createChecklistEvaluator(),
+                            rowTypeCollectorProviders.get(DwcTerm.Taxon)
+            )));
+
+    return rowTypeEvaluationUnits;
 
   }
 
@@ -244,7 +245,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       validationResultElementList.add(validationResultElement.get());
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
               new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                      GBIF_INDEXING_PROFILE, validationResultElementList, null, null)));
+                      GBIF_INDEXING_PROFILE, validationResultElementList, null)));
       return false;
     }
     return true;
@@ -274,9 +275,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private ActorRef createWorkerRoutes(RecordEvaluationUnit evaluationUnit) {
     String actorName =  "dataFileRouter_" + UUID.randomUUID();
-    if (evaluationUnit.dataFiles.size() == 1 && DwcTerm.Taxon == evaluationUnit.dataFiles.get(0).getRowType()) {
-      return getContext().actorOf(Props.create(ChecklistsValidatorActor.class, checklistValidator),actorName);
-    }
     return getContext().actorOf(
             new RoundRobinPool(Math.min(evaluationUnit.dataFiles.size(), MAX_WORKER)).props(Props.create(DataFileRecordsActor.class,
                                                                               evaluationUnit.recordEvaluator,
@@ -320,16 +318,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Collects individual results and aggregates them in the internal data structures.
    */
   private void collectResult(DataWorkResult result) {
-
-    //FIXME we should only use one collector
-    if (DwcTerm.Taxon != result.getRowType()) {
-      rowTypeCollectors.compute(result.getRowType(), (key, val) -> {
-        val.add(result.getCollectors());
-        return val;
-      });
-    } else {
-      checklistsResults.add(result.getChecklistValidationResult());
-    }
+    rowTypeCollectors.compute(result.getRowType(), (key, val) -> {
+      val.add(result.getCollectors());
+      return val;
+    });
   }
 
   /**
@@ -344,7 +336,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
                                                             collectorList)
     ));
     return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
-            GBIF_INDEXING_PROFILE, validationResultElements, null, checklistsResults);
+            GBIF_INDEXING_PROFILE, validationResultElements, null);
   }
 
   /**

@@ -85,6 +85,6 @@ class DataWorkResult {
 
   @Override
   public String toString() {
-    return "Result: " + result.name() + " Datafile: " + dataFile.getFilePath();
+    return "Result: " + result != null ? result.name() : "null" + " Datafile: " + dataFile.getFilePath();
   }
 }

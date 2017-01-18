@@ -5,7 +5,6 @@ import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.result.ValidationResult;
-import org.gbif.validation.checklists.ChecklistValidator;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
@@ -116,11 +115,9 @@ public class ValidationWsListener extends GbifServletListener {
      * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
      */
     private static ActorPropsSupplier buildActorPropsMapping(ValidationConfiguration configuration) {
-      return new ActorPropsSupplier(new EvaluatorFactory(configuration.getApiUrl()),
+      return new ActorPropsSupplier(new EvaluatorFactory(configuration.getApiUrl(), getNormalizerConfiguration()),
                                     configuration.getFileSplitSize(),
-                                    configuration.getWorkingDir(),
-                                    new ChecklistValidator(getNormalizerConfiguration()));
-
+                                    configuration.getWorkingDir());
     }
 
     /**

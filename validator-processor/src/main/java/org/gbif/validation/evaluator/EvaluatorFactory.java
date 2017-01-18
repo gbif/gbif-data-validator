@@ -1,5 +1,6 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
@@ -7,8 +8,8 @@ import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
@@ -44,7 +45,9 @@ public class EvaluatorFactory {
   private static final XMLSchemaValidatorProvider XML_SCHEMA_VALIDATOR_PROVIDER = createXMLSchemaValidatorProvider();
   private static final int CLIENT_TO = 600000; // registry client default timeout
   private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
+
   private final String apiUrl;
+  private final NormalizerConfiguration normalizerConfiguration;
 
   /**
    * Create a {@link ResourceStructureEvaluator} instance for a specific {@link FileFormat}.
@@ -63,7 +66,7 @@ public class EvaluatorFactory {
   }
 
   /**
-   * Create a {@link RecordCollectionEvaluator} instance for a specific rowType.
+   * Creates a {@link RecordCollectionEvaluator} instance for a specific rowType.
    * Given a {@link DataFile} that represents the entire Dwc-A, this {@link RecordCollectionEvaluator} instance
    * will check for referential integrity issues between the given extension (rowType) and the core.
    *
@@ -73,6 +76,16 @@ public class EvaluatorFactory {
   public static RecordCollectionEvaluator<DataFile> createReferentialIntegrityEvaluator(Term rowType) {
     Objects.requireNonNull(rowType, "rowType shall be provided");
     return new ReferentialIntegrityEvaluator(rowType);
+  }
+
+  /**
+   * Creates a {@link RecordCollectionEvaluator} instance for a evaluating checklist.
+   *
+   *
+   * @return
+   */
+  public RecordCollectionEvaluator<DataFile> createChecklistEvaluator() {
+    return new ChecklistEvaluator(normalizerConfiguration);
   }
 
   /**
@@ -89,23 +102,9 @@ public class EvaluatorFactory {
     return new XMLSchemaValidatorProvider(Optional.empty());
   }
 
-  /**
-   * Creates an HTTP client.
-   */
-  private static ApacheHttpClient createHttpClient() {
-
-    ClientConfig cc = new DefaultClientConfig();
-    cc.getClasses().add(JacksonJsonContextResolver.class);
-    cc.getClasses().add(JacksonJsonProvider.class);
-    cc.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, true);
-    cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, CLIENT_TO);
-    JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
-
-    return ApacheHttpClient.create(cc);
-  }
-
-  public EvaluatorFactory(String apiUrl) {
+  public EvaluatorFactory(String apiUrl, NormalizerConfiguration normalizerConfiguration) {
     this.apiUrl = apiUrl;
+    this.normalizerConfiguration = normalizerConfiguration;
   }
 
   /**
@@ -136,6 +135,21 @@ public class EvaluatorFactory {
     TaxonomyInterpreter taxonomyInterpreter = new TaxonomyInterpreter(webResource);
     LocationInterpreter locationInterpreter = new LocationInterpreter(new CoordinateInterpreter(webResource));
     return new OccurrenceInterpreter(taxonomyInterpreter, locationInterpreter);
+  }
+
+  /**
+   * Creates an HTTP client.
+   */
+  private static ApacheHttpClient createHttpClient() {
+
+    ClientConfig cc = new DefaultClientConfig();
+    cc.getClasses().add(JacksonJsonContextResolver.class);
+    cc.getClasses().add(JacksonJsonProvider.class);
+    cc.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, true);
+    cc.getProperties().put(ClientConfig.PROPERTY_CONNECT_TIMEOUT, CLIENT_TO);
+    JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
+
+    return ApacheHttpClient.create(cc);
   }
 
 }

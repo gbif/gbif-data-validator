@@ -1,7 +1,5 @@
 package org.gbif.validation.processor;
 
-import org.gbif.validation.evaluator.EvaluatorFactory;
-
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -22,7 +20,7 @@ public class ParallelDataFileProcessorMasterTest {
   @Test
   public void test(){
 
-    EvaluatorFactory EVALUATOR_FACTORY = new EvaluatorFactory(UAT_API);
+//    EvaluatorFactory EVALUATOR_FACTORY = new EvaluatorFactory(UAT_API);
 
 //    Props props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
 //            workingDir, checklistValidator);
