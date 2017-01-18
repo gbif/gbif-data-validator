@@ -43,7 +43,7 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator<DataFile> {
 
   private static final Predicate<InterpretationRemark> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
 
-  private static final Logger LOG = LoggerFactory.getLogger(ChecklistValidator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(ChecklistEvaluator.class);
 
   private final NormalizerConfiguration configuration;
 
