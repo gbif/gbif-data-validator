@@ -36,10 +36,9 @@ public class InterpretationRemarkEvaluationTypeMapping {
           NameUsageIssue.BACKBONE_MATCH_NONE)
   );
 
-  public static final Map<InterpretationRemark, EvaluationType> OCCURRENCE_ISSUE_MAPPING;
+  public static final Map<InterpretationRemark, EvaluationType> INTERPRETATION_REMARK_MAPPING;
 
   static {
-
     List<Enum<? extends InterpretationRemark>> allRemarks = new ArrayList<>();
     allRemarks.addAll(Arrays.asList(OccurrenceIssue.values()));
     allRemarks.addAll(Arrays.asList(NameUsageIssue.values()));
@@ -50,7 +49,7 @@ public class InterpretationRemarkEvaluationTypeMapping {
                     .filter(x -> !UNSUPPORTED_ISSUES.contains(x))
                     .collect(Collectors.toMap(k-> (InterpretationRemark)k, v -> EvaluationType.valueOf(v.name())));
 
-    OCCURRENCE_ISSUE_MAPPING = Collections.unmodifiableMap(mapping);
+    INTERPRETATION_REMARK_MAPPING = Collections.unmodifiableMap(mapping);
   }
 
 }

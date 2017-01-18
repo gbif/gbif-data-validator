@@ -42,7 +42,6 @@ public class ReferentialIntegrityEvaluatorTest {
       assertEquals(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION, recordEvaluationResultDetails.getEvaluationType());
       assertEquals("ZZ", recordEvaluationResult.getRecordId());
     } catch (IOException e) {
-      e.printStackTrace();
       fail(e.getMessage());
     }
 

@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition.REMARKS_MAP;
-import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING;
+import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMapping.INTERPRETATION_REMARK_MAPPING;
 
 /**
  * Class to evaluate an occurrence record using an {@link OccurrenceInterpreter}.
@@ -42,7 +42,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
   private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> REMARKS_MAP.containsKey(issue)
-                                                                       && OCCURRENCE_ISSUE_MAPPING.containsKey(issue);
+                                                                       && INTERPRETATION_REMARK_MAPPING.containsKey(issue);
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
@@ -115,7 +115,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
                 .stream()
                 .filter(t -> verbatimFields.get(t) != null)
                 .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
-        builder.addInterpretationDetail(OCCURRENCE_ISSUE_MAPPING.get(issue),
+        builder.addInterpretationDetail(INTERPRETATION_REMARK_MAPPING.get(issue),
                 relatedData);
 
       });
