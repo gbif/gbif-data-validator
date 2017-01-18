@@ -108,7 +108,7 @@ public class ValidationResultElement implements Serializable {
   }
 
   /**
-   * Represents the output of a specific {@link EvaluationType} with no details.
+   * Represents the output of a specific {@link EvaluationType}.
    *
    * Immutable class
    */

@@ -13,7 +13,7 @@ public class OccurrenceIssueEvaluationTypeMappingTest {
   @Test
   public void testOccurrenceIssueEvaluationTypeMapping() {
     //we just test that we can load the map since it is initialized in a static block
-    assertFalse(OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.isEmpty());
+    assertFalse(InterpretationRemarkEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING.isEmpty());
   }
 
 }

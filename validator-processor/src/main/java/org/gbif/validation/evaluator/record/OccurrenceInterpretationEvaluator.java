@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition.REMARKS_MAP;
-import static org.gbif.validation.evaluator.OccurrenceIssueEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING;
+import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMapping.OCCURRENCE_ISSUE_MAPPING;
 
 /**
  * Class to evaluate an occurrence record using an {@link OccurrenceInterpreter}.

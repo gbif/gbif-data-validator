@@ -7,5 +7,6 @@ package org.gbif.validation.api.model;
 public enum EvaluationCategory {
   RESOURCE_STRUCTURE,
   RECORD_STRUCTURE,
-  OCC_INTERPRETATION_BASED
+  OCC_INTERPRETATION_BASED,
+  CLB_INTERPRETATION_BASED
 }
