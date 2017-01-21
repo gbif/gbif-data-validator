@@ -10,3 +10,8 @@ Possible transformations on DataFile:
  * Tranforming Excel file into CSV
  * Splitting a tabular file into multiple (smaller) tabular files
 
+##RecordSource
+
+##Actors
+
+##Collectors
