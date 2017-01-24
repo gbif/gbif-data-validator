@@ -36,7 +36,7 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
 
 
 /**
- * {@link RecordCollectionEvaluator} implementation to evaluate Checlist using ChecklistBank Normalizer.
+ * {@link RecordCollectionEvaluator} implementation to evaluate Checklist using ChecklistBank Normalizer.
  * Currently, no nub matching is done
  */
 public class ChecklistEvaluator implements RecordCollectionEvaluator<DataFile> {

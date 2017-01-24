@@ -34,13 +34,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
    */
   public RecordEvaluationResultCollector(Integer maxNumberOfSample, boolean useConcurrentMap) {
     this.maxNumberOfSample = maxNumberOfSample != null ? maxNumberOfSample : DEFAULT_MAX_NUMBER_OF_SAMPLE;
-
-    if(useConcurrentMap) {
-      innerImpl = new RecordEvaluationResultCollectorConcurrent(-1);
-    }
-    else {
-      innerImpl = new RecordEvaluationResultCollectorSingleThread(-1);
-    }
+    innerImpl = useConcurrentMap ? new RecordEvaluationResultCollectorConcurrent() :
+            new RecordEvaluationResultCollectorSingleThread();
   }
 
   /**
@@ -54,11 +49,14 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     Map<EvaluationType, List<ValidationResultDetails>> getSamples();
   }
 
+  /**
+   * InnerRecordEvaluationResultCollector implementation with support for single-thread access.
+   */
   private static class RecordEvaluationResultCollectorSingleThread implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, Long> issueCounter;
     private final Map<EvaluationType, Collection<ValidationResultDetails>> issueSampling;
 
-    RecordEvaluationResultCollectorSingleThread(Integer maxNumberOfSample) {
+    RecordEvaluationResultCollectorSingleThread() {
       issueCounter = new EnumMap<>(EvaluationType.class);
       issueSampling = new EnumMap<>(EvaluationType.class);
     }
@@ -77,22 +75,25 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
 
     @Override
     public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
-      return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
-              rec ->  new ArrayList<>(rec.getValue()))); //Value
+      return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+              rec ->  new ArrayList<>(rec.getValue())));
     }
 
     @Override
     public Map<EvaluationType, Long> getAggregatedCounts() {
-      return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
-              Map.Entry::getValue)); //Value
+      return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+              Map.Entry::getValue));
     }
   }
 
+  /**
+   * InnerRecordEvaluationResultCollector implementation with support for concurrent access.
+   */
   private static class RecordEvaluationResultCollectorConcurrent implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, LongAdder> issueCounter;
     private final Map<EvaluationType, Collection<ValidationResultDetails>> issueSampling;
 
-    RecordEvaluationResultCollectorConcurrent(Integer maxNumberOfSample) {
+    RecordEvaluationResultCollectorConcurrent() {
       issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
       issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
     }
@@ -114,8 +115,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
      */
     @Override
     public Map<EvaluationType, Long> getAggregatedCounts() {
-      return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
-              rec -> rec.getValue().longValue())); //Value
+      return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+              rec -> rec.getValue().longValue()));
     }
 
     /**
@@ -124,14 +125,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
      */
     @Override
     public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
-      return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, //Key
-              rec ->  new ArrayList<>(rec.getValue()))); //Value
+      return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+              rec ->  new ArrayList<>(rec.getValue())));
     }
   }
 
   @Override
   public void collect(RecordEvaluationResult result) {
-    //result.
     if (result !=null && result.getDetails() != null) {
       result.getDetails().forEach(detail -> {
         innerImpl.countAndPrepare(detail.getEvaluationType());

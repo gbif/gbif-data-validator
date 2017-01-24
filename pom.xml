@@ -46,7 +46,7 @@
     <dwc-api.version>1.17-SNAPSHOT</dwc-api.version>
     <dwca-io.version>1.28</dwca-io.version>
     <gbif-api.version>0.50-SNAPSHOT</gbif-api.version>
-    <gbif-common.version>0.31</gbif-common.version>
+    <gbif-common.version>0.32-SNAPSHOT</gbif-common.version>
     <gbif-common-ws.version>0.38-SNAPSHOT</gbif-common-ws.version>
     <gbif-occurrence.version>0.61-SNAPSHOT</gbif-occurrence.version>
     <gbif-checklistbank.version>2.50</gbif-checklistbank.version>

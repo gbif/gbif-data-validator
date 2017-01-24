@@ -1,6 +1,7 @@
 package org.gbif.validation.api.result;
 
 import org.gbif.dwc.terms.Term;
+import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
 
@@ -21,6 +22,7 @@ public class ValidationResultElement implements Serializable {
   private final List<ValidationIssue> issues;
 
   private final Long numberOfLines;
+  private final DwcFileType fileType;
   //From Dwc "class of data represented by each row"
   private final Term rowType;
 
@@ -29,29 +31,31 @@ public class ValidationResultElement implements Serializable {
 
   /**
    * Get a new {@link ValidationResultElement} that represents an exception linked to a {@link EvaluationType}.
+   *
    * @param fileName
    * @param evaluationType
    * @param exception
+   *
    * @return
    */
   public static ValidationResultElement onException(String fileName, EvaluationType evaluationType, String exception){
     //EvaluationType evaluationType
     List<ValidationIssue> issues = new ArrayList<>();
     issues.add(new ValidationIssue(evaluationType, 1l, exception));
-    return new ValidationResultElement(fileName, null, null, issues);
+    return new ValidationResultElement(fileName, null, null, null, issues);
   }
 
-  public ValidationResultElement(String fileName, Long numberOfLines, Term rowType,
+  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
                                  List<ValidationIssue> issues){
-    this(fileName, numberOfLines, rowType, issues, null, null);
+    this(fileName, numberOfLines, fileType, rowType, issues, null, null);
   }
 
-  public ValidationResultElement(String fileName, Long numberOfLines, Term rowType,
+  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
                           Map<EvaluationType, Long> issueCounter,
                           Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
                           Map<Term, Long> termsFrequency,
                           Map<Term, Long> interpretedValueCounts) {
-    this(fileName, numberOfLines, rowType, new ArrayList<>(), termsFrequency, interpretedValueCounts);
+    this(fileName, numberOfLines, fileType, rowType, new ArrayList<>(), termsFrequency, interpretedValueCounts);
 
     if(issueCounter != null && issueSampling != null) {
       issueCounter.forEach(
@@ -65,17 +69,19 @@ public class ValidationResultElement implements Serializable {
    *
    * @param fileName
    * @param numberOfLines
+   * @param fileType
    * @param rowType
    * @param issues
    * @param termsFrequency
    * @param interpretedValueCounts
    */
-  public ValidationResultElement(String fileName, Long numberOfLines, Term rowType,
+  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
                                  List<ValidationIssue> issues,
                                  Map<Term, Long> termsFrequency,
                                  Map<Term, Long> interpretedValueCounts) {
     this.fileName = fileName;
     this.numberOfLines = numberOfLines;
+    this.fileType = fileType;
     this.rowType = rowType;
     this.issues = issues;
     this.termsFrequency = termsFrequency;

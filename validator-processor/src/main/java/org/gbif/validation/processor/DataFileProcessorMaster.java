@@ -6,6 +6,7 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
@@ -208,7 +209,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
     List<RowTypeEvaluationUnit> rowTypeEvaluationUnits =
             dataFiles.stream()
-            .filter(df -> !df.isCore())
+            .filter(df -> df.getType() == DwcFileType.EXTENSION)
             .map(df -> new RowTypeEvaluationUnit(
                     df.getRowType(),
                     EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),

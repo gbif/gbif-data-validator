@@ -7,6 +7,7 @@ import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.util.FileBashUtilities;
 import org.gbif.ws.util.ExtraMediaTypes;
@@ -173,7 +174,7 @@ public class RecordSourceFactory {
       //add the core first
       DataFile core = createDwcDataFile(dwcaDataFile, dwcReader.getCore().getLocationFile().toPath());
       core.setRowType(dwcReader.getRowType());
-      core.setCore(true);
+      core.setType(DwcFileType.CORE);
       core.setHasHeaders(dwcReader.getCore().getIgnoreHeaderLines() != null
                                      && dwcReader.getCore().getIgnoreHeaderLines() > 0);
       core.setDelimiterChar(dwcReader.getCore().getFieldsTerminatedBy().charAt(0));
@@ -182,7 +183,7 @@ public class RecordSourceFactory {
       for (ArchiveFile ext : dwcReader.getExtensions()) {
         DataFile extDatafile = createDwcDataFile(dwcaDataFile, Paths.get(ext.getLocationFile().getAbsolutePath()));
         extDatafile.setRowType(ext.getRowType());
-        extDatafile.setCore(false);
+        extDatafile.setType(DwcFileType.EXTENSION);
         extDatafile.setHasHeaders(ext.getIgnoreHeaderLines() != null && ext.getIgnoreHeaderLines() > 0);
         extDatafile.setDelimiterChar(ext.getFieldsTerminatedBy().charAt(0));
         dataFileList.add(extDatafile);

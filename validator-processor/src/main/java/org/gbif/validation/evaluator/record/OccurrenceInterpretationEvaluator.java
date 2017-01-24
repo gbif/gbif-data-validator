@@ -4,7 +4,6 @@ import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.OccurrenceIssue;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
-import org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.result.OccurrenceInterpretationResult;
 import org.gbif.validation.api.RecordEvaluator;
@@ -26,7 +25,6 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.occurrence.common.interpretation.InterpretationRemarksDefinition.REMARKS_MAP;
 import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMapping.INTERPRETATION_REMARK_MAPPING;
 
 /**
@@ -41,8 +39,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
-  private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> REMARKS_MAP.containsKey(issue)
-                                                                       && INTERPRETATION_REMARK_MAPPING.containsKey(issue);
+  private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
 
   /**
    * Default constructor, builds an instance using a OccurrenceInterpreter class.
@@ -108,17 +105,17 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
 
-    result.getUpdated().getIssues().stream().filter(IS_MAPPED).
-      forEach(issue -> {
+    result.getUpdated().getIssues().stream()
+            .filter(IS_MAPPED)
+            .forEach(issue -> {
+              Map<Term, String> relatedData = issue.getRelatedTerms()
+                      .stream()
+                      .filter(t -> verbatimFields.get(t) != null)
+                      .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
+              builder.addInterpretationDetail(INTERPRETATION_REMARK_MAPPING.get(issue),
+                      relatedData);
 
-        Map<Term, String> relatedData = InterpretationRemarksDefinition.getRelatedTerms(issue)
-                .stream()
-                .filter(t -> verbatimFields.get(t) != null)
-                .collect(Collectors.toMap(Function.identity(), verbatimFields::get));
-        builder.addInterpretationDetail(INTERPRETATION_REMARK_MAPPING.get(issue),
-                relatedData);
-
-      });
+            });
     return builder.build();
   }
 

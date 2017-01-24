@@ -1,6 +1,7 @@
 package org.gbif.validation.api;
 
 import org.gbif.dwc.terms.Term;
+import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
 
 import java.nio.file.Path;
@@ -26,10 +27,9 @@ public class DataFile {
   private String sourceFileName;
 
   private Term[] columns;
+  private DwcFileType type;
   private Term rowType;
   private Optional<Map<Term, String>> defaultValues = Optional.empty();
-
-  private boolean isCore = true;
 
   private Optional<Integer> fileLineOffset = Optional.empty();
   private boolean hasHeaders = false;
@@ -80,9 +80,9 @@ public class DataFile {
     destDataFile.sourceFileName = srcDataFile.sourceFileName;
 
     destDataFile.columns = srcDataFile.columns;
+    destDataFile.type = srcDataFile.type;
     destDataFile.rowType = srcDataFile.rowType;
     destDataFile.defaultValues = srcDataFile.defaultValues;
-    destDataFile.isCore = srcDataFile.isCore;
 
     destDataFile.fileLineOffset = srcDataFile.fileLineOffset;
     destDataFile.hasHeaders = srcDataFile.hasHeaders;
@@ -129,20 +129,13 @@ public class DataFile {
     this.rowType = rowType;
   }
 
-  /**
-   * Does this {@link DataFile} represent the "core" of a DarwinCore start schema representation.
-   * If the {@link DataFile} is not inside DarwinCore Archive it is considered the "core" file.
-   * Default value: true
-   * @return
-   */
-  public boolean isCore() {
-    return isCore;
+  public DwcFileType getType() {
+    return type;
   }
 
-  public void setCore(boolean core) {
-    isCore = core;
+  public void setType(DwcFileType type) {
+    this.type = type;
   }
-
 
   public void setFilePath(Path filePath) {
     this.filePath = filePath;
@@ -238,7 +231,7 @@ public class DataFile {
             ", columns=" + Arrays.toString(columns) +
             ", rowType=" + rowType +
             ", defaultValues=" + defaultValues +
-            ", isCore=" + isCore +
+            ", type=" + type +
             ", delimiterChar='" + delimiterChar + '\'' +
             ", numOfLines=" + numOfLines +
             ", fileLineOffset=" + fileLineOffset +
@@ -257,7 +250,7 @@ public class DataFile {
             Arrays.equals(columns, dataFile.columns) &&
             Objects.equals(rowType, dataFile.rowType) &&
             Objects.equals(defaultValues, dataFile.defaultValues) &&
-            Objects.equals(isCore, dataFile.isCore) &&
+            Objects.equals(type, dataFile.type) &&
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
@@ -275,7 +268,7 @@ public class DataFile {
             columns,
             rowType,
             defaultValues,
-            isCore,
+            type,
             delimiterChar,
             numOfLines,
             fileLineOffset,

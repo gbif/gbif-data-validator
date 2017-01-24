@@ -101,6 +101,7 @@ public class CollectorGroup {
 
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l),
+            dataFile.getType(),
             dataFile.getRowType(),
             mergedAggregatedCounts, resampledMergedSamples,
             mergedTermFrequency,
@@ -118,7 +119,7 @@ public class CollectorGroup {
    * @return
    */
   private static List<ValidationResultDetails> resample(List<ValidationResultDetails> resultDetails,
-                                                                                             int maxSample) {
+                                                        int maxSample) {
     return resultDetails.stream()
             .sorted((lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
             .limit(maxSample)
