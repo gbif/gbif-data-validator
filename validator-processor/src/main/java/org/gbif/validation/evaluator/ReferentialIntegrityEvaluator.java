@@ -10,7 +10,7 @@ import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
 import org.gbif.validation.collector.DwcExtensionIntegrityValidation;
-import org.gbif.validation.source.RecordSourceFactory;
+import org.gbif.validation.source.DataFileFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator<
       int coreIdIdx = core.getId().getIndex();
       int extCoreIdx = ext.getId().getIndex();
 
-      List<DataFile> dfList = RecordSourceFactory.prepareSource(dataFile);
+      List<DataFile> dfList = DataFileFactory.prepareDataFile(dataFile);
 
       Map<Term, DataFile> dfPerRowType = dfList.stream()
               .collect(Collectors.toMap(DataFile::getRowType, Function.identity()));
