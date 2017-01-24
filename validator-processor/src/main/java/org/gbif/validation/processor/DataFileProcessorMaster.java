@@ -16,7 +16,7 @@ import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.messages.DataJob;
-import org.gbif.validation.source.RecordSourceFactory;
+import org.gbif.validation.source.DataFileFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,7 +123,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     DataFile dataFile = dataJob.getJobData();
 
     if(evaluateResourceStructure(dataFile)){
-      List<DataFile> dataFiles = RecordSourceFactory.prepareSource(dataFile);
+      List<DataFile> dataFiles = DataFileFactory.prepareDataFile(dataFile);
 
       init(dataFiles);
 

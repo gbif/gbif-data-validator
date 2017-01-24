@@ -13,9 +13,9 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
- * Probably a Temporary class.
+ * Simple wrapper around {@link TabularDataFileReader} to expose it as {@link RecordSource}.
  */
-public class TabularFileReader implements RecordSource {
+class TabularFileReader implements RecordSource {
 
   private final Path filePath;
   private final List<String> headerLine;
@@ -49,8 +49,6 @@ public class TabularFileReader implements RecordSource {
     }
     return null;
   }
-
-
 
   @Override
   public void close() throws IOException {

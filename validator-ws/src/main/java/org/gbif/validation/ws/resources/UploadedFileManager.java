@@ -3,6 +3,7 @@ package org.gbif.validation.ws.resources;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
+import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.ws.conf.ValidationConfiguration;
 import org.gbif.ws.util.ExtraMediaTypes;
 
@@ -244,28 +245,26 @@ public class UploadedFileManager {
 
     Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
 
-    DataFile transferredDataFile = new DataFile();
-    transferredDataFile.setSourceFileName(filename);
-    transferredDataFile.setContentType(contentType);
-
+    DataFile transferredDataFile;
     try {
       //check if we have something to unzip
       if (ZIP_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
         try {
           unzip(inputStream, destinationFolder);
-          transferredDataFile.setFilePath(destinationFolder);
+
           //a little bit risky to assume that
-          transferredDataFile.setFileFormat(FileFormat.DWCA);
+          transferredDataFile = DataFileFactory.newDataFile(destinationFolder,
+                  filename, FileFormat.DWCA, contentType);
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
           throw new RuntimeException(arEx);
         }
       } else if (TABULAR_CONTENT_TYPES.contains(contentType)) {
-        transferredDataFile.setFilePath(copyInputStream(destinationFolder, inputStream, filename));
-        transferredDataFile.setFileFormat(FileFormat.TABULAR);
+        transferredDataFile = DataFileFactory.newDataFile(copyInputStream(destinationFolder, inputStream, filename),
+                filename, FileFormat.TABULAR, contentType);
       } else if (SPREADSHEET_CONTENT_TYPES.contains(contentType)) {
-        transferredDataFile.setFilePath(copyInputStream(destinationFolder, inputStream, filename));
-        transferredDataFile.setFileFormat(FileFormat.SPREADSHEET);
+        transferredDataFile = DataFileFactory.newDataFile(copyInputStream(destinationFolder, inputStream, filename),
+                filename, FileFormat.SPREADSHEET, contentType);
       } else {
         LOG.warn("Unsupported file type: {}", contentType);
         return Optional.empty();

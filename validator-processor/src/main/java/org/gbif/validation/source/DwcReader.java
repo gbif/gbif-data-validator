@@ -26,7 +26,7 @@ import javax.annotation.Nullable;
  * This reader can work on the core file, an extension file or a portion of one of them (after splitting).
  *
  */
-public class DwcReader implements RecordSource {
+class DwcReader implements RecordSource {
 
   private static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
