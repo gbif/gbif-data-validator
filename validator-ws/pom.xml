@@ -28,9 +28,7 @@
   <!-- External libraries -->
   <servlet-api.version>3.1.0</servlet-api.version>
   <javassist.version>3.19.0-GA</javassist.version>
-  <jersey.version>1.19</jersey.version>
-  <guice.version>4.0</guice.version>
-  <hadoop.version>2.6.0-cdh5.4.10</hadoop.version>
+
   <commons-fileupload.version>1.3.2</commons-fileupload.version>
   <commons-io.version>2.4</commons-io.version>
   <commons-compress.version>1.4.1</commons-compress.version>
@@ -179,7 +177,6 @@
     <!-- dependency:analyze reports a false positive here -->
     <groupId>com.google.inject</groupId>
     <artifactId>guice</artifactId>
-    <version>${guice.version}</version>
   </dependency>
 
   <dependency>
@@ -218,9 +215,12 @@
     <version>${servlet-api.version}</version>
   </dependency>
   <dependency>
+    <groupId>com.sun.jersey</groupId>
+    <artifactId>jersey-json</artifactId>
+  </dependency>
+  <dependency>
     <groupId>com.sun.jersey.contribs</groupId>
     <artifactId>jersey-multipart</artifactId>
-    <version>${jersey.version}</version>
   </dependency>
   <dependency>
     <groupId>com.fasterxml.jackson.dataformat</groupId>
