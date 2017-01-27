@@ -14,8 +14,12 @@ import java.util.List;
  */
 public class FileBashUtilities {
 
+  //command that appends a newline at the end of the file if not already there
+  private static final String ENSURE_FILE_ENDS_NEWLINE_CMD = "sed -i '' -e '$a\\' %s";
+
   //command to find content in a specific column of a file
   private static final String FIND_FILE_CMD = "awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s";
+  private static final String FIND_DUPLICATE_CMD = "awk -F'%s' '{cur = $%d} prev == cur { print $%d} {prev = cur}' %s";
 
   /**
    * Private constructor.
@@ -25,19 +29,38 @@ public class FileBashUtilities {
   }
 
   /**
-   * Counts the number of lines in a text file.
+   * Ensures that the provided file ends with a newline.
+   * The provided file will be modified to add a newline if not already present.
+   * Mostly used before using {@link #countLines(String)} to ensure the last line in counted.
+   * @param filePath
+   * @throws IOException
    */
-  public static int countLines(String fileName) throws IOException {
-    String[] out = executeSimpleCmd(String.format("wc -l %s | awk '{print $1;}'", fileName));
+  public static void ensureEndsWithNewline(String filePath) throws IOException {
+    File inFile = new File(filePath);
+    checkArgument(inFile.exists(), "Input file doesn't exist");
+
+    executeSimpleCmd(String.format(ENSURE_FILE_ENDS_NEWLINE_CMD, filePath));
+  }
+
+  /**
+   * Counts the number of lines in a text file.
+   * Note: the last line will not be counted if it doesn't end with a newline. Use {@link #ensureEndsWithNewline(String)}
+   */
+  public static int countLines(String filePath) throws IOException {
+    File inFile = new File(filePath);
+    checkArgument(inFile.exists(), "Input file doesn't exist");
+
+    //wc will not count the last line if it doesn't end with an endline
+    String[] out = executeSimpleCmd(String.format("wc -l %s | awk '{print $1;}'", filePath));
     return Integer.parseInt(out[0]);
   }
 
   /**
    * Split a text file into pieces of size 'splitSize'.
    */
-  public static String[] splitFile(String fileName, int splitSize, String outputDir) throws IOException {
+  public static String[] splitFile(String filePath, int splitSize, String outputDir) throws IOException {
     File outDir = new File(outputDir);
-    File inFile = new File(fileName);
+    File inFile = new File(filePath);
     checkArgument((outDir.exists() && outDir.isDirectory()) || !outDir.exists(), "Output path is not a directory");
     checkArgument((outDir.exists() && outDir.list().length == 0) || !outDir.exists(),
                   "Output directory should be empty");
@@ -47,7 +70,7 @@ public class FileBashUtilities {
       outDir.mkdirs();
     }
 
-    executeSimpleCmd(String.format("split -l %s %s %s", Integer.toString(splitSize), fileName,
+    executeSimpleCmd(String.format("split -l %s %s %s", Integer.toString(splitSize), filePath,
                                    Paths.get(outputDir, inFile.getName())));
     return outDir.list();
   }
@@ -62,6 +85,19 @@ public class FileBashUtilities {
   }
 
   /**
+   * Find duplicated values of a column from a file already sorted on that column.
+   *
+   * @param filePath path to the file sorted on the column
+   * @param column index of the column to find duplicate, starting at 1
+   * @param separator
+   * @return
+   * @throws IOException
+   */
+  public static String[] findDuplicates(String filePath, int column, String separator) throws IOException {
+    return executeSimpleCmd(String.format(FIND_DUPLICATE_CMD, separator, column, column, filePath));
+  }
+
+  /**
    * Utility method to validate arguments.
    */
   private static void checkArgument(Boolean expression, String message) {
@@ -72,6 +108,7 @@ public class FileBashUtilities {
 
   /**
    * Executes a bash command and collect its result in a string array.
+   * FIXME limit the number of result return
    */
   private static String[] executeSimpleCmd(String bashCmd) throws IOException {
     String[] cmd = {"/bin/sh", "-c", bashCmd};
