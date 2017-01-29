@@ -1,9 +1,9 @@
 package org.gbif.validation.collector;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
@@ -62,7 +62,7 @@ public class CollectorGroup {
    * @param collectors
    * @return
    */
-  public static ValidationResultElement mergeAndGetResult(DataFile dataFile, String resultingFileName,
+  public static ValidationResultElement mergeAndGetResult(TabularDataFile dataFile, String resultingFileName,
                                                           List<CollectorGroup> collectors) {
 
     if (collectors.isEmpty()) {

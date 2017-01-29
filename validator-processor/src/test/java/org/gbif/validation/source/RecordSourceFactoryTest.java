@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 
 import java.io.File;
@@ -24,15 +25,15 @@ public class RecordSourceFactoryTest {
 
   @Test
   public void testfromDataFile() throws IOException {
-    DataFile dataFile = new DataFile();
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
-    dataFile.setFileFormat(FileFormat.DWCA);
-    dataFile.setFilePath(testFile.toPath());
-    List<DataFile> preparedDataFiles = DataFileFactory.prepareDataFile(dataFile);
 
-    DataFile taxonDataFile = preparedDataFiles.stream().filter(df -> df.getRowType() == DwcTerm.Taxon).findFirst().get();
-    try(RecordSource rs = RecordSourceFactory.fromDataFile(taxonDataFile).get()){
+    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "");
+
+    List<TabularDataFile> preparedDataFiles = DataFileFactory.prepareDataFile(dataFile);
+
+    TabularDataFile taxonDataFile = preparedDataFiles.stream().filter(df -> df.getRowType() == DwcTerm.Taxon).findFirst().get();
+    try (RecordSource rs = RecordSourceFactory.fromTabularDataFile(taxonDataFile).get()) {
       assertEquals("1559060", rs.read()[0]);
     }
   }
@@ -41,15 +42,12 @@ public class RecordSourceFactoryTest {
   public void testPrepareSourceTabular() throws IOException {
 
     File testFile = FileUtils.getClasspathFile(TEST_TSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile();
-    dataFile.setFileFormat(FileFormat.TABULAR);
-    dataFile.setFilePath(testFile.toPath());
-    dataFile.setHasHeaders(true);
+    DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "");
 
-    List<DataFile> preparedDataFiles = DataFileFactory.prepareDataFile(dataFile);
+    List<TabularDataFile> preparedDataFiles = DataFileFactory.prepareDataFile(dataFile);
 
     assertEquals(1, preparedDataFiles.size());
-    DataFile preparedDataFile = preparedDataFiles.get(0);
+    TabularDataFile preparedDataFile = preparedDataFiles.get(0);
     assertEquals('\t', preparedDataFile.getDelimiterChar().charValue());
     assertEquals(DwcTerm.Occurrence, preparedDataFile.getRowType());
   }

@@ -1,171 +1,53 @@
 package org.gbif.validation.api;
 
-import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
 
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
 
+
 /**
- * Represents data held in a file. It can be a portion of a bigger file.
- * It can also represent a tabular view of other formats (spreadsheet).
- *
- * A {@link DataFile} can point to a parent (in a conceptual way).
- * e.g. DarwinCore Archive folder is the parent of its core file.
+ * Represents data held in a file or a folder containing multiple files.
+ * This class is thread-safe and immutable.
  */
 public class DataFile {
 
-  private Path filePath;
-  private FileFormat fileFormat;
-  private String contentType;
-
-  private String sourceFileName;
-
-  private Term[] columns;
-  private DwcFileType type;
-  private Term rowType;
-  private Optional<Map<Term, String>> defaultValues = Optional.empty();
-
-  private Optional<Integer> fileLineOffset = Optional.empty();
-  private boolean hasHeaders = false;
-
-  private Character delimiterChar;
-  private Integer numOfLines;
-
-  private final Optional<DataFile> parent;
-
-  public DataFile() {
-    this(null);
-  }
+  protected final Path filePath;
+  protected final String sourceFileName;
+  protected final FileFormat fileFormat;
+  protected final String contentType;
+  protected final Optional<Path> metadataFolder;
 
   /**
-   * Constructor used to get a new {@link DataFile} that represents an alternative view of another {@link DataFile}.
-   *
-   * @param parent the parent {@link DataFile}
-   */
-  public DataFile(DataFile parent) {
-    this.parent = Optional.ofNullable(parent);
-  }
-
-  public static DataFile copyFromParent(DataFile parentDataFile) {
-    DataFile newDataFile = new DataFile(parentDataFile);
-    return copyInto(parentDataFile, newDataFile);
-  }
-  /**
-   * Get a copy of a {@link DataFile}.
-   * @param dataFile
-   * @return
-   */
-  public static DataFile copy(DataFile dataFile) {
-    DataFile newDataFile = new DataFile(dataFile.parent.orElse(null));
-    return copyInto(dataFile, newDataFile);
-  }
-
-  /**
-   * Mutable method to copy all properties of one {@link DataFile} into another.
-   *
-   * @param srcDataFile
-   * @param destDataFile
-   */
-  private static DataFile copyInto(DataFile srcDataFile, DataFile destDataFile) {
-    destDataFile.filePath = srcDataFile.filePath;
-    destDataFile.fileFormat = srcDataFile.fileFormat;
-    destDataFile.contentType = srcDataFile.contentType;
-
-    destDataFile.sourceFileName = srcDataFile.sourceFileName;
-
-    destDataFile.columns = srcDataFile.columns;
-    destDataFile.type = srcDataFile.type;
-    destDataFile.rowType = srcDataFile.rowType;
-    destDataFile.defaultValues = srcDataFile.defaultValues;
-
-    destDataFile.fileLineOffset = srcDataFile.fileLineOffset;
-    destDataFile.hasHeaders = srcDataFile.hasHeaders;
-
-    destDataFile.delimiterChar = srcDataFile.delimiterChar;
-    destDataFile.numOfLines = srcDataFile.numOfLines;
-
-    return destDataFile;
-  }
-
-  public Character getDelimiterChar() {
-    return delimiterChar;
-  }
-
-  public void setDelimiterChar(Character delimiterChar) {
-    this.delimiterChar = delimiterChar;
-  }
-
-  public Term[] getColumns() {
-    return columns;
-  }
-
-  public void setColumns(Term[] columns) {
-    this.columns = columns;
-  }
-
-  public Term getRowType() {
-    return rowType;
-  }
-
-  public void setDefaultValues(Optional<Map<Term, String>> defaultValues) {
-    this.defaultValues = defaultValues;
-  }
-
-  /**
-   * Get the default value to use for some terms (if defined).
-   * @return
-   */
-  public Optional<Map<Term, String>> getDefaultValues() {
-    return defaultValues;
-  }
-
-  public void setRowType(Term rowType) {
-    this.rowType = rowType;
-  }
-
-  public DwcFileType getType() {
-    return type;
-  }
-
-  public void setType(DwcFileType type) {
-    this.type = type;
-  }
-
-  public void setFilePath(Path filePath) {
-    this.filePath = filePath;
-  }
-
-  public void setNumOfLines(Integer numOfLines) {
-    this.numOfLines = numOfLines;
-  }
-
-  /**
-   * Name of the file as received. For safety reason this name should only be used to display.
+   * See {@link #DataFile(Path, String, FileFormat, String, Optional)}
+   * @param filePath
    * @param sourceFileName
+   * @param fileFormat
+   * @param contentType
    */
-  public void setSourceFileName(String sourceFileName) {
-    this.sourceFileName = sourceFileName;
-  }
-
-  public Integer getNumOfLines() {
-    return numOfLines;
+  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType) {
+    this(filePath, sourceFileName, fileFormat, contentType, Optional.empty());
   }
 
   /**
-   * File name as provided. For safety reason this name should only be used to display.
+   * Complete constructor of {@link DataFile}
    *
+   * @param filePath       path where the file is located
+   * @param sourceFileName Name of the file as received. For safety reason this name should only be used to display.
+   * @param fileFormat
+   * @param contentType    as received by the "resource" layer
+   * @param metadataFolder optionally, a DataFile can contain (or point to) a metadata folder
    */
-  @Nullable
-  public String getSourceFileName() {
-    return sourceFileName;
+  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType,
+                  Optional<Path> metadataFolder) {
+    this.filePath = filePath;
+    this.sourceFileName = sourceFileName;
+    this.fileFormat = fileFormat;
+    this.contentType = contentType;
+    this.metadataFolder = metadataFolder;
   }
-
 
   /**
    * Path to the working file stored with a generated file name.
@@ -177,66 +59,39 @@ public class DataFile {
   }
 
   /**
-   * If this {@link DataFile} represents a part of a bigger file, the offset of lines relative to the
-   * source file.
-   * @return
+   * File name as provided. For safety reason this name should only be used to display.
+   *
    */
-  public Optional<Integer> getFileLineOffset() {
-    return fileLineOffset;
-  }
-
-  public void setFileLineOffset(Optional<Integer> fileLineOffset) {
-    this.fileLineOffset = fileLineOffset;
+  @Nullable
+  public String getSourceFileName() {
+    return sourceFileName;
   }
 
   public FileFormat getFileFormat() {
     return fileFormat;
   }
 
-  public void setFileFormat(FileFormat fileFormat) {
-    this.fileFormat = fileFormat;
-  }
-
-  /**
-   * Does this {@link DataFile} contain headers on the first row.
-   * Default value: false
-   * @return
-   */
-  public boolean isHasHeaders() {
-    return hasHeaders;
-  }
-
-  public void setHasHeaders(boolean hasHeaders) {
-    this.hasHeaders = hasHeaders;
-  }
 
   public String getContentType() {
     return contentType;
   }
 
-  public void setContentType(String contentType) {
-    this.contentType = contentType;
-  }
-
-  public Optional<DataFile> getParent() {
-    return parent;
+  /**
+   * A folder containing metadata about this {@link DataFile}.
+   * @return
+   */
+  public Optional<Path> getMetadataFolder() {
+    return metadataFolder;
   }
 
   @Override
   public String toString() {
     return "DataFile{" +
             "filePath=" + filePath +
-            ", fileFormat=" + fileFormat +
             ", sourceFileName=" + sourceFileName +
-            ", columns=" + Arrays.toString(columns) +
-            ", rowType=" + rowType +
-            ", defaultValues=" + defaultValues +
-            ", type=" + type +
-            ", delimiterChar='" + delimiterChar + '\'' +
-            ", numOfLines=" + numOfLines +
-            ", fileLineOffset=" + fileLineOffset +
-            ", hasHeaders=" + hasHeaders +
-            ", parent=" + parent +
+            ", fileFormat=" + fileFormat +
+            ", contentType=" + contentType +
+            ", metadataFolder=" + metadataFolder +
             '}';
   }
 
@@ -245,35 +100,21 @@ public class DataFile {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     DataFile dataFile = (DataFile) o;
-    return hasHeaders == dataFile.hasHeaders &&
-            Objects.equals(delimiterChar, dataFile.delimiterChar) &&
-            Arrays.equals(columns, dataFile.columns) &&
-            Objects.equals(rowType, dataFile.rowType) &&
-            Objects.equals(defaultValues, dataFile.defaultValues) &&
-            Objects.equals(type, dataFile.type) &&
-            Objects.equals(filePath, dataFile.filePath) &&
-            Objects.equals(fileFormat, dataFile.fileFormat) &&
+    return Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
-            Objects.equals(numOfLines, dataFile.numOfLines) &&
-            Objects.equals(fileLineOffset, dataFile.fileLineOffset) &&
-            Objects.equals(parent, dataFile.parent);
+            Objects.equals(fileFormat, dataFile.fileFormat) &&
+            Objects.equals(contentType, dataFile.contentType) &&
+            Objects.equals(metadataFolder, dataFile.metadataFolder);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
             filePath,
-            fileFormat,
             sourceFileName,
-            columns,
-            rowType,
-            defaultValues,
-            type,
-            delimiterChar,
-            numOfLines,
-            fileLineOffset,
-            hasHeaders,
-            parent);
+            fileFormat,
+            contentType,
+            metadataFolder);
   }
 
 }

@@ -6,6 +6,7 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
@@ -49,7 +50,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   private static final int MAX_WORKER = Runtime.getRuntime().availableProcessors() * 50;
 
-  private final Map<Term, DataFile> rowTypeDataFile;
+  private final Map<Term, TabularDataFile> rowTypeDataFile;
   private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
   private final AtomicInteger workerCompleted;
@@ -65,11 +66,11 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Simple container class to hold data between initialization and processing phase.
    */
   private static class RecordEvaluationUnit {
-    private final List<DataFile> dataFiles;
+    private final List<TabularDataFile> dataFiles;
     private final RecordEvaluator recordEvaluator;
     private final CollectorGroupProvider collectorsProvider;
 
-    RecordEvaluationUnit(List<DataFile> dataFiles, RecordEvaluator recordEvaluator,
+    RecordEvaluationUnit(List<TabularDataFile> dataFiles, RecordEvaluator recordEvaluator,
                    CollectorGroupProvider collectorsProvider) {
       this.dataFiles = dataFiles;
       this.recordEvaluator = recordEvaluator;
@@ -123,7 +124,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     DataFile dataFile = dataJob.getJobData();
 
     if(evaluateResourceStructure(dataFile)){
-      List<DataFile> dataFiles = DataFileFactory.prepareDataFile(dataFile);
+      List<TabularDataFile> dataFiles = DataFileFactory.prepareDataFile(dataFile);
 
       init(dataFiles);
 
@@ -147,7 +148,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Initialize all member variables based on the list of {@link DataFile}.
    * @param dataFiles
    */
-  private void init(Iterable<DataFile> dataFiles){
+  private void init(Iterable<TabularDataFile> dataFiles){
     dataFiles.forEach(df -> {
       rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
       rowTypeDataFile.put(df.getRowType(), df);
@@ -167,7 +168,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    *
    * @return
    */
-  private List<RecordEvaluationUnit> prepareRecordBasedEvaluations(Iterable<DataFile> dataFiles, EvaluatorFactory factory,
+  private List<RecordEvaluationUnit> prepareRecordBasedEvaluations(Iterable<TabularDataFile> dataFiles, EvaluatorFactory factory,
                                                                    Integer fileSplitSize, final MutableInt numOfWorkers) {
 
     List<RecordEvaluationUnit> dataFilesToEvaluate = new ArrayList<>();
@@ -176,7 +177,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     dataFiles.forEach(df -> {
       List<Term> columns = Arrays.asList(df.getColumns());
       try {
-        List<DataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
+        List<TabularDataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
         numOfWorkers.add(splitDataFile.size());
 
         dataFilesToEvaluate.add(new RecordEvaluationUnit(splitDataFile,
@@ -201,7 +202,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    *
    * @return all ValidationResultElement or an empty list, never null
    */
-  private List<RowTypeEvaluationUnit> prepareRowTypeBasedEvaluations(DataFile dwcaDataFile, List<DataFile> dataFiles,
+  private List<RowTypeEvaluationUnit> prepareRowTypeBasedEvaluations(DataFile dwcaDataFile, List<TabularDataFile> dataFiles,
                                                                      EvaluatorFactory factory) {
     if (FileFormat.DWCA != dwcaDataFile.getFileFormat()) {
       return Collections.emptyList();

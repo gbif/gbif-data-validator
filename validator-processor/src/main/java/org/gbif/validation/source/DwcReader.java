@@ -181,6 +181,17 @@ class DwcReader implements RecordSource {
     return darwinCoreComponent.getRowType();
   }
 
+  /**
+   * Get the {@link Term} representing the "id" of the current rowType.
+   * @return
+   */
+  public Optional<Term> getRecordIdentifier() {
+    if (darwinCoreComponent == null) {
+      return Optional.empty();
+    }
+    return Optional.ofNullable(darwinCoreComponent.getId() != null ? darwinCoreComponent.getId().getTerm() : null);
+  }
+
   @Override
   public void close() throws IOException {
     csvReader.close();

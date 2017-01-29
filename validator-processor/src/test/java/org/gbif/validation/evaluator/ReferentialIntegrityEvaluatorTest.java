@@ -29,11 +29,7 @@ public class ReferentialIntegrityEvaluatorTest {
   public void dwcaResourceStructureEvaluatorTest() {
     ReferentialIntegrityEvaluator riEvaluator = new ReferentialIntegrityEvaluator(DwcTerm.Identification);
 
-    DataFile df = new DataFile();
-    df.setFileFormat(FileFormat.DWCA);
-    df.setFilePath(DWC_ARCHIVE.toPath());
-    df.setNumOfLines(10);
-    df.setSourceFileName("dwc-data-integrity-dwca");
+    DataFile df = new DataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca", FileFormat.DWCA, "");
 
     try {
       Optional<Stream<RecordEvaluationResult>> result = riEvaluator.evaluate(df);
@@ -44,7 +40,6 @@ public class ReferentialIntegrityEvaluatorTest {
     } catch (IOException e) {
       fail(e.getMessage());
     }
-
 
   }
 }

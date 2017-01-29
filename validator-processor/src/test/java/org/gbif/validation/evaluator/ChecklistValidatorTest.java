@@ -1,9 +1,9 @@
 package org.gbif.validation.evaluator;
 
 import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
-import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.io.File;
@@ -31,9 +31,8 @@ public class ChecklistValidatorTest {
     config.archiveRepository = FileUtils.getClasspathFile("checklists");
     ChecklistEvaluator checklistEvaluator = new ChecklistEvaluator(config);
 
-    DataFile testChecklistDataFile = new DataFile();
-    testChecklistDataFile.setRowType(DwcTerm.Taxon);
-    testChecklistDataFile.setFilePath(testChecklistFile.toPath());
+    DataFile testChecklistDataFile = new DataFile(testChecklistFile.toPath(), "00000001-c6af-11e2-9b88-00145eb45e9a",
+            FileFormat.DWCA, "");
 
     try {
       Optional<Stream<RecordEvaluationResult>> a = checklistEvaluator.evaluate(testChecklistDataFile);

@@ -11,6 +11,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
 import org.gbif.validation.evaluator.record.OccurrenceInterpretationEvaluator;
@@ -63,6 +64,18 @@ public class EvaluatorFactory {
         return new DwcaResourceStructureEvaluator(XML_SCHEMA_VALIDATOR_PROVIDER);
       default: return (dataFile) -> Optional.empty();
     }
+  }
+
+  /**
+   * Creates a {@link RecordCollectionEvaluator} that validates the uniqueness of the value on a specific column index.
+   *
+   * @param idColumnIndex
+   * @param caseSensitive
+   *
+   * @return
+   */
+  public static RecordCollectionEvaluator<TabularDataFile> createUniquenessEvaluator(int idColumnIndex, boolean caseSensitive) {
+    return new UniquenessEvaluator(idColumnIndex, caseSensitive);
   }
 
   /**

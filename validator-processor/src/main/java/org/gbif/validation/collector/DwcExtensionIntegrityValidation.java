@@ -1,6 +1,6 @@
 package org.gbif.validation.collector;
 
-import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.TabularDataFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,8 +31,8 @@ public class DwcExtensionIntegrityValidation {
    * extracting the column extColumn of extDescriptor.getSubmittedFile and matching it agains coreColumn of
    * coreDescriptor.getSubmittedFile.
    */
-  public static List<String> collectUnlinkedExtensions(DataFile coreDescriptor, int coreColumn,
-                                                       DataFile extDescriptor, int extColumn,
+  public static List<String> collectUnlinkedExtensions(TabularDataFile coreDescriptor, int coreColumn,
+                                                       TabularDataFile extDescriptor, int extColumn,
                                                        long maxSampleSize) throws IOException {
 
     try (Stream<String> lines = Files.lines(extDescriptor.getFilePath())) {
@@ -51,7 +51,7 @@ public class DwcExtensionIntegrityValidation {
    * Validates if the String function parameter exists in any line[column] of the descriptor.getSubmittedFile.
    * It was created to maintain readability in the collectUnlinkedExtension method.
    */
-  private static Function<String,Boolean> valueIsNotInFile(DataFile descriptor, int column) {
+  private static Function<String,Boolean> valueIsNotInFile(TabularDataFile descriptor, int column) {
     return val -> {
       try {
         return findInFile(descriptor.getFilePath().toString(), val, column + 1, //bash uses 1-based indexes

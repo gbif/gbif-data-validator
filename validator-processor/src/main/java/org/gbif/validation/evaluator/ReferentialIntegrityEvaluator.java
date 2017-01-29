@@ -6,6 +6,7 @@ import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
@@ -43,35 +44,36 @@ public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator<
 
   /**
    * Run the evaluation on a {@link DataFile} representing the Dwc-A.
+   *
    * @param dataFile where the resource is located. The {@link DataFile} shall represent the entire Dwc Archive.
+   *
    * @return
    */
   @Override
   public Optional<Stream<RecordEvaluationResult>> evaluate(DataFile dataFile) throws IOException {
 
-      Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+    Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
 
-      ArchiveFile core = archive.getCore();
-      ArchiveFile ext = archive.getExtension(extensionRowType);
+    ArchiveFile core = archive.getCore();
+    ArchiveFile ext = archive.getExtension(extensionRowType);
 
-      int coreIdIdx = core.getId().getIndex();
-      int extCoreIdx = ext.getId().getIndex();
+    int coreIdIdx = core.getId().getIndex();
+    int extCoreIdx = ext.getId().getIndex();
 
-      List<DataFile> dfList = DataFileFactory.prepareDataFile(dataFile);
+    List<TabularDataFile> dfList = DataFileFactory.prepareDataFile(dataFile);
 
-      Map<Term, DataFile> dfPerRowType = dfList.stream()
-              .collect(Collectors.toMap(DataFile::getRowType, Function.identity()));
+    Map<Term, TabularDataFile> dfPerRowType = dfList.stream()
+            .collect(Collectors.toMap(TabularDataFile::getRowType, Function.identity()));
+    TabularDataFile coreDf = dfPerRowType.get(core.getRowType());
+    TabularDataFile extDf = dfPerRowType.get(ext.getRowType());
 
-      DataFile coreDf = dfPerRowType.get(core.getRowType());
-      DataFile extDf = dfPerRowType.get(ext.getRowType());
+    List<String> unlinkedId = DwcExtensionIntegrityValidation.collectUnlinkedExtensions(coreDf, coreIdIdx, extDf,
+            extCoreIdx, MAX_SAMPLE);
 
-      List<String> unlinkedId = DwcExtensionIntegrityValidation.collectUnlinkedExtensions(coreDf, coreIdIdx, extDf,
-              extCoreIdx, MAX_SAMPLE);
-
-      if (unlinkedId.isEmpty()) {
-        return Optional.empty();
-      }
-      return Optional.of(unlinkedId.stream().map(rec -> buildResult(extensionRowType, rec)));
+    if (unlinkedId.isEmpty()) {
+      return Optional.empty();
+    }
+    return Optional.of(unlinkedId.stream().map(rec -> buildResult(extensionRowType, rec)));
   }
 
   private static RecordEvaluationResult buildResult(Term rowType, String unlinkedId){

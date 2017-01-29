@@ -3,6 +3,7 @@ package org.gbif.validation.processor;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.source.RecordSourceFactory;
@@ -33,7 +34,7 @@ class DataFileRecordsActor extends AbstractLoggingActor {
    */
   DataFileRecordsActor(RecordEvaluator recordEvaluator, CollectorGroupProvider collectorsProvider) {
     receive(
-            match(DataFile.class, dataFile -> {
+            match(TabularDataFile.class, dataFile -> {
               pipe(
                       future(() -> processDataFile(dataFile, recordEvaluator, collectorsProvider.newCollectorGroup()),
                               getContext().dispatcher()),
@@ -54,9 +55,9 @@ class DataFileRecordsActor extends AbstractLoggingActor {
    * @param collectors
    * @return
    */
-  private static DataWorkResult processDataFile(DataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
+  private static DataWorkResult processDataFile(TabularDataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
     long line = dataFile.getFileLineOffset().orElse(0) + 1; //we report line number starting at 1
-    try (RecordSource recordSource = RecordSourceFactory.fromDataFile(dataFile).orElse(null)) {
+    try (RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(dataFile).orElse(null)) {
       String[] record;
       while ((record = recordSource.read()) != null) {
         line++;

@@ -1,6 +1,9 @@
 package org.gbif.validation.collector;
 
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.source.DataFileFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -24,28 +27,25 @@ public class DwcExtensionIntegrityValidationTest {
   /**
    * Gets a test core file from the specified testDir.
    */
-  private static DataFile getCoreTestFileDescriptor(String testDir) {
+  private static TabularDataFile getCoreTestFileDescriptor(String testDir) throws IOException {
     return getTestDataFile(testDir, "core.txt");
   }
 
   /**
    * Gets a test extension file from the specified testDir.
    */
-  private static DataFile getExtensionTestFileDescriptor(String testDir) {
+  private static TabularDataFile getExtensionTestFileDescriptor(String testDir) throws IOException {
     return getTestDataFile(testDir, "ext.txt");
   }
 
   /**
    * Utility class to create data file descriptors from tests files.
    */
-  private static DataFile getTestDataFile(String testDir, String testFileName) {
+  private static TabularDataFile getTestDataFile(String testDir, String testFileName) throws IOException {
     try {
       URL testFileUrl = Resources.getResource(Paths.get(RESOURCES_DIR, testDir, testFileName).toString());
-      DataFile dataFileDescriptor = new DataFile();
-      dataFileDescriptor.setDelimiterChar(',');
-      dataFileDescriptor.setHasHeaders(true);
-      dataFileDescriptor.setFilePath(Paths.get(testFileUrl.toURI()));
-      return dataFileDescriptor;
+      DataFile dataFile = new DataFile(Paths.get(testFileUrl.toURI()), testFileName, FileFormat.TABULAR, "");
+      return DataFileFactory.prepareDataFile(dataFile).stream().findFirst().get();
     } catch (URISyntaxException ex) {
       throw new RuntimeException(ex);
     }

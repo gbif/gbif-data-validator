@@ -3,6 +3,7 @@ package org.gbif.validation.evaluator;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
@@ -34,10 +35,7 @@ public class DwcaResourceStructureEvaluatorTest {
    */
   static DataFile getDataFile(String resourcePath, String sourceFileName) {
     File dwcaFolder = FileUtils.getClasspathFile(resourcePath);
-    DataFile df = new DataFile();
-    df.setFilePath(dwcaFolder.toPath());
-    df.setSourceFileName(sourceFileName);
-    return df;
+    return new DataFile(dwcaFolder.toPath(), sourceFileName, FileFormat.DWCA, "");
   }
 
   @Test

@@ -1,6 +1,8 @@
 package org.gbif.validation.processor;
 
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
@@ -19,8 +21,8 @@ import java.util.stream.IntStream;
 class DataFileSplitter {
 
   /**
-   * Split the provided {@link DataFile} into multiple {@link DataFile} if required.
-   * If no split is required the returning list will contain the provided {@link DataFile}.
+   * Split the provided {@link TabularDataFile} into multiple {@link TabularDataFile} if required.
+   * If no split is required the returning list will contain the provided {@link TabularDataFile}.
    *
    * @param dataFile expected to have at least the followings: rowType, filePath, numOfLines, hasHeaders
    * @param fileSplitSize
@@ -30,11 +32,11 @@ class DataFileSplitter {
    *
    * @throws IOException
    */
-  static List<DataFile> splitDataFile(DataFile dataFile, Integer fileSplitSize, Path baseDir) throws IOException {
+  static List<TabularDataFile> splitDataFile(TabularDataFile dataFile, Integer fileSplitSize, Path baseDir) throws IOException {
     Objects.requireNonNull(dataFile.getRowType(), "DataFile rowType shall be provided");
     Objects.requireNonNull(dataFile.getFilePath(), "DataFile filePath shall be provided");
 
-    List<DataFile> splitDataFiles = new ArrayList<>();
+    List<TabularDataFile> splitDataFiles = new ArrayList<>();
     if (dataFile.getNumOfLines() <= fileSplitSize) {
       splitDataFiles.add(dataFile);
     } else {
@@ -47,7 +49,7 @@ class DataFileSplitter {
                       splitFolder,
                       splits[idx],
                       inputHasHeaders && (idx == 0),
-                      Optional.of((idx * fileSplitSize) + (inputHasHeaders ? 1 : 0)))));
+                      Optional.of((idx * fileSplitSize)))));
     }
     return splitDataFiles;
   }
@@ -63,17 +65,14 @@ class DataFileSplitter {
    *
    * @return new {@link DataFile} representing a portion of the provided dataFile.
    */
-  private static DataFile newSplitDataFile(DataFile dataFile, String baseDir, String fileName,
+  private static TabularDataFile newSplitDataFile(TabularDataFile dataFile, String baseDir, String fileName,
                                            boolean withHeader, Optional<Integer> offset) {
     //Creates the file to be used
     File splitFile = new File(baseDir, fileName);
     splitFile.deleteOnExit();
 
-    //use dataFile as parent dataFile
-    DataFile dataInputSplitFile = DataFile.copyFromParent(dataFile);
-    dataInputSplitFile.setHasHeaders(withHeader);
-    dataInputSplitFile.setFilePath(Paths.get(splitFile.getAbsolutePath()));
-    dataInputSplitFile.setFileLineOffset(offset);
-    return dataInputSplitFile;
+    return DataFileFactory.newTabularDataFileSplit(dataFile, Paths.get(splitFile.getAbsolutePath()),
+            offset, withHeader);
+
   }
 }

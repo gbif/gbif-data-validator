@@ -1,8 +1,11 @@
 package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.impl.InMemoryJobStorage;
+
+import java.nio.file.Paths;
 
 import akka.actor.Props;
 import org.junit.After;
@@ -38,7 +41,7 @@ public class JobServerTest {
   @Test
   public void submitTestIT() {
     jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L));
-    JobStatusResponse<?> jobResponse = jobServer.submit(new DataFile());
+    JobStatusResponse<?> jobResponse = jobServer.submit(createNewDataFile());
     Assert.assertEquals(JobStatusResponse.JobStatus.ACCEPTED, jobResponse.getStatus());
     Assert.assertNotEquals(0L, jobResponse.getJobId());
   }
@@ -49,7 +52,7 @@ public class JobServerTest {
   @Test
   public void submitAndGetTestIT() {
     jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L));
-    JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
+    JobStatusResponse<?> initialJobResponse = jobServer.submit(createNewDataFile());
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
     Assert.assertEquals(jobResponse.getJobId(), initialJobResponse.getJobId());
@@ -66,7 +69,7 @@ public class JobServerTest {
   @Test
   public void killTestIT() throws InterruptedException {
     jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L));
-    JobStatusResponse<?> initialJobResponse = jobServer.submit(new DataFile());
+    JobStatusResponse<?> initialJobResponse = jobServer.submit(createNewDataFile());
     Thread.sleep(5); //sleep before getting the status of a running actor
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
@@ -74,6 +77,10 @@ public class JobServerTest {
     Assert.assertEquals(JobStatusResponse.JobStatus.KILLED, jobKillResponse.getStatus());
     JobStatusResponse<?> jobSecondKillResponse = jobServer.status(jobKillResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.KILLED, jobSecondKillResponse.getStatus());
+  }
+
+  private static DataFile createNewDataFile(){
+    return new DataFile(Paths.get(""), "", FileFormat.TABULAR, "");
   }
 
 }

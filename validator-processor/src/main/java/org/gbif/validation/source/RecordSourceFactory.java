@@ -1,8 +1,8 @@
 package org.gbif.validation.source;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 
 import java.io.File;
@@ -68,14 +68,14 @@ public class RecordSourceFactory {
 
 
   /**
-   * Build a new RecordSource matching the {@link DataFile} file format.
+   * Build a new RecordSource matching for the {@link TabularDataFile} file format.
    * This method will only return a RecordSource for TABULAR or DWCA.
    *
    * @param dataFile
    * @return
    * @throws IOException
    */
-  public static Optional<RecordSource> fromDataFile(DataFile dataFile) throws IOException {
+  public static Optional<RecordSource> fromTabularDataFile(TabularDataFile dataFile) throws IOException {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
 
@@ -88,25 +88,13 @@ public class RecordSourceFactory {
                                        dataFile.isHasHeaders()));
     }
     if (FileFormat.DWCA == dataFile.getFileFormat()) {
-      Path dwcaFolder = dataFile.getFilePath();
-      // the DataFile is a folder, get a reader for the entire archive
-      if (dwcaFolder.toFile().isDirectory()) {
-        return Optional.of(fromDwcA(dwcaFolder.toFile()));
-      }
-
+      File dwcaFolder = dataFile.getMetadataFolder().map(Path::toFile).orElse(null);
       //line offset means this file is a portion of the entire file
       if (dataFile.getFileLineOffset().isPresent()) {
-        //parent file is the complete file, grand-parent file is the archive
-        dwcaFolder = dataFile.getParent().get().getParent().get().getFilePath();
-        return Optional.of(new DwcReader(dwcaFolder.toFile(),
-                                         dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders()));
+        return Optional.of(new DwcReader(dwcaFolder,
+                dataFile.getFilePath().toFile(), dataFile.getRowType(), dataFile.isHasHeaders()));
       }
-
-      // normally, the parent file is the archive
-      if (dataFile.getParent().isPresent()) {
-        dwcaFolder = dataFile.getParent().get().getFilePath();
-      }
-      return Optional.of(fromDwcA(dwcaFolder.toFile(), dataFile.getRowType()));
+      return Optional.of(fromDwcA(dwcaFolder, dataFile.getRowType()));
     }
     return Optional.empty();
   }
