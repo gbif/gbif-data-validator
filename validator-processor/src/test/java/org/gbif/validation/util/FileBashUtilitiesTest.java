@@ -13,6 +13,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -56,14 +57,17 @@ public class FileBashUtilitiesTest {
     File t2 = copyTestFile(TEST_FILE_NONEWLINE, "split_nonewline_t2.csv");
 
     //try first with the file that includes a newline
-    assertSplitInNewFolder(t1, 2, 3);
+    assertEquals(3, splitInNewFolder(t1, 2));
 
     //then, with the file that does NOT include a newline
-    assertSplitInNewFolder(t2, 2, 2);
+    //NOTE: on Mac version of 'split' (based on BSD) the last line will be ignored but on GNU based version, it won't
+    int numberOfSplitFile = splitInNewFolder(t2, 2);
+    assertTrue(SystemUtils.IS_OS_MAC && numberOfSplitFile == 2 ||
+            SystemUtils.IS_OS_LINUX && numberOfSplitFile == 3);
 
-    //fix the newline
+    //In all cases, ensure we can "fix" the newline with no side effects
     FileBashUtilities.ensureEndsWithNewline(t2.getAbsolutePath());
-    assertSplitInNewFolder(t2, 2, 3);
+    assertEquals(3, splitInNewFolder(t2, 2));
   }
 
   /**
@@ -82,11 +86,18 @@ public class FileBashUtilitiesTest {
     return testFileCopy;
   }
 
-  private void assertSplitInNewFolder(File sourceFile, int splitSize, int expectedNumberOfSplitFile) throws IOException {
+  private int splitInNewFolder(File sourceFile, int splitSize) throws IOException {
     File destFolder = folder.newFolder();
     FileBashUtilities.splitFile(sourceFile.getAbsolutePath(), splitSize, destFolder.getAbsolutePath());
     List<File> splitFiles = Arrays.asList(destFolder.listFiles());
-    assertEquals(expectedNumberOfSplitFile, splitFiles.size());
+    return splitFiles.size();
   }
+
+//  private void assertSplitInNewFolder(File sourceFile, int splitSize, int expectedNumberOfSplitFile) throws IOException {
+//    File destFolder = folder.newFolder();
+//    FileBashUtilities.splitFile(sourceFile.getAbsolutePath(), splitSize, destFolder.getAbsolutePath());
+//    List<File> splitFiles = Arrays.asList(destFolder.listFiles());
+//    assertEquals(expectedNumberOfSplitFile, splitFiles.size());
+//  }
 
 }
