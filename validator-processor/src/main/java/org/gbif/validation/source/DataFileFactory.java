@@ -18,19 +18,62 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
- * Main factory used to create and prepare {@link DataFile}.
+ * Main factory used to create and prepare {@link DataFile} and {@link TabularDataFile}.
  */
 public class DataFileFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DataFileFactory.class);
+
+  /**
+   * Predefined mapping between {@link Term} and its rowType.
+   * Ordering is important since the first found will be used.
+   */
+  private static final Map<Term, Term> TERM_TO_ROW_TYPE;
+  static {
+    Map<Term, Term> idToRowType = new LinkedHashMap<>();
+    idToRowType.put(DwcTerm.eventID, DwcTerm.Event);
+    idToRowType.put(DwcTerm.taxonID, DwcTerm.Taxon);
+    idToRowType.put(DwcTerm.occurrenceID, DwcTerm.Occurrence);
+    TERM_TO_ROW_TYPE = Collections.unmodifiableMap(idToRowType);
+  }
+
+  private static final String CSV_EXT = ".csv";
+
+  /**
+   * Terms that can represent an identifier within a file
+   */
+  private static final List<Term> ID_TERMS = Collections.unmodifiableList(
+          Arrays.asList(DwcTerm.eventID, DwcTerm.occurrenceID, DwcTerm.taxonID, DcTerm.identifier));
+  /**
+   * Recognized sheet names in Excel workbook when the workbook contains more than 1 sheet.
+   * Mostly name of sheets used in GBIF provided templates.
+   */
+  private static final List<String> KNOWN_EXCEL_SHEET_NAMES = Collections.unmodifiableList(
+          Arrays.asList("sampling events", "classification", "occurrences"));
+
+  /**
+   * Function to select an Excel sheet within multiple sheets.
+   * This will select the first known sheet starting from the left.
+   */
+  private static final Function<List<String>, Optional<String>> SELECT_EXCEL_SHEET =
+          sheetsList -> sheetsList.stream()
+                  .filter(name -> KNOWN_EXCEL_SHEET_NAMES.contains(name.toLowerCase()))
+                  .findFirst();
 
   /**
    * Private constructor.
@@ -89,7 +132,8 @@ public class DataFileFactory {
     List<TabularDataFile> dataFileList = new ArrayList<>();
     switch (dataFile.getFileFormat()) {
       case SPREADSHEET:
-        dataFileList.add(handleSpreadsheetConversion(dataFile));
+        //FIXME if the contentType is not supported this will failed silently (except it will be log)
+        handleSpreadsheetConversion(dataFile).ifPresent(dataFileList::add);
         break;
       case DWCA:
         dataFileList.addAll(prepareDwcA(dataFile));
@@ -190,22 +234,28 @@ public class DataFileFactory {
   }
 
   /**
+   * Perform conversion of Spreadsheets.
+   * @param {@link DataFile} that requires conversion.
+   * @return new DataFile instance representing the converted file or Optional.empty() if the contentType can not
+   * be handled.
    *
-   * @return new DataFile instance representing the converted file
    * @throws IOException
    */
-  private static TabularDataFile handleSpreadsheetConversion(DataFile spreadsheetDataFile)
+  private static Optional<TabularDataFile> handleSpreadsheetConversion(DataFile spreadsheetDataFile)
           throws IOException {
 
     Path spreadsheetFile = spreadsheetDataFile.getFilePath();
     String contentType = spreadsheetDataFile.getContentType();
 
-    Path csvFile = spreadsheetFile.getParent().resolve(UUID.randomUUID() + ".csv");
+    Path csvFile = spreadsheetFile.getParent().resolve(UUID.randomUUID() + CSV_EXT);
     if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
             ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(contentType)) {
-      SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile);
+      SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile, SELECT_EXCEL_SHEET);
     } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(contentType)) {
       SpreadsheetConverters.convertOdsToCSV(spreadsheetFile, csvFile);
+    } else {
+      LOG.warn("Unhandled contentType {}", contentType);
+      return Optional.empty();
     }
 
     int numberOfLine = FileBashUtilities.countLines(csvFile.toAbsolutePath().toString());
@@ -219,12 +269,12 @@ public class DataFileFactory {
       recordIdentifier = determineRecordIdentifier(Arrays.asList(headers));
     }
 
-    return new TabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
+    return Optional.of(new TabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
             FileFormat.TABULAR, ExtraMediaTypes.TEXT_CSV,
             rowType.orElse(null), DwcFileType.CORE, headers, recordIdentifier, Optional.empty(),
             Optional.empty(), true, delimiter, numberOfLine,
             Optional.empty(), //no metadata folder supported for tabular file at the moment
-            Optional.of(spreadsheetDataFile));
+            Optional.of(spreadsheetDataFile)));
   }
 
   /**
@@ -236,16 +286,9 @@ public class DataFileFactory {
    * @return
    */
   protected static Optional<Term> determineRowType(List<Term> headers) {
-    if (headers.contains(DwcTerm.occurrenceID)) {
-      return Optional.of(DwcTerm.Occurrence);
-    }
-    if (headers.contains(DwcTerm.taxonID)) {
-      return Optional.of(DwcTerm.Taxon);
-    }
-    if (headers.contains(DwcTerm.eventID)) {
-      return Optional.of(DwcTerm.Event);
-    }
-    return Optional.empty();
+    return TERM_TO_ROW_TYPE.entrySet().stream()
+            .filter(ke -> headers.contains(ke.getKey()))
+            .map(Map.Entry::getValue).findFirst();
   }
 
   /**
@@ -257,9 +300,8 @@ public class DataFileFactory {
    * @return
    */
   protected static Optional<Term> determineRecordIdentifier(List<Term> headers) {
-    List<Term> termsToCheck = Arrays.asList(DwcTerm.eventID, DwcTerm.occurrenceID, DwcTerm.taxonID, DcTerm.identifier);
     //try to find the first matching term
-    return termsToCheck.stream().filter(t -> headers.contains(t)).findFirst();
+    return ID_TERMS.stream().filter(t -> headers.contains(t)).findFirst();
   }
 
   /**

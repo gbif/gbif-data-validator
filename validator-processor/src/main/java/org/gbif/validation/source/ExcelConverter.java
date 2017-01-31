@@ -9,7 +9,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.TimeZone;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
@@ -40,6 +44,7 @@ class ExcelConverter {
   private static final Logger LOG = LoggerFactory.getLogger(ExcelConverter.class);
   private static final TimeZone UTC_TIMEZONE = TimeZone.getTimeZone("UTC");
   private static final int FLUSH_INTERVAL = 1000;
+  private static final int FIRST_SHEET_INDEX = 0;
 
   private final DataFormatter formatter;
 
@@ -57,17 +62,19 @@ class ExcelConverter {
    *
    * @param workbookFile Path to the  workbook file
    * @param csvFile Path to the csv file to produce
+   * @param sheetSelector
    * @throws IOException
    * @throws InvalidFormatException Thrown if invalid xml is found whilst parsing an input SpreadsheetML file.
    */
-  public void convertToCSV(Path workbookFile, Path csvFile) throws IOException, InvalidFormatException {
+  public void convertToCSV(Path workbookFile, Path csvFile, Function<List<String>, Optional<String>> sheetSelector)
+          throws IOException, InvalidFormatException {
 
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
          ICsvListWriter csvWriter = new CsvListWriter(new FileWriter(csvFile.toFile()),
                                                       CsvPreference.STANDARD_PREFERENCE)) {
 
       Workbook workbook = WorkbookFactory.create(fis);
-      convertToCSV(workbook, csvWriter);
+      convertToCSV(workbook, csvWriter, sheetSelector);
 
       //ensure to flush remaining content to csvWriter
       csvWriter.flush();
@@ -81,9 +88,10 @@ class ExcelConverter {
    *
    * @param workbook
    * @param csvWriter
+   * @param sheetSelector
    * @throws IOException
    */
-  private void convertToCSV(Workbook workbook, ICsvListWriter csvWriter) throws IOException {
+  private void convertToCSV(Workbook workbook, ICsvListWriter csvWriter, Function<List<String>, Optional<String>> sheetSelector) throws IOException {
     Objects.requireNonNull(workbook, "workbook shall be provided");
     Objects.requireNonNull(csvWriter, "csvWriter shall be provided");
 
@@ -92,11 +100,22 @@ class ExcelConverter {
       return;
     }
 
-    if (workbook.getNumberOfSheets() > 1) { //we work only on one sheet
-      LOG.warn("Detected more than 1 sheet, only reading the first one.");
+    int sheetIndex = FIRST_SHEET_INDEX;
+    if (workbook.getNumberOfSheets() > 1) {
+      List<String> sheetNames = IntStream.range(0, workbook.getNumberOfSheets())
+              .mapToObj( idx -> workbook.getSheetName(idx))
+              .collect(Collectors.toList());
+      //run the sheetSelector function to see if we can get a sheet name from it otherwise, keep the first sheet
+      Optional<String> sheetName = sheetSelector.apply(sheetNames);
+      if(sheetName.isPresent()) {
+        sheetIndex = sheetName.map(name -> workbook.getSheetIndex(name)).get();
+      }
+      else{
+        LOG.warn("Detected more than 1 sheet and can not get a selection from sheetSelector(), only reading the first one.");
+      }
     }
 
-    Sheet sheet = workbook.getSheetAt(0); //get the first Sheet, and only get this
+    Sheet sheet = workbook.getSheetAt(sheetIndex); //get the first Sheet, and only get this
     if (sheet.getPhysicalNumberOfRows() > 0) {
       //pass the evaluator to other methods since it's unknown how expensive is to get one!
       writeSheetContent(csvWriter, sheet, workbook.getCreationHelper().createFormulaEvaluator());
@@ -111,7 +130,7 @@ class ExcelConverter {
     String[] headers = getHeaders(sheet, evaluator);
     csvWriter.writeHeader(headers);
 
-    int rowSize = headers.length - 1; //this is done avoid thi calculation on each call
+    int rowSize = headers.length - 1; //this is done avoid the calculation on each call
     for(int j = 1; j <= sheet.getLastRowNum(); j++) {
       csvWriter.write(rowToCSV(sheet.getRow(j), evaluator, rowSize));
       if (j % FLUSH_INTERVAL == 0) {

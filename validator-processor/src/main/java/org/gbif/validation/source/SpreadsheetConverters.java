@@ -2,6 +2,9 @@ package org.gbif.validation.source;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Function;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 
@@ -23,12 +26,14 @@ public class SpreadsheetConverters {
    *
    * @param workbookFile
    * @param csvFile
+   * @param sheetSelector function used to select the right sheet to convert (if more than one sheet is found)
    * @throws IOException
    */
-  public static void convertExcelToCSV(Path workbookFile, Path csvFile) throws IOException {
+  public static void convertExcelToCSV(Path workbookFile, Path csvFile,
+                                       Function<List<String>, Optional<String>> sheetSelector) throws IOException {
     try {
       ExcelConverter excelConverter = new ExcelConverter();
-      excelConverter.convertToCSV(workbookFile, csvFile);
+      excelConverter.convertToCSV(workbookFile, csvFile, sheetSelector);
     } catch (InvalidFormatException e) {
       throw new IOException(e);
     }

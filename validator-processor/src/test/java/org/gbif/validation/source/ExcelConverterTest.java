@@ -4,6 +4,7 @@ import org.gbif.utils.file.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.junit.Rule;
@@ -34,7 +35,7 @@ public class ExcelConverterTest {
 
     File testCsvFile = FileUtils.getClasspathFile(CSV_TEST_FILE_LOCATION);
     File testFile = folder.newFile();
-    SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(), testFile.toPath());
+    SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(), testFile.toPath(), l -> Optional.empty());
 
     assertTrue(org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(testFile, testCsvFile, "UTF-8"));
   }
