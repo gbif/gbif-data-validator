@@ -9,11 +9,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ValidationResultElement} represents an element in the resource in validation.
  * For DarwinCore Archive this could be the meta.xml, a core file or an extension file.
+ *
+ * Scope: part (per rowType) of the resource submitted.
  *
  */
 public class ValidationResultElement implements Serializable {
@@ -41,7 +42,7 @@ public class ValidationResultElement implements Serializable {
   public static ValidationResultElement onException(String fileName, EvaluationType evaluationType, String exception){
     //EvaluationType evaluationType
     List<ValidationIssue> issues = new ArrayList<>();
-    issues.add(new ValidationIssue(evaluationType, 1l, exception));
+    issues.add(ValidationIssues.withException(evaluationType, exception));
     return new ValidationResultElement(fileName, null, null, null, issues);
   }
 
@@ -60,7 +61,7 @@ public class ValidationResultElement implements Serializable {
     if(issueCounter != null && issueSampling != null) {
       issueCounter.forEach(
               (k, v) ->
-                      issues.add(new ValidationIssue(k, v, issueSampling.get(k))));
+                      issues.add(ValidationIssues.withSample(k, v, issueSampling.get(k))));
     }
   }
 
@@ -113,61 +114,19 @@ public class ValidationResultElement implements Serializable {
     return interpretedValueCounts;
   }
 
+
   /**
-   * Represents the output of a specific {@link EvaluationType}.
-   *
-   * Immutable class
+   * Check if the list of issue contains at least one issue of the provided {@link EvaluationCategory}.
+   * @param evaluationCategory
+   * @return
    */
-  public static class ValidationIssue implements Serializable {
-
-    private final EvaluationType issue;
-    private final long count;
-    private final List<ValidationResultDetails> sample;
-    private final String exception;
-
-    ValidationIssue(EvaluationType issue, long count) {
-      this(issue, count, null, null);
+  public boolean contains(EvaluationCategory evaluationCategory) {
+    if(issues != null) {
+      return issues.stream()
+              .filter( vi -> EvaluationCategory.RESOURCE_INTEGRITY.equals(vi.getIssue().getCategory()))
+              .findAny().isPresent();
     }
-
-    ValidationIssue(EvaluationType issue, long count, String exception) {
-      this(issue, count, null, exception);
-    }
-
-    ValidationIssue(EvaluationType issue, long count, List<ValidationResultDetails> sample) {
-      this(issue, count, sample, null);
-    }
-
-    ValidationIssue(EvaluationType issue, long count, List<ValidationResultDetails> sample, String exception) {
-      this.issue = issue;
-      this.count = count;
-      this.sample = sample;
-      this.exception = exception;
-    }
-
-    public EvaluationType getIssue() {
-      return issue;
-    }
-
-    public EvaluationCategory getIssueCategory() {
-      if(issue == null) {
-        return null;
-      }
-      return issue.getCategory();
-    }
-
-    public long getCount() {
-      return count;
-    }
-
-    @Nullable
-    public List<ValidationResultDetails> getSample() {
-      return sample;
-    }
-
-    public String getException() {
-      return exception;
-    }
+    return false;
   }
-
 
 }

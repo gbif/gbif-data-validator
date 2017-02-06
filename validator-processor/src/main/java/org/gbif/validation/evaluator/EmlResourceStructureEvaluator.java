@@ -11,6 +11,8 @@ import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.validation.constraints.NotNull;
@@ -36,10 +38,10 @@ class EmlResourceStructureEvaluator implements ResourceStructureEvaluator {
   }
 
   @Override
-  public Optional<ValidationResultElement> evaluate(@NotNull DataFile dataFile) {
-
+  public Optional<List<ValidationResultElement>> evaluate(@NotNull DataFile dataFile) {
     Objects.requireNonNull(dataFile.getFilePath(), "DataFile filePath shall be provided");
     Objects.requireNonNull(dataFile.getSourceFileName(), "DataFile sourceFileName shall be provided");
+    List<ValidationResultElement> validationResultElements = new ArrayList<>();
 
     try {
       Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
@@ -48,19 +50,19 @@ class EmlResourceStructureEvaluator implements ResourceStructureEvaluator {
         try {
           getMetaXMLValidator().validate(new StreamSource(datasetMetadataFile.getAbsolutePath()));
         } catch (SAXException e) {
-          return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_GBIF_SCHEMA, e.getMessage()));
+          validationResultElements.add(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_GBIF_SCHEMA, e.getMessage()));
         }
       }
       else{
-        return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_NOT_FOUND, null));
+        validationResultElements.add(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_NOT_FOUND, null));
       }
     } catch (IOException | UnsupportedArchiveException uaEx) {
       LOG.debug("Can't evaluate EML file", uaEx);
       //this is a tricky one since it is not really possible to know if the error is coming from the EML
-      return Optional.of(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_NOT_FOUND, uaEx.getMessage()));
+      validationResultElements.add(buildResult(dataFile.getSourceFileName(), EvaluationType.EML_NOT_FOUND, uaEx.getMessage()));
     }
 
-    return Optional.empty();
+    return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);
   }
 
   private Validator getMetaXMLValidator() {

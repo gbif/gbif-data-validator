@@ -1,5 +1,7 @@
 package org.gbif.validation.ws.conf;
 
+import java.net.URL;
+
 /**
  * Configuration settings required by the data validation web services.
  */
@@ -12,6 +14,8 @@ public class ValidationConfiguration {
    * Url to the GBIF Rest API.
    */
   private String apiUrl;
+
+  private URL extensionDiscoveryUrl;
 
   /**
    * Maximum number of lines a file can contains until we split it.
@@ -43,6 +47,14 @@ public class ValidationConfiguration {
 
   public String getApiDataValidationPath() {
     return apiDataValidationPath;
+  }
+
+  public void setExtensionDiscoveryUrl(URL extensionDiscoveryUrl){
+    this.extensionDiscoveryUrl = extensionDiscoveryUrl;
+  }
+
+  public URL getExtensionDiscoveryUrl() {
+    return extensionDiscoveryUrl;
   }
 
   public void setApiDataValidationPath(String apiDataValidationPath) {

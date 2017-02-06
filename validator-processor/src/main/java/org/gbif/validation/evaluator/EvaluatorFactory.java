@@ -1,12 +1,15 @@
 package org.gbif.validation.evaluator;
 
 import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
+import org.gbif.dwc.extensions.ExtensionManager;
+import org.gbif.dwc.extensions.ExtensionManagerFactory;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.CoordinateInterpreter;
 import org.gbif.occurrence.processor.interpreting.LocationInterpreter;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
+import org.gbif.utils.HttpUtil;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
@@ -14,6 +17,7 @@ import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
+import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.evaluator.record.OccurrenceInterpretationEvaluator;
 import org.gbif.validation.evaluator.record.RecordStructureEvaluator;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
@@ -32,6 +36,7 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.apache.ApacheHttpClient;
+import org.apache.http.client.HttpClient;
 import org.codehaus.jackson.jaxrs.JacksonJsonProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,10 +50,23 @@ public class EvaluatorFactory {
   private static final String XML_CATALOG = "xml/xml-catalog.xml";
   private static final XMLSchemaValidatorProvider XML_SCHEMA_VALIDATOR_PROVIDER = createXMLSchemaValidatorProvider();
   private static final int CLIENT_TO = 600000; // registry client default timeout
+
   private static final ApacheHttpClient HTTP_CLIENT = createHttpClient();
+  //FIXME we should refactor the ExtensionManager and reuse the ApacheHttpClient
+  private static final HttpClient PLAIN_HTTP_CLIENT = createPlainHttpClient(10, 10);
 
   private final String apiUrl;
   private final NormalizerConfiguration normalizerConfiguration;
+  private final ExtensionManager extensionManager;
+
+  public EvaluatorFactory(ValidatorConfiguration config) {
+    Objects.requireNonNull(config, "ValidatorConfiguration shall be provided");
+
+    this.apiUrl = config.getApiUrl();
+    this.normalizerConfiguration = config.getNormalizerConfiguration();
+    extensionManager = ExtensionManagerFactory.buildExtensionManager(PLAIN_HTTP_CLIENT,
+            config.getExtensionListURL(), true);
+  }
 
   /**
    * Create a {@link ResourceStructureEvaluator} instance for a specific {@link FileFormat}.
@@ -56,12 +74,12 @@ public class EvaluatorFactory {
    * @param fileFormat
    * @return
    */
-  public static ResourceStructureEvaluator createResourceStructureEvaluator(FileFormat fileFormat) {
+  public ResourceStructureEvaluator createResourceStructureEvaluator(FileFormat fileFormat) {
     Objects.requireNonNull(fileFormat, "fileFormat shall be provided");
 
     switch(fileFormat) {
       case DWCA:
-        return new DwcaResourceStructureEvaluator(XML_SCHEMA_VALIDATOR_PROVIDER);
+        return new DwcaResourceStructureEvaluator(XML_SCHEMA_VALIDATOR_PROVIDER, extensionManager);
       default: return (dataFile) -> Optional.empty();
     }
   }
@@ -69,7 +87,7 @@ public class EvaluatorFactory {
   /**
    * Creates a {@link RecordCollectionEvaluator} that validates the uniqueness of the value on a specific column index.
    *
-   * @param idColumnIndex
+   * @param idColumnIndex starting at 1
    * @param caseSensitive
    *
    * @return
@@ -94,7 +112,6 @@ public class EvaluatorFactory {
   /**
    * Creates a {@link RecordCollectionEvaluator} instance for a evaluating checklist.
    *
-   *
    * @return
    */
   public RecordCollectionEvaluator<DataFile> createChecklistEvaluator() {
@@ -113,11 +130,6 @@ public class EvaluatorFactory {
     }
     LOG.warn("Could not load {} from the classpath. Continuing without XMLCatalog.", XML_CATALOG);
     return new XMLSchemaValidatorProvider(Optional.empty());
-  }
-
-  public EvaluatorFactory(String apiUrl, NormalizerConfiguration normalizerConfiguration) {
-    this.apiUrl = apiUrl;
-    this.normalizerConfiguration = normalizerConfiguration;
   }
 
   /**
@@ -163,6 +175,10 @@ public class EvaluatorFactory {
     JacksonJsonContextResolver.addMixIns(Mixins.getPredefinedMixins());
 
     return ApacheHttpClient.create(cc);
+  }
+
+  private static HttpClient createPlainHttpClient(int maxConnections, int maxPerRoute) {
+    return HttpUtil.newMultithreadedClient(CLIENT_TO, maxConnections, maxPerRoute);
   }
 
 }

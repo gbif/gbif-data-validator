@@ -5,6 +5,7 @@ import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.result.ValidationResult;
+import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
@@ -16,6 +17,8 @@ import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -28,11 +31,15 @@ import com.google.common.collect.Lists;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Server listener. Contains
  */
 public class ValidationWsListener extends GbifServletListener {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ValidationWsListener.class);
 
   //Default configuration file
   private static final String APP_CONF_FILE = "validation.properties";
@@ -61,12 +68,20 @@ public class ValidationWsListener extends GbifServletListener {
 
     private static ValidationConfiguration getConfFromProperties(Properties properties){
       ValidationConfiguration configuration = new ValidationConfiguration();
+
       configuration.setApiUrl(properties.getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(properties.getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
       configuration.setFileSplitSize(NumberUtils.toInt(properties.getProperty(ConfKeys.FILE_SPLIT_SIZE),
                                                        DEFAULT_SPLIT_SIZE));
       configuration.setApiDataValidationPath(properties.getProperty(ConfKeys.VALIDATION_API_PATH_CONF_KEY));
       configuration.setJobResultStorageDir(properties.getProperty(ConfKeys.RESULT_STORAGE_DIR_CONF_KEY));
+
+      try {
+        configuration.setExtensionDiscoveryUrl(new URL(properties.getProperty(ConfKeys.EXTENSION_DISCOVERY_URL_KEY)));
+      } catch (MalformedURLException e) {
+        LOG.error("Can't set ExtensionDiscoveryUrl", e);
+      }
+
       return configuration;
     }
 
@@ -115,7 +130,10 @@ public class ValidationWsListener extends GbifServletListener {
      * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
      */
     private static ActorPropsSupplier buildActorPropsMapping(ValidationConfiguration configuration) {
-      return new ActorPropsSupplier(new EvaluatorFactory(configuration.getApiUrl(), getNormalizerConfiguration()),
+      ValidatorConfiguration config = new ValidatorConfiguration(configuration.getApiUrl(),
+              getNormalizerConfiguration(), configuration.getExtensionDiscoveryUrl());
+
+      return new ActorPropsSupplier(new EvaluatorFactory(config),
                                     configuration.getFileSplitSize(),
                                     configuration.getWorkingDir());
     }

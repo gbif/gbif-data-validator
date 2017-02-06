@@ -2,6 +2,7 @@ package org.gbif.validation.api;
 
 import org.gbif.validation.api.result.ValidationResultElement;
 
+import java.util.List;
 import java.util.Optional;
 import javax.validation.constraints.NotNull;
 
@@ -15,7 +16,7 @@ public interface ResourceStructureEvaluator {
    * Evaluate a {@link DataFile} and optionally produce a {@link ValidationResultElement}.
    *
    * @param dataFile where the resource is located
-   * @return for the moment {@link ValidationResultElement} is returned directly simply because it is not aggregated
+   * @return list of all {@link ValidationResultElement} or Optional.empty() if nothing to report
    */
-  Optional<ValidationResultElement> evaluate(@NotNull DataFile dataFile);
+  Optional<List<ValidationResultElement>> evaluate(@NotNull DataFile dataFile);
 }

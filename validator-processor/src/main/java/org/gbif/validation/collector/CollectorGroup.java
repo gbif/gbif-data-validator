@@ -121,7 +121,8 @@ public class CollectorGroup {
   private static List<ValidationResultDetails> resample(List<ValidationResultDetails> resultDetails,
                                                         int maxSample) {
     return resultDetails.stream()
-            .sorted((lberd1, lberd2) -> Long.compare(lberd1.getLineNumber(), lberd2.getLineNumber()))
+            .sorted((lberd1, lberd2) -> Long.compare(lberd1.getLineNumber() == null ? Long.MAX_VALUE : lberd1.getLineNumber(),
+                    lberd2.getLineNumber() == null ? Long.MAX_VALUE : lberd2.getLineNumber()))
             .limit(maxSample)
             .collect(Collectors.toList());
   }

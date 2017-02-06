@@ -36,6 +36,7 @@ import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.mutable.MutableInt;
 
 import static org.gbif.validation.api.model.ValidationProfile.GBIF_INDEXING_PROFILE;
@@ -44,7 +45,7 @@ import static akka.japi.pf.ReceiveBuilder.match;
 
 /**
  * Akka actor that acts as the central coordinator of parallel data processing.
- * This class decides if the data input should be split into smaller pieces to be processed by worker actors..
+ * This class decides if the data input should be split into smaller pieces to be processed by worker actors.
  */
 public class DataFileProcessorMaster extends AbstractLoggingActor {
 
@@ -79,13 +80,15 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   private static class RowTypeEvaluationUnit {
+    private final DataFile dataFile;
     private final Term rowType;
     private final RecordCollectionEvaluator resourceRecordIntegrityEvaluator;
     private final CollectorGroupProvider collectorsProvider;
 
-    RowTypeEvaluationUnit(Term rowType,
+    RowTypeEvaluationUnit(DataFile dataFile, Term rowType,
                             RecordCollectionEvaluator resourceRecordIntegrityEvaluator,
                             CollectorGroupProvider collectorsProvider) {
+      this.dataFile = dataFile;
       this.rowType = rowType;
       this.resourceRecordIntegrityEvaluator = resourceRecordIntegrityEvaluator;
       this.collectorsProvider = collectorsProvider;
@@ -123,7 +126,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
     DataFile dataFile = dataJob.getJobData();
 
-    if(evaluateResourceStructure(dataFile)){
+    if(evaluateResourceStructure(dataFile, factory)){
       List<TabularDataFile> dataFiles = DataFileFactory.prepareDataFile(dataFile);
 
       init(dataFiles);
@@ -139,7 +142,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       this.numOfWorkers = numOfWorkers.intValue();
 
       //now trigger everything
-      processRowTypeEvaluationUnit(dataFile, rowTypeBasedEvaluations);
+      processRowTypeEvaluationUnit(rowTypeBasedEvaluations);
       processEvaluationUnit(dataFilesToEvaluate);
     }
   }
@@ -195,7 +198,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   /**
    * Prepares the RowTypeEvaluationUnit if required (only on DarwinCore Archive for now).
-   * TODO: run uniqueness
    *
    * @param dwcaDataFile
    * @param dataFiles
@@ -208,20 +210,38 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       return Collections.emptyList();
     }
 
-    List<RowTypeEvaluationUnit> rowTypeEvaluationUnits =
-            dataFiles.stream()
-            .filter(df -> df.getType() == DwcFileType.EXTENSION)
-            .map(df -> new RowTypeEvaluationUnit(
-                    df.getRowType(),
-                    EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
-                    rowTypeCollectorProviders.get(df.getRowType())))
-            .collect(Collectors.toList());
+    Map<DwcFileType, List<TabularDataFile>> dfPerRowType = dataFiles.stream()
+            .collect(Collectors.groupingBy(TabularDataFile::getType));
+
+    //we assume the core file is there
+    TabularDataFile coreTdf = dfPerRowType.get(DwcFileType.CORE).get(0);
+
+    //validate assumptions
+    Validate.validState(coreTdf != null , "Core file defined");
+    Validate.validState(coreTdf.getRecordIdentifier().isPresent(), "Core file had a record Identifier");
+
+    List<RowTypeEvaluationUnit> rowTypeEvaluationUnits = new ArrayList<>();
+
+    rowTypeEvaluationUnits.add(new RowTypeEvaluationUnit(
+            coreTdf, coreTdf.getRowType(),
+            EvaluatorFactory.createUniquenessEvaluator(coreTdf.getIndexOf(coreTdf.getRecordIdentifier().get()).getAsInt() + 1, true),
+            rowTypeCollectorProviders.get(coreTdf.getRowType())));
+
+    if (dfPerRowType.get(DwcFileType.EXTENSION) != null) {
+      rowTypeEvaluationUnits.addAll(
+              dfPerRowType.get(DwcFileType.EXTENSION).stream()
+                      .map(df -> new RowTypeEvaluationUnit(
+                              df, df.getRowType(),
+                              EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()),
+                              rowTypeCollectorProviders.get(df.getRowType())))
+                      .collect(Collectors.toList()));
+    }
 
     dataFiles.stream().filter( df -> DwcTerm.Taxon.equals(df.getRowType()))
             .findFirst()
             .ifPresent(df -> rowTypeEvaluationUnits.add(
                     new RowTypeEvaluationUnit(
-                            DwcTerm.Taxon,
+                            df, DwcTerm.Taxon,
                             factory.createChecklistEvaluator(),
                             rowTypeCollectorProviders.get(DwcTerm.Taxon)
             )));
@@ -237,26 +257,36 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * @param dataFile
    * @return is the resource structurally valid or not (should the validation continue or not)
    */
-  private boolean evaluateResourceStructure(DataFile dataFile) {
-    Optional<ValidationResultElement> validationResultElement =
-            EvaluatorFactory.createResourceStructureEvaluator(dataFile.getFileFormat())
+  private boolean evaluateResourceStructure(DataFile dataFile, EvaluatorFactory factory) {
+    Optional<List<ValidationResultElement>> validationResultElement =
+            factory.createResourceStructureEvaluator(dataFile.getFileFormat())
                     .evaluate(dataFile);
 
     if (validationResultElement.isPresent()) {
       List<ValidationResultElement> validationResultElementList = new ArrayList<>(1);
-      validationResultElementList.add(validationResultElement.get());
-      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-              new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                      GBIF_INDEXING_PROFILE, validationResultElementList, null)));
-      return false;
+      validationResultElementList.addAll(validationResultElement.get());
+
+      //check if we have an issue that requires to stop the evaluation process
+//      if(validationResultElement.get().stream()
+//              .filter( vre -> vre.contains(EvaluationCategory.RESOURCE_INTEGRITY))
+//              .findAny().isPresent()){
+        emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
+                new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                        GBIF_INDEXING_PROFILE, validationResultElementList, null)));
+        return false;
+//      }
     }
     return true;
   }
 
-  private void processRowTypeEvaluationUnit(DataFile dwcaDataFile, Iterable<RowTypeEvaluationUnit> rowTypeEvaluators) {
-    rowTypeEvaluators.forEach(rtEvaluator -> {
+//  private boolean evaluateResourceMetadata(DataFile dataFile, EvaluatorFactory factory) {
+//
+//  }
+
+  private void processRowTypeEvaluationUnit(Iterable<RowTypeEvaluationUnit> rowTypeEvaluationUnits) {
+    rowTypeEvaluationUnits.forEach(rtEvaluator -> {
       ActorRef actor = createSingleActor(rtEvaluator);
-      actor.tell(dwcaDataFile, self());
+      actor.tell(rtEvaluator.dataFile, self());
     });
   }
 
