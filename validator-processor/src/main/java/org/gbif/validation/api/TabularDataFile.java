@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.OptionalInt;
+import java.util.stream.IntStream;
 
 
 /**
@@ -124,6 +126,22 @@ public class TabularDataFile extends DataFile {
    */
   public Optional<Map<Term, String>> getDefaultValues() {
     return defaultValues;
+  }
+
+  /**
+   * Get the index of a {@link Term} or OptionalInt.empty if the Term can not be found.
+   *
+   * @param term
+   *
+   * @return
+   */
+  public OptionalInt getIndexOf(Term term) {
+    if (columns == null) {
+      return OptionalInt.empty();
+    }
+    return IntStream.range(0, columns.length)
+            .filter(idx -> term.equals(columns[idx]))
+            .findAny();
   }
 
   public Optional<DataFile> getParent() {

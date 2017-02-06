@@ -7,6 +7,8 @@ import java.util.Map;
 /**
  * This class shares some concepts with RecordEvaluationResultDetails but is not used in the same context.
  * To separate the concerns we decided to have 2 classes.
+ *
+ * Scope : single line of a rowType
  */
 public class ValidationResultDetails {
 

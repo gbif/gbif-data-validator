@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.Validate;
+
 /**
  * This class contains functions that encapsulate Linux commands.
  */
@@ -94,6 +96,7 @@ public class FileBashUtilities {
    * @throws IOException
    */
   public static String[] findDuplicates(String filePath, int column, String separator) throws IOException {
+    Validate.isTrue(column > 0, "Indices are starting at 1");
     return executeSimpleCmd(String.format(FIND_DUPLICATE_CMD, separator, column, column, filePath));
   }
 

@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 
 /**
  * Contains the result of a validation. This is the top class of validation result.
+ * Scope: the entire resource submitted.
  */
 public class ValidationResult implements Serializable {
 

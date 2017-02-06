@@ -49,7 +49,7 @@ public class UniquenessEvaluator implements RecordCollectionEvaluator<TabularDat
             dataFile.getDelimiterChar().toString(), null, "\n", dataFile.isHasHeaders() ? 1 : 0, null, caseSensitive);
 
     //FIXME doesn't support case sensitive for now
-    String[] result = FileBashUtilities.findDuplicates(sourceFile.getAbsolutePath(), idColumnIndex,
+    String[] result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex,
             dataFile.getDelimiterChar().toString());
 
     return Optional.of(Arrays.stream(result).map(rec -> buildResult(rowType, rec)));

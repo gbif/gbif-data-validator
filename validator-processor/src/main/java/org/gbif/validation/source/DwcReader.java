@@ -183,13 +183,15 @@ class DwcReader implements RecordSource {
 
   /**
    * Get the {@link Term} representing the "id" of the current rowType.
+   *
    * @return
    */
   public Optional<Term> getRecordIdentifier() {
-    if (darwinCoreComponent == null) {
+    if (darwinCoreComponent == null || darwinCoreComponent.getId() == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(darwinCoreComponent.getId() != null ? darwinCoreComponent.getId().getTerm() : null);
+    return Optional.ofNullable(darwinCoreComponent.getId().getTerm() != null ?
+            darwinCoreComponent.getId().getTerm() : DEFAULT_ID_TERM);
   }
 
   @Override
