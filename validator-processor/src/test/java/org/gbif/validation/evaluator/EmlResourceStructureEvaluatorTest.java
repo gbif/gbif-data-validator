@@ -10,7 +10,7 @@ import java.util.Optional;
 import org.junit.Test;
 
 import static org.gbif.validation.TestUtils.XML_CATALOG;
-import static org.gbif.validation.evaluator.DwcaResourceStructureEvaluatorTest.getDataFile;
+import static org.gbif.validation.TestUtils.getDwcaDataFile;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,14 +27,14 @@ public class EmlResourceStructureEvaluatorTest {
   @Test
   public void emlResourceStructureEvaluatorTest() {
     Optional<List<ValidationResultElement>> result =
-            EML_RESOURCES_STRUCTURE_EVAL.evaluate(getDataFile("dwca/dwca-occurrence", "test"));
+            EML_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence", "test"));
     assertFalse(result.isPresent());
   }
 
   @Test
   public void emlResourceStructureEvaluatorTestBrokenEml() {
     Optional<List<ValidationResultElement>> result =
-            EML_RESOURCES_STRUCTURE_EVAL.evaluate(getDataFile("dwca/dwca-occurrence-eml-broken", "test"));
+            EML_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence-eml-broken", "test"));
     assertTrue(result.isPresent());
     assertEquals(EvaluationType.EML_GBIF_SCHEMA, result.get().get(0).getIssues().get(0).getIssue());
   }

@@ -36,6 +36,7 @@ class DwcReader implements RecordSource {
   private final ArchiveFile darwinCoreComponent;
   private final List<ArchiveField> archiveFields;
   private final CSVReader csvReader;
+  private final Term[] headers;
 
   private Optional<Map<Term, String>> defaultValues = Optional.empty();
 
@@ -69,6 +70,7 @@ class DwcReader implements RecordSource {
     //check if there is default value(s) defined
     archiveFields.stream().filter(af -> af.getIndex() == null)
             .forEach(af -> addDefaultValue(af.getTerm(), af.getDefaultValue()));
+    headers = extractHeaders();
   }
 
   /**
@@ -104,6 +106,7 @@ class DwcReader implements RecordSource {
     archiveFields.stream().filter(af -> af.getIndex() == null)
             .forEach(af -> addDefaultValue(af.getTerm(), af.getDefaultValue()));
 
+    headers = extractHeaders();
   }
 
   public ArchiveFile getCore() {
@@ -122,6 +125,11 @@ class DwcReader implements RecordSource {
   @Nullable
   @Override
   public Term[] getHeaders() {
+    return headers;
+  }
+
+
+  private Term[] extractHeaders() throws UnsupportedArchiveException {
     if (archiveFields == null) {
       return null;
     }
@@ -190,8 +198,9 @@ class DwcReader implements RecordSource {
     if (darwinCoreComponent == null || darwinCoreComponent.getId() == null) {
       return Optional.empty();
     }
-    return Optional.ofNullable(darwinCoreComponent.getId().getTerm() != null ?
-            darwinCoreComponent.getId().getTerm() : DEFAULT_ID_TERM);
+
+    return Optional.of(headers[darwinCoreComponent.getId().getIndex()]);
+
   }
 
   @Override

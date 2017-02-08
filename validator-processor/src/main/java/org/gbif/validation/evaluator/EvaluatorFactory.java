@@ -59,13 +59,28 @@ public class EvaluatorFactory {
   private final NormalizerConfiguration normalizerConfiguration;
   private final ExtensionManager extensionManager;
 
+  /**
+   * Get a new {@link EvaluatorFactory} instance based on {@link ValidatorConfiguration}.
+   * @param config
+   */
   public EvaluatorFactory(ValidatorConfiguration config) {
+    this(config, ExtensionManagerFactory.buildExtensionManager(PLAIN_HTTP_CLIENT,
+            config.getExtensionListURL(), true));
+  }
+
+  /**
+   * Get a new {@link EvaluatorFactory} instance based on {@link ValidatorConfiguration} but using the provided
+   * {@link ExtensionManager} ignoring the related configuration in the {@link ValidatorConfiguration}.
+   * Mostly use for testing.
+   * @param config
+   * @param extensionManager use the provided
+   */
+  public EvaluatorFactory(ValidatorConfiguration config, ExtensionManager extensionManager) {
     Objects.requireNonNull(config, "ValidatorConfiguration shall be provided");
 
     this.apiUrl = config.getApiUrl();
     this.normalizerConfiguration = config.getNormalizerConfiguration();
-    extensionManager = ExtensionManagerFactory.buildExtensionManager(PLAIN_HTTP_CLIENT,
-            config.getExtensionListURL(), true);
+    this.extensionManager = extensionManager;
   }
 
   /**
