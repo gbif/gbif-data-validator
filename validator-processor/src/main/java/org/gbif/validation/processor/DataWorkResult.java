@@ -2,7 +2,6 @@ package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.result.ChecklistValidationResult;
 import org.gbif.validation.collector.CollectorGroup;
 
 /**
@@ -21,8 +20,6 @@ class DataWorkResult {
   private Term rowType;
 
   private CollectorGroup collectors;
-
-  private ChecklistValidationResult checklistValidationResult;
 
   private Result result;
 
@@ -75,13 +72,6 @@ class DataWorkResult {
     this.result = result;
   }
 
-  public ChecklistValidationResult getChecklistValidationResult() {
-    return checklistValidationResult;
-  }
-
-  public void setChecklistValidationResult(ChecklistValidationResult checklistValidationResult) {
-    this.checklistValidationResult = checklistValidationResult;
-  }
 
   @Override
   public String toString() {

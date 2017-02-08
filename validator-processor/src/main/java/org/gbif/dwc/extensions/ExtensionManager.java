@@ -9,11 +9,11 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -48,7 +48,7 @@ public class ExtensionManager {
   private final ExtensionFactory factory;
   private final HttpClient httpClient;
 
-  private Map<Term, Extension> extensionsByRowtype = new HashMap<>();
+  private Map<Term, Extension> extensionsByRowtype = new ConcurrentHashMap<>();
 
   private final String TAXON_KEYWORD = "dwc:taxon";
   private final String OCCURRENCE_KEYWORD = "dwc:occurrence";
@@ -154,6 +154,7 @@ public class ExtensionManager {
   public List<Extension> search(String keyword) {
     List<Extension> list = new ArrayList<>();
     keyword = keyword.toLowerCase();
+    //FIXME risk of race condition when update runs
     for (Extension e : extensionsByRowtype.values()) {
       if (StringUtils.containsIgnoreCase(e.getSubject(), keyword)) {
         list.add(e);
@@ -171,7 +172,6 @@ public class ExtensionManager {
       install(url);
       counter++;
     }
-
     return counter;
   }
 
