@@ -25,6 +25,19 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 ## EvaluationChain
 [EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build and store the sequence of evaluation that will be performed.
 
+Example of simple evaluation chain based from unit test:
+```java
+List<TabularDataFile> dataFiles = DataFileFactory.prepareDataFile(dwcaDataFile);
+EvaluationChain.Builder evaluationChainBuilder = EvaluationChain.Builder.using(dwcaDataFile, dataFiles,
+              TestUtils.getEvaluatorFactory());
+
+evaluationChainBuilder.evaluateReferentialIntegrity();
+evaluationChainBuilder.build().runRowTypeEvaluation(rowTypeEvaluationUnit -> {
+  Optional<Stream<RecordEvaluationResult>> result = rowTypeEvaluationUnit.evaluate();
+  if(DwcTerm.Identification.equals(rowTypeEvaluationUnit.getRowType())){
+    assertTrue("Got referential integrity issue on Identification extensions", result.isPresent());
+});
+```
 ## Actors
 
 ## Collectors
