@@ -1,6 +1,6 @@
 
 
-##DataFile
+## DataFile
 [DataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DataFile.java)
 represents the resource to be validated. DataFile are transformed into one or multiple
 TabularDataFile prior to validation. When a DataFile is transformed the link to
@@ -12,16 +12,19 @@ Transformations include:
  * Splitting a tabular file into multiple (smaller) tabular files
 DataFile are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
 
-##TabularDataFile
+## TabularDataFile
 [TabularDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/TabularDataFile.java)
 represents data held into a file in tabular format.
 TabularDataFile are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
 
-##RecordSource
-(RecordSource)[https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordSource.java] allows to expose records independently from their source.
+## RecordSource
+[RecordSource](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordSource.java) allows to expose records independently from their source.
 
 RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/RecordSourceFactory.java).
 
-##Actors
+## EvaluationChain
+[EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build and store the sequence of evaluation that will be performed.
 
-##Collectors
+## Actors
+
+## Collectors
