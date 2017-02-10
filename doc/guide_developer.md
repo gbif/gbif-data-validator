@@ -25,7 +25,7 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 
 ## Evaluators
 ### ResourceStructureEvaluator
-[ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself. If the evaluation bring results, depending of the (EvaluationCategory)[https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java], the evaluation chain can be stopped. For example if DarwinCore Archive and cannot be opened/extracted.
+[ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself. If the evaluation bring results, depending of the [EvaluationCategory[(https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java), the evaluation chain can be stopped. For example if DarwinCore Archive and cannot be opened/extracted.
 
 ### MetadataEvaluator
 
