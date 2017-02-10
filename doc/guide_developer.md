@@ -1,4 +1,5 @@
-This document is intended for developers and covers the internal concepts of the gbif-data-validator.
+This document is intended for developers.
+It covers the internal concepts of the gbif-data-validator.
 
 ## DataFile
 [DataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DataFile.java)
@@ -24,7 +25,10 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 
 ## Evaluators
 ### ResourceStructureEvaluator
-[ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java)
+[ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself. If the evaluation bring results, depending of the (EvaluationCategory)[https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java], the evaluation chain can be stopped. For example if DarwinCore Archive and cannot be opened/extracted.
+
+### MetadataEvaluator
+
 
 ### RecordCollectionEvaluator
 [RecordCollectionEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordCollectionEvaluator.java) operates at a higher level than RecordEvaluator and work on more than one record but, it also produces RecordEvaluationResult at a record level.
