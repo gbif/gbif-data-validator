@@ -142,6 +142,11 @@ public class EvaluationChain {
     }
 
     public Builder evaluateReferentialIntegrity() {
+      //in case we have no extension, simply return
+      if(dfPerRowType.get(DwcFileType.EXTENSION) == null){
+        return this;
+      }
+
       rowTypeEvaluationUnits.addAll(
               dfPerRowType.get(DwcFileType.EXTENSION).stream()
                       .map(df -> new RowTypeEvaluationUnit<>(
