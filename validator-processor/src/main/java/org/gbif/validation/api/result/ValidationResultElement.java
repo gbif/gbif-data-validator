@@ -109,6 +109,10 @@ public class ValidationResultElement implements Serializable {
     return numberOfLines;
   }
 
+  public DwcFileType getFileType() {
+    return fileType;
+  }
+
   public Term getRowType() {
     return rowType;
   }

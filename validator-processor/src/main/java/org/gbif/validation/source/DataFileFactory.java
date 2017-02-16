@@ -253,7 +253,7 @@ public class DataFileFactory {
 
   /**
    * Build a {@link TabularDataFile} for tabualr files (csv, csv from converted Excel sheet).
-   * 
+   *
    * @param tabularFilePath {@link Path} to the tabular file
    * @param sourceFileName
    * @param contentType
@@ -267,6 +267,8 @@ public class DataFileFactory {
     Term[] headers;
     Optional<Term> rowType;
     Optional<Term> recordIdentifier;
+    //Note, this will modify the file (if required)
+    FileBashUtilities.ensureEndsWithNewline(tabularFilePath.toAbsolutePath().toString());
     int numberOfLine = FileBashUtilities.countLines(tabularFilePath.toAbsolutePath().toString());
     try (RecordSource rs = RecordSourceFactory.fromDelimited(tabularFilePath.toFile(), delimiter, true)) {
       headers = rs.getHeaders();
