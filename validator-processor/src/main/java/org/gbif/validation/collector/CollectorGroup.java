@@ -100,7 +100,7 @@ public class CollectorGroup {
                     e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
 
     return new ValidationResultElement(resultingFileName,
-            dataFile.getNumOfLines() - (dataFile.isHasHeaders() ? 1l : 0l),
+            dataFile.getNumOfLines().longValue(),
             dataFile.getType(),
             dataFile.getRowType(),
             mergedAggregatedCounts, resampledMergedSamples,

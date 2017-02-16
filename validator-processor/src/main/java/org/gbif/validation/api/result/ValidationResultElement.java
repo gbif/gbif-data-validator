@@ -51,6 +51,17 @@ public class ValidationResultElement implements Serializable {
     this(fileName, numberOfLines, fileType, rowType, issues, null, null);
   }
 
+  /**
+   *
+   * @param fileName
+   * @param numberOfLines total number of line, including the header line
+   * @param fileType
+   * @param rowType
+   * @param issueCounter
+   * @param issueSampling
+   * @param termsFrequency
+   * @param interpretedValueCounts
+   */
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
                           Map<EvaluationType, Long> issueCounter,
                           Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
