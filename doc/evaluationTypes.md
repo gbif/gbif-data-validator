@@ -1,17 +1,21 @@
 ### Resource Integrity
-DWCA_UNREADABLE
-DWCA_META_XML_NOT_FOUND
-DWCA_META_XML_SCHEMA
+|Key            |Description    |
+| ------------- | ------------- |
+|DWCA_UNREADABLE | Impossible to read or extract the DarwinCore Archive
+|DWCA_META_XML_NOT_FOUND | Impossible to find the meta.xml file
+|DWCA_META_XML_SCHEMA | meta.xml file can not be validated against its schema
 
 ### Resource Structure
-EML_GBIF_SCHEMA
-EML_NOT_FOUND
-UNKNOWN_ROWTYPE
-REQUIRED_TERM_MISSING
-UNKNOWN_TERM
-RECORD_NOT_UNIQUELY_IDENTIFIED
-RECORD_REFERENTIAL_INTEGRITY_VIOLATION
-COLUMN_MISMATCH
+|Key            |Description    |
+| ------------- | ------------- |
+|EML_GBIF_SCHEMA|
+|EML_NOT_FOUND|
+|UNKNOWN_ROWTYPE|
+|REQUIRED_TERM_MISSING|
+|UNKNOWN_TERM|
+|RECORD_NOT_UNIQUELY_IDENTIFIED|
+|RECORD_REFERENTIAL_INTEGRITY_VIOLATION|
+|COLUMN_MISMATCH|
 
 ### Occurrence Interpretation Based
 ZERO_COORDINATE
