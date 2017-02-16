@@ -139,7 +139,8 @@ public class DataFileFactory {
         dataFileList.addAll(prepareDwcA(dataFile));
         break;
       case TABULAR:
-        dataFileList.add(prepareTabular(dataFile));
+        //FIXME if the Optional is empty, it will fail silently
+        prepareTabular(dataFile).ifPresent(dataFileList::add);
     }
 
     return dataFileList;
@@ -174,27 +175,11 @@ public class DataFileFactory {
    * @return
    * @throws IOException
    */
-  private static TabularDataFile prepareTabular(DataFile tabularDataFile) throws IOException {
+  private static Optional<TabularDataFile> prepareTabular(DataFile tabularDataFile) throws IOException {
 
-    int numberOfLine = FileBashUtilities.countLines(tabularDataFile.getFilePath().toAbsolutePath().toString());
     Character delimiter = getDelimiter(tabularDataFile.getFilePath());
-    Term[] headers;
-    Optional<Term> rowType;
-    Optional<Term> recordIdentifier;
-
-    try (RecordSource rs = RecordSourceFactory.fromDelimited(tabularDataFile.getFilePath().toFile(), delimiter, true)) {
-      headers = rs.getHeaders();
-      rowType = determineRowType(Arrays.asList(headers));
-      recordIdentifier = determineRecordIdentifier(Arrays.asList(headers));
-    }
-
-    return new TabularDataFile(tabularDataFile.getFilePath(),
-            tabularDataFile.getSourceFileName(), tabularDataFile.getFileFormat(),
-            tabularDataFile.getContentType(),
-            rowType.orElse(null), DwcFileType.CORE, headers, recordIdentifier, Optional.empty(),
-            Optional.empty(), true, delimiter, numberOfLine,
-            Optional.empty(), //no metadata folder supported for tabular file at the moment
-            Optional.empty());
+    return Optional.of(buildTabularDataFile(tabularDataFile.getFilePath(), tabularDataFile.getSourceFileName(),
+            tabularDataFile.getContentType(), delimiter, Optional.empty()));
   }
 
   /**
@@ -209,7 +194,8 @@ public class DataFileFactory {
   private static TabularDataFile createDwcDataFile(DataFile dwcaDatafile, DwcFileType type, Term rowType,
                                                    ArchiveFile archiveFile) throws IOException {
 
-    Validate.isTrue(dwcaDatafile.getFilePath().toFile().isDirectory(), "dwcaDatafile is expected to be a directory containing the Dwc-A files");
+    Validate.isTrue(dwcaDatafile.getFilePath().toFile().isDirectory(),
+            "dwcaDatafile is expected to be a directory containing the Dwc-A files");
 
     int numberOfLine = FileBashUtilities.countLines(archiveFile.getLocationFile().getAbsolutePath());
     Term[] headers = null;
@@ -259,23 +245,44 @@ public class DataFileFactory {
       return Optional.empty();
     }
 
-    int numberOfLine = FileBashUtilities.countLines(csvFile.toAbsolutePath().toString());
     char delimiter = ',';
+    return Optional.of(buildTabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
+            ExtraMediaTypes.TEXT_CSV, delimiter, Optional.of(spreadsheetDataFile)));
+
+  }
+
+  /**
+   * Build a {@link TabularDataFile} for tabualr files (csv, csv from converted Excel sheet).
+   * 
+   * @param tabularFilePath {@link Path} to the tabular file
+   * @param sourceFileName
+   * @param contentType
+   * @param delimiter
+   * @param parentFile
+   * @return
+   */
+  private static TabularDataFile buildTabularDataFile(Path tabularFilePath, String sourceFileName,
+                                                      String contentType, Character delimiter,
+                                                      Optional<DataFile> parentFile) throws IOException {
     Term[] headers;
     Optional<Term> rowType;
     Optional<Term> recordIdentifier;
-    try (RecordSource rs = RecordSourceFactory.fromDelimited(csvFile.toFile(), delimiter, true)) {
+    int numberOfLine = FileBashUtilities.countLines(tabularFilePath.toAbsolutePath().toString());
+    try (RecordSource rs = RecordSourceFactory.fromDelimited(tabularFilePath.toFile(), delimiter, true)) {
       headers = rs.getHeaders();
       rowType = determineRowType(Arrays.asList(headers));
       recordIdentifier = determineRecordIdentifier(Arrays.asList(headers));
     }
 
-    return Optional.of(new TabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
-            FileFormat.TABULAR, ExtraMediaTypes.TEXT_CSV,
-            rowType.orElse(null), DwcFileType.CORE, headers, recordIdentifier, Optional.empty(),
-            Optional.empty(), true, delimiter, numberOfLine,
+    return new TabularDataFile(tabularFilePath,
+            sourceFileName, FileFormat.TABULAR,
+            contentType,
+            rowType.orElse(null), DwcFileType.CORE, headers, recordIdentifier,
+            Optional.empty(), //no default values
+            Optional.empty(),  //no line offset
+            true, delimiter, numberOfLine,
             Optional.empty(), //no metadata folder supported for tabular file at the moment
-            Optional.of(spreadsheetDataFile)));
+            parentFile);
   }
 
   /**
