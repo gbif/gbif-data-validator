@@ -180,11 +180,12 @@ public class DataFileFactory {
     Character delimiter = getDelimiter(tabularDataFile.getFilePath());
     Term[] headers;
     Optional<Term> rowType;
-    Optional<Term> recordIdentifier = Optional.empty();
+    Optional<Term> recordIdentifier;
 
     try (RecordSource rs = RecordSourceFactory.fromDelimited(tabularDataFile.getFilePath().toFile(), delimiter, true)) {
       headers = rs.getHeaders();
       rowType = determineRowType(Arrays.asList(headers));
+      recordIdentifier = determineRecordIdentifier(Arrays.asList(headers));
     }
 
     return new TabularDataFile(tabularDataFile.getFilePath(),
