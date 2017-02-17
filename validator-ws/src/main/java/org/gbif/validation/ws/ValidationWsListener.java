@@ -1,6 +1,7 @@
 package org.gbif.validation.ws;
 
 import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
+import org.gbif.common.parsers.NumberParser;
 import org.gbif.service.guice.PrivateServiceModule;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.properties.PropertiesUtil;
@@ -11,7 +12,7 @@ import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
 import org.gbif.validation.jobserver.impl.FileJobStorage;
 import org.gbif.validation.ws.conf.ConfKeys;
-import org.gbif.validation.ws.conf.ValidationConfiguration;
+import org.gbif.validation.ws.conf.ValidationWsConfiguration;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
@@ -23,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,8 +68,8 @@ public class ValidationWsListener extends GbifServletListener {
       super(PROPERTIES_PREFIX,properties);
     }
 
-    private static ValidationConfiguration getConfFromProperties(Properties properties){
-      ValidationConfiguration configuration = new ValidationConfiguration();
+    private static ValidationWsConfiguration getConfFromProperties(Properties properties){
+      ValidationWsConfiguration configuration = new ValidationWsConfiguration();
 
       configuration.setApiUrl(properties.getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(properties.getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
@@ -82,13 +84,17 @@ public class ValidationWsListener extends GbifServletListener {
         LOG.error("Can't set ExtensionDiscoveryUrl", e);
       }
 
+      //optionally, Ganglia settings
+      configuration.setGangliaHost(Optional.ofNullable(properties.getProperty(ConfKeys.GANGLIA_HOST)));
+      configuration.setGangliaPort(Optional.ofNullable(NumberParser.parseInteger(properties.getProperty(ConfKeys.GANGLIA_PORT))));
+
       return configuration;
     }
 
     /**
      * Creates the workingDir and the file storage directory.
      */
-    private static void createWorkingDirs(ValidationConfiguration configuration) {
+    private static void createWorkingDirs(ValidationWsConfiguration configuration) {
       try {
         Files.createDirectories(Paths.get(configuration.getWorkingDir()));
         Files.createDirectories(Paths.get(configuration.getJobResultStorageDir()));
@@ -100,7 +106,7 @@ public class ValidationWsListener extends GbifServletListener {
     /**
      * Creates an instance of a JobServer using  the provided configuration.
      */
-    private static JobServer<ValidationResult> getJobServerInstance(ValidationConfiguration configuration) {
+    private static JobServer<ValidationResult> getJobServerInstance(ValidationWsConfiguration configuration) {
       return new JobServer<>(new FileJobStorage(Paths.get(configuration.getJobResultStorageDir())),
                              buildActorPropsMapping(configuration));
     }
@@ -108,7 +114,7 @@ public class ValidationWsListener extends GbifServletListener {
     @Override
     protected void configureService() {
       //get configuration settings
-      ValidationConfiguration configuration = getConfFromProperties(getProperties());
+      ValidationWsConfiguration configuration = getConfFromProperties(getProperties());
 
       //create required directories
       createWorkingDirs(configuration);
@@ -119,19 +125,24 @@ public class ValidationWsListener extends GbifServletListener {
 
       bind(HttpUtil.class).toInstance(httpUtil);
       bind(JOB_SERVER_TYPE_LITERAL).toInstance(getJobServerInstance(configuration));
-      bind(ValidationConfiguration.class).toInstance(configuration);
+      bind(ValidationWsConfiguration.class).toInstance(configuration);
 
       expose(JOB_SERVER_TYPE_LITERAL);
-      expose(ValidationConfiguration.class);
+      expose(ValidationWsConfiguration.class);
       expose(HttpUtil.class);
     }
 
     /**
-     * Builds an instance of DataValidationActorPropsMapping which is used by the Akka components.
+     * Builds an instance of {@link ActorPropsSupplier} which is used by the Akka components.
      */
-    private static ActorPropsSupplier buildActorPropsMapping(ValidationConfiguration configuration) {
-      ValidatorConfiguration config = new ValidatorConfiguration(configuration.getApiUrl(),
-              getNormalizerConfiguration(), configuration.getExtensionDiscoveryUrl());
+    private static ActorPropsSupplier buildActorPropsMapping(ValidationWsConfiguration configuration) {
+      ValidatorConfiguration config = ValidatorConfiguration.builder()
+              .setApiUrl(configuration.getApiUrl())
+              .setNormalizerConfiguration(getNormalizerConfiguration())
+              .setExtensionListURL(configuration.getExtensionDiscoveryUrl())
+              .setGangliaHost(configuration.getGangliaHost())
+              .setGangliaPort(configuration.getGangliaPort())
+              .build();
 
       return new ActorPropsSupplier(new EvaluatorFactory(config),
                                     configuration.getFileSplitSize(),

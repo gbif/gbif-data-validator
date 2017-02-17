@@ -1,11 +1,12 @@
 package org.gbif.validation.ws.conf;
 
 import java.net.URL;
+import java.util.Optional;
 
 /**
  * Configuration settings required by the data validation web services.
  */
-public class ValidationConfiguration {
+public class ValidationWsConfiguration {
 
   //name of the parameter used when POSTing a file
   public static final String FILE_POST_PARAM_NAME = "file";
@@ -16,6 +17,9 @@ public class ValidationConfiguration {
   private String apiUrl;
 
   private URL extensionDiscoveryUrl;
+
+  private Optional<String> gangliaHost;
+  private Optional<Integer> gangliaPort;
 
   /**
    * Maximum number of lines a file can contains until we split it.
@@ -83,5 +87,21 @@ public class ValidationConfiguration {
 
   public void setJobResultStorageDir(String jobResultStorageDir) {
     this.jobResultStorageDir = jobResultStorageDir;
+  }
+
+  public Optional<String> getGangliaHost() {
+    return gangliaHost;
+  }
+
+  public void setGangliaHost(Optional<String> gangliaHost) {
+    this.gangliaHost = gangliaHost;
+  }
+
+  public Optional<Integer> getGangliaPort() {
+    return gangliaPort;
+  }
+
+  public void setGangliaPort(Optional<Integer> gangliaPort) {
+    this.gangliaPort = gangliaPort;
   }
 }

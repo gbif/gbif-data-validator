@@ -13,6 +13,7 @@ import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
 import java.io.File;
@@ -58,6 +59,9 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
       if (metaXmlFile.exists()){
         try {
           getMetaXMLValidator().validate(new StreamSource(metaXmlFile.getAbsolutePath()));
+
+          //Make sure we can read the headers
+          DataFileFactory.prepareDataFile(dataFile);
 
           if(!archive.getExtensions().isEmpty()) {
             archive.getExtensions().forEach(

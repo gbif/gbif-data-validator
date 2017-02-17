@@ -54,8 +54,11 @@ public class TestUtils {
   private static ValidatorConfiguration loadValidatorConfiguration() {
     try {
       Properties p = PropertiesUtil.readFromFile(FileUtils.getClasspathFile(APP_CONF_FILE).getAbsolutePath());
-      return new ValidatorConfiguration(p.getProperty("validation.apiUrl"),
-              loadNormalizerConfiguration(), new URL(p.getProperty("validation.extensionDiscoveryUrl")));
+      return ValidatorConfiguration.builder()
+              .setApiUrl(p.getProperty("validation.apiUrl"))
+              .setNormalizerConfiguration(loadNormalizerConfiguration())
+              .setExtensionListURL(new URL(p.getProperty("validation.extensionDiscoveryUrl")))
+              .build();
     } catch (IOException e) {
       e.printStackTrace();
     }

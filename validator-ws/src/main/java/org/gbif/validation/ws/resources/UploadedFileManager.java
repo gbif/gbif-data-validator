@@ -4,7 +4,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.source.DataFileFactory;
-import org.gbif.validation.ws.conf.ValidationConfiguration;
+import org.gbif.validation.ws.conf.ValidationWsConfiguration;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;
@@ -62,6 +62,11 @@ public class UploadedFileManager {
 
   private static final String ZIP_CONTENT_TYPE = CommonMediaTypes.ZIP.getMediaType().toString();
 
+  //Files with name in the list will be ignored from a zip file
+  protected static final List<String> FILE_EXCLUSION_LIST = Arrays.asList(".DS_Store");
+  //Folders with name in the list (from the root, not recursively) will be ignored from a zip file
+  protected static final List<String> FOLDER_EXCLUSION_LIST = Arrays.asList("__MACOSX");
+
   private static final Pattern FILENAME_PATTERN = Pattern.compile("filename[ ]*=[ ]*[\\S]+",Pattern.CASE_INSENSITIVE);
   private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
 
@@ -75,37 +80,40 @@ public class UploadedFileManager {
     ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET);
 
   private static final int FILE_DOWNLOAD_TIMEOUT_MS = 10000;
-
   private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
-
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
-
   private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
 
   private final Path workingDirectory;
   private final ServletFileUpload servletBasedFileUpload;
 
   /**
-   * Warning, this will close the input stream.
+   * Warning, this will close the zippedInputStream {@link InputStream}.
    * VISIBLE-FOR-TESTING
    *
    * @param zippedInputStream
    * @param destinationFile
+   *
    * @throws ArchiveException
    * @throws IOException
    */
   protected static void unzip(InputStream zippedInputStream, Path destinationFile) throws ArchiveException, IOException {
 
     try (ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP,
-                                                                                      zippedInputStream)) {
-      Optional<ZipArchiveEntry> entry = Optional.ofNullable((ZipArchiveEntry)ais.getNextEntry());
+            zippedInputStream)) {
+      Optional<ZipArchiveEntry> entry = Optional.ofNullable((ZipArchiveEntry) ais.getNextEntry());
       while (entry.isPresent()) {
-        if (entry.get().isDirectory()) {
-          Files.createDirectory(destinationFile.resolve(entry.get().getName()));
-        } else {
-          Files.copy(ais, destinationFile.resolve(entry.get().getName()));
+        String entryName = entry.get().getName();
+        if (!FOLDER_EXCLUSION_LIST.contains(StringUtils.substringBefore(entryName, "/"))) {
+          if (entry.get().isDirectory()) {
+            Files.createDirectory(destinationFile.resolve(entryName));
+          } else {
+            if (!FILE_EXCLUSION_LIST.contains(StringUtils.substringAfterLast(entryName, "/"))) {
+              Files.copy(ais, destinationFile.resolve(entryName));
+            }
+          }
         }
-        entry = Optional.ofNullable((ZipArchiveEntry)ais.getNextEntry());
+        entry = Optional.ofNullable((ZipArchiveEntry) ais.getNextEntry());
       }
     }
   }
@@ -210,7 +218,7 @@ public class UploadedFileManager {
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
       Optional<FileItem> uploadFileInputStream = uploadedContent.stream()
         .filter(fileItem -> !fileItem.isFormField()
-                            && ValidationConfiguration.FILE_POST_PARAM_NAME.equals(fileItem.getFieldName()))
+                            && ValidationWsConfiguration.FILE_POST_PARAM_NAME.equals(fileItem.getFieldName()))
         .findFirst();
       if (uploadFileInputStream.isPresent()) {
         FileItem uploadFileInputStreamVal = uploadFileInputStream.get();
@@ -244,7 +252,6 @@ public class UploadedFileManager {
     throws IOException {
 
     Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
-
     DataFile transferredDataFile;
     try {
       //check if we have something to unzip
@@ -252,9 +259,10 @@ public class UploadedFileManager {
         try {
           unzip(inputStream, destinationFolder);
 
-          //a little bit risky to assume that
-          transferredDataFile = DataFileFactory.newDataFile(destinationFolder,
+          //a little bit risky to assume that the file is a Dwc-A, we should accept a zip csv
+          transferredDataFile = DataFileFactory.newDataFile(determineDataFilePath(destinationFolder),
                   filename, FileFormat.DWCA, contentType);
+
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
           throw new RuntimeException(arEx);
@@ -301,6 +309,26 @@ public class UploadedFileManager {
       return handleFileTransfer(getFilename(providedFilename, urlConnection),
                                 getContentType(providedContentType,urlConnection), in);
     }
+  }
+
+  /**
+   * This function is used to determine the final {@link Path} to use for the {@link DataFile}.
+   * Currently, the main functionality is to skip the parent folder for Dwc-A in case the zip file
+   * included a folder at its root.
+   *
+   * @param dataFilePath current {@link Path} of the {@link DataFile}
+   *
+   * @return
+   */
+  protected static Path determineDataFilePath(Path dataFilePath) {
+    Objects.requireNonNull(dataFilePath, "dataFilePath shall be provided");
+    File file = dataFilePath.toFile();
+    Path filePath = dataFilePath;
+    File[] content = file.listFiles();
+    if (content.length == 1 && content[0].isDirectory()) {
+      filePath = content[0].toPath();
+    }
+    return filePath;
   }
 
   /**

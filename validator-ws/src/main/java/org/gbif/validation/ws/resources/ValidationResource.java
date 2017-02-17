@@ -4,7 +4,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.jobserver.JobServer;
-import org.gbif.validation.ws.conf.ValidationConfiguration;
+import org.gbif.validation.ws.conf.ValidationWsConfiguration;
 
 import java.io.IOException;
 import java.net.URI;
@@ -42,7 +42,7 @@ public class ValidationResource {
 
   private final UploadedFileManager fileTransferManager;
   private final JobServer<?> jobServer;
-  private final ValidationConfiguration configuration;
+  private final ValidationWsConfiguration configuration;
 
 
   private URI getJobRedirectUri(long jobId) {
@@ -64,7 +64,7 @@ public class ValidationResource {
   }
 
   @Inject
-  public ValidationResource(ValidationConfiguration configuration, JobServer<ValidationResult> jobServer)
+  public ValidationResource(ValidationWsConfiguration configuration, JobServer<ValidationResult> jobServer)
     throws IOException {
     this.jobServer = jobServer;
     this.configuration = configuration;
