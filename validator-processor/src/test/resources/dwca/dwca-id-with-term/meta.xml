@@ -10,7 +10,8 @@
     <field index="2" term="http://rs.tdwg.org/dwc/terms/decimalLongitude" />
     <field term="http://rs.tdwg.org/dwc/terms/geodeticDatum" default="EPSG:3035"/>
     <field term="http://rs.tdwg.org/dwc/terms/coordinateUncertaintyInMeters" default="707"/>
-    <field index="3" term="http://rs.tdwg.org/dwc/terms/country" />
+    <!--commented by purpose, we want to test "skipped" column-->
+    <!--<field index="3" term="http://rs.tdwg.org/dwc/terms/country" />-->
     <field index="4" term="http://rs.tdwg.org/dwc/terms/scientificName"/>
     <field term="http://rs.tdwg.org/dwc/terms/kingdom"       default="Plantae"/>
     <field term="http://rs.tdwg.org/dwc/terms/basisOfRecord" default="OBSERVATION"/>

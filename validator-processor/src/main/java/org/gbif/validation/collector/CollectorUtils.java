@@ -41,11 +41,14 @@ public class CollectorUtils {
 
   /**
    * Initializes a Map<Term,Long> using the Stream<Terms> for keys and zeroes for all the values.
+   * @param terms if the Stream contains null, they will be ignored.
+   * @param size
+   * @param useConcurrentMap
    */
   public static Map<Term, Long> getZeroTermFrequency(Stream<Term> terms, int size, boolean useConcurrentMap) {
     Map<Term, Long> termFrequencyCounter = useConcurrentMap ? new ConcurrentHashMap<>(size) :
             new LinkedHashMap<>(size);
-    terms.forEach(term -> termFrequencyCounter.put(term, 0l));
+    terms.filter(t-> t != null).forEach(term -> termFrequencyCounter.put(term, 0l));
     return termFrequencyCounter;
   }
 

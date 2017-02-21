@@ -21,7 +21,6 @@ public class DwcReaderTest {
   private static final String TEST_FILE_TAXON_LOCATION = "dwca/dwca-taxon";
   private static final String TEST_FILE_ID_WITH_TERM_LOCATION = "dwca/dwca-id-with-term";
 
-
   @Test
   public void testDwcReaderTaxon() {
     testDwcaReader(TEST_FILE_TAXON_LOCATION, DwcTerm.Taxon, 12, "1559060", 12);

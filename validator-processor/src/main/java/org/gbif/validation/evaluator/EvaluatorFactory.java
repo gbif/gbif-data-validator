@@ -160,9 +160,9 @@ public class EvaluatorFactory {
     List<RecordEvaluator> evaluators = new ArrayList<>();
     evaluators.add(new RecordStructureEvaluator(rowType, columns));
 
-    if(DwcTerm.Occurrence == rowType) {
+    if (DwcTerm.Occurrence == rowType) {
       evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
-              DwcTerm.Occurrence, columns, defaultValues));
+              DwcTerm.Occurrence, columns.toArray(new Term[columns.size()]), defaultValues));
     }
     return new RecordEvaluatorChain(evaluators);
   }

@@ -7,9 +7,7 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,7 +29,7 @@ public class OccurrenceInterpretationEvaluatorTest {
     defaultValues.put(DwcTerm.basisOfRecord, BasisOfRecord.FOSSIL_SPECIMEN.name());
 
     //test expected data
-    List<Term> columnMapping = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified});
+    Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
             DwcTerm.Occurrence, columnMapping, Optional.of(defaultValues));
 
@@ -62,7 +60,7 @@ public class OccurrenceInterpretationEvaluatorTest {
 
   @Test
   public void testEvaluateWithNulls(){
-    List<Term> columnMapping = Arrays.asList(new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified});
+    Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
             DwcTerm.Occurrence, columnMapping, Optional.empty());
     assertNull(evaluator.evaluate(null, null));

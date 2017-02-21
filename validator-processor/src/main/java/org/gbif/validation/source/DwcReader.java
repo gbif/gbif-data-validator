@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
  */
 class DwcReader implements RecordSource {
 
-  private static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
+  public static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
   private final Archive archive;
 
@@ -129,6 +129,14 @@ class DwcReader implements RecordSource {
   }
 
 
+  /**
+   * The purpose is this method is to extract headers from the DarwinCore Archive.
+   * The size of the array will be determined by the maximum value of "index" in the definition of the archive.
+   * If the "id" is not mapped to any Term, the term DEFAULT_ID_TERM will be assigned to it.
+   *
+   * @return
+   * @throws UnsupportedArchiveException
+   */
   private Term[] extractHeaders() throws UnsupportedArchiveException {
     if (archiveFields == null) {
       return null;
@@ -139,29 +147,15 @@ class DwcReader implements RecordSource {
 
     //we assume the id is provided (it is mandatory by the schema)
     Integer idIndex = darwinCoreComponent.getId().getIndex();
-    boolean idAssignedToTerm = archiveFieldsWithIndex.stream()
-            .anyMatch(af -> af.getIndex().equals(idIndex));
 
-    int declaredNumberOfColumn = archiveFieldsWithIndex.size() + (idAssignedToTerm ? 0 : 1);
-
-    // if the id column is NOT assigned to a term, add 1 to the expected number of column
-   // int expectedNumberOfColumn = archiveFields.size() + (idAssignedToTerm ? 0 : 1);
     int maxIndex = archiveFieldsWithIndex.stream()
             .mapToInt(ArchiveField::getIndex).max().getAsInt();
     maxIndex = Math.max(maxIndex, darwinCoreComponent.getId().getIndex());
 
-    //defense against wrongly declared index number
-    if (maxIndex + 1 > declaredNumberOfColumn) {
-      throw new UnsupportedArchiveException("Number of column declared doesn't match the indices declared");
-    }
-
-    Term[] terms = new Term[declaredNumberOfColumn];
-
+    Term[] terms = new Term[maxIndex + 1];
     // handle id column, assign default Term, it will be rewritten below if assigned to a term
     terms[idIndex] = DEFAULT_ID_TERM;
-
     archiveFieldsWithIndex.stream().forEach(af -> terms[af.getIndex()] = af.getTerm());
-
     return terms;
   }
 

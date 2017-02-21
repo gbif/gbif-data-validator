@@ -10,7 +10,6 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,19 +41,20 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   private static final Predicate<OccurrenceIssue> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
 
   /**
-   * Default constructor, builds an instance using a OccurrenceInterpreter class.
+   * Default constructor.
    *
    * @param interpreter occurrence interpreter
-   * @param columnMapping
+   * @param columnMapping indices based column mapping. Unmapped column are expected to be represented by null
+   * @param defaultValues
    */
   public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term rowType,
-                                           List<Term> columnMapping, Optional<Map<Term, String>> defaultValues ) {
+                                           Term[] columnMapping, Optional<Map<Term, String>> defaultValues ) {
     Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
     Validate.notNull(columnMapping, "columnMapping must not be null");
 
     this.interpreter = interpreter;
     this.rowType = rowType;
-    this.columnMapping = columnMapping.toArray(new Term[columnMapping.size()]);
+    this.columnMapping = columnMapping;
     this.defaultValues = defaultValues;
   }
 
@@ -83,7 +83,8 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     IntStream.range(0, Math.min(record.length, columnMapping.length))
-      .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
+            .filter(idx -> columnMapping[idx] != null)
+            .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
 
     defaultValues.ifPresent(map -> map.forEach( (k,v) -> verbatimOccurrence.setVerbatimField(k,v)));
     return verbatimOccurrence;

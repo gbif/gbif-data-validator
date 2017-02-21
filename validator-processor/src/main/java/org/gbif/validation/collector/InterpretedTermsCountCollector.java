@@ -34,7 +34,6 @@ public class InterpretedTermsCountCollector implements ResultsCollector, Seriali
     Validate.notNull(targetedTerms, "targetedTerms must not be null");
 
     this.targetedTerms = targetedTerms;
-
     interpretedValueCounter = CollectorUtils.getZeroTermFrequency(targetedTerms, useConcurrentMap);
   }
 
