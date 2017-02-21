@@ -1,7 +1,6 @@
-basisOfRecord,institutionCode,id,collectionCode
 999,I1,1,C1
-9999,I1,2,C1
 9999,I1,3,C1
 8,I1,4,C1
 9999,I1,5,C1
 8,I1,6,C1
+9999,I1,2,C1

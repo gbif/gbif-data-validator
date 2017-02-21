@@ -10,11 +10,12 @@ import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
-import org.gbif.validation.collector.DwcExtensionIntegrityValidation;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -67,13 +68,15 @@ public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator<
     TabularDataFile coreDf = dfPerRowType.get(core.getRowType());
     TabularDataFile extDf = dfPerRowType.get(ext.getRowType());
 
-    List<String> unlinkedId = DwcExtensionIntegrityValidation.collectUnlinkedExtensions(coreDf, coreIdIdx, extDf,
-            extCoreIdx, MAX_SAMPLE);
+    String[] result = FileBashUtilities.diffOnColumns(
+            coreDf.getFilePath().toString(),
+            extDf.getFilePath().toString(),
+            coreIdIdx + 1,
+            extCoreIdx + 1,
+            coreDf.getDelimiterChar().toString(),
+            coreDf.isHasHeaders());
 
-    if (unlinkedId.isEmpty()) {
-      return Optional.empty();
-    }
-    return Optional.of(unlinkedId.stream().map(rec -> buildResult(extensionRowType, rec)));
+    return Optional.of(Arrays.stream(result).map(rec -> buildResult(extensionRowType, rec)));
   }
 
   private static RecordEvaluationResult buildResult(Term rowType, String unlinkedId){

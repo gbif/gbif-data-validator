@@ -6,10 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import org.apache.commons.lang3.Validate;
 
 /**
  * This class contains functions that encapsulate Linux commands.
@@ -20,8 +17,19 @@ public class FileBashUtilities {
   private static final String ENSURE_FILE_ENDS_NEWLINE_CMD = "sed -i '' -e '$a\\' %s";
 
   //command to find content in a specific column of a file
-  private static final String FIND_FILE_CMD = "awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s";
+  //private static final String FIND_FILE_CMD = "awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s";
   private static final String FIND_DUPLICATE_CMD = "awk -F'%s' '{cur = $%d} prev == cur { print $%d} {prev = cur}' %s";
+
+  /**
+   * This command can does a diff between 2 files on a specific column.
+   * FNR==NR matches only the first file so we read all the cells and store them 'a[$%d];next'
+   * If the cell of the second file is not in the stored array, print it.
+   * The command does not require the files to be sorted but stores the column of the reference file in memory.
+   * !($%d in a))&&(FNR>1)
+   */
+  private static final String DIFF_CMD = "awk -F'%s' 'FNR==NR{a[$%d];next}!($%d in a){print $%d}' %s %s";
+
+  private static final String DIFF_CMD_SKIP_HEADER = "awk -F'%s' '(FNR>1)&&(FNR==NR){a[$%d];next}(!($%d in a))&&(FNR>1){print $%d}' %s %s";
 
   /**
    * Private constructor.
@@ -81,10 +89,10 @@ public class FileBashUtilities {
    * Applies the command 'awk -v column=column -v value='value' -F'\t' '$column == value {print FNR}' fileName'.
    * It returns the lines number where the pattern occurs.
    */
-  public static Integer[] findInFile(String fileName, String value, int column, String separator) throws IOException {
-    String[] lines =  executeSimpleCmd(String.format(FIND_FILE_CMD, column, value, separator, fileName));
-    return Arrays.stream(lines).map(Integer::parseInt).toArray(Integer[]::new);
-  }
+//  public static Integer[] findInFile(String fileName, String value, int column, String separator) throws IOException {
+//    String[] lines = executeSimpleCmd(String.format(FIND_FILE_CMD, column, value, separator, fileName));
+//    return Arrays.stream(lines).map(Integer::parseInt).toArray(Integer[]::new);
+//  }
 
   /**
    * Find duplicated values of a column from a file already sorted on that column.
@@ -96,8 +104,17 @@ public class FileBashUtilities {
    * @throws IOException
    */
   public static String[] findDuplicates(String filePath, int column, String separator) throws IOException {
-    Validate.isTrue(column > 0, "Indices are starting at 1");
+    checkArgument(column > 0, "Indices are starting at 1");
     return executeSimpleCmd(String.format(FIND_DUPLICATE_CMD, separator, column, column, filePath));
+  }
+
+  public static String[] diffOnColumns(String refFilePath, String inputFilePath,
+                                       int columnNumberReferenceFile, int columnNumberInputFile, String sep,
+                                       boolean skipHeaderLine) throws IOException {
+    checkArgument(columnNumberReferenceFile > 0 && columnNumberInputFile > 0, "Indices are starting at 1");
+
+    return executeSimpleCmd(String.format(skipHeaderLine ? DIFF_CMD_SKIP_HEADER : DIFF_CMD, sep,
+            columnNumberReferenceFile, columnNumberInputFile, columnNumberInputFile, refFilePath, inputFilePath));
   }
 
   /**
