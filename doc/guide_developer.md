@@ -3,20 +3,34 @@ It covers the internal concepts of the gbif-data-validator.
 
 ## DataFile
 [DataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DataFile.java)
-represents the resource to be validated. DataFile are transformed into one or multiple
-TabularDataFile prior to validation. When a DataFile is transformed the link to
-the original/previous DataFile is kept and accessible via the `getParent()` method of TabularDataFile.
+represents the resource to be validated as provided by the user.
 
-Transformations include:
+DataFile instances are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
+
+## DwcDataFile
+DataFile are transformed and prepared in order to facilitate their usage within the evaluation chain.
+
+Including :
+ * Counting the number of lines
+ * Extracting the headers
  * Darwin Core Archive into a list of all its components (core + extensions)
  * Excel file into CSV
- * Splitting a tabular file into multiple (smaller) tabular files
-DataFile are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
+ * Conversion to UTF-8
+ * Standardisation of end line characters
+
+The result of those operations is kept in a DwcDataFile.
 
 ## TabularDataFile
 [TabularDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/TabularDataFile.java)
 represents data held into a file in tabular format.
 TabularDataFile are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
+
+## Additional TabularDataFile Transformations
+
+A TabularDataFile can be transformed again under some circumstances. The best example is when a TabularDataFile
+needs tp be split into multiple (smaller) tabular files.
+
+When a DataFile is transformed the link to the original/previous DataFile is kept and accessible via the `getParent()` method of TabularDataFile.
 
 ## RecordSource
 [RecordSource](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordSource.java) allows to expose records independently from their source.

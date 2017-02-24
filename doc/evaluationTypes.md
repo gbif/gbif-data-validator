@@ -1,9 +1,10 @@
 ### Resource Integrity
 |Key            |Description    |
 | ------------- | ------------- |
-|DWCA_UNREADABLE | Impossible to read or extract the DarwinCore Archive
-|DWCA_META_XML_NOT_FOUND | Impossible to find the meta.xml file
-|DWCA_META_XML_SCHEMA | meta.xml file can not be validated against its schema
+DWCA_UNREADABLE | Impossible to read or extract the DarwinCore Archive
+DWCA_META_XML_NOT_FOUND | Impossible to find the meta.xml file
+DWCA_META_XML_SCHEMA | meta.xml file can not be validated against its schema
+=======
 
 ### Resource Structure
 |Key            |Description    |
