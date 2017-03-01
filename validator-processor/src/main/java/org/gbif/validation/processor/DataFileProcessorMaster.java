@@ -74,6 +74,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
             match(DataJob.class, dataJobMessage -> {
               dataJob = (DataJob<DataFile>)dataJobMessage;
               workingDir = new File(baseWorkingDir, UUID.randomUUID().toString());
+              workingDir.mkdir();
               processDataFile(factory, fileSplitSize);
             })
               .match(DataWorkResult.class, this::processResults).build()
