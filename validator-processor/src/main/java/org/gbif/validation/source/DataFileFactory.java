@@ -121,7 +121,7 @@ public class DataFileFactory {
             tabDatafile.getRowType(), tabDatafile.getType(), tabDatafile.getColumns(),
             tabDatafile.getRecordIdentifier(), tabDatafile.getDefaultValues(),
             lineOffset, withHeader, tabDatafile.getDelimiterChar(), -1,
-            tabDatafile.getMetadataFolder(), Optional.of(tabDatafile));
+            tabDatafile.getMetadataFolder());
   }
 
   /**
@@ -219,6 +219,7 @@ public class DataFileFactory {
 
   /**
    * Creates a new {@link TabularDataFile} representing a DarwinCore rowType.
+   *
    * @param dwcaDatafile
    * @param type
    * @param rowType
@@ -250,8 +251,7 @@ public class DataFileFactory {
             rowType, type, headers, recordIdentifier, defaultValues,
             Optional.empty(), archiveFile.getIgnoreHeaderLines()!= null
             && archiveFile.getIgnoreHeaderLines() > 0, archiveFile.getFieldsTerminatedBy().charAt(0), numberOfLines,
-            Optional.of(dwcaDatafile.getFilePath()),
-            Optional.of(dwcaDatafile));
+            Optional.of(dwcaDatafile.getFilePath()));
   }
 
   /**
@@ -322,8 +322,7 @@ public class DataFileFactory {
             Optional.empty(), //no default values
             Optional.empty(),  //no line offset
             true, delimiter, numberOfLine,
-            Optional.empty(), //no metadata folder supported for tabular file at the moment
-            parentFile);
+            Optional.empty()); //no metadata folder supported for tabular file at the moment
   }
 
   /**

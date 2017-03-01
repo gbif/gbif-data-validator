@@ -42,10 +42,6 @@ public class DataFileFactoryTest {
     //the test Dwc folder contains 1 core + 2 extensions
     assertEquals(3, preparedDwcDataFile.getTabularDataFiles().size());
 
-    //all components should points to the parent DataFile
-    preparedDwcDataFile.getTabularDataFiles()
-            .forEach( df -> assertEquals(dataFile, df.getParent().get()));
-
     // the filePath should point to the component file
     assertTrue(StringUtils.endsWith(preparedDwcDataFile.getCore().getFilePath().toString(), ".txt"));
   }

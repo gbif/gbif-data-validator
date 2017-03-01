@@ -41,8 +41,6 @@ public class TabularDataFile extends DataFile {
   private final Character delimiterChar;
   private final Integer numOfLines;
 
-  private final Optional<DataFile> parent;
-
   /**
    * Complete constructor of {@link TabularDataFile}
    *
@@ -60,14 +58,13 @@ public class TabularDataFile extends DataFile {
    * @param delimiterChar character used to delimit each value (cell) in the file
    * @param numOfLines
    * @param metadataFolder
-   * @param parent
    */
   public TabularDataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType,
                          Term rowType, DwcFileType type, Term[] columns,
                          Optional<TermIndex> recordIdentifier,
                          Optional<Map<Term, String>> defaultValues,
                          Optional<Integer> fileLineOffset, boolean hasHeaders, Character delimiterChar, Integer numOfLines,
-                         Optional<Path> metadataFolder, Optional<DataFile> parent) {
+                         Optional<Path> metadataFolder) {
     super(filePath, sourceFileName, fileFormat, contentType, metadataFolder);
 
     this.rowType = rowType;
@@ -79,7 +76,6 @@ public class TabularDataFile extends DataFile {
     this.hasHeaders = hasHeaders;
     this.delimiterChar = delimiterChar;
     this.numOfLines = numOfLines;
-    this.parent = parent;
   }
 
   public Character getDelimiterChar() {
@@ -148,10 +144,6 @@ public class TabularDataFile extends DataFile {
             .findAny();
   }
 
-  public Optional<DataFile> getParent() {
-    return parent;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -169,8 +161,7 @@ public class TabularDataFile extends DataFile {
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
             Objects.equals(fileLineOffset, dataFile.fileLineOffset) &&
-            Objects.equals(metadataFolder, dataFile.metadataFolder) &&
-            Objects.equals(parent, dataFile.parent);
+            Objects.equals(metadataFolder, dataFile.metadataFolder);
   }
 
   @Override
@@ -188,8 +179,7 @@ public class TabularDataFile extends DataFile {
             numOfLines,
             fileLineOffset,
             hasHeaders,
-            metadataFolder,
-            parent);
+            metadataFolder);
   }
 
 }
