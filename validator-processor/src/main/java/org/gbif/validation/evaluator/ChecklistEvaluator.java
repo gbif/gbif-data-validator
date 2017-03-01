@@ -9,8 +9,9 @@ import org.gbif.checklistbank.neo.UsageDao;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
-import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.io.File;
@@ -25,7 +26,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import javax.validation.constraints.NotNull;
 
 import com.google.common.base.Preconditions;
 import org.neo4j.graphdb.Transaction;
@@ -39,7 +39,7 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
  * {@link RecordCollectionEvaluator} implementation to evaluate Checklist using ChecklistBank Normalizer.
  * Currently, no nub matching is done
  */
-public class ChecklistEvaluator implements RecordCollectionEvaluator<DataFile> {
+public class ChecklistEvaluator implements RecordCollectionEvaluator {
 
   private static final Predicate<InterpretationRemark> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
 
@@ -61,10 +61,13 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator<DataFile> {
    * @throws IOException
    */
   @Override
-  public Optional<Stream<RecordEvaluationResult>> evaluate(@NotNull DataFile dataFile) throws IOException {
-    Preconditions.checkNotNull(dataFile.getFilePath(),"DataFile is not defined");
+  public Optional<Stream<RecordEvaluationResult>> evaluate(DwcDataFile dwcDataFile) throws IOException {
+
+    TabularDataFile taxonFile = dwcDataFile.getByRowType(DwcTerm.Taxon);
+    Preconditions.checkNotNull(taxonFile, "No Taxon TabularDataFile is defined");
+
     //The dataset key is obtained from the temporary directory name which is assumed to be an UUID
-    UUID datasetKey = UUID.fromString(dataFile.getFilePath().getFileName().toString());
+    UUID datasetKey = UUID.fromString(dwcDataFile.getDataFile().getFilePath().getFileName().toString());
 
     try {
       //Run normalizer with no NubLookup

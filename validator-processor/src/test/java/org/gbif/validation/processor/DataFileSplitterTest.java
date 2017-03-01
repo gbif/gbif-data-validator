@@ -2,6 +2,7 @@ package org.gbif.validation.processor;
 
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.source.DataFileFactory;
@@ -9,7 +10,6 @@ import org.gbif.validation.source.DataFileFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,10 +31,11 @@ public class DataFileSplitterTest {
   @Test
   public void testFileSplit() throws IOException {
     DataFile dataFile = new DataFile(testFile.toPath(), "original_file.csv", FileFormat.TABULAR, "");
-    Optional<TabularDataFile> tabDataFile = DataFileFactory.prepareDataFile(dataFile).stream().findFirst();
+    DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
     try {
-      List<TabularDataFile> dataFileSplits = DataFileSplitter.splitDataFile(tabDataFile.get(), 2, folder.newFolder().toPath());
+      List<TabularDataFile> dataFileSplits = DataFileSplitter.splitDataFile(dwcDataFile.getCore(),
+              2, folder.newFolder().toPath());
       assertEquals(3, dataFileSplits.size());
 
       //check the offset

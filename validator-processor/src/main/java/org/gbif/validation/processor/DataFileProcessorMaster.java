@@ -3,6 +3,7 @@ package org.gbif.validation.processor;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.JobStatusResponse;
@@ -57,7 +58,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   //current working directory for the current validation
   private File workingDir;
 
-
   /**
    * Full constructor.
    */
@@ -81,7 +81,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Starting point of the entire processing of a {@link DataFile}.
+   * Starting point of the entire process to evaluate a {@link DataFile}.
    *
    * @param factory
    * @param fileSplitSize
@@ -90,25 +90,30 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
     DataFile dataFile = dataJob.getJobData();
 
-    if(evaluateResourceIntegrityAndStructure(dataFile, factory)){
-      List<TabularDataFile> dataFiles = DataFileFactory.prepareDataFile(dataFile);
+    //Probably from here DataFile -> PreparedDataFile with list of derived tabular files
 
-      init(dataFiles);
+    if(evaluateResourceIntegrityAndStructure(dataFile, factory)){
+      DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
+
+      init(dwcDataFile.getTabularDataFiles());
 
       EvaluationChain.Builder evaluationChainBuilder =
-              EvaluationChain.Builder.using(dataFile, dataFiles, factory)
+              EvaluationChain.Builder.using(dwcDataFile, factory)
                       .evaluateCoreUniqueness()
-                      .evaluateReferentialIntegrity()
-                      .evaluateChecklist();
+                      .evaluateReferentialIntegrity();
+                     // .evaluateChecklist(); fix UUID for folder name
 
       //numOfWorkers is used to know how many responses we are expecting
       final MutableInt numOfWorkers = new MutableInt(0);
-      prepareRecordBasedEvaluations(dataFiles, fileSplitSize, evaluationChainBuilder, numOfWorkers);
+      prepareRecordBasedEvaluations(dwcDataFile, fileSplitSize, evaluationChainBuilder, numOfWorkers);
 
       EvaluationChain evaluationChain = evaluationChainBuilder.build();
       numOfWorkers.add(evaluationChain.getNumberOfRowTypeEvaluationUnits());
 
       this.numOfWorkers = numOfWorkers.intValue();
+
+      log().info("Expected {} worker response(s)", numOfWorkers);
+      log().info(evaluationChain.toString());
 
       //now trigger everything
       processRowTypeEvaluationUnit(evaluationChain);
@@ -133,16 +138,16 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Calculates the required splits to process all the {@link DataFile}.
    * This method expect {@link #init(Iterable)} to be already called.
    *
-   * @param dataFiles     all files to evaluate. For DarwinCore it also includes all extensions.
+   * @param dwcDataFile     all files to evaluate. For DarwinCore it also includes all extensions.
    * @param fileSplitSize
    * @param evaluationChainBuilder current EvaluationChain.Builder
    * @param numOfWorkers
    *
    * @return
    */
-  private void prepareRecordBasedEvaluations(final Iterable<TabularDataFile> dataFiles, final Integer fileSplitSize,
+  private void prepareRecordBasedEvaluations(final DwcDataFile dwcDataFile, final Integer fileSplitSize,
                                              final EvaluationChain.Builder evaluationChainBuilder, final MutableInt numOfWorkers) {
-    dataFiles.forEach(df -> {
+    dwcDataFile.getTabularDataFiles().forEach(df -> {
       List<Term> columns = Arrays.asList(df.getColumns());
       try {
         List<TabularDataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
@@ -210,6 +215,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Creates the worker router using the calculated number of workers.
    */
   private ActorRef createWorkerRoutes(EvaluationChain.RecordEvaluationUnit evaluationUnit) {
+    log().info("Created routes for " + evaluationUnit.getRowType());
     String actorName = "dataFileRouter_" + UUID.randomUUID();
     return getContext().actorOf(
             new RoundRobinPool(Math.min(evaluationUnit.getDataFiles().size(), MAX_WORKER)).props(Props.create(DataFileRecordsActor.class,

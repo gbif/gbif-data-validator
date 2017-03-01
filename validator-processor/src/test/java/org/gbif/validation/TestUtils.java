@@ -2,21 +2,18 @@ package org.gbif.validation;
 
 import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.dwc.extensions.ExtensionManager;
-import org.gbif.dwc.extensions.ExtensionManagerFactory;
 import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.conf.ValidatorConfiguration;
+import org.gbif.validation.dwc.extensions.ExtensionManagerFactoryTestAdapter;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -27,8 +24,9 @@ import org.apache.http.client.HttpClient;
  *
  */
 public class TestUtils {
+
+
   public static final File XML_CATALOG = FileUtils.getClasspathFile("xml/xml-catalog.xml");
-  public static final String EXT_URL = "http://rs.gbif.org/extension/gbif/1.0/description.xml";
 
   private static ValidatorConfiguration testConfig = loadValidatorConfiguration();
   private static final String APP_CONF_FILE = "validation.properties";
@@ -36,20 +34,10 @@ public class TestUtils {
 
   public static final HttpClient HTTP_CLIENT = HttpUtil.newMultithreadedClient(6000, 2, 1);
 
-  //This ExtensionManager only servers 1 extension (Description)
-  public static final ExtensionManager EXTENSION_MANAGER;
+  //This ExtensionManager only servers 2 extensions (Description and Occurrence)
+  public static final ExtensionManager EXTENSION_MANAGER =
+          ExtensionManagerFactoryTestAdapter.getTestExtensionManager(HTTP_CLIENT);
 
-  static {
-    ExtensionManager tmp = null;
-    try {
-      List<URL> testExtList = new ArrayList<>();
-      testExtList.add(new URL(EXT_URL));
-      tmp = ExtensionManagerFactory.buildExtensionManager(HTTP_CLIENT, testExtList, false);
-    } catch (MalformedURLException e) {
-      e.printStackTrace();
-    }
-    EXTENSION_MANAGER = tmp;
-  }
 
   private static ValidatorConfiguration loadValidatorConfiguration() {
     try {

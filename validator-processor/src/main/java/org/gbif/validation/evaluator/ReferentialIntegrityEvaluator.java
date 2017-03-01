@@ -1,28 +1,23 @@
 package org.gbif.validation.evaluator;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
-import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * extension.
  *
  */
-public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator<DataFile> {
+public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReferentialIntegrityEvaluator.class);
   private static final int MAX_SAMPLE = 10;
@@ -46,33 +41,26 @@ public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator<
   /**
    * Run the evaluation on a {@link DataFile} representing the Dwc-A.
    *
-   * @param dataFile where the resource is located. The {@link DataFile} shall represent the entire Dwc Archive.
+   * @param dwcDataFile
    *
    * @return
    */
   @Override
-  public Optional<Stream<RecordEvaluationResult>> evaluate(DataFile dataFile) throws IOException {
+  public Optional<Stream<RecordEvaluationResult>> evaluate(DwcDataFile dwcDataFile) throws IOException {
 
-    Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+    TabularDataFile coreDf = dwcDataFile.getCore();
+    TabularDataFile extDf = dwcDataFile.getByRowType(extensionRowType);
 
-    ArchiveFile core = archive.getCore();
-    ArchiveFile ext = archive.getExtension(extensionRowType);
-
-    int coreIdIdx = core.getId().getIndex();
-    int extCoreIdx = ext.getId().getIndex();
-
-    List<TabularDataFile> dfList = DataFileFactory.prepareDataFile(dataFile);
-
-    Map<Term, TabularDataFile> dfPerRowType = dfList.stream()
-            .collect(Collectors.toMap(TabularDataFile::getRowType, Function.identity()));
-    TabularDataFile coreDf = dfPerRowType.get(core.getRowType());
-    TabularDataFile extDf = dfPerRowType.get(ext.getRowType());
+    Preconditions.checkState(coreDf != null && coreDf.getRecordIdentifier().isPresent(),
+            "DwcDataFile core shall have a record identifier");
+    Preconditions.checkState(extDf != null && extDf.getRecordIdentifier().isPresent(),
+            "DwcDataFile extension shall have a record identifier");
 
     String[] result = FileBashUtilities.diffOnColumns(
             coreDf.getFilePath().toString(),
             extDf.getFilePath().toString(),
-            coreIdIdx + 1,
-            extCoreIdx + 1,
+            coreDf.getRecordIdentifier().get().getIndex() + 1,
+            extDf.getRecordIdentifier().get().getIndex() + 1,
             coreDf.getDelimiterChar().toString(),
             coreDf.isHasHeaders());
 

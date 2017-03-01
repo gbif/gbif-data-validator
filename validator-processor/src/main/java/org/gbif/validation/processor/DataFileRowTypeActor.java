@@ -2,6 +2,7 @@ package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.collector.CollectorGroup;
@@ -30,11 +31,11 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
    * @param evaluator
    * @param collector
    */
-  public DataFileRowTypeActor(Term rowType, RecordCollectionEvaluator<DataFile> evaluator,
+  public DataFileRowTypeActor(Term rowType, RecordCollectionEvaluator evaluator,
                               CollectorGroupProvider collector) {
     receive(
             //this should only be called once
-            match(DataFile.class, dataFileMessage -> {
+            match(DwcDataFile.class, dataFileMessage -> {
               pipe(
                       future(() -> processDataFile(dataFileMessage, rowType, evaluator, collector), getContext().dispatcher()),
                       getContext().dispatcher()
@@ -46,8 +47,8 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
   /**
    * Runs the validation and converts the result into a DataWorkResult.
    */
-  private DataWorkResult processDataFile(DataFile dwcaDataFile, Term rowType,
-                                         RecordCollectionEvaluator<DataFile> evaluator,
+  private DataWorkResult processDataFile(DwcDataFile dwcaDataFile, Term rowType,
+                                         RecordCollectionEvaluator evaluator,
                                          CollectorGroupProvider collectorGroupProvider) {
     CollectorGroup collector = collectorGroupProvider.newCollectorGroup();
     try {

@@ -38,7 +38,7 @@ public class ExtensionManagerFactory {
     Objects.requireNonNull(httpClient, "httpClient shall be provided");
     Objects.requireNonNull(extensionDiscoveryURL, "extensionDiscoveryURL shall be provided");
 
-    return new ExtensionManager(buildExtensionFactory(httpClient), httpClient,
+    return new DefaultExtensionManager(buildExtensionFactory(httpClient), httpClient,
             discoverExtensions(extensionDiscoveryURL), autoUpdate);
   }
 
@@ -53,9 +53,24 @@ public class ExtensionManagerFactory {
    */
   public static ExtensionManager buildExtensionManager(HttpClient httpClient, List<URL> extensionListURL,
                                                        boolean autoUpdate) {
+    return buildExtensionManager(buildExtensionFactory(httpClient), httpClient, extensionListURL, autoUpdate);
+  }
+
+  /**
+   * Builds and wires a new ExtensionManager using a provided ExtensionFactory and athe list of extension URL.
+   * @param extensionFactory
+   * @param httpClient
+   * @param extensionListURL
+   * @param autoUpdate
+   * @return
+   */
+  public static ExtensionManager buildExtensionManager(ExtensionFactory extensionFactory,
+                                                       HttpClient httpClient, List<URL> extensionListURL,
+                                                       boolean autoUpdate) {
+    Objects.requireNonNull(extensionFactory, "extensionFactory shall be provided");
     Objects.requireNonNull(httpClient, "httpClient shall be provided");
     Objects.requireNonNull(extensionListURL, "extensionListURL shall be provided");
-    return new ExtensionManager(buildExtensionFactory(httpClient), httpClient, extensionListURL, autoUpdate);
+    return new DefaultExtensionManager(extensionFactory, httpClient, extensionListURL, autoUpdate);
   }
 
   /**

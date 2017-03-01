@@ -18,6 +18,8 @@ import java.util.stream.IntStream;
  * Represents the workable unit for the validation. It can point to a file or a portion of a bigger file.
  * It can also represent a tabular view of other formats (spreadsheet).
  *
+ * Expected to be in UTF-8, with LF (\n) end of line character.
+ *
  * A {@link TabularDataFile} can point to a parent (in a conceptual way).
  * e.g. DarwinCore Archive folder is the parent of its core file.
  *
@@ -28,7 +30,8 @@ public class TabularDataFile extends DataFile {
   private final Term rowType;
   private final DwcFileType type;
   private final Term[] columns;
-  private final Optional<Term> recordIdentifier;
+
+  private final Optional<TermIndex> recordIdentifier;
 
   private final Optional<Map<Term, String>> defaultValues;
 
@@ -50,7 +53,7 @@ public class TabularDataFile extends DataFile {
    * @param rowType the rowType (sometimes called "class") of this file in the context of DarwinCore
    * @param type the type of file in the context of DarwinCore
    * @param columns columns of the file, in the right order
-   * @param recordIdentifier {@Term} used to uniquely identifier a record within the file
+   * @param recordIdentifier {@link Term} and its index used to uniquely identifier a record within the file
    * @param defaultValues default values to use for specific {@Term}
    * @param fileLineOffset if the file represents a part of a bigger file, the offset (in line) relative to the parent file
    * @param hasHeaders does the first line of this file represents the headers or no
@@ -60,7 +63,8 @@ public class TabularDataFile extends DataFile {
    * @param parent
    */
   public TabularDataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType,
-                         Term rowType, DwcFileType type, Term[] columns, Optional<Term> recordIdentifier,
+                         Term rowType, DwcFileType type, Term[] columns,
+                         Optional<TermIndex> recordIdentifier,
                          Optional<Map<Term, String>> defaultValues,
                          Optional<Integer> fileLineOffset, boolean hasHeaders, Character delimiterChar, Integer numOfLines,
                          Optional<Path> metadataFolder, Optional<DataFile> parent) {
@@ -94,7 +98,7 @@ public class TabularDataFile extends DataFile {
     return columns;
   }
 
-  public Optional<Term> getRecordIdentifier() {
+  public Optional<TermIndex> getRecordIdentifier() {
     return recordIdentifier;
   }
 

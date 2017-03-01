@@ -3,10 +3,10 @@ package org.gbif.validation.processor;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 
@@ -50,24 +50,31 @@ public class EvaluationChain {
     public List<TabularDataFile> getDataFiles() {
       return dataFiles;
     }
+
+    @Override
+    public String toString() {
+      return "dataFiles:{" + dataFiles + "}," +
+              "rowType: " + rowType + ", " +
+              "recordEvaluator: " + recordEvaluator;
+    }
   }
 
   /**
    * Container class holding data between initialization and processing phase for {@link RecordCollectionEvaluator}.
    */
-  public static class RowTypeEvaluationUnit<T extends DataFile> {
-    private final T dataFile;
+  public static class RowTypeEvaluationUnit {
+    private final DwcDataFile dataFile;
     private final Term rowType;
-    private final RecordCollectionEvaluator<T> recordCollectionEvaluator;
+    private final RecordCollectionEvaluator recordCollectionEvaluator;
 
-    RowTypeEvaluationUnit(T dataFile, Term rowType,
-                          RecordCollectionEvaluator<T>  recordCollectionEvaluator) {
+    RowTypeEvaluationUnit(DwcDataFile dataFile, Term rowType,
+                          RecordCollectionEvaluator recordCollectionEvaluator) {
       this.dataFile = dataFile;
       this.rowType = rowType;
       this.recordCollectionEvaluator = recordCollectionEvaluator;
     }
 
-    public T getDataFile() {
+    public DwcDataFile getDataFile() {
       return dataFile;
     }
 
@@ -79,8 +86,15 @@ public class EvaluationChain {
       return recordCollectionEvaluator.evaluate(dataFile);
     }
 
-    public RecordCollectionEvaluator<T> getRecordCollectionEvaluator() {
+    public RecordCollectionEvaluator getRecordCollectionEvaluator() {
       return recordCollectionEvaluator;
+    }
+
+    @Override
+    public String toString() {
+      return "dataFile: " + dataFile + "}," +
+              "rowType: " + rowType + ", " +
+              "recordCollectionEvaluator: " + recordCollectionEvaluator;
     }
   }
 
@@ -88,36 +102,25 @@ public class EvaluationChain {
    * Builder class allowing to build an instance of {@link EvaluationChain}.
    */
   public static class Builder {
-    private final DataFile sourceDataFile;
+    private final DwcDataFile dwcDataFile;
 
-    private final TabularDataFile coreDataFile;
-    private final List<TabularDataFile> dataFiles;
-
-    private final List<RowTypeEvaluationUnit<? extends DataFile>> rowTypeEvaluationUnits = new ArrayList<>();
+    private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits = new ArrayList<>();
     private final List<RecordEvaluationUnit> recordEvaluationUnits = new ArrayList<>();
 
-    private final Map<DwcFileType, List<TabularDataFile>> dfPerRowType;
     private final EvaluatorFactory factory;
 
     /**
      *
-     * @param sourceDataFile dataFile received for validation
-     * @param dataFiles
+     * @param dwcDataFile dataFile received for validation
      * @param factory
      * @return
      */
-    public static Builder using(DataFile sourceDataFile, List<TabularDataFile> dataFiles, EvaluatorFactory factory) {
-      return new Builder(sourceDataFile, dataFiles, factory);
+    public static Builder using(DwcDataFile dwcDataFile, EvaluatorFactory factory) {
+      return new Builder(dwcDataFile, factory);
     }
 
-    private Builder(DataFile sourceDataFile, List<TabularDataFile> dataFiles, EvaluatorFactory factory) {
-      this.sourceDataFile = sourceDataFile;
-      this.dataFiles = dataFiles;
-
-      dfPerRowType = dataFiles.stream()
-              .collect(Collectors.groupingBy(TabularDataFile::getType));
-      //we assume the core file is there
-      this.coreDataFile = dfPerRowType.get(DwcFileType.CORE).get(0);
+    private Builder(DwcDataFile dwcDataFile, EvaluatorFactory factory) {
+      this.dwcDataFile = dwcDataFile;
       this.factory = factory;
     }
 
@@ -135,22 +138,22 @@ public class EvaluationChain {
 
     public Builder evaluateCoreUniqueness() {
       rowTypeEvaluationUnits.add(new RowTypeEvaluationUnit(
-              coreDataFile, coreDataFile.getRowType(),
-              EvaluatorFactory.createUniquenessEvaluator(coreDataFile.getIndexOf(coreDataFile.getRecordIdentifier().get()).getAsInt() + 1, true)
+              dwcDataFile, dwcDataFile.getCore().getRowType(),
+              EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowType(), true)
       ));
       return this;
     }
 
     public Builder evaluateReferentialIntegrity() {
       //in case we have no extension, simply return
-      if(dfPerRowType.get(DwcFileType.EXTENSION) == null){
+      if(!dwcDataFile.getExtensions().isPresent()){
         return this;
       }
 
       rowTypeEvaluationUnits.addAll(
-              dfPerRowType.get(DwcFileType.EXTENSION).stream()
-                      .map(df -> new RowTypeEvaluationUnit<>(
-                              sourceDataFile, df.getRowType(),
+              dwcDataFile.getExtensions().get().stream()
+                      .map(df -> new RowTypeEvaluationUnit(
+                              dwcDataFile, df.getRowType(),
                               EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()))
                       )
                       .collect(Collectors.toList()));
@@ -158,15 +161,15 @@ public class EvaluationChain {
     }
 
     public Builder evaluateChecklist() {
-      dataFiles.stream()
-              .filter(e -> DwcTerm.Taxon.equals(e.getRowType()))
-              .findFirst()
-              .ifPresent(taxonDataFile ->
-                      rowTypeEvaluationUnits.add(
-                              new RowTypeEvaluationUnit(
-                                      sourceDataFile, DwcTerm.Taxon,
-                                      factory.createChecklistEvaluator()
-                              )));
+
+      if (dwcDataFile.getByRowType(DwcTerm.Taxon) == null) {
+        return this;
+      }
+      rowTypeEvaluationUnits.add(
+              new RowTypeEvaluationUnit(
+                      dwcDataFile, DwcTerm.Taxon,
+                      factory.createChecklistEvaluator()
+              ));
       return this;
     }
 
@@ -175,10 +178,10 @@ public class EvaluationChain {
     }
   }
 
-  private final List<RowTypeEvaluationUnit<? extends DataFile>> rowTypeEvaluationUnits;
+  private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits;
   private final List<RecordEvaluationUnit> recordEvaluationUnits;
 
-  private EvaluationChain(List<RowTypeEvaluationUnit<? extends DataFile>> rowTypeEvaluationUnits,
+  private EvaluationChain(List<RowTypeEvaluationUnit> rowTypeEvaluationUnits,
                           List<RecordEvaluationUnit> recordEvaluationUnits) {
     this.rowTypeEvaluationUnits = rowTypeEvaluationUnits;
     this.recordEvaluationUnits = recordEvaluationUnits;
@@ -188,7 +191,7 @@ public class EvaluationChain {
    * Run the provided function on all RowTypeEvaluationUnit in the evaluation chain.
    * @param fct
    */
-  public void runRowTypeEvaluation(Consumer<RowTypeEvaluationUnit<? extends DataFile>> fct) {
+  public void runRowTypeEvaluation(Consumer<RowTypeEvaluationUnit> fct) {
     rowTypeEvaluationUnits.forEach(fct);
   }
 
@@ -208,5 +211,18 @@ public class EvaluationChain {
     return recordEvaluationUnits.size();
   }
 
+  @Override
+  public String toString() {
+    StringBuilder str = new StringBuilder();
+    if (!rowTypeEvaluationUnits.isEmpty()) {
+      str.append("RowType EvaluationUnits:\n");
+      rowTypeEvaluationUnits.stream().forEach(u -> str.append(u.toString() + "\n"));
+    }
+    if (!recordEvaluationUnits.isEmpty()) {
+      str.append("Record EvaluationUnits:\n");
+      recordEvaluationUnits.stream().forEach(u -> str.append(u.toString() + "\n"));
+    }
+    return str.toString();
+  }
 
 }

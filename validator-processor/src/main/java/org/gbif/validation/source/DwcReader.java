@@ -9,6 +9,7 @@ import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.utils.file.csv.CSVReader;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.TermIndex;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +27,7 @@ import javax.annotation.Nullable;
  * This reader can work on the core file, an extension file or a portion of one of them (after splitting).
  *
  */
-class DwcReader implements RecordSource {
+public class DwcReader implements RecordSource {
 
   public static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
@@ -46,7 +47,7 @@ class DwcReader implements RecordSource {
    * @param dwcFolder
    * @throws IOException
    */
-  DwcReader(File dwcFolder) throws IOException {
+  public DwcReader(File dwcFolder) throws IOException {
     this(dwcFolder, Optional.empty());
   }
 
@@ -57,7 +58,7 @@ class DwcReader implements RecordSource {
    * @param rowType can be null to get the core
    * @throws IOException
    */
-  DwcReader(File dwcFolder, Optional<Term> rowType) throws IOException {
+  public DwcReader(File dwcFolder, Optional<Term> rowType) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
     archive = ArchiveFactory.openArchive(dwcFolder);
 
@@ -82,7 +83,7 @@ class DwcReader implements RecordSource {
    * @param ignoreHeaderLines
    * @throws IOException
    */
-  DwcReader(File dwcFolder, File partFile, @Nullable Term rowType, boolean ignoreHeaderLines) throws IOException {
+  public DwcReader(File dwcFolder, File partFile, @Nullable Term rowType, boolean ignoreHeaderLines) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
 
     archive = ArchiveFactory.openArchive(dwcFolder);
@@ -175,7 +176,7 @@ class DwcReader implements RecordSource {
   public String[] read() throws IOException {
       return csvReader.next();
   }
-
+  
   public Term getRowType() {
     if (darwinCoreComponent == null) {
       return null;
@@ -188,13 +189,13 @@ class DwcReader implements RecordSource {
    *
    * @return
    */
-  public Optional<Term> getRecordIdentifier() {
+  public Optional<TermIndex> getRecordIdentifier() {
     if (darwinCoreComponent == null || darwinCoreComponent.getId() == null) {
       return Optional.empty();
     }
 
-    return Optional.of(headers[darwinCoreComponent.getId().getIndex()]);
-
+    return Optional.of(new TermIndex(darwinCoreComponent.getId().getIndex(),
+            headers[darwinCoreComponent.getId().getIndex()]));
   }
 
   @Override

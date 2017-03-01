@@ -13,7 +13,6 @@ import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
-import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 
 import java.io.File;
@@ -56,25 +55,25 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
     try {
       Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
       File metaXmlFile = new File(dataFile.getFilePath().toFile(), Archive.META_FN);
-      if (metaXmlFile.exists()){
+      if (metaXmlFile.exists()) {
         try {
           getMetaXMLValidator().validate(new StreamSource(metaXmlFile.getAbsolutePath()));
 
           //Make sure we can read the headers
-          DataFileFactory.prepareDataFile(dataFile);
+         // Term[] headers = DwcReader.extractHeaders(archive.getCore());
+          evaluateArchiveFile(archive.getCore()).ifPresent(vre -> validationResultElements.add(vre));
 
-          if(!archive.getExtensions().isEmpty()) {
+          if (!archive.getExtensions().isEmpty()) {
             archive.getExtensions().forEach(
-                    ext -> evaluateArchiveFile(dataFile, ext).
-                            ifPresent( vre -> validationResultElements.add(vre))
+                    ext -> evaluateArchiveFile(ext).
+                            ifPresent(vre -> validationResultElements.add(vre))
             );
           }
         } catch (SAXException e) {
           validationResultElements.add(ValidationResultElement.onException(dataFile.getSourceFileName(),
                   EvaluationType.DWCA_META_XML_SCHEMA, e.getMessage()));
         }
-      }
-      else{
+      } else {
         validationResultElements.add(ValidationResultElement.onException(dataFile.getSourceFileName(),
                 EvaluationType.DWCA_META_XML_NOT_FOUND, null));
       }
@@ -86,7 +85,7 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
     return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);
   }
 
-  private Optional<ValidationResultElement> evaluateArchiveFile(DataFile dataFile, ArchiveFile archiveFile) {
+  private Optional<ValidationResultElement> evaluateArchiveFile(ArchiveFile archiveFile) {
     List<ValidationIssue> validationIssues = new ArrayList<>();
     // registered extension?
     Extension ext = extensionManager.get(archiveFile.getRowType());

@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
  * Contrary to {@link RecordEvaluator}, {@link RecordCollectionEvaluator} operates at a higher level representing more
  * than one record but, it also produces ({@link RecordEvaluationResult}) at a record level.
  */
-public interface RecordCollectionEvaluator<T> {
+public interface RecordCollectionEvaluator {
 
   /**
    * Evaluates a record collection of type <T> and produces (optionally since it may not produce any result) a {@link
@@ -19,9 +19,9 @@ public interface RecordCollectionEvaluator<T> {
    * {@link RecordEvaluationResult}. {@link Stream} is used since it may produce a large quantity of results and the
    * caller may want to limit and/or filter them.
    *
-   * @param recordCollection
+   * @param dwcDataFile
    *
    * @return optionally, a {@link Stream} of {@link RecordEvaluationResult}.
    */
-  Optional<Stream<RecordEvaluationResult>> evaluate(@NotNull T recordCollection) throws IOException;
+  Optional<Stream<RecordEvaluationResult>> evaluate(@NotNull DwcDataFile dwcDataFile) throws IOException;
 }

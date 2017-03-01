@@ -7,15 +7,19 @@ import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.util.FileBashUtilities;
+import org.gbif.validation.util.FileNormalizer;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,7 +30,11 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -120,66 +128,93 @@ public class DataFileFactory {
    * Prepare the {@link DataFile} for evaluation.
    * This step includes reading the headers from the file and generating a list of {@link TabularDataFile}.
    *
+   *
    * @param dataFile
+   * @param destinationFolder Preparing {@link DataFile} includes rewriting them in a normalized format. This {@link Path}
+   *                          represents the destination of normalized files.
    * @return a list of {@link TabularDataFile}
    * @throws IOException
    * @throws IllegalStateException
    */
-  public static List<TabularDataFile> prepareDataFile(DataFile dataFile) throws IOException {
+  public static DwcDataFile prepareDataFile(DataFile dataFile, Path destinationFolder) throws IOException {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
+    Objects.requireNonNull(destinationFolder, "destinationFolder shall be provided");
+    Preconditions.checkState(Files.isDirectory(destinationFolder), "destinationFolder should point to a folder");
 
     List<TabularDataFile> dataFileList = new ArrayList<>();
     switch (dataFile.getFileFormat()) {
       case SPREADSHEET:
         //FIXME if the contentType is not supported this will failed silently (except it will be log)
-        handleSpreadsheetConversion(dataFile).ifPresent(dataFileList::add);
+        handleSpreadsheetConversion(dataFile, destinationFolder).ifPresent(dataFileList::add);
         break;
       case DWCA:
-        dataFileList.addAll(prepareDwcA(dataFile));
+        dataFileList.addAll(prepareDwcA(dataFile, destinationFolder));
         break;
       case TABULAR:
         //FIXME if the Optional is empty, it will fail silently
-        prepareTabular(dataFile).ifPresent(dataFileList::add);
+        prepareTabular(dataFile, destinationFolder).ifPresent(dataFileList::add);
     }
 
-    return dataFileList;
+    Map<DwcFileType, List<TabularDataFile>> dfPerDwcFileType = dataFileList.stream()
+            .collect(Collectors.groupingBy(TabularDataFile::getType));
+
+    TabularDataFile coreDf = dfPerDwcFileType.get(DwcFileType.CORE).get(0);
+
+    return new DwcDataFile(dataFile, coreDf,
+            Optional.ofNullable(dfPerDwcFileType.get(DwcFileType.EXTENSION)));
   }
 
   /**
-   * Given a {@link DataFile} pointing to folder containing the extracted DarwinCore archive this method creates
+   * Given a {@link DataFile} pointing to folder containing the extracted DarwinCore archive, this method creates
    * a list of {@link TabularDataFile} for each of the data component (core + extensions).
    *
    * @param dwcaDataFile
    * @return
    */
-  private static List<TabularDataFile> prepareDwcA(DataFile dwcaDataFile) throws IOException {
+  private static List<TabularDataFile> prepareDwcA(DataFile dwcaDataFile, Path destinationFolder) throws IOException {
     Validate.isTrue(dwcaDataFile.getFilePath().toFile().isDirectory(),
             "dwcaDataFile.getFilePath() must point to a directory");
+
+    //ensure files are normalized
+    Map<Path, Integer> normalizedFiles = FileNormalizer.normalizeFolderContent(dwcaDataFile.getFilePath(),
+            destinationFolder, Optional.empty());
+
     List<TabularDataFile> dataFileList = new ArrayList<>();
-    try (DwcReader dwcReader = new DwcReader(dwcaDataFile.getFilePath().toFile())) {
+    try (DwcReader dwcReader = new DwcReader(destinationFolder.toFile())) {
       //add the core first
       dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, dwcReader.getRowType(),
-              dwcReader.getCore()));
+              dwcReader.getCore(), normalizedFiles.get(Paths.get(dwcReader.getCore().getLocation())) , destinationFolder));
       for (ArchiveFile ext : dwcReader.getExtensions()) {
         dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.EXTENSION, ext.getRowType(),
-                ext));
+                ext, normalizedFiles.get(Paths.get(ext.getLocation())), destinationFolder));
       }
     }
     return dataFileList;
   }
 
   /**
+   * Function responsible to transform a {@link DataFile} into a {@link TabularDataFile}.
+   * File will be normalized and lines will be counted.
    *
    * @param tabularDataFile
    * @return
    * @throws IOException
    */
-  private static Optional<TabularDataFile> prepareTabular(DataFile tabularDataFile) throws IOException {
+  private static Optional<TabularDataFile> prepareTabular(DataFile tabularDataFile, Path destinationFolder)
+          throws IOException {
+
+    Preconditions.checkArgument(FileFormat.TABULAR.equals(tabularDataFile.getFileFormat()), "prepareTabular can only" +
+            "prepare FileFormat.TABULAR file");
+
+    String fileExt = FilenameUtils.getExtension(tabularDataFile.getFilePath().getFileName().toString());
+    Path destinationFile = destinationFolder.resolve(UUID.randomUUID() + fileExt);
+    int numberOfLines = (int)FileNormalizer.normalizeFile(tabularDataFile.getFilePath(), destinationFile,
+            Optional.empty());
 
     Character delimiter = getDelimiter(tabularDataFile.getFilePath());
-    return Optional.of(buildTabularDataFile(tabularDataFile.getFilePath(), tabularDataFile.getSourceFileName(),
-            tabularDataFile.getContentType(), delimiter, Optional.empty()));
+    return Optional.of(buildTabularDataFile(destinationFile, tabularDataFile.getSourceFileName(),
+            tabularDataFile.getContentType(), delimiter, numberOfLines, Optional.of(tabularDataFile)));
   }
 
   /**
@@ -192,22 +227,21 @@ public class DataFileFactory {
    * @throws IOException
    */
   private static TabularDataFile createDwcDataFile(DataFile dwcaDatafile, DwcFileType type, Term rowType,
-                                                   ArchiveFile archiveFile) throws IOException {
+                                                   ArchiveFile archiveFile, int numberOfLines,
+                                                   Path destinationFolder) throws IOException {
 
-    Validate.isTrue(dwcaDatafile.getFilePath().toFile().isDirectory(),
+    Preconditions.checkArgument(dwcaDatafile.getFilePath().toFile().isDirectory(),
             "dwcaDatafile is expected to be a directory containing the Dwc-A files");
 
-    int numberOfLine = FileBashUtilities.countLines(archiveFile.getLocationFile().getAbsolutePath());
-    Term[] headers = null;
-    Optional<Map<Term, String>> defaultValues = Optional.empty();
-    Optional<Term> recordIdentifier = Optional.empty();
-    //open DwcReader on dwcComponent (rowType)
+    Term[] headers;
+    Optional<Map<Term, String>> defaultValues;
+    Optional<TermIndex> recordIdentifier;
+
+    //open DwcReader on specific dwcComponent (rowType)
     try (DwcReader rs = new DwcReader(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType))) {
-      if (rs != null) {
-        headers = rs.getHeaders();
-        defaultValues = rs.getDefaultValues();
-        recordIdentifier = rs.getRecordIdentifier();
-      }
+      headers = rs.getHeaders();
+      defaultValues = rs.getDefaultValues();
+      recordIdentifier = rs.getRecordIdentifier();
     }
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
@@ -215,31 +249,36 @@ public class DataFileFactory {
             dwcaDatafile.getContentType(),
             rowType, type, headers, recordIdentifier, defaultValues,
             Optional.empty(), archiveFile.getIgnoreHeaderLines()!= null
-            && archiveFile.getIgnoreHeaderLines() > 0, archiveFile.getFieldsTerminatedBy().charAt(0), numberOfLine,
+            && archiveFile.getIgnoreHeaderLines() > 0, archiveFile.getFieldsTerminatedBy().charAt(0), numberOfLines,
             Optional.of(dwcaDatafile.getFilePath()),
             Optional.of(dwcaDatafile));
   }
 
   /**
    * Perform conversion of Spreadsheets.
-   * @param {@link DataFile} that requires conversion.
-   * @return new DataFile instance representing the converted file or Optional.empty() if the contentType can not
-   * be handled.
+   *
+   * @param spreadsheetDataFile {@link DataFile} that requires conversion.
+   * @param destinationFolder destination folder where the output will be stored in the form a random UUID with
+   *                          CSV_EXT.
+   *
+   * @return new {@link TabularDataFile} instance representing the converted file or Optional.empty()
+   * if the contentType can not be handled.
    *
    * @throws IOException
    */
-  private static Optional<TabularDataFile> handleSpreadsheetConversion(DataFile spreadsheetDataFile)
+  private static Optional<TabularDataFile> handleSpreadsheetConversion(DataFile spreadsheetDataFile, Path destinationFolder)
           throws IOException {
 
     Path spreadsheetFile = spreadsheetDataFile.getFilePath();
     String contentType = spreadsheetDataFile.getContentType();
 
-    Path csvFile = spreadsheetFile.getParent().resolve(UUID.randomUUID() + CSV_EXT);
+    Path csvFile = destinationFolder.resolve(UUID.randomUUID() + CSV_EXT);
+    int numberOfLine;
     if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
             ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(contentType)) {
-      SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile, SELECT_EXCEL_SHEET);
+      numberOfLine = SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile, SELECT_EXCEL_SHEET);
     } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(contentType)) {
-      SpreadsheetConverters.convertOdsToCSV(spreadsheetFile, csvFile);
+      numberOfLine = SpreadsheetConverters.convertOdsToCSV(spreadsheetFile, csvFile);
     } else {
       LOG.warn("Unhandled contentType {}", contentType);
       return Optional.empty();
@@ -247,29 +286,28 @@ public class DataFileFactory {
 
     char delimiter = ',';
     return Optional.of(buildTabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
-            ExtraMediaTypes.TEXT_CSV, delimiter, Optional.of(spreadsheetDataFile)));
+            ExtraMediaTypes.TEXT_CSV, delimiter, numberOfLine, Optional.of(spreadsheetDataFile)));
 
   }
 
   /**
-   * Build a {@link TabularDataFile} for tabualr files (csv, csv from converted Excel sheet).
+   * Build a {@link TabularDataFile} for tabular files (csv, csv from converted Excel sheet).
+   * The file is assumed to be already normalized
    *
    * @param tabularFilePath {@link Path} to the tabular file
    * @param sourceFileName
    * @param contentType
    * @param delimiter
+   * @param numberOfLine
    * @param parentFile
    * @return
    */
   private static TabularDataFile buildTabularDataFile(Path tabularFilePath, String sourceFileName,
-                                                      String contentType, Character delimiter,
+                                                      String contentType, Character delimiter, int numberOfLine,
                                                       Optional<DataFile> parentFile) throws IOException {
     Term[] headers;
     Optional<Term> rowType;
-    Optional<Term> recordIdentifier;
-    //Note, this will modify the file (if required)
-    FileBashUtilities.ensureEndsWithNewline(tabularFilePath.toAbsolutePath().toString());
-    int numberOfLine = FileBashUtilities.countLines(tabularFilePath.toAbsolutePath().toString());
+    Optional<TermIndex> recordIdentifier;
     try (RecordSource rs = RecordSourceFactory.fromDelimited(tabularFilePath.toFile(), delimiter, true)) {
       headers = rs.getHeaders();
       rowType = determineRowType(Arrays.asList(headers));
@@ -279,7 +317,8 @@ public class DataFileFactory {
     return new TabularDataFile(tabularFilePath,
             sourceFileName, FileFormat.TABULAR,
             contentType,
-            rowType.orElse(null), DwcFileType.CORE, headers, recordIdentifier,
+            rowType.orElse(null), DwcFileType.CORE, headers,
+            recordIdentifier,
             Optional.empty(), //no default values
             Optional.empty(),  //no line offset
             true, delimiter, numberOfLine,
@@ -289,12 +328,12 @@ public class DataFileFactory {
 
   /**
    * Tries to determine the rowType of a file based on its headers.
-   * VISIBLE-FOR-TESTING
    *
    * @param headers
    *
    * @return
    */
+  @VisibleForTesting
   protected static Optional<Term> determineRowType(List<Term> headers) {
     return TERM_TO_ROW_TYPE.entrySet().stream()
             .filter(ke -> headers.contains(ke.getKey()))
@@ -303,15 +342,18 @@ public class DataFileFactory {
 
   /**
    * Tries to determine the record identifier of a file based on its headers.
-   * VISIBLE-FOR-TESTING
    *
-   * @param headers
+   * @param headers the list can contain null value when a column is used but the Term is undefined
    *
    * @return
    */
-  protected static Optional<Term> determineRecordIdentifier(List<Term> headers) {
-    //try to find the first matching term
-    return ID_TERMS.stream().filter(t -> headers.contains(t)).findFirst();
+  @VisibleForTesting
+  protected static Optional<TermIndex> determineRecordIdentifier(List<Term> headers) {
+    //try to find the first matching term respecting the order defined by ID_TERMS
+    return ID_TERMS.stream()
+            .filter(t -> headers.contains(t))
+            .findFirst()
+            .map(t -> new TermIndex(headers.indexOf(t), t));
   }
 
   /**

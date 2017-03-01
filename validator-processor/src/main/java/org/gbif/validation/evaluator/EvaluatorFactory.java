@@ -14,7 +14,6 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
-import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
 import org.gbif.validation.conf.ValidatorConfiguration;
@@ -102,13 +101,13 @@ public class EvaluatorFactory {
   /**
    * Creates a {@link RecordCollectionEvaluator} that validates the uniqueness of the value on a specific column index.
    *
-   * @param idColumnIndex starting at 1
+   * @param rowType rowType targeted by this uniqueness validation
    * @param caseSensitive
    *
    * @return
    */
-  public static RecordCollectionEvaluator<TabularDataFile> createUniquenessEvaluator(int idColumnIndex, boolean caseSensitive) {
-    return new UniquenessEvaluator(idColumnIndex, caseSensitive);
+  public static RecordCollectionEvaluator createUniquenessEvaluator(Term rowType, boolean caseSensitive) {
+    return new UniquenessEvaluator(rowType, caseSensitive);
   }
 
   /**
@@ -119,7 +118,7 @@ public class EvaluatorFactory {
    * @param rowType
    * @return
    */
-  public static RecordCollectionEvaluator<DataFile> createReferentialIntegrityEvaluator(Term rowType) {
+  public static RecordCollectionEvaluator createReferentialIntegrityEvaluator(Term rowType) {
     Objects.requireNonNull(rowType, "rowType shall be provided");
     return new ReferentialIntegrityEvaluator(rowType);
   }
@@ -129,7 +128,7 @@ public class EvaluatorFactory {
    *
    * @return
    */
-  public RecordCollectionEvaluator<DataFile> createChecklistEvaluator() {
+  public RecordCollectionEvaluator createChecklistEvaluator() {
     return new ChecklistEvaluator(normalizerConfiguration);
   }
 
