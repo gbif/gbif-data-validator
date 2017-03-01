@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.Rule;
@@ -25,6 +27,7 @@ public class FileNormalizerTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
+  private static final File TEST_FOLDER = FileUtils.getClasspathFile("normalizer/subfolder");
   private static final File LATIN_CRLF_TEST_FILE = FileUtils.getClasspathFile("normalizer/latin1_crlf.txt");
   private static final File UTF8_CR_TEST_FILE = FileUtils.getClasspathFile("normalizer/utf8_cr.txt");
   private static final File UTF8_LF_TEST_FILE = FileUtils.getClasspathFile("normalizer/utf8_lf.txt");
@@ -44,12 +47,23 @@ public class FileNormalizerTest {
     testNormalizer(UTF8_LF_TEST_FILE.toPath(), StandardCharsets.UTF_8);
   }
 
+  @Test
+  public void normalizeFolderContent() throws IOException {
+    File normalizedFolder = folder.newFolder();
+
+    Map<Path, Integer> normalizedContent = FileNormalizer.normalizeFolderContent(TEST_FOLDER.toPath(),
+            normalizedFolder.toPath(), Optional.empty());
+    assertEquals(2, normalizedContent.size());
+    assertEquals(3, normalizedContent.get(Paths.get("utf8_lf.txt")).intValue());
+    assertEquals(2, normalizedContent.get(Paths.get("subsubfolder/utf8_lf.txt")).intValue());
+  }
+
   private void testNormalizer(Path testFile, Charset charset) throws IOException {
     File normalizedFile = folder.newFile();
     long numberOfLine = FileNormalizer.normalizeFile(testFile, normalizedFile.toPath(),
             Optional.of(charset));
 
-    assertEquals(3l, numberOfLine);
+    assertEquals(3, numberOfLine);
 
     // Use the Apache FileUtils to get the entire content as a String
     String fileContent = org.apache.commons.io.FileUtils.readFileToString(normalizedFile, "UTF-8");
