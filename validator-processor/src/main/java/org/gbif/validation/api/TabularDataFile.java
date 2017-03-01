@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.FileFormat;
 
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -18,10 +19,7 @@ import java.util.stream.IntStream;
  * Represents the workable unit for the validation. It can point to a file or a portion of a bigger file.
  * It can also represent a tabular view of other formats (spreadsheet).
  *
- * Expected to be in UTF-8, with LF (\n) end of line character.
- *
- * A {@link TabularDataFile} can point to a parent (in a conceptual way).
- * e.g. DarwinCore Archive folder is the parent of its core file.
+ * Expected  LF (\n) end of line character.
  *
  * This class is thread-safe and immutable.
  */
@@ -38,7 +36,9 @@ public class TabularDataFile extends DataFile {
   private final Optional<Integer> fileLineOffset;
   private final boolean hasHeaders;
 
+  private final Charset characterEncoding;
   private final Character delimiterChar;
+  private final Character quoteChar;
   private final Integer numOfLines;
 
   /**
@@ -55,7 +55,9 @@ public class TabularDataFile extends DataFile {
    * @param defaultValues default values to use for specific {@Term}
    * @param fileLineOffset if the file represents a part of a bigger file, the offset (in line) relative to the parent file
    * @param hasHeaders does the first line of this file represents the headers or no
+   * @param characterEncoding
    * @param delimiterChar character used to delimit each value (cell) in the file
+   * @param quoteChar
    * @param numOfLines
    * @param metadataFolder
    */
@@ -63,7 +65,9 @@ public class TabularDataFile extends DataFile {
                          Term rowType, DwcFileType type, Term[] columns,
                          Optional<TermIndex> recordIdentifier,
                          Optional<Map<Term, String>> defaultValues,
-                         Optional<Integer> fileLineOffset, boolean hasHeaders, Character delimiterChar, Integer numOfLines,
+                         Optional<Integer> fileLineOffset, boolean hasHeaders,
+                         Charset characterEncoding,
+                         Character delimiterChar, Character quoteChar, Integer numOfLines,
                          Optional<Path> metadataFolder) {
     super(filePath, sourceFileName, fileFormat, contentType, metadataFolder);
 
@@ -74,12 +78,22 @@ public class TabularDataFile extends DataFile {
     this.defaultValues = defaultValues.map( dv -> new HashMap<>(dv));
     this.fileLineOffset = fileLineOffset;
     this.hasHeaders = hasHeaders;
+    this.characterEncoding = characterEncoding;
     this.delimiterChar = delimiterChar;
+    this.quoteChar = quoteChar;
     this.numOfLines = numOfLines;
+  }
+
+  public Charset getCharacterEncoding() {
+    return characterEncoding;
   }
 
   public Character getDelimiterChar() {
     return delimiterChar;
+  }
+
+  public Character getQuoteChar() {
+    return quoteChar;
   }
 
   public Term getRowType() {
@@ -150,7 +164,9 @@ public class TabularDataFile extends DataFile {
     if (o == null || getClass() != o.getClass()) return false;
     TabularDataFile dataFile = (TabularDataFile) o;
     return hasHeaders == dataFile.hasHeaders &&
+            Objects.equals(characterEncoding, dataFile.characterEncoding) &&
             Objects.equals(delimiterChar, dataFile.delimiterChar) &&
+            Objects.equals(quoteChar, dataFile.quoteChar) &&
             Arrays.equals(columns, dataFile.columns) &&
             Objects.equals(recordIdentifier, dataFile.recordIdentifier) &&
             Objects.equals(rowType, dataFile.rowType) &&
@@ -175,7 +191,9 @@ public class TabularDataFile extends DataFile {
             rowType,
             defaultValues,
             type,
+            characterEncoding,
             delimiterChar,
+            quoteChar,
             numOfLines,
             fileLineOffset,
             hasHeaders,

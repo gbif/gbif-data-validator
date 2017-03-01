@@ -14,6 +14,9 @@ import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
  */
 public class SpreadsheetConverters {
 
+  public static final Character QUOTE_CHAR = '\"';
+  public static final Character DELIMITER_CHAR = ',';
+
   /**
    * Utility class can't be instantiated.
    */

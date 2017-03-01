@@ -17,6 +17,8 @@ import org.gbif.validation.util.FileNormalizer;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -120,7 +122,8 @@ public class DataFileFactory {
             tabDatafile.getContentType(),
             tabDatafile.getRowType(), tabDatafile.getType(), tabDatafile.getColumns(),
             tabDatafile.getRecordIdentifier(), tabDatafile.getDefaultValues(),
-            lineOffset, withHeader, tabDatafile.getDelimiterChar(), -1,
+            lineOffset, withHeader, tabDatafile.getCharacterEncoding(), tabDatafile.getDelimiterChar(),
+            tabDatafile.getQuoteChar(), -1,
             tabDatafile.getMetadataFolder());
   }
 
@@ -158,7 +161,6 @@ public class DataFileFactory {
 
     Map<DwcFileType, List<TabularDataFile>> dfPerDwcFileType = dataFileList.stream()
             .collect(Collectors.groupingBy(TabularDataFile::getType));
-
     TabularDataFile coreDf = dfPerDwcFileType.get(DwcFileType.CORE).get(0);
 
     return new DwcDataFile(dataFile, coreDf,
@@ -209,12 +211,13 @@ public class DataFileFactory {
 
     String fileExt = FilenameUtils.getExtension(tabularDataFile.getFilePath().getFileName().toString());
     Path destinationFile = destinationFolder.resolve(UUID.randomUUID() + fileExt);
-    int numberOfLines = (int)FileNormalizer.normalizeFile(tabularDataFile.getFilePath(), destinationFile,
+    int numberOfLines = FileNormalizer.normalizeFile(tabularDataFile.getFilePath(), destinationFile,
             Optional.empty());
 
-    Character delimiter = getDelimiter(tabularDataFile.getFilePath());
+    TabularMetadata tabularMetadata = getTabularMetadata(tabularDataFile.getFilePath(), StandardCharsets.UTF_8);
     return Optional.of(buildTabularDataFile(destinationFile, tabularDataFile.getSourceFileName(),
-            tabularDataFile.getContentType(), delimiter, numberOfLines, Optional.of(tabularDataFile)));
+            tabularDataFile.getContentType(), tabularMetadata.getDelimiterChar(),
+            tabularMetadata.getQuoteChar(), numberOfLines));
   }
 
   /**
@@ -250,7 +253,10 @@ public class DataFileFactory {
             dwcaDatafile.getContentType(),
             rowType, type, headers, recordIdentifier, defaultValues,
             Optional.empty(), archiveFile.getIgnoreHeaderLines()!= null
-            && archiveFile.getIgnoreHeaderLines() > 0, archiveFile.getFieldsTerminatedBy().charAt(0), numberOfLines,
+            && archiveFile.getIgnoreHeaderLines() > 0,
+            Charset.forName(archiveFile.getEncoding()),
+            archiveFile.getFieldsTerminatedBy().charAt(0),
+            archiveFile.getFieldsEnclosedBy(), numberOfLines,
             Optional.of(dwcaDatafile.getFilePath()));
   }
 
@@ -284,10 +290,9 @@ public class DataFileFactory {
       return Optional.empty();
     }
 
-    char delimiter = ',';
     return Optional.of(buildTabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
-            ExtraMediaTypes.TEXT_CSV, delimiter, numberOfLine, Optional.of(spreadsheetDataFile)));
-
+            ExtraMediaTypes.TEXT_CSV, SpreadsheetConverters.DELIMITER_CHAR,
+            SpreadsheetConverters.QUOTE_CHAR, numberOfLine));
   }
 
   /**
@@ -298,13 +303,13 @@ public class DataFileFactory {
    * @param sourceFileName
    * @param contentType
    * @param delimiter
+   * @param quoteChar
    * @param numberOfLine
-   * @param parentFile
    * @return
    */
   private static TabularDataFile buildTabularDataFile(Path tabularFilePath, String sourceFileName,
-                                                      String contentType, Character delimiter, int numberOfLine,
-                                                      Optional<DataFile> parentFile) throws IOException {
+                                                      String contentType, Character delimiter, Character quoteChar,
+                                                      int numberOfLine) throws IOException {
     Term[] headers;
     Optional<Term> rowType;
     Optional<TermIndex> recordIdentifier;
@@ -321,7 +326,7 @@ public class DataFileFactory {
             recordIdentifier,
             Optional.empty(), //no default values
             Optional.empty(),  //no line offset
-            true, delimiter, numberOfLine,
+            true, StandardCharsets.UTF_8, delimiter, quoteChar, numberOfLine,
             Optional.empty()); //no metadata folder supported for tabular file at the moment
   }
 
@@ -360,12 +365,31 @@ public class DataFileFactory {
    *
    * @throws UnkownDelimitersException
    */
-  private static Character getDelimiter(Path dataFilePath) {
-    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), "UTF-8");
+  private static TabularMetadata getTabularMetadata(Path dataFilePath, Charset charset) {
+    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), charset.name());
+
     if (metadata.getDelimiter().length() == 1) {
-      return metadata.getDelimiter().charAt(0);
+      return new TabularMetadata(metadata.getDelimiter().charAt(0),
+              metadata.getQuotedBy());
     } else {
       throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
+    }
+  }
+
+  private static class TabularMetadata {
+    private final Character delimiterChar;
+    private final Character quoteChar;
+    TabularMetadata(Character delimiterChar, Character quoteChar){
+      this.delimiterChar = delimiterChar;
+      this.quoteChar = quoteChar;
+    }
+
+    public Character getDelimiterChar() {
+      return delimiterChar;
+    }
+
+    public Character getQuoteChar() {
+      return quoteChar;
     }
   }
 

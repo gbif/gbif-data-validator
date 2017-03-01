@@ -167,7 +167,6 @@ public class DwcReader implements RecordSource {
     defaultValues.get().put(term, value);
   }
 
-  @Override
   public Optional<Map<Term, String>> getDefaultValues() {
     return defaultValues;
   }
@@ -176,7 +175,7 @@ public class DwcReader implements RecordSource {
   public String[] read() throws IOException {
       return csvReader.next();
   }
-  
+
   public Term getRowType() {
     if (darwinCoreComponent == null) {
       return null;

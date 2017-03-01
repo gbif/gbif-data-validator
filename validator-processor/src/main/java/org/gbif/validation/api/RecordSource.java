@@ -4,8 +4,6 @@ import org.gbif.dwc.terms.Term;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -19,12 +17,6 @@ public interface RecordSource extends Closeable {
    */
   @Nullable
   Term[] getHeaders();
-
-  /**
-   * Returns the default values (if any) of the source.
-   * @return
-   */
-  Optional<Map<Term, String>> getDefaultValues();
 
   @Nullable
   String[] read() throws IOException;

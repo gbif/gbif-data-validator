@@ -1,15 +1,13 @@
 package org.gbif.validation.source;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.RecordSource;
 import org.gbif.utils.file.tabular.TabularDataFileReader;
+import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.util.TempTermsUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 /**
@@ -34,11 +32,6 @@ class TabularFileReader implements RecordSource {
       return TempTermsUtils.buildTermMapping(headerLine.toArray(new String[headerLine.size()]));
     }
     return null;
-  }
-
-  @Override
-  public Optional<Map<Term, String>> getDefaultValues() {
-    return Optional.empty();
   }
 
   @Override
