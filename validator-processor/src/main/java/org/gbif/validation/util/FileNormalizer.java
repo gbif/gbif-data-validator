@@ -38,7 +38,7 @@ public class FileNormalizer {
    */
   public static final int normalizeFile(Path sourceFilePath, Path normalizedFilePath,
                                          Optional<Charset> sourceFilePathCharset) {
-    Preconditions.checkArgument(!normalizedFilePath.toFile().isDirectory(), "normalizedFilePath must represent a file");
+    Preconditions.checkArgument(!Files.isDirectory(normalizedFilePath), "normalizedFilePath must represent a file");
     final AtomicInteger numberOfLine = new AtomicInteger(0);
     try (Stream<String> lines = Files.lines(sourceFilePath, sourceFilePathCharset.orElse(StandardCharsets.UTF_8));
          BufferedWriter writer = Files.newBufferedWriter(normalizedFilePath, OUTPUT_FILE_CHARSET)) {
@@ -48,7 +48,7 @@ public class FileNormalizer {
           writer.append(END_LINE);
           numberOfLine.incrementAndGet();
         } catch (IOException ioEx) {
-          LOG.warn("Issue while writing to normalized file", ioEx);
+          LOG.error("Issue while writing to normalized file", ioEx);
         }
       });
     } catch (IOException ioEx) {
@@ -70,8 +70,8 @@ public class FileNormalizer {
    */
   public static Map<Path, Integer> normalizeFolderContent(Path sourceFolderPath, Path destinationFolderPath,
                                                           Optional<Charset> sourceFolderCharset) throws IOException {
-    Preconditions.checkArgument(sourceFolderPath.toFile().isDirectory(), "sourceFolderPath must represent a folder");
-    Preconditions.checkArgument(destinationFolderPath.toFile().isDirectory(), "destinationFolderPath must represent a folder");
+    Preconditions.checkArgument(Files.isDirectory(sourceFolderPath), "sourceFolderPath must represent a folder");
+    Preconditions.checkArgument(Files.isDirectory(destinationFolderPath), "destinationFolderPath must represent a folder");
     Preconditions.checkArgument(sourceFolderPath != destinationFolderPath, "sourceFolderPath can NOT be the same as destinationFolderPath");
 
     Map<Path, Integer> linesPerFile = new HashMap<>();

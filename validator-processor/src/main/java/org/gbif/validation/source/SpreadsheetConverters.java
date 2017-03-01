@@ -27,13 +27,14 @@ public class SpreadsheetConverters {
    * @param workbookFile
    * @param csvFile
    * @param sheetSelector function used to select the right sheet to convert (if more than one sheet is found)
+   * @return number of lines converted
    * @throws IOException
    */
-  public static void convertExcelToCSV(Path workbookFile, Path csvFile,
+  public static int convertExcelToCSV(Path workbookFile, Path csvFile,
                                        Function<List<String>, Optional<String>> sheetSelector) throws IOException {
     try {
       ExcelConverter excelConverter = new ExcelConverter();
-      excelConverter.convertToCSV(workbookFile, csvFile, sheetSelector);
+      return excelConverter.convertToCSV(workbookFile, csvFile, sheetSelector);
     } catch (InvalidFormatException e) {
       throw new IOException(e);
     }
@@ -44,10 +45,11 @@ public class SpreadsheetConverters {
    *
    * @param workbookFile
    * @param csvFile
+   * @return number of lines converted
    * @throws IOException
    */
-  public static void convertOdsToCSV(Path workbookFile, Path csvFile) throws IOException {
-    OdsConverter.convertToCSV(workbookFile, csvFile);
+  public static int convertOdsToCSV(Path workbookFile, Path csvFile) throws IOException {
+    return OdsConverter.convertToCSV(workbookFile, csvFile);
   }
 
 }

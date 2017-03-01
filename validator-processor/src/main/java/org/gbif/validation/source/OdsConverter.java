@@ -44,20 +44,21 @@ class OdsConverter {
     //empty constructor
   }
 
-  public static void convertToCSV(Path workbookFile, Path csvFile) throws IOException {
-
+  public static int convertToCSV(Path workbookFile, Path csvFile) throws IOException {
+    int numberOfLineWritten;
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
          ICsvListWriter csvWriter = new CsvListWriter(new FileWriter(csvFile.toFile()),
                  CsvPreference.STANDARD_PREFERENCE)) {
 
       SpreadsheetDocument doc = SpreadsheetDocument.loadDocument(fis);
-      convertToCSV(doc, csvWriter);
+      numberOfLineWritten = convertToCSV(doc, csvWriter);
 
       //ensure to flush remaining content to csvWriter
       csvWriter.flush();
     } catch (Exception e) {
       throw new IOException(e);
     }
+    return numberOfLineWritten;
   }
 
   /**
@@ -69,23 +70,24 @@ class OdsConverter {
    * @param csvWriter
    * @throws IOException
    */
-  private static void convertToCSV(SpreadsheetDocument spreadsheetDocument, ICsvListWriter csvWriter)
+  private static int convertToCSV(SpreadsheetDocument spreadsheetDocument, ICsvListWriter csvWriter)
     throws IOException {
     Objects.requireNonNull(spreadsheetDocument, "spreadsheetDocument shall be provided");
     Objects.requireNonNull(csvWriter, "csvWriter shall be provided");
+    int numberOfLineWritten = 0;
 
     if (spreadsheetDocument.getSheetCount() == 0) {
       LOG.warn("No sheet found in the spreadsheetDocument");
-      return;
+      return numberOfLineWritten;
     } //we work only on one sheet
     if(spreadsheetDocument.getSheetCount() > 1) {
       LOG.warn("Detected more than 1 sheet, only reading the first one.");
     }
 
     Table table = spreadsheetDocument.getSheetByIndex(0);
-
     List<String> headers = extractWhile(table, 0, cell -> cell != null && isNotBlank(cell.getStringValue()));
     csvWriter.writeHeader(headers.toArray(new String[headers.size()]));
+    numberOfLineWritten++;
 
     boolean hasContent = true;
     int rowIdx = 1;
@@ -94,9 +96,12 @@ class OdsConverter {
       hasContent = !line.stream().allMatch(StringUtils::isBlank);
       if (hasContent) {
         csvWriter.write(line);
+        numberOfLineWritten++;
       }
       rowIdx++;
     }
+
+    return numberOfLineWritten;
   }
 
   /**

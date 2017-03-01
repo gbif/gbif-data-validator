@@ -66,7 +66,7 @@ class ExcelConverter {
    * @throws IOException
    * @throws InvalidFormatException Thrown if invalid xml is found whilst parsing an input SpreadsheetML file.
    */
-  public void convertToCSV(Path workbookFile, Path csvFile, Function<List<String>, Optional<String>> sheetSelector)
+  public int convertToCSV(Path workbookFile, Path csvFile, Function<List<String>, Optional<String>> sheetSelector)
           throws IOException, InvalidFormatException {
 
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
@@ -74,10 +74,12 @@ class ExcelConverter {
                                                       CsvPreference.STANDARD_PREFERENCE)) {
 
       Workbook workbook = WorkbookFactory.create(fis);
-      convertToCSV(workbook, csvWriter, sheetSelector);
+      int numberOfLineWritten = convertToCSV(workbook, csvWriter, sheetSelector);
 
       //ensure to flush remaining content to csvWriter
       csvWriter.flush();
+
+      return numberOfLineWritten;
     }
   }
 
@@ -91,13 +93,14 @@ class ExcelConverter {
    * @param sheetSelector
    * @throws IOException
    */
-  private void convertToCSV(Workbook workbook, ICsvListWriter csvWriter, Function<List<String>, Optional<String>> sheetSelector) throws IOException {
+  private int convertToCSV(Workbook workbook, ICsvListWriter csvWriter, Function<List<String>, Optional<String>> sheetSelector) throws IOException {
     Objects.requireNonNull(workbook, "workbook shall be provided");
     Objects.requireNonNull(csvWriter, "csvWriter shall be provided");
+    int numberOfLineWritten = 0;
 
     if (workbook.getNumberOfSheets() == 0) {
       LOG.warn("No sheet found in the workbook");
-      return;
+      return numberOfLineWritten;
     }
 
     int sheetIndex = FIRST_SHEET_INDEX;
@@ -118,14 +121,16 @@ class ExcelConverter {
     Sheet sheet = workbook.getSheetAt(sheetIndex); //get the first Sheet, and only get this
     if (sheet.getPhysicalNumberOfRows() > 0) {
       //pass the evaluator to other methods since it's unknown how expensive is to get one!
-      writeSheetContent(csvWriter, sheet, workbook.getCreationHelper().createFormulaEvaluator());
+      numberOfLineWritten = writeSheetContent(csvWriter, sheet, workbook.getCreationHelper().createFormulaEvaluator());
     }
+
+    return numberOfLineWritten;
   }
 
   /**
    * Writes the content of a Sheet into the csvWriter.
    */
-  private void writeSheetContent(ICsvListWriter csvWriter, Sheet sheet, FormulaEvaluator evaluator) throws IOException {
+  private int writeSheetContent(ICsvListWriter csvWriter, Sheet sheet, FormulaEvaluator evaluator) throws IOException {
     //extract headers (first line)
     String[] headers = getHeaders(sheet, evaluator);
     csvWriter.writeHeader(headers);
@@ -137,6 +142,8 @@ class ExcelConverter {
         csvWriter.flush();
       }
     }
+    // +1 to add the header line
+    return sheet.getLastRowNum() + 1;
   }
 
   /**

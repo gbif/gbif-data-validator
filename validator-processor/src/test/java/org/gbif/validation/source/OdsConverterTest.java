@@ -10,6 +10,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -32,9 +33,10 @@ public class OdsConverterTest {
 
     File testCsvFile = FileUtils.getClasspathFile(CSV_TEST_FILE_LOCATION);
     File testFile = folder.newFile();
-    SpreadsheetConverters.convertOdsToCSV(workbookFile.toPath(), testFile.toPath());
+    int numberOfLines = SpreadsheetConverters.convertOdsToCSV(workbookFile.toPath(), testFile.toPath());
 
     assertTrue(org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(testFile, testCsvFile, "UTF-8"));
+    assertEquals(6, numberOfLines);
   }
 
 }

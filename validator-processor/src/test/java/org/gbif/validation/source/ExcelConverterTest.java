@@ -11,6 +11,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -35,9 +36,10 @@ public class ExcelConverterTest {
 
     File testCsvFile = FileUtils.getClasspathFile(CSV_TEST_FILE_LOCATION);
     File testFile = folder.newFile();
-    SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(), testFile.toPath(), l -> Optional.empty());
+    int numberOfLines = SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(), testFile.toPath(), l -> Optional.empty());
 
     assertTrue(org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(testFile, testCsvFile, "UTF-8"));
+    assertEquals(7, numberOfLines);
   }
 
 }
