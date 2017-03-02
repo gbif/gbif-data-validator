@@ -21,8 +21,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Adapter for extracting information about DarwinCore Archive.
- * The adapter can work on the core file, an extension file or a portion of one of them (after splitting).
+ * Responsible for extracting information about DarwinCore Archive.
+ * {@link DwcaMetadataExtractor} can work on the core file, an extension
+ * file or a portion of one of them (after splitting).
  *
  */
 class DwcaMetadataExtractor {

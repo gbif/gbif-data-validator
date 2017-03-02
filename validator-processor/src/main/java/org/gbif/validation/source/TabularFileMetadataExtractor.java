@@ -4,6 +4,8 @@ import org.gbif.dwc.terms.DcTerm;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.csv.CSVReader;
+import org.gbif.utils.file.csv.CSVReaderFactory;
+import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.util.TempTermsUtils;
 
@@ -19,7 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * Adapter for extracting information about file in tabular format.
+ * Responsible for extracting information about file in tabular format.
  */
 class TabularFileMetadataExtractor {
 
@@ -88,6 +90,42 @@ class TabularFileMetadataExtractor {
             .filter(t -> headers.contains(t))
             .findFirst()
             .map(t -> new TermIndex(headers.indexOf(t), t));
+  }
+
+  /**
+   * Guesses the delimiter character form the data file.
+   *
+   * @throws UnkownDelimitersException
+   */
+  static TabularMetadata getTabularMetadata(Path dataFilePath, Charset charset) {
+    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), charset.name());
+
+    if (metadata.getDelimiter().length() == 1) {
+      return new TabularMetadata(metadata.getDelimiter().charAt(0),
+              metadata.getQuotedBy());
+    } else {
+      throw new UnkownDelimitersException(metadata.getDelimiter() + " is a non supported delimiter");
+    }
+  }
+
+  /**
+   * Simple class holding information that be be extracted from a tabular file.
+   */
+  static class TabularMetadata {
+    private final Character delimiterChar;
+    private final Character quoteChar;
+    TabularMetadata(Character delimiterChar, Character quoteChar){
+      this.delimiterChar = delimiterChar;
+      this.quoteChar = quoteChar;
+    }
+
+    public Character getDelimiterChar() {
+      return delimiterChar;
+    }
+
+    public Character getQuoteChar() {
+      return quoteChar;
+    }
   }
 
 }

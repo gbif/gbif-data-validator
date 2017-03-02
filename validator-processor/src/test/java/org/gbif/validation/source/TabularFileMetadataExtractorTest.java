@@ -1,41 +1,54 @@
 package org.gbif.validation.source;
 
-import org.gbif.utils.file.FileUtils;
-import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.RecordSource;
-import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.dwc.terms.DcTerm;
+import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
+import org.gbif.validation.api.TermIndex;
 
-import java.io.File;
-import java.io.IOException;
+import java.util.Arrays;
+import java.util.Optional;
 
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
 
 /**
- *
+ * Test related to {@link TabularFileMetadataExtractor}
  */
 public class TabularFileMetadataExtractorTest {
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-  private static final String TEST_TSV_FILE_LOCATION = "validator_test_file_all_issues.tsv";
+  @Test
+  public void testDetermineRowType() {
+    Optional<Term> rowType = TabularFileMetadataExtractor
+            .determineRowType(Arrays.asList(DwcTerm.decimalLatitude, DwcTerm.occurrenceID));
+    assertEquals(DwcTerm.Occurrence, rowType.get());
+  }
 
   @Test
-  public void testCsvReading() throws IOException, UnsupportedDataFileException {
+  public void testDetermineRecordIdentifier() {
+    Optional<TermIndex> id = TabularFileMetadataExtractor.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLatitude, DwcTerm.occurrenceID));
+    assertEquals(DwcTerm.occurrenceID, id.get().getTerm());
+    assertEquals(1, id.get().getIndex());
 
-    File testFile = FileUtils.getClasspathFile(TEST_TSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "");
+    id = TabularFileMetadataExtractor.determineRecordIdentifier(Arrays.asList(DwcTerm.taxonID, DwcTerm.scientificName));
+    assertEquals(DwcTerm.taxonID, id.get().getTerm());
 
-    TabularDataFile tsvTabularDataFile =
-            DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath()).getCore();
+    //eventId should be picked even if taxonID is there
+    id = TabularFileMetadataExtractor.determineRecordIdentifier(Arrays.asList(DwcTerm.eventID, DwcTerm.scientificName, DwcTerm.taxonID));
+    assertEquals(DwcTerm.eventID, id.get().getTerm());
 
-    try(RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(tsvTabularDataFile)) {
-      assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read()[0]);
-    }
+    id = TabularFileMetadataExtractor.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLongitude, DwcTerm.scientificName,
+            DcTerm.identifier));
+    assertEquals(DcTerm.identifier, id.get().getTerm());
+
+    //eventId should be picked even if taxonID is there
+    id = TabularFileMetadataExtractor.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLongitude, DwcTerm.scientificName, DwcTerm.decimalLatitude));
+    assertFalse(id.isPresent());
   }
 }

@@ -21,17 +21,17 @@ public class DwcaMetadataExtractorTest {
   private static final String TEST_FILE_ID_WITH_TERM_LOCATION = "dwca/dwca-id-with-term";
 
   @Test
-  public void testDwcReaderTaxon() {
-    testDwcaReader(TEST_FILE_TAXON_LOCATION, DwcTerm.Taxon, 12, "1559060", 12);
+  public void testTaxon() {
+    testDwcaMetadataExtractor(TEST_FILE_TAXON_LOCATION, DwcTerm.Taxon, 12, "1559060", 12);
   }
 
   @Test
-  public void testDwcReaderIdAsTerm() {
-    testDwcaReader(TEST_FILE_ID_WITH_TERM_LOCATION, DwcTerm.Occurrence, 5,
+  public void testIdAsTerm() {
+    testDwcaMetadataExtractor(TEST_FILE_ID_WITH_TERM_LOCATION, DwcTerm.Occurrence, 5,
             "10d1bde8870c424ba9065de6964a269d", 11);
   }
 
-  private void testDwcaReader(String testFile, Term expectedRowType, int expectedNumberOfHeaders,
+  private void testDwcaMetadataExtractor(String testFile, Term expectedRowType, int expectedNumberOfHeaders,
                               String expectedLine1Column1Value, int expectedLine1Length) {
     File testFolder = FileUtils.getClasspathFile(testFile);
 
