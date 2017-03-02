@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
  * The adapter can work on the core file, an extension file or a portion of one of them (after splitting).
  *
  */
-public class DwcAdapter {
+class DwcAdapter {
 
   public static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
@@ -44,7 +44,7 @@ public class DwcAdapter {
    * @param dwcFolder
    * @throws IOException
    */
-  public DwcAdapter(File dwcFolder) throws IOException {
+  DwcAdapter(File dwcFolder) throws IOException {
     this(dwcFolder, Optional.empty());
   }
 
@@ -55,7 +55,7 @@ public class DwcAdapter {
    * @param rowType can be null to get the core
    * @throws IOException
    */
-  public DwcAdapter(File dwcFolder, Optional<Term> rowType) throws IOException {
+  DwcAdapter(File dwcFolder, Optional<Term> rowType) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
     archive = ArchiveFactory.openArchive(dwcFolder);
 
