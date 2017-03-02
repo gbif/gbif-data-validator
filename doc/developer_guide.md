@@ -2,7 +2,7 @@ This document is intended for developers.
 It covers the internal concepts of the gbif-data-validator.
 
 ## Unix utility dependencies
-The current implementation requires Unix utilities such as `awk`, `split` (see [FileBashUtilities](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/util/FileBashUtilities.java) in order to perform evaluations like uniqueness and referential integrity checks and split files in an efficient manner.
+The current implementation requires Unix utilities such as `awk`, `split` (see [FileBashUtilities](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/util/FileBashUtilities.java)) in order to perform evaluations like uniqueness and referential integrity checks and split files in an efficient manner.
 
 These utilities expect `lf` endline characters. Therefore, we normalize files in order to allow evaluations to be performed. At the moment, [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java) is responsible to coordinate this task.
 
@@ -22,12 +22,11 @@ Including :
  * Excel file into CSV
  * Standardisation of end line characters
 
-The result of those operations is kept in a DwcDataFile.
+The result of those operations is kept in a [DwcDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFile.java) and can be obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java) `prepareDataFile` method.
 
 ## TabularDataFile
 [TabularDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/TabularDataFile.java)
 represents data held into a file in tabular format.
-TabularDataFile are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
 
 ## Additional TabularDataFile Transformations
 
