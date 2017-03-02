@@ -6,6 +6,7 @@ import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +30,7 @@ public class DataFileSplitterTest {
   private File testFile = FileUtils.getClasspathFile("splitter/original_file.csv");
 
   @Test
-  public void testFileSplit() throws IOException {
+  public void testFileSplit() throws IOException, UnsupportedDataFileException {
     DataFile dataFile = new DataFile(testFile.toPath(), "original_file.csv", FileFormat.TABULAR, "");
     DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 

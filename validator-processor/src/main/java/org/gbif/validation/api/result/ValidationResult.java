@@ -6,6 +6,7 @@ import org.gbif.validation.api.model.ValidationProfile;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 
@@ -24,30 +25,38 @@ public class ValidationResult implements Serializable {
 
   //only used in case of general error with the input file
   private final ValidationErrorCode errorCode;
+  private final String errorMessage;
 
-  //TODO maybe we should store the concrete type to allow typed getter?
   private final List<ValidationResultElement> results;
 
-  public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat, ValidationErrorCode errorCode) {
-    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode);
+  public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat,
+                                         ValidationErrorCode errorCode,
+                                         Optional<String> errorMessage) {
+    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode, errorMessage.orElse(null));
   }
 
   /**
    *
-   *
    * @param indexeable
+   * @param fileName
    * @param fileFormat
    * @param validationProfile
-   * @param errorCode
+   * @param results
    */
   public ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                   List<ValidationResultElement> results, ValidationErrorCode errorCode) {
+                   List<ValidationResultElement> results) {
+    this(indexeable, fileName, fileFormat, validationProfile, results, null, null);
+  }
+
+  private ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
+                          List<ValidationResultElement> results, ValidationErrorCode errorCode, String errorMessage) {
     this.indexeable = indexeable;
     this.fileName = fileName;
     this.fileFormat = fileFormat;
     this.validationProfile = validationProfile;
     this.results = results;
     this.errorCode = errorCode;
+    this.errorMessage = errorMessage;
   }
 
   public Boolean isIndexeable() {
@@ -72,6 +81,10 @@ public class ValidationResult implements Serializable {
 
   public ValidationErrorCode getErrorCode() {
     return errorCode;
+  }
+
+  public String getErrorMessage() {
+    return errorMessage;
   }
 
 }

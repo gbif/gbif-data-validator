@@ -23,7 +23,7 @@ public final class TempTermsUtils {
    *
    * @param terms
    * @return
-   * @throws IllegalArgumentException
+   * @throws IllegalArgumentException if unsupported character are used to identify a term
    */
   public static Term[] buildTermMapping(String[] terms) throws IllegalArgumentException {
     Term[] columnMapping = new Term[terms.length];

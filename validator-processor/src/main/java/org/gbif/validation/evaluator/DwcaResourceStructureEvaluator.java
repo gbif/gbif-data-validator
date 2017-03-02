@@ -59,10 +59,7 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
         try {
           getMetaXMLValidator().validate(new StreamSource(metaXmlFile.getAbsolutePath()));
 
-          //Make sure we can read the headers
-         // Term[] headers = DwcReader.extractHeaders(archive.getCore());
           evaluateArchiveFile(archive.getCore()).ifPresent(vre -> validationResultElements.add(vre));
-
           if (!archive.getExtensions().isEmpty()) {
             archive.getExtensions().forEach(
                     ext -> evaluateArchiveFile(ext).

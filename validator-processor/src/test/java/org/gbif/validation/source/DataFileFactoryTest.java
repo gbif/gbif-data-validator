@@ -33,7 +33,7 @@ public class DataFileFactoryTest {
   public TemporaryFolder folder = new TemporaryFolder();
 
   @Test
-  public void testPrepareSourceDwc() throws IOException {
+  public void testPrepareSourceDwc() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "");
@@ -48,23 +48,23 @@ public class DataFileFactoryTest {
 
   @Test
   public void testDetermineRecordIdentifier() {
-    Optional<TermIndex> id = DataFileFactory.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLatitude, DwcTerm.occurrenceID));
+    Optional<TermIndex> id = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLatitude, DwcTerm.occurrenceID));
     assertEquals(DwcTerm.occurrenceID, id.get().getTerm());
     assertEquals(1, id.get().getIndex());
 
-    id = DataFileFactory.determineRecordIdentifier(Arrays.asList(DwcTerm.taxonID, DwcTerm.scientificName));
+    id = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(DwcTerm.taxonID, DwcTerm.scientificName));
     assertEquals(DwcTerm.taxonID, id.get().getTerm());
 
     //eventId should be picked even if taxonID is there
-    id = DataFileFactory.determineRecordIdentifier(Arrays.asList(DwcTerm.eventID, DwcTerm.scientificName, DwcTerm.taxonID));
+    id = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(DwcTerm.eventID, DwcTerm.scientificName, DwcTerm.taxonID));
     assertEquals(DwcTerm.eventID, id.get().getTerm());
 
-    id = DataFileFactory.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLongitude, DwcTerm.scientificName,
+    id = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLongitude, DwcTerm.scientificName,
             DcTerm.identifier));
     assertEquals(DcTerm.identifier, id.get().getTerm());
 
     //eventId should be picked even if taxonID is there
-    id = DataFileFactory.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLongitude, DwcTerm.scientificName, DwcTerm.decimalLatitude));
+    id = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(DwcTerm.decimalLongitude, DwcTerm.scientificName, DwcTerm.decimalLatitude));
     assertFalse(id.isPresent());
   }
 }

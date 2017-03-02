@@ -8,6 +8,7 @@ import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
+import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
@@ -15,6 +16,7 @@ import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
@@ -91,10 +93,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
     DataFile dataFile = dataJob.getJobData();
 
-    //Probably from here DataFile -> PreparedDataFile with list of derived tabular files
-
-    if(evaluateResourceIntegrityAndStructure(dataFile, factory)){
-      DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
+    StructuralEvaluationResult structuralEvaluationResult = evaluateResourceIntegrityAndStructure(dataFile, factory);
+    if(structuralEvaluationResult.canContinueEvaluation()){
+      DwcDataFile dwcDataFile = structuralEvaluationResult.dwcDataFile;
 
       init(dwcDataFile.getTabularDataFiles());
 
@@ -102,7 +103,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
               EvaluationChain.Builder.using(dwcDataFile, factory)
                       .evaluateCoreUniqueness()
                       .evaluateReferentialIntegrity();
-                     // .evaluateChecklist(); fix UUID for folder name
+      // .evaluateChecklist(); fix UUID for folder name
 
       //numOfWorkers is used to know how many responses we are expecting
       final MutableInt numOfWorkers = new MutableInt(0);
@@ -167,27 +168,38 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * @param dataFile
    * @return is the resource integrity allows to continue the evaluation or not
    */
-  private boolean evaluateResourceIntegrityAndStructure(DataFile dataFile, EvaluatorFactory factory) {
+  private StructuralEvaluationResult evaluateResourceIntegrityAndStructure(DataFile dataFile, EvaluatorFactory factory) {
     Optional<List<ValidationResultElement>> validationResultElements =
             factory.createResourceStructureEvaluator(dataFile.getFileFormat())
                     .evaluate(dataFile);
 
     if (validationResultElements.isPresent()) {
       List<ValidationResultElement> validationResultElementList = new ArrayList<>(validationResultElements.get());
-
       //check if we have an issue that requires to stop the evaluation process
       if (validationResultElements.get().stream()
               .filter(vre -> vre.contains(EvaluationCategory.RESOURCE_INTEGRITY))
               .findAny().isPresent()) {
         emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
                 new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                        GBIF_INDEXING_PROFILE, validationResultElementList, null)));
-        return false;
-      } else {
-        resourceStructureResultElement.addAll(validationResultElementList);
+                        GBIF_INDEXING_PROFILE, validationResultElementList)));
+        return StructuralEvaluationResult.createStopEvaluation();
       }
+      resourceStructureResultElement.addAll(validationResultElementList);
     }
-    return true;
+
+    // try to prepare the DataFile
+    boolean stopEvaluation = false;
+    DwcDataFile dwcDataFile = null;
+    try {
+      dwcDataFile = DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
+    } catch (IOException ioEx){
+      emitErrorAndStop(dataFile, ValidationErrorCode.IO_ERROR, Optional.empty());
+      stopEvaluation = true;
+    } catch(UnsupportedDataFileException ex) {
+      emitErrorAndStop(dataFile, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT, Optional.of(ex.getMessage()));
+      stopEvaluation = true;
+    }
+    return new StructuralEvaluationResult(stopEvaluation, dwcDataFile);
   }
 
   /**
@@ -283,7 +295,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     validationResultElements.addAll(resourceStructureResultElement);
 
     return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
-            GBIF_INDEXING_PROFILE, validationResultElements, null);
+            GBIF_INDEXING_PROFILE, validationResultElements);
   }
 
   /**
@@ -295,12 +307,38 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     getContext().stop(self());
   }
 
+  private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, Optional<String> errorMessage) {
+    JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED, dataJob.getJobId(),
+            ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(), errorCode, errorMessage));
+    context().parent().tell(response, self());
+    deleteWorkingDir();
+    getContext().stop(self());
+  }
+
   /**
    * Deletes the working directory if it exists.
    */
   private void deleteWorkingDir() {
     if (workingDir.exists()) {
       FileUtils.deleteDirectoryRecursively(workingDir);
+    }
+  }
+
+  private static class StructuralEvaluationResult {
+    private boolean stopEvaluation;
+    private DwcDataFile dwcDataFile;
+
+    static StructuralEvaluationResult createStopEvaluation(){
+      return new StructuralEvaluationResult(true, null);
+    }
+
+    StructuralEvaluationResult(boolean stopEvaluation, DwcDataFile dwcDataFile){
+      this.stopEvaluation = stopEvaluation;
+      this.dwcDataFile = dwcDataFile;
+    }
+
+    public boolean canContinueEvaluation(){
+      return !stopEvaluation;
     }
   }
 }

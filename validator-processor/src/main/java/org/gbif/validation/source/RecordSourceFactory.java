@@ -4,15 +4,10 @@ import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.FileFormat;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Objects;
-import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.Validate;
-
-import static org.gbif.utils.file.tabular.TabularFiles.newTabularFileReader;
 
 /**
  * Creates instances of RecordSource class.
@@ -27,17 +22,6 @@ public class RecordSourceFactory {
    */
   private RecordSourceFactory() {
     //empty method
-  }
-
-  /**
-   * Creates instances of RecordSource from character delimited files.
-   */
-  public static RecordSource fromDelimited(@NotNull File sourceFile, @NotNull Character delimiterChar,
-                                           boolean headerIncluded) throws IOException {
-    Objects.requireNonNull(sourceFile, "sourceFile shall be provided");
-    Objects.requireNonNull(delimiterChar, "delimiterChar shall be provided");
-    return new TabularFileReader(sourceFile.toPath(), newTabularFileReader(new FileInputStream(sourceFile),
-                                                                           delimiterChar, headerIncluded));
   }
 
   /**

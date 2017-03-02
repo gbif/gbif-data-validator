@@ -13,7 +13,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
- * Tests related to {@link DwcReader}.
+ * Tests related to {@link DwcAdapter}.
  */
 public class DwcReaderTest {
 
@@ -36,7 +36,7 @@ public class DwcReaderTest {
     File testFolder = FileUtils.getClasspathFile(testFile);
 
     try {
-      DwcReader dwcReader = new DwcReader(testFolder);
+      DwcAdapter dwcReader = new DwcAdapter(testFolder);
       assertEquals(expectedRowType, dwcReader.getRowType());
       assertEquals(expectedNumberOfHeaders, dwcReader.getHeaders().length);
     } catch (IOException e) {

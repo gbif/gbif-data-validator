@@ -6,6 +6,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -31,7 +32,7 @@ public class EvaluationChainTest {
   private DataFile dwcaDataFile = getDwcaDataFile("dwca/dwca-ref-integrity-issue", "test");
 
   @Test
-  public void testBasicEvaluationChain() {
+  public void testBasicEvaluationChain() throws UnsupportedDataFileException {
     try {
       DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dwcaDataFile, folder.newFolder().toPath());
       EvaluationChain.Builder evaluationChainBuilder = EvaluationChain.Builder.using(dwcDataFile,

@@ -9,6 +9,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,11 +34,10 @@ public class ReferentialIntegrityEvaluatorTest {
   public TemporaryFolder folder = new TemporaryFolder();
 
   @Test
-  public void dwcaResourceStructureEvaluatorTest() throws IOException {
+  public void dwcaResourceStructureEvaluatorTest() throws IOException, UnsupportedDataFileException {
     ReferentialIntegrityEvaluator riEvaluator = new ReferentialIntegrityEvaluator(DwcTerm.Identification);
 
     DataFile df = new DataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca", FileFormat.DWCA, "");
-
     DwcDataFile dwcDf = DataFileFactory.prepareDataFile(df, folder.newFolder().toPath());
 
     try {

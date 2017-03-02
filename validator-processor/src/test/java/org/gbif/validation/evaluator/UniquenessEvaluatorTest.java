@@ -9,6 +9,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class UniquenessEvaluatorTest {
   private static final File DWC_ARCHIVE = FileUtils.getClasspathFile("dwc-data-integrity/dwca");
 
   @Test
-  public void testUniqueness() {
+  public void testUniqueness() throws UnsupportedDataFileException {
 
     DataFile df = DataFileFactory.newDataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca",
             FileFormat.DWCA, "");

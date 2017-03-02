@@ -7,7 +7,6 @@ import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
-import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TermIndex;
 
 import java.io.File;
@@ -22,11 +21,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * {@link RecordSource} implementation for DarwinCore Archive.
- * This reader can work on the core file, an extension file or a portion of one of them (after splitting).
+ * Adapter for extracting information about DarwinCore Archive.
+ * The adapter can work on the core file, an extension file or a portion of one of them (after splitting).
  *
  */
-public class DwcReader {
+public class DwcAdapter {
 
   public static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
@@ -45,7 +44,7 @@ public class DwcReader {
    * @param dwcFolder
    * @throws IOException
    */
-  public DwcReader(File dwcFolder) throws IOException {
+  public DwcAdapter(File dwcFolder) throws IOException {
     this(dwcFolder, Optional.empty());
   }
 
@@ -56,7 +55,7 @@ public class DwcReader {
    * @param rowType can be null to get the core
    * @throws IOException
    */
-  public DwcReader(File dwcFolder, Optional<Term> rowType) throws IOException {
+  public DwcAdapter(File dwcFolder, Optional<Term> rowType) throws IOException {
     Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
     archive = ArchiveFactory.openArchive(dwcFolder);
 
@@ -68,40 +67,6 @@ public class DwcReader {
     //check if there is default value(s) defined
     archiveFields.stream().filter(af -> af.getIndex() == null)
             .forEach(af -> addDefaultValue(af.getTerm(), af.getDefaultValue()));
-    headers = extractHeaders();
-  }
-
-  /**
-   * Get a new reader for the core or an extension that uses a portion of the original file obtained after splitting.
-   *
-   * @param dwcFolder
-   * @param partFile portion of the original file obtained after splitting
-   * @param rowType
-   * @param ignoreHeaderLines
-   * @throws IOException
-   */
-  public DwcReader(File dwcFolder, File partFile, @Nullable Term rowType, boolean ignoreHeaderLines) throws IOException {
-    Objects.requireNonNull(dwcFolder, "dwcFolder shall be provided");
-
-    archive = ArchiveFactory.openArchive(dwcFolder);
-
-    if (archive.getCore() == null) {
-      throw new UnsupportedArchiveException("The archive must have a least a core file.");
-    }
-
-    if (rowType == null) {
-      darwinCoreComponent = archive.getCore();
-    } else {
-      darwinCoreComponent = archive.getCore().getRowType().equals(rowType) ? archive.getCore() : archive.getExtension(rowType);
-    }
-
-    //TODO if darwinCoreComponent is null ?
-    archiveFields = darwinCoreComponent.getFieldsSorted();
-
-    //check if there is default value(s) defined
-    archiveFields.stream().filter(af -> af.getIndex() == null)
-            .forEach(af -> addDefaultValue(af.getTerm(), af.getDefaultValue()));
-
     headers = extractHeaders();
   }
 

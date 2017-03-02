@@ -26,7 +26,7 @@ public class TabularFileReaderTest {
   private static final String TEST_TSV_FILE_LOCATION = "validator_test_file_all_issues.tsv";
 
   @Test
-  public void testCsvReading() throws IOException {
+  public void testCsvReading() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_TSV_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "");

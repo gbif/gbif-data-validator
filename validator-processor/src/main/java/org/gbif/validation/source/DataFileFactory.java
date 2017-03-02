@@ -1,14 +1,11 @@
 package org.gbif.validation.source;
 
-import org.gbif.dwc.terms.DcTerm;
-import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.api.model.DwcFileType;
@@ -25,7 +22,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +30,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.Validate;
@@ -49,26 +44,8 @@ public class DataFileFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataFileFactory.class);
 
-  /**
-   * Predefined mapping between {@link Term} and its rowType.
-   * Ordering is important since the first found will be used.
-   */
-  private static final Map<Term, Term> TERM_TO_ROW_TYPE;
-  static {
-    Map<Term, Term> idToRowType = new LinkedHashMap<>();
-    idToRowType.put(DwcTerm.eventID, DwcTerm.Event);
-    idToRowType.put(DwcTerm.taxonID, DwcTerm.Taxon);
-    idToRowType.put(DwcTerm.occurrenceID, DwcTerm.Occurrence);
-    TERM_TO_ROW_TYPE = Collections.unmodifiableMap(idToRowType);
-  }
-
   private static final String CSV_EXT = ".csv";
 
-  /**
-   * Terms that can represent an identifier within a file
-   */
-  private static final List<Term> ID_TERMS = Collections.unmodifiableList(
-          Arrays.asList(DwcTerm.eventID, DwcTerm.occurrenceID, DwcTerm.taxonID, DcTerm.identifier));
   /**
    * Recognized sheet names in Excel workbook when the workbook contains more than 1 sheet.
    * Mostly name of sheets used in GBIF provided templates.
@@ -139,7 +116,8 @@ public class DataFileFactory {
    * @throws IOException
    * @throws IllegalStateException
    */
-  public static DwcDataFile prepareDataFile(DataFile dataFile, Path destinationFolder) throws IOException {
+  public static DwcDataFile prepareDataFile(DataFile dataFile, Path destinationFolder) throws IOException,
+          UnsupportedDataFileException {
     Objects.requireNonNull(dataFile.getFilePath(), "filePath shall be provided");
     Objects.requireNonNull(dataFile.getFileFormat(), "fileFormat shall be provided");
     Objects.requireNonNull(destinationFolder, "destinationFolder shall be provided");
@@ -148,14 +126,12 @@ public class DataFileFactory {
     List<TabularDataFile> dataFileList = new ArrayList<>();
     switch (dataFile.getFileFormat()) {
       case SPREADSHEET:
-        //FIXME if the contentType is not supported this will failed silently (except it will be log)
         handleSpreadsheetConversion(dataFile, destinationFolder).ifPresent(dataFileList::add);
         break;
       case DWCA:
         dataFileList.addAll(prepareDwcA(dataFile, destinationFolder));
         break;
       case TABULAR:
-        //FIXME if the Optional is empty, it will fail silently
         prepareTabular(dataFile, destinationFolder).ifPresent(dataFileList::add);
     }
 
@@ -183,7 +159,7 @@ public class DataFileFactory {
             destinationFolder, Optional.empty());
 
     List<TabularDataFile> dataFileList = new ArrayList<>();
-    DwcReader dwcReader = new DwcReader(destinationFolder.toFile());
+    DwcAdapter dwcReader = new DwcAdapter(destinationFolder.toFile());
     //add the core first
     dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, dwcReader.getRowType(),
             dwcReader.getCore(), normalizedFiles.get(Paths.get(dwcReader.getCore().getLocation())) , destinationFolder));
@@ -203,20 +179,26 @@ public class DataFileFactory {
    * @throws IOException
    */
   private static Optional<TabularDataFile> prepareTabular(DataFile tabularDataFile, Path destinationFolder)
-          throws IOException {
+          throws IOException, UnsupportedDataFileException {
 
     Preconditions.checkArgument(FileFormat.TABULAR.equals(tabularDataFile.getFileFormat()), "prepareTabular can only" +
             "prepare FileFormat.TABULAR file");
 
+    Charset charset = StandardCharsets.UTF_8;
     String fileExt = FilenameUtils.getExtension(tabularDataFile.getFilePath().getFileName().toString());
     Path destinationFile = destinationFolder.resolve(UUID.randomUUID() + fileExt);
     int numberOfLines = FileNormalizer.normalizeFile(tabularDataFile.getFilePath(), destinationFile,
             Optional.empty());
-
-    TabularMetadata tabularMetadata = getTabularMetadata(tabularDataFile.getFilePath(), StandardCharsets.UTF_8);
-    return Optional.of(buildTabularDataFile(destinationFile, tabularDataFile.getSourceFileName(),
-            tabularDataFile.getContentType(), tabularMetadata.getDelimiterChar(),
-            tabularMetadata.getQuoteChar(), numberOfLines));
+    try{
+      TabularMetadata tabularMetadata = getTabularMetadata(tabularDataFile.getFilePath(), charset);
+      return Optional.of(buildTabularDataFile(destinationFile, tabularDataFile.getSourceFileName(),
+              tabularDataFile.getContentType(), charset, tabularMetadata.getDelimiterChar(),
+              tabularMetadata.getQuoteChar(), numberOfLines));
+    }
+    catch (UnkownDelimitersException udEx) {
+      //re-throw the exception as UnsupportedDataFileException
+      throw new UnsupportedDataFileException(udEx.getMessage());
+    }
   }
 
   /**
@@ -240,8 +222,8 @@ public class DataFileFactory {
     Optional<Map<Term, String>> defaultValues;
     Optional<TermIndex> recordIdentifier;
 
-    //open DwcReader on specific dwcComponent (rowType)
-    DwcReader rs = new DwcReader(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
+    //open DwcAdapter on specific dwcComponent (rowType)
+    DwcAdapter rs = new DwcAdapter(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
     headers = rs.getHeaders();
     defaultValues = rs.getDefaultValues();
     recordIdentifier = rs.getRecordIdentifier();
@@ -271,7 +253,7 @@ public class DataFileFactory {
    * @throws IOException
    */
   private static Optional<TabularDataFile> handleSpreadsheetConversion(DataFile spreadsheetDataFile, Path destinationFolder)
-          throws IOException {
+          throws IOException, UnsupportedDataFileException {
 
     Path spreadsheetFile = spreadsheetDataFile.getFilePath();
     String contentType = spreadsheetDataFile.getContentType();
@@ -285,11 +267,11 @@ public class DataFileFactory {
       numberOfLine = SpreadsheetConverters.convertOdsToCSV(spreadsheetFile, csvFile);
     } else {
       LOG.warn("Unhandled contentType {}", contentType);
-      return Optional.empty();
+      throw new UnsupportedDataFileException(contentType + " can not be converted");
     }
 
     return Optional.of(buildTabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
-            ExtraMediaTypes.TEXT_CSV, SpreadsheetConverters.DELIMITER_CHAR,
+            ExtraMediaTypes.TEXT_CSV, StandardCharsets.UTF_8, SpreadsheetConverters.DELIMITER_CHAR,
             SpreadsheetConverters.QUOTE_CHAR, numberOfLine));
   }
 
@@ -306,16 +288,14 @@ public class DataFileFactory {
    * @return
    */
   private static TabularDataFile buildTabularDataFile(Path tabularFilePath, String sourceFileName,
-                                                      String contentType, Character delimiter, Character quoteChar,
-                                                      int numberOfLine) throws IOException {
-    Term[] headers;
-    Optional<Term> rowType;
-    Optional<TermIndex> recordIdentifier;
-    try (RecordSource rs = RecordSourceFactory.fromDelimited(tabularFilePath.toFile(), delimiter, true)) {
-      headers = rs.getHeaders();
-      rowType = determineRowType(Arrays.asList(headers));
-      recordIdentifier = determineRecordIdentifier(Arrays.asList(headers));
-    }
+                                                      String contentType, Charset charset, Character delimiter,
+                                                      Character quoteChar,
+                                                      int numberOfLine) throws IOException, UnsupportedDataFileException {
+
+    Term[] headers = TabularFileAdapter.extractHeader(tabularFilePath, charset, delimiter, quoteChar)
+            .orElseThrow(() -> new UnsupportedDataFileException("Can't extract header"));
+    Optional<Term> rowType = TabularFileAdapter.determineRowType(Arrays.asList(headers));
+    Optional<TermIndex> recordIdentifier = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(headers));
 
     return new TabularDataFile(tabularFilePath,
             sourceFileName, FileFormat.TABULAR,
@@ -326,36 +306,6 @@ public class DataFileFactory {
             Optional.empty(),  //no line offset
             true, StandardCharsets.UTF_8, delimiter, quoteChar, numberOfLine,
             Optional.empty()); //no metadata folder supported for tabular file at the moment
-  }
-
-  /**
-   * Tries to determine the rowType of a file based on its headers.
-   *
-   * @param headers
-   *
-   * @return
-   */
-  @VisibleForTesting
-  protected static Optional<Term> determineRowType(List<Term> headers) {
-    return TERM_TO_ROW_TYPE.entrySet().stream()
-            .filter(ke -> headers.contains(ke.getKey()))
-            .map(Map.Entry::getValue).findFirst();
-  }
-
-  /**
-   * Tries to determine the record identifier of a file based on its headers.
-   *
-   * @param headers the list can contain null value when a column is used but the Term is undefined
-   *
-   * @return
-   */
-  @VisibleForTesting
-  protected static Optional<TermIndex> determineRecordIdentifier(List<Term> headers) {
-    //try to find the first matching term respecting the order defined by ID_TERMS
-    return ID_TERMS.stream()
-            .filter(t -> headers.contains(t))
-            .findFirst()
-            .map(t -> new TermIndex(headers.indexOf(t), t));
   }
 
   /**
@@ -370,7 +320,7 @@ public class DataFileFactory {
       return new TabularMetadata(metadata.getDelimiter().charAt(0),
               metadata.getQuotedBy());
     } else {
-      throw new UnkownDelimitersException(metadata.getDelimiter() + "{} is a non supported delimiter");
+      throw new UnkownDelimitersException(metadata.getDelimiter() + " is a non supported delimiter");
     }
   }
 

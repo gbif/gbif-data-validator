@@ -29,7 +29,7 @@ public class RecordSourceFactoryTest {
   private static final String TEST_DWC_FILE_LOCATION = "dwca/dwca-taxon";
 
   @Test
-  public void testFromDataFile() throws IOException {
+  public void testFromDataFile() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
 
@@ -44,7 +44,7 @@ public class RecordSourceFactoryTest {
   }
 
   @Test
-  public void testPrepareSourceTabular() throws IOException {
+  public void testPrepareSourceTabular() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_TSV_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "");
