@@ -19,6 +19,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.google.common.base.MoreObjects;
+
 /**
  * The {@link EvaluationChain} is used to build and store the sequence of evaluation that will be performed.
  * An {@link EvaluationChain} is specific to each {@link DataFile} and they should NOT be reused.
@@ -53,9 +55,11 @@ public class EvaluationChain {
 
     @Override
     public String toString() {
-      return "dataFiles:{" + dataFiles + "}," +
-              "rowType: " + rowType + ", " +
-              "recordEvaluator: " + recordEvaluator;
+      return MoreObjects.toStringHelper(this)
+              .add("dataFiles", dataFiles)
+              .add("rowType", rowType)
+              .add("recordEvaluator", recordEvaluator)
+              .toString();
     }
   }
 
@@ -92,9 +96,11 @@ public class EvaluationChain {
 
     @Override
     public String toString() {
-      return "dataFile: " + dataFile + "}," +
-              "rowType: " + rowType + ", " +
-              "recordCollectionEvaluator: " + recordCollectionEvaluator;
+      return MoreObjects.toStringHelper(this)
+              .add("dataFile", dataFile)
+              .add("rowType", rowType)
+              .add("recordCollectionEvaluator", recordCollectionEvaluator)
+              .toString();
     }
   }
 

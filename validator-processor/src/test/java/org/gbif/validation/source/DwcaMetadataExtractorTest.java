@@ -13,9 +13,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 /**
- * Tests related to {@link DwcAdapter}.
+ * Tests related to {@link DwcaMetadataExtractor}.
  */
-public class DwcReaderTest {
+public class DwcaMetadataExtractorTest {
 
   private static final String TEST_FILE_TAXON_LOCATION = "dwca/dwca-taxon";
   private static final String TEST_FILE_ID_WITH_TERM_LOCATION = "dwca/dwca-id-with-term";
@@ -36,7 +36,7 @@ public class DwcReaderTest {
     File testFolder = FileUtils.getClasspathFile(testFile);
 
     try {
-      DwcAdapter dwcReader = new DwcAdapter(testFolder);
+      DwcaMetadataExtractor dwcReader = new DwcaMetadataExtractor(testFolder);
       assertEquals(expectedRowType, dwcReader.getRowType());
       assertEquals(expectedNumberOfHeaders, dwcReader.getHeaders().length);
     } catch (IOException e) {

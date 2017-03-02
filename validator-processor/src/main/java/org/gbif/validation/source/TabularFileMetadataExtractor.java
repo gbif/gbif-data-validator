@@ -21,7 +21,7 @@ import java.util.Optional;
 /**
  * Adapter for extracting information about file in tabular format.
  */
-class TabularFileAdapter {
+class TabularFileMetadataExtractor {
 
   /**
    * Terms that can represent an identifier within a file
@@ -42,7 +42,7 @@ class TabularFileAdapter {
     TERM_TO_ROW_TYPE = Collections.unmodifiableMap(idToRowType);
   }
 
-  private TabularFileAdapter() {
+  private TabularFileMetadataExtractor() {
   }
 
   static Optional<Term[]> extractHeader(Path filePath, Charset characterEncoding,

@@ -18,7 +18,7 @@ import org.junit.rules.TemporaryFolder;
 import static org.junit.Assert.assertEquals;
 
 /**
- * Unit tests for RecordSourceFactory
+ * Unit tests for {@link }RecordSourceFactory}
  */
 public class RecordSourceFactoryTest {
 
@@ -29,10 +29,9 @@ public class RecordSourceFactoryTest {
   private static final String TEST_DWC_FILE_LOCATION = "dwca/dwca-taxon";
 
   @Test
-  public void testFromDataFile() throws IOException, UnsupportedDataFileException {
+  public void testPrepareDwcA() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
-
     DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "");
 
     DwcDataFile preparedDwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
@@ -44,17 +43,21 @@ public class RecordSourceFactoryTest {
   }
 
   @Test
-  public void testPrepareSourceTabular() throws IOException, UnsupportedDataFileException {
+  public void testPrepareTabular() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_TSV_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "");
 
-    DwcDataFile preparedDwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
+    DwcDataFile preparedTabularDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
-    assertEquals(1, preparedDwcDataFile.getTabularDataFiles().size());
-    TabularDataFile preparedDataFile = preparedDwcDataFile.getTabularDataFiles().get(0);
-    assertEquals('\t', preparedDataFile.getDelimiterChar().charValue());
-    assertEquals(DwcTerm.Occurrence, preparedDataFile.getRowType());
+    assertEquals(1, preparedTabularDataFile.getTabularDataFiles().size());
+    TabularDataFile tabularDataFile = preparedTabularDataFile.getTabularDataFiles().get(0);
+    assertEquals('\t', tabularDataFile.getDelimiterChar().charValue());
+    assertEquals(DwcTerm.Occurrence, tabularDataFile.getRowType());
+
+    try(RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(tabularDataFile)) {
+      assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read()[0]);
+    }
   }
 
 }

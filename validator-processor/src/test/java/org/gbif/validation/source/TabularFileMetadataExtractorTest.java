@@ -18,7 +18,7 @@ import static org.junit.Assert.assertEquals;
 /**
  *
  */
-public class TabularFileReaderTest {
+public class TabularFileMetadataExtractorTest {
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();

@@ -10,9 +10,9 @@ import java.util.Objects;
 import org.apache.commons.lang3.Validate;
 
 /**
- * Creates instances of RecordSource class.
+ * Creates instances of {@link RecordSource} class.
  *
- * RecordSourceFactory contract is to provide a RecordSource from {@link TabularDataFile}, therefore
+ * {@link RecordSourceFactory} contract is to provide a RecordSource from {@link TabularDataFile}, therefore
  * no validation on the structure of the source will be performed.
  */
 public class RecordSourceFactory {

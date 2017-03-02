@@ -11,9 +11,8 @@ import java.util.Optional;
 
 
 /**
- * Basically wrapping all the components of DarwinCore based data.
+ * Basically grouping all the components of DarwinCore based data.
  * It represents a DarwinCore file in the sense that data is related to Darwin Core terms.
- * The content of a {@link DwcDataFile} is expected to be standardized.
  */
 public class DwcDataFile {
 

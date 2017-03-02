@@ -2,7 +2,6 @@ package org.gbif.validation.source;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.ArchiveFile;
-import org.gbif.utils.file.csv.CSVReaderFactory;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
@@ -35,6 +34,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.gbif.validation.source.TabularFileMetadataExtractor.*;
 
 
 /**
@@ -159,7 +160,7 @@ public class DataFileFactory {
             destinationFolder, Optional.empty());
 
     List<TabularDataFile> dataFileList = new ArrayList<>();
-    DwcAdapter dwcReader = new DwcAdapter(destinationFolder.toFile());
+    DwcaMetadataExtractor dwcReader = new DwcaMetadataExtractor(destinationFolder.toFile());
     //add the core first
     dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, dwcReader.getRowType(),
             dwcReader.getCore(), normalizedFiles.get(Paths.get(dwcReader.getCore().getLocation())) , destinationFolder));
@@ -222,8 +223,8 @@ public class DataFileFactory {
     Optional<Map<Term, String>> defaultValues;
     Optional<TermIndex> recordIdentifier;
 
-    //open DwcAdapter on specific dwcComponent (rowType)
-    DwcAdapter rs = new DwcAdapter(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
+    //open DwcaMetadataExtractor on specific dwcComponent (rowType)
+    DwcaMetadataExtractor rs = new DwcaMetadataExtractor(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
     headers = rs.getHeaders();
     defaultValues = rs.getDefaultValues();
     recordIdentifier = rs.getRecordIdentifier();
@@ -292,10 +293,10 @@ public class DataFileFactory {
                                                       Character quoteChar,
                                                       int numberOfLine) throws IOException, UnsupportedDataFileException {
 
-    Term[] headers = TabularFileAdapter.extractHeader(tabularFilePath, charset, delimiter, quoteChar)
+    Term[] headers = extractHeader(tabularFilePath, charset, delimiter, quoteChar)
             .orElseThrow(() -> new UnsupportedDataFileException("Can't extract header"));
-    Optional<Term> rowType = TabularFileAdapter.determineRowType(Arrays.asList(headers));
-    Optional<TermIndex> recordIdentifier = TabularFileAdapter.determineRecordIdentifier(Arrays.asList(headers));
+    Optional<Term> rowType = determineRowType(Arrays.asList(headers));
+    Optional<TermIndex> recordIdentifier = determineRecordIdentifier(Arrays.asList(headers));
 
     return new TabularDataFile(tabularFilePath,
             sourceFileName, FileFormat.TABULAR,
@@ -306,39 +307,6 @@ public class DataFileFactory {
             Optional.empty(),  //no line offset
             true, StandardCharsets.UTF_8, delimiter, quoteChar, numberOfLine,
             Optional.empty()); //no metadata folder supported for tabular file at the moment
-  }
-
-  /**
-   * Guesses the delimiter character form the data file.
-   *
-   * @throws UnkownDelimitersException
-   */
-  private static TabularMetadata getTabularMetadata(Path dataFilePath, Charset charset) {
-    CSVReaderFactory.CSVMetadata metadata = CSVReaderFactory.extractCsvMetadata(dataFilePath.toFile(), charset.name());
-
-    if (metadata.getDelimiter().length() == 1) {
-      return new TabularMetadata(metadata.getDelimiter().charAt(0),
-              metadata.getQuotedBy());
-    } else {
-      throw new UnkownDelimitersException(metadata.getDelimiter() + " is a non supported delimiter");
-    }
-  }
-
-  private static class TabularMetadata {
-    private final Character delimiterChar;
-    private final Character quoteChar;
-    TabularMetadata(Character delimiterChar, Character quoteChar){
-      this.delimiterChar = delimiterChar;
-      this.quoteChar = quoteChar;
-    }
-
-    public Character getDelimiterChar() {
-      return delimiterChar;
-    }
-
-    public Character getQuoteChar() {
-      return quoteChar;
-    }
   }
 
 }
