@@ -7,7 +7,6 @@ import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
-import org.gbif.utils.file.csv.CSVReader;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TermIndex;
 
@@ -27,7 +26,7 @@ import javax.annotation.Nullable;
  * This reader can work on the core file, an extension file or a portion of one of them (after splitting).
  *
  */
-public class DwcReader implements RecordSource {
+public class DwcReader {
 
   public static final Term DEFAULT_ID_TERM = TermFactory.instance().findTerm("ARCHIVE_RECORD_ID");
 
@@ -36,7 +35,6 @@ public class DwcReader implements RecordSource {
   //could be the core or an extension
   private final ArchiveFile darwinCoreComponent;
   private final List<ArchiveField> archiveFields;
-  private final CSVReader csvReader;
   private final Term[] headers;
 
   private Optional<Map<Term, String>> defaultValues = Optional.empty();
@@ -66,7 +64,6 @@ public class DwcReader implements RecordSource {
                                                   archive.getCore() : archive.getExtension(rowType.get());
 
     archiveFields = darwinCoreComponent.getFieldsSorted();
-    csvReader = darwinCoreComponent.getCSVReader();
 
     //check if there is default value(s) defined
     archiveFields.stream().filter(af -> af.getIndex() == null)
@@ -100,8 +97,6 @@ public class DwcReader implements RecordSource {
 
     //TODO if darwinCoreComponent is null ?
     archiveFields = darwinCoreComponent.getFieldsSorted();
-    csvReader =  new CSVReader(partFile, darwinCoreComponent.getEncoding(),
-            darwinCoreComponent.getFieldsTerminatedBy(), darwinCoreComponent.getFieldsEnclosedBy(), ignoreHeaderLines ? 1 : 0);
 
     //check if there is default value(s) defined
     archiveFields.stream().filter(af -> af.getIndex() == null)
@@ -124,7 +119,6 @@ public class DwcReader implements RecordSource {
   }
 
   @Nullable
-  @Override
   public Term[] getHeaders() {
     return headers;
   }
@@ -171,11 +165,6 @@ public class DwcReader implements RecordSource {
     return defaultValues;
   }
 
-  @Override
-  public String[] read() throws IOException {
-      return csvReader.next();
-  }
-
   public Term getRowType() {
     if (darwinCoreComponent == null) {
       return null;
@@ -197,8 +186,4 @@ public class DwcReader implements RecordSource {
             headers[darwinCoreComponent.getId().getIndex()]));
   }
 
-  @Override
-  public void close() throws IOException {
-    csvReader.close();
-  }
 }

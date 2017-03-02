@@ -38,7 +38,7 @@ public class RecordSourceFactoryTest {
     DwcDataFile preparedDwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
     TabularDataFile taxonDataFile = preparedDwcDataFile.getByRowType(DwcTerm.Taxon);
-    try (RecordSource rs = RecordSourceFactory.fromTabularDataFile(taxonDataFile).get()) {
+    try (RecordSource rs = RecordSourceFactory.fromTabularDataFile(taxonDataFile)) {
       assertEquals("1559060", rs.read()[0]);
     }
   }

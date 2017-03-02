@@ -58,7 +58,7 @@ class DataFileRecordsActor extends AbstractLoggingActor {
   private DataWorkResult processDataFile(TabularDataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
     long line = dataFile.getFileLineOffset().orElse(0) + 1; //we report line number starting at 1
     log().info("Starting to read: " + dataFile.getFilePath());
-    try (RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(dataFile).orElse(null)) {
+    try (RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(dataFile)) {
       String[] record;
       while ((record = recordSource.read()) != null) {
         line++;

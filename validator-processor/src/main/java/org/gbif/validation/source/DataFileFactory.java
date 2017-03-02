@@ -183,14 +183,13 @@ public class DataFileFactory {
             destinationFolder, Optional.empty());
 
     List<TabularDataFile> dataFileList = new ArrayList<>();
-    try (DwcReader dwcReader = new DwcReader(destinationFolder.toFile())) {
-      //add the core first
-      dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, dwcReader.getRowType(),
-              dwcReader.getCore(), normalizedFiles.get(Paths.get(dwcReader.getCore().getLocation())) , destinationFolder));
-      for (ArchiveFile ext : dwcReader.getExtensions()) {
-        dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.EXTENSION, ext.getRowType(),
-                ext, normalizedFiles.get(Paths.get(ext.getLocation())), destinationFolder));
-      }
+    DwcReader dwcReader = new DwcReader(destinationFolder.toFile());
+    //add the core first
+    dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, dwcReader.getRowType(),
+            dwcReader.getCore(), normalizedFiles.get(Paths.get(dwcReader.getCore().getLocation())) , destinationFolder));
+    for (ArchiveFile ext : dwcReader.getExtensions()) {
+      dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.EXTENSION, ext.getRowType(),
+              ext, normalizedFiles.get(Paths.get(ext.getLocation())), destinationFolder));
     }
     return dataFileList;
   }
@@ -242,11 +241,10 @@ public class DataFileFactory {
     Optional<TermIndex> recordIdentifier;
 
     //open DwcReader on specific dwcComponent (rowType)
-    try (DwcReader rs = new DwcReader(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType))) {
-      headers = rs.getHeaders();
-      defaultValues = rs.getDefaultValues();
-      recordIdentifier = rs.getRecordIdentifier();
-    }
+    DwcReader rs = new DwcReader(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
+    headers = rs.getHeaders();
+    defaultValues = rs.getDefaultValues();
+    recordIdentifier = rs.getRecordIdentifier();
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             archiveFile.getLocationFile().getName(), FileFormat.DWCA,

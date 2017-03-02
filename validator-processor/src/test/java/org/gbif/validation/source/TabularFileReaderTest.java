@@ -8,7 +8,6 @@ import org.gbif.validation.api.model.FileFormat;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,9 +34,7 @@ public class TabularFileReaderTest {
     TabularDataFile tsvTabularDataFile =
             DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath()).getCore();
 
-    //all components should points to the parent DataFile
-    Optional<RecordSource> rc = RecordSourceFactory.fromTabularDataFile(tsvTabularDataFile);
-    try(RecordSource recordSource = rc.get()) {
+    try(RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(tsvTabularDataFile)) {
       assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read()[0]);
     }
   }
