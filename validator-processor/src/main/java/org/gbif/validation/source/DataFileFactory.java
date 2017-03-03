@@ -35,7 +35,11 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.validation.source.TabularFileMetadataExtractor.*;
+import static org.gbif.validation.source.TabularFileMetadataExtractor.TabularMetadata;
+import static org.gbif.validation.source.TabularFileMetadataExtractor.determineRecordIdentifier;
+import static org.gbif.validation.source.TabularFileMetadataExtractor.determineRowType;
+import static org.gbif.validation.source.TabularFileMetadataExtractor.extractHeader;
+import static org.gbif.validation.source.TabularFileMetadataExtractor.getTabularMetadata;
 
 
 /**
@@ -116,7 +120,7 @@ public class DataFileFactory {
    *                          represents the destination of normalized files.
    * @return a list of {@link TabularDataFile}
    * @throws IOException
-   * @throws IllegalStateException
+   * @throws UnsupportedDataFileException
    */
   public static DwcDataFile prepareDataFile(DataFile dataFile, Path destinationFolder) throws IOException,
           UnsupportedDataFileException {
@@ -139,9 +143,16 @@ public class DataFileFactory {
 
     Map<DwcFileType, List<TabularDataFile>> dfPerDwcFileType = dataFileList.stream()
             .collect(Collectors.groupingBy(TabularDataFile::getType));
-    TabularDataFile coreDf = dfPerDwcFileType.get(DwcFileType.CORE).get(0);
+    List<TabularDataFile> coreTabularDataFile =
+            dfPerDwcFileType.getOrDefault(DwcFileType.CORE, new ArrayList<>());
 
-    return new DwcDataFile(dataFile, coreDf,
+    if(coreTabularDataFile.size() != 1) {
+      LOG.warn("DataFile should have exactly 1 core. {}", dataFile);
+      throw new UnsupportedDataFileException("DataFile should have exactly 1 core. Found " + coreTabularDataFile.size());
+    }
+
+    Optional<TabularDataFile> coreDf = coreTabularDataFile.stream().findFirst();
+    return new DwcDataFile(dataFile, coreDf.get(),
             Optional.ofNullable(dfPerDwcFileType.get(DwcFileType.EXTENSION)));
   }
 
@@ -177,25 +188,27 @@ public class DataFileFactory {
    * Function responsible to transform a {@link DataFile} into a {@link TabularDataFile}.
    * File will be normalized and lines will be counted.
    *
-   * @param tabularDataFile
+   * @param dataFile
+   * @param destinationFolder assumed to already exist
    * @return
    * @throws IOException
+   * @throws UnsupportedDataFileException
    */
-  private static Optional<TabularDataFile> prepareTabular(DataFile tabularDataFile, Path destinationFolder)
+  private static Optional<TabularDataFile> prepareTabular(DataFile dataFile, Path destinationFolder)
           throws IOException, UnsupportedDataFileException {
 
-    Preconditions.checkArgument(FileFormat.TABULAR.equals(tabularDataFile.getFileFormat()), "prepareTabular can only" +
+    Preconditions.checkArgument(FileFormat.TABULAR.equals(dataFile.getFileFormat()), "prepareTabular can only" +
             "prepare FileFormat.TABULAR file");
 
     Charset charset = StandardCharsets.UTF_8;
-    String fileExt = FilenameUtils.getExtension(tabularDataFile.getFilePath().getFileName().toString());
+    String fileExt = FilenameUtils.getExtension(dataFile.getFilePath().getFileName().toString());
     Path destinationFile = destinationFolder.resolve(UUID.randomUUID() + fileExt);
-    int numberOfLines = FileNormalizer.normalizeFile(tabularDataFile.getFilePath(), destinationFile,
+    int numberOfLines = FileNormalizer.normalizeFile(dataFile.getFilePath(), destinationFile,
             Optional.empty());
     try{
-      TabularMetadata tabularMetadata = getTabularMetadata(tabularDataFile.getFilePath(), charset);
-      return Optional.of(buildTabularDataFile(destinationFile, tabularDataFile.getSourceFileName(),
-              tabularDataFile.getContentType(), charset, tabularMetadata.getDelimiterChar(),
+      TabularMetadata tabularMetadata = getTabularMetadata(dataFile.getFilePath(), charset);
+      return Optional.of(buildTabularDataFile(destinationFile, dataFile.getSourceFileName(),
+              dataFile.getContentType(), charset, tabularMetadata.getDelimiterChar(),
               tabularMetadata.getQuoteChar(), numberOfLines));
     }
     catch (UnkownDelimitersException udEx) {
@@ -254,6 +267,7 @@ public class DataFileFactory {
    * if the contentType can not be handled.
    *
    * @throws IOException
+   * @throws UnsupportedDataFileException if conversion can not be applied or returned no content
    */
   private static Optional<TabularDataFile> handleSpreadsheetConversion(DataFile spreadsheetDataFile, Path destinationFolder)
           throws IOException, UnsupportedDataFileException {
@@ -271,6 +285,12 @@ public class DataFileFactory {
     } else {
       LOG.warn("Unhandled contentType {}", contentType);
       throw new UnsupportedDataFileException(contentType + " can not be converted");
+    }
+
+    //If no lines were converted
+    if (numberOfLine <= 0) {
+      LOG.warn("No line written while converting {}", spreadsheetDataFile);
+      throw new UnsupportedDataFileException(contentType + " conversion returned no content (no line)");
     }
 
     return Optional.of(buildTabularDataFile(csvFile, spreadsheetDataFile.getSourceFileName(),
