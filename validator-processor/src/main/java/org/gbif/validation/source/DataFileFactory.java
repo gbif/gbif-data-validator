@@ -40,6 +40,7 @@ import static org.gbif.validation.source.TabularFileMetadataExtractor.*;
 
 /**
  * Main factory used to create and prepare {@link DataFile} and {@link TabularDataFile}.
+ * Those objects are not simple to create so we centralize this process here.
  */
 public class DataFileFactory {
 
@@ -156,6 +157,7 @@ public class DataFileFactory {
             "dwcaDataFile.getFilePath() must point to a directory");
 
     //ensure files are normalized
+    //FIXME we should use the character encoding defined in the meta.xml
     Map<Path, Integer> normalizedFiles = FileNormalizer.normalizeFolderContent(dwcaDataFile.getFilePath(),
             destinationFolder, Optional.empty());
 
@@ -224,10 +226,10 @@ public class DataFileFactory {
     Optional<TermIndex> recordIdentifier;
 
     //open DwcaMetadataExtractor on specific dwcComponent (rowType)
-    DwcaMetadataExtractor rs = new DwcaMetadataExtractor(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
-    headers = rs.getHeaders();
-    defaultValues = rs.getDefaultValues();
-    recordIdentifier = rs.getRecordIdentifier();
+    DwcaMetadataExtractor dmex = new DwcaMetadataExtractor(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
+    headers = dmex.getHeaders();
+    defaultValues = dmex.getDefaultValues();
+    recordIdentifier = dmex.getRecordIdentifier();
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             archiveFile.getLocationFile().getName(), FileFormat.DWCA,

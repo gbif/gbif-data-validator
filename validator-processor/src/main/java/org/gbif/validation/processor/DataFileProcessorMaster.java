@@ -164,7 +164,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Evaluate the structure of the resource represented by the provided {@link DataFile}.
    * If a RESOURCE_INTEGRITY issue is found, the JobStatusResponse will be emitted and this actor will be stopped.
-   *
+   * FIXME this should run outside the Actor
    * @param dataFile
    * @return is the resource integrity allows to continue the evaluation or not
    */
