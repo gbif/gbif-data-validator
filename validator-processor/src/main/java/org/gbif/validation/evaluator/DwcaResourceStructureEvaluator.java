@@ -31,7 +31,7 @@ import org.xml.sax.SAXException;
 
 /**
  * Class to evaluate the structure of a DarwinCore Archive.
- * That includes meta.xml schema validation.
+ * That includes meta.xml schema validation, checks for mandatory and unknown terms.
  */
 class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
 

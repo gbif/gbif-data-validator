@@ -1,6 +1,8 @@
 package org.gbif.validation.source;
 
 import org.gbif.dwc.terms.Term;
+import org.gbif.dwca.io.Archive;
+import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
@@ -173,11 +175,15 @@ public class DataFileFactory {
             destinationFolder, Optional.empty());
 
     List<TabularDataFile> dataFileList = new ArrayList<>();
-    DwcaMetadataExtractor dwcReader = new DwcaMetadataExtractor(destinationFolder.toFile());
-    //add the core first
-    dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, dwcReader.getRowType(),
-            dwcReader.getCore(), normalizedFiles.get(Paths.get(dwcReader.getCore().getLocation())) , destinationFolder));
-    for (ArchiveFile ext : dwcReader.getExtensions()) {
+    Archive archive = ArchiveFactory.openArchive(destinationFolder.toFile());
+
+    //add the core first, if there is no core it will handled by the caller
+    ArchiveFile core = archive.getCore();
+    if(core != null) {
+      dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.CORE, core.getRowType(),
+              core, normalizedFiles.get(Paths.get(core.getLocation())), destinationFolder));
+    }
+    for (ArchiveFile ext : archive.getExtensions()) {
       dataFileList.add(createDwcDataFile(dwcaDataFile, DwcFileType.EXTENSION, ext.getRowType(),
               ext, normalizedFiles.get(Paths.get(ext.getLocation())), destinationFolder));
     }
@@ -238,11 +244,10 @@ public class DataFileFactory {
     Optional<Map<Term, String>> defaultValues;
     Optional<TermIndex> recordIdentifier;
 
-    //open DwcaMetadataExtractor on specific dwcComponent (rowType)
-    DwcaMetadataExtractor dmex = new DwcaMetadataExtractor(dwcaDatafile.getFilePath().toFile(), Optional.of(rowType));
-    headers = dmex.getHeaders();
-    defaultValues = dmex.getDefaultValues();
-    recordIdentifier = dmex.getRecordIdentifier();
+    headers = archiveFile.getHeader();
+    defaultValues = archiveFile.getDefaultValues();
+    recordIdentifier = archiveFile.getId() == null ? Optional.empty() :
+            Optional.of(new TermIndex(archiveFile.getId().getIndex(), archiveFile.getId().getTerm()));
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             archiveFile.getLocationFile().getName(), FileFormat.DWCA,

@@ -14,8 +14,7 @@ import javax.validation.constraints.NotNull;
 public interface RecordCollectionEvaluator {
 
   /**
-   * Evaluates a record collection of type <T> and produces (optionally since it may not produce any result) a {@link
-   * Stream} of
+   * Evaluates a collection of record and produces (optionally since it may not produce any result) a {@link Stream} of
    * {@link RecordEvaluationResult}. {@link Stream} is used since it may produce a large quantity of results and the
    * caller may want to limit and/or filter them.
    *
