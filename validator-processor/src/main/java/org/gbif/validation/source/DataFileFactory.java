@@ -122,7 +122,7 @@ public class DataFileFactory {
     Objects.requireNonNull(destinationFolder, "destinationFolder shall be provided");
     Preconditions.checkState(Files.isDirectory(destinationFolder), "destinationFolder should point to a folder");
 
-    List<TabularDataFile> dataFileList = handleFileNormalization(dataFile, destinationFolder);
+    List<TabularDataFile> dataFileList = normalizeAndPrepare(dataFile, destinationFolder);
 
     Map<DwcFileType, List<TabularDataFile>> dfPerDwcFileType = dataFileList.stream()
             .collect(Collectors.groupingBy(TabularDataFile::getType));
@@ -140,24 +140,24 @@ public class DataFileFactory {
   }
 
   /**
-   * Responsible to decide and run file normalization.
-   * @return
+   * Responsible to decide and run file normalization and prepare the {@link DataFile} from the result.
+   *
+   * @return list of prepared {@link TabularDataFile}
    */
-  private static List<TabularDataFile> handleFileNormalization(DataFile dataFile, Path destinationFolder)
+  private static List<TabularDataFile> normalizeAndPrepare(DataFile dataFile, Path destinationFolder)
           throws IOException, UnsupportedDataFileException {
 
-    //ensure files are normalized
-    //FIXME we should use the character encoding defined in the meta.xml
     Map<Path, Integer> normalizedFiles;
     List<TabularDataFile> dataFileList = new ArrayList<>();
 
     //Spreadsheet is a special case since the crawling will not take it at the moment
-    if(FileFormat.SPREADSHEET == dataFile.getFileFormat()) {
+    if (FileFormat.SPREADSHEET == dataFile.getFileFormat()) {
       SpreadsheetConversionResult conversionResult = handleSpreadsheetConversion(dataFile, destinationFolder);
       Map<Path, Integer> pathAndLines = new HashMap<>();
       pathAndLines.put(conversionResult.getResultPath().getFileName(), conversionResult.getNumOfLines());
       dataFileList.addAll(prepareDwcBased(conversionResult.getResultPath(), dataFile, pathAndLines));
     } else {
+      //FIXME we should use the character encoding defined in the meta.xml
       normalizedFiles = FileNormalizer.normalizeTarget(dataFile.getFilePath(),
               destinationFolder, Optional.empty());
       dataFileList.addAll(prepareDwcBased(destinationFolder, dataFile, normalizedFiles));
@@ -170,9 +170,10 @@ public class DataFileFactory {
    * Given a {@link DataFile} pointing to folder containing the extracted DarwinCore archive or a single file,
    * this method creates a list of {@link TabularDataFile} for each of the data component (core + extensions).
    *
-   * @param pathToOpen folder of an extracted DarwinCore Archive or a single tabular file
+   * @param pathToOpen       folder of an extracted DarwinCore Archive or a single tabular file
    * @param originalDataFile
-   * @param pathAndLines mapping between all {@link Path} and their number of lines
+   * @param pathAndLines     mapping between all {@link Path} and their number of lines
+   *
    * @return
    */
   private static List<TabularDataFile> prepareDwcBased(Path pathToOpen, DataFile originalDataFile,
@@ -205,7 +206,7 @@ public class DataFileFactory {
   }
 
   /**
-   * Creates a new {@link TabularDataFile} representing a DarwinCore rowType.
+   * Creates a new {@link TabularDataFile} for a DarwinCore rowType as {@link ArchiveFile}.
    *
    * @param archiveFile
    * @param originalDataFile
