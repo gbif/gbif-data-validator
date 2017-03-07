@@ -13,10 +13,10 @@ import javax.annotation.Nullable;
  */
 public class DataFile {
 
-  protected final Path filePath;
-  protected final String sourceFileName;
-  protected final FileFormat fileFormat;
-  protected final String contentType;
+  private final Path filePath;
+  private final String sourceFileName;
+  private final FileFormat fileFormat;
+  private final String contentType;
 
   /**
    * Complete constructor of {@link DataFile}

@@ -2,7 +2,6 @@ package org.gbif.validation.api;
 
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.model.DwcFileType;
-import org.gbif.validation.api.model.FileFormat;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -13,6 +12,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 
 
 /**
@@ -23,7 +23,10 @@ import java.util.stream.IntStream;
  *
  * This class is thread-safe and immutable.
  */
-public class TabularDataFile extends DataFile {
+public class TabularDataFile {
+
+  private final Path filePath;
+  private final String sourceFileName;
 
   private final Term rowType;
   private final DwcFileType type;
@@ -46,8 +49,6 @@ public class TabularDataFile extends DataFile {
    *
    * @param filePath path where the file is located
    * @param sourceFileName Name of the file as received. For safety reason this name should only be used to display.
-   * @param fileFormat
-   * @param contentType
    * @param rowType the rowType (sometimes called "class") of this file in the context of DarwinCore
    * @param type the type of file in the context of DarwinCore
    * @param columns columns of the file, in the right order
@@ -60,15 +61,15 @@ public class TabularDataFile extends DataFile {
    * @param quoteChar
    * @param numOfLines
    */
-  public TabularDataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType,
+  public TabularDataFile(Path filePath, String sourceFileName,
                          Term rowType, DwcFileType type, Term[] columns,
                          Optional<TermIndex> recordIdentifier,
                          Optional<Map<Term, String>> defaultValues,
                          Optional<Integer> fileLineOffset, boolean hasHeaders,
                          Charset characterEncoding,
                          Character delimiterChar, Character quoteChar, Integer numOfLines) {
-    super(filePath, sourceFileName, fileFormat, contentType);
-
+    this.filePath = filePath;
+    this.sourceFileName = sourceFileName;
     this.rowType = rowType;
     this.type = type;
     this.columns = Arrays.copyOf(columns, columns.length);
@@ -80,6 +81,24 @@ public class TabularDataFile extends DataFile {
     this.delimiterChar = delimiterChar;
     this.quoteChar = quoteChar;
     this.numOfLines = numOfLines;
+  }
+
+  /**
+   * Path to the working file stored with a generated file name.
+   *
+   * @return safe, path to generated filename
+   */
+  public Path getFilePath() {
+    return filePath;
+  }
+
+  /**
+   * File name as provided. For safety reason this name should only be used to display.
+   *
+   */
+  @Nullable
+  public String getSourceFileName() {
+    return sourceFileName;
   }
 
   public Charset getCharacterEncoding() {
@@ -171,7 +190,6 @@ public class TabularDataFile extends DataFile {
             Objects.equals(defaultValues, dataFile.defaultValues) &&
             Objects.equals(type, dataFile.type) &&
             Objects.equals(filePath, dataFile.filePath) &&
-            Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
             Objects.equals(fileLineOffset, dataFile.fileLineOffset);
@@ -181,7 +199,6 @@ public class TabularDataFile extends DataFile {
   public int hashCode() {
     return Objects.hash(
             filePath,
-            fileFormat,
             sourceFileName,
             columns,
             recordIdentifier,

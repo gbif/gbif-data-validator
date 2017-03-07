@@ -95,8 +95,7 @@ public class DataFileFactory {
                                                         Optional<Integer> lineOffset, boolean withHeader) {
     //FIXME lineNumber
     return new TabularDataFile(splitFilePath,
-            tabDatafile.getSourceFileName(), tabDatafile.getFileFormat(),
-            tabDatafile.getContentType(),
+            tabDatafile.getSourceFileName(),
             tabDatafile.getRowType(), tabDatafile.getType(), tabDatafile.getColumns(),
             tabDatafile.getRecordIdentifier(), tabDatafile.getDefaultValues(),
             lineOffset, withHeader, tabDatafile.getCharacterEncoding(), tabDatafile.getDelimiterChar(),
@@ -185,12 +184,11 @@ public class DataFileFactory {
         //if the location is not set on the core we assume the archive is a single file
         String location = core.getLocation() != null ? core.getLocation() : archive.getLocation().getName();
         dataFileList.add(createDwcBasedTabularDataFile(core, originalDataFile.getSourceFileName(),
-                originalDataFile, DwcFileType.CORE, pathAndLines.get(Paths.get(location))));
+                DwcFileType.CORE, pathAndLines.get(Paths.get(location))));
       }
       for (ArchiveFile ext : archive.getExtensions()) {
         dataFileList.add(createDwcBasedTabularDataFile(ext,
-                ext.getLocationFile().getName(),
-                originalDataFile, DwcFileType.EXTENSION,
+                ext.getLocationFile().getName(), DwcFileType.EXTENSION,
                 pathAndLines.get(Paths.get(ext.getLocation()))));
       }
     } catch (UnkownDelimitersException udEx) {
@@ -204,7 +202,7 @@ public class DataFileFactory {
    * Creates a new {@link TabularDataFile} for a DarwinCore rowType as {@link ArchiveFile}.
    *
    * @param archiveFile
-   * @param originalDataFile
+   * @param sourceFileName
    * @param type
    * @param numberOfLines
    * @return
@@ -212,7 +210,6 @@ public class DataFileFactory {
    */
   private static TabularDataFile createDwcBasedTabularDataFile(ArchiveFile archiveFile,
                                                                String sourceFileName,
-                                                               DataFile originalDataFile,
                                                                DwcFileType type,
                                                                int numberOfLines) throws IOException {
     Term[] headers = archiveFile.getHeader();
@@ -221,8 +218,7 @@ public class DataFileFactory {
             Optional.of(new TermIndex(archiveFile.getId().getIndex(), archiveFile.getId().getTerm()));
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
-            sourceFileName, originalDataFile.getFileFormat(),
-            originalDataFile.getContentType(),
+            sourceFileName,
             archiveFile.getRowType(), type, headers, recordIdentifier, defaultValues,
             Optional.empty(), //no line offset
             archiveFile.getIgnoreHeaderLines()!= null
