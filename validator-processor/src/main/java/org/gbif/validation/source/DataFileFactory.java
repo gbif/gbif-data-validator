@@ -147,23 +147,18 @@ public class DataFileFactory {
   private static List<TabularDataFile> normalizeAndPrepare(DataFile dataFile, Path destinationFolder)
           throws IOException, UnsupportedDataFileException {
 
-    Map<Path, Integer> normalizedFiles;
-    List<TabularDataFile> dataFileList = new ArrayList<>();
-
     //Spreadsheet is a special case since the crawling will not take it at the moment
     if (FileFormat.SPREADSHEET == dataFile.getFileFormat()) {
       SpreadsheetConversionResult conversionResult = handleSpreadsheetConversion(dataFile, destinationFolder);
       Map<Path, Integer> pathAndLines = new HashMap<>();
       pathAndLines.put(conversionResult.getResultPath().getFileName(), conversionResult.getNumOfLines());
-      dataFileList.addAll(prepareDwcBased(conversionResult.getResultPath(), dataFile, pathAndLines));
+      return prepareDwcBased(conversionResult.getResultPath(), dataFile, pathAndLines);
     } else {
       //FIXME we should use the character encoding defined in the meta.xml
-      normalizedFiles = FileNormalizer.normalizeTarget(dataFile.getFilePath(),
+      Map<Path, Integer> normalizedFiles = FileNormalizer.normalizeTarget(dataFile.getFilePath(),
               destinationFolder, Optional.empty());
-      dataFileList.addAll(prepareDwcBased(destinationFolder, dataFile, normalizedFiles));
+      return prepareDwcBased(destinationFolder, dataFile, normalizedFiles);
     }
-
-    return dataFileList;
   }
 
   /**
