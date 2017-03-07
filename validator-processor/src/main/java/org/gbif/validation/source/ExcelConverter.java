@@ -66,20 +66,21 @@ class ExcelConverter {
    * @throws IOException
    * @throws InvalidFormatException Thrown if invalid xml is found whilst parsing an input SpreadsheetML file.
    */
-  public int convertToCSV(Path workbookFile, Path csvFile, Function<List<String>, Optional<String>> sheetSelector)
+  public SpreadsheetConversionResult convertToCSV(Path workbookFile, Path csvFile, Function<List<String>, Optional<String>> sheetSelector)
           throws IOException, InvalidFormatException {
 
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
          ICsvListWriter csvWriter = new CsvListWriter(new FileWriter(csvFile.toFile()),
-                                                      CsvPreference.STANDARD_PREFERENCE)) {
+                 CsvPreference.STANDARD_PREFERENCE)) {
 
       Workbook workbook = WorkbookFactory.create(fis);
       int numberOfLineWritten = convertToCSV(workbook, csvWriter, sheetSelector);
 
       //ensure to flush remaining content to csvWriter
       csvWriter.flush();
-
-      return numberOfLineWritten;
+      return new SpreadsheetConversionResult(workbookFile, csvFile,
+              (char) CsvPreference.STANDARD_PREFERENCE.getDelimiterChar(),
+              CsvPreference.STANDARD_PREFERENCE.getQuoteChar(), numberOfLineWritten);
     }
   }
 

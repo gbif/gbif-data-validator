@@ -4,7 +4,6 @@ import org.gbif.validation.api.model.FileFormat;
 
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 
@@ -18,18 +17,6 @@ public class DataFile {
   protected final String sourceFileName;
   protected final FileFormat fileFormat;
   protected final String contentType;
-  protected final Optional<Path> metadataFolder;
-
-  /**
-   * See {@link #DataFile(Path, String, FileFormat, String, Optional)}
-   * @param filePath
-   * @param sourceFileName
-   * @param fileFormat
-   * @param contentType
-   */
-  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType) {
-    this(filePath, sourceFileName, fileFormat, contentType, Optional.empty());
-  }
 
   /**
    * Complete constructor of {@link DataFile}
@@ -38,15 +25,12 @@ public class DataFile {
    * @param sourceFileName Name of the file as received. For safety reason this name should only be used to display.
    * @param fileFormat
    * @param contentType    as received by the "resource" layer
-   * @param metadataFolder optionally, a DataFile can contain (or point to) a metadata folder
    */
-  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType,
-                  Optional<Path> metadataFolder) {
+  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType) {
     this.filePath = filePath;
     this.sourceFileName = sourceFileName;
     this.fileFormat = fileFormat;
     this.contentType = contentType;
-    this.metadataFolder = metadataFolder;
   }
 
   /**
@@ -76,13 +60,6 @@ public class DataFile {
     return contentType;
   }
 
-  /**
-   * A folder containing metadata about this {@link DataFile}.
-   * @return
-   */
-  public Optional<Path> getMetadataFolder() {
-    return metadataFolder;
-  }
 
   @Override
   public String toString() {
@@ -91,7 +68,6 @@ public class DataFile {
             ", sourceFileName=" + sourceFileName +
             ", fileFormat=" + fileFormat +
             ", contentType=" + contentType +
-            ", metadataFolder=" + metadataFolder +
             '}';
   }
 
@@ -103,8 +79,7 @@ public class DataFile {
     return Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
-            Objects.equals(contentType, dataFile.contentType) &&
-            Objects.equals(metadataFolder, dataFile.metadataFolder);
+            Objects.equals(contentType, dataFile.contentType);
   }
 
   @Override
@@ -113,8 +88,7 @@ public class DataFile {
             filePath,
             sourceFileName,
             fileFormat,
-            contentType,
-            metadataFolder);
+            contentType);
   }
 
 }

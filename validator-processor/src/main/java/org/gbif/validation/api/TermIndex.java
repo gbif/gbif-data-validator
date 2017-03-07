@@ -6,15 +6,15 @@ import org.gbif.dwc.terms.Term;
  * Simple holder for a Term and its related index.
  */
 public class TermIndex {
-  private int index;
+  private Integer index;
   private Term term;
 
-  public TermIndex(int index, Term term){
+  public TermIndex(Integer index, Term term){
     this.index = index;
     this.term = term;
   }
 
-  public int getIndex() {
+  public Integer getIndex() {
     return index;
   }
 

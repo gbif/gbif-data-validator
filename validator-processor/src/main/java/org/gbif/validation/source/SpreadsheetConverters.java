@@ -33,7 +33,7 @@ public class SpreadsheetConverters {
    * @return number of lines converted
    * @throws IOException
    */
-  public static int convertExcelToCSV(Path workbookFile, Path csvFile,
+  public static SpreadsheetConversionResult convertExcelToCSV(Path workbookFile, Path csvFile,
                                        Function<List<String>, Optional<String>> sheetSelector) throws IOException {
     try {
       ExcelConverter excelConverter = new ExcelConverter();
@@ -51,7 +51,7 @@ public class SpreadsheetConverters {
    * @return number of lines converted
    * @throws IOException
    */
-  public static int convertOdsToCSV(Path workbookFile, Path csvFile) throws IOException {
+  public static SpreadsheetConversionResult convertOdsToCSV(Path workbookFile, Path csvFile) throws IOException {
     return OdsConverter.convertToCSV(workbookFile, csvFile);
   }
 

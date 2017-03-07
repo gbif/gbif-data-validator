@@ -59,7 +59,6 @@ public class TabularDataFile extends DataFile {
    * @param delimiterChar character used to delimit each value (cell) in the file
    * @param quoteChar
    * @param numOfLines
-   * @param metadataFolder
    */
   public TabularDataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType,
                          Term rowType, DwcFileType type, Term[] columns,
@@ -67,9 +66,8 @@ public class TabularDataFile extends DataFile {
                          Optional<Map<Term, String>> defaultValues,
                          Optional<Integer> fileLineOffset, boolean hasHeaders,
                          Charset characterEncoding,
-                         Character delimiterChar, Character quoteChar, Integer numOfLines,
-                         Optional<Path> metadataFolder) {
-    super(filePath, sourceFileName, fileFormat, contentType, metadataFolder);
+                         Character delimiterChar, Character quoteChar, Integer numOfLines) {
+    super(filePath, sourceFileName, fileFormat, contentType);
 
     this.rowType = rowType;
     this.type = type;
@@ -176,8 +174,7 @@ public class TabularDataFile extends DataFile {
             Objects.equals(fileFormat, dataFile.fileFormat) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
-            Objects.equals(fileLineOffset, dataFile.fileLineOffset) &&
-            Objects.equals(metadataFolder, dataFile.metadataFolder);
+            Objects.equals(fileLineOffset, dataFile.fileLineOffset);
   }
 
   @Override
@@ -196,8 +193,7 @@ public class TabularDataFile extends DataFile {
             quoteChar,
             numOfLines,
             fileLineOffset,
-            hasHeaders,
-            metadataFolder);
+            hasHeaders);
   }
 
 }

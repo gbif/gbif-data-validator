@@ -36,10 +36,11 @@ public class ExcelConverterTest {
 
     File testCsvFile = FileUtils.getClasspathFile(CSV_TEST_FILE_LOCATION);
     File testFile = folder.newFile();
-    int numberOfLines = SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(), testFile.toPath(), l -> Optional.empty());
+    SpreadsheetConversionResult result = SpreadsheetConverters.convertExcelToCSV(workbookFile.toPath(),
+            testFile.toPath(), l -> Optional.empty());
 
     assertTrue(org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(testFile, testCsvFile, "UTF-8"));
-    assertEquals(7, numberOfLines);
+    assertEquals(7, result.getNumOfLines().intValue());
   }
 
 }

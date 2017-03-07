@@ -6,6 +6,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -38,6 +39,7 @@ public class FileNormalizer {
    */
   public static final int normalizeFile(Path sourceFilePath, Path normalizedFilePath,
                                          Optional<Charset> sourceFilePathCharset) {
+    Preconditions.checkArgument(!Files.isDirectory(sourceFilePath), "sourceFilePath must represent a file");
     Preconditions.checkArgument(!Files.isDirectory(normalizedFilePath), "normalizedFilePath must represent a file");
     final AtomicInteger numberOfLine = new AtomicInteger(0);
     try (Stream<String> lines = Files.lines(sourceFilePath, sourceFilePathCharset.orElse(StandardCharsets.UTF_8));
@@ -58,24 +60,25 @@ public class FileNormalizer {
   }
 
   /**
-   * Write new files after applying transformations on the source files from the specified folder.
+   * Write new files after applying transformations on the source target (file(s) or file(s) within folder(s)) from the specified folder.
    * This function "walks" inside the folder recursively.
    * See {@link #normalizeFile(Path, Path, Optional)}
    * This function only support folder content in the same charset.
    *
-   * @param sourceFolderPath
+   * @param sourceTargetPath
    * @param destinationFolderPath
-   * @return Map linking path to their line count. Paths are relative to sourceFolder.
+   * @return Map linking path to their line count. Paths are relative to sourceTargetPath.
    * @throws IOException
    */
-  public static Map<Path, Integer> normalizeFolderContent(Path sourceFolderPath, Path destinationFolderPath,
+  public static Map<Path, Integer> normalizeTarget(Path sourceTargetPath, Path destinationFolderPath,
                                                           Optional<Charset> sourceFolderCharset) throws IOException {
-    Preconditions.checkArgument(Files.isDirectory(sourceFolderPath), "sourceFolderPath must represent a folder");
-    Preconditions.checkArgument(Files.isDirectory(destinationFolderPath), "destinationFolderPath must represent a folder");
+    Path sourceFolderPath = Files.isDirectory(sourceTargetPath) ? sourceTargetPath : sourceTargetPath.getParent();
     Preconditions.checkArgument(sourceFolderPath != destinationFolderPath, "sourceFolderPath can NOT be the same as destinationFolderPath");
+    Preconditions.checkArgument(Files.isDirectory(destinationFolderPath), "destinationFolderPath must represent a folder");
 
     Map<Path, Integer> linesPerFile = new HashMap<>();
-    try (Stream<Path> paths = Files.walk(sourceFolderPath)) {
+    try (Stream<Path> paths = Files.isDirectory(sourceTargetPath) ? Files.walk(sourceFolderPath) :
+            Arrays.asList(sourceTargetPath).stream()) {
       paths.forEach(filePath -> {
         if (Files.isRegularFile(filePath)) {
           Path destinationFile = destinationFolderPath.resolve(filePath.getFileName());

@@ -33,10 +33,11 @@ public class OdsConverterTest {
 
     File testCsvFile = FileUtils.getClasspathFile(CSV_TEST_FILE_LOCATION);
     File testFile = folder.newFile();
-    int numberOfLines = SpreadsheetConverters.convertOdsToCSV(workbookFile.toPath(), testFile.toPath());
+    SpreadsheetConversionResult result = SpreadsheetConverters.convertOdsToCSV(workbookFile.toPath(),
+            testFile.toPath());
 
     assertTrue(org.apache.commons.io.FileUtils.contentEqualsIgnoreEOL(testFile, testCsvFile, "UTF-8"));
-    assertEquals(6, numberOfLines);
+    assertEquals(6, result.getNumOfLines().intValue());
   }
 
 }

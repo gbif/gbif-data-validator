@@ -48,10 +48,10 @@ public class FileNormalizerTest {
   }
 
   @Test
-  public void normalizeFolderContent() throws IOException {
+  public void normalizeTarget() throws IOException {
     File normalizedFolder = folder.newFolder();
 
-    Map<Path, Integer> normalizedContent = FileNormalizer.normalizeFolderContent(TEST_FOLDER.toPath(),
+    Map<Path, Integer> normalizedContent = FileNormalizer.normalizeTarget(TEST_FOLDER.toPath(),
             normalizedFolder.toPath(), Optional.empty());
     assertEquals(2, normalizedContent.size());
     assertEquals(3, normalizedContent.get(Paths.get("utf8_lf.txt")).intValue());
@@ -70,6 +70,18 @@ public class FileNormalizerTest {
 
     assertFalse(fileContent.contains("\r"));
     assertTrue(fileContent.contains("é"));
+  }
+
+  /**
+   * normalizeTarget should also work for a single file
+   */
+  @Test
+  public void testNormalizerUsingTarget() throws IOException {
+    File normalizedFolder = folder.newFolder();
+    Map<Path, Integer> normalizedContent = FileNormalizer.normalizeTarget(UTF8_LF_TEST_FILE.toPath(),
+            normalizedFolder.toPath(), Optional.empty());
+    assertEquals(1, normalizedContent.size());
+    assertEquals(3, normalizedContent.get(Paths.get(UTF8_LF_TEST_FILE.getName())).intValue());
   }
 
 }

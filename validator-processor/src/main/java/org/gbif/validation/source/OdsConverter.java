@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import org.apache.commons.lang3.StringUtils;
 import org.odftoolkit.simple.SpreadsheetDocument;
 import org.odftoolkit.simple.table.Cell;
@@ -22,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import org.supercsv.io.CsvListWriter;
 import org.supercsv.io.ICsvListWriter;
 import org.supercsv.prefs.CsvPreference;
+
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
 /**
  * Experimental converter that reads an ODF(Open Document Format) spreadsheet (.ods) file and produces a csv file.
@@ -44,7 +45,7 @@ class OdsConverter {
     //empty constructor
   }
 
-  public static int convertToCSV(Path workbookFile, Path csvFile) throws IOException {
+  public static SpreadsheetConversionResult convertToCSV(Path workbookFile, Path csvFile) throws IOException {
     int numberOfLineWritten;
     try (FileInputStream fis = new FileInputStream(workbookFile.toFile());
          ICsvListWriter csvWriter = new CsvListWriter(new FileWriter(csvFile.toFile()),
@@ -58,7 +59,9 @@ class OdsConverter {
     } catch (Exception e) {
       throw new IOException(e);
     }
-    return numberOfLineWritten;
+    return new SpreadsheetConversionResult(workbookFile, csvFile,
+            (char) CsvPreference.STANDARD_PREFERENCE.getDelimiterChar(),
+            CsvPreference.STANDARD_PREFERENCE.getQuoteChar(), numberOfLineWritten);
   }
 
   /**

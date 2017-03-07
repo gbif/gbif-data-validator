@@ -68,7 +68,7 @@ class DataFileRecordsActor extends AbstractLoggingActor {
       log().info("Done reading: " + dataFile.getFilePath() + " " + line + " lines");
       return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.SUCCESS, collectors);
     } catch (Exception ex) {
-      log().error("Error while evaluating line {} of {}", line, dataFile.getFilePath(), ex);
+      log().error("Error while evaluating line {} of {}: {}", line, dataFile.getFilePath(), ex.getMessage());
       return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.FAILED, collectors);
     }
   }
