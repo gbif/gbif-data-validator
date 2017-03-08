@@ -22,17 +22,18 @@ import static org.junit.Assert.assertNull;
  */
 public class OccurrenceInterpretationEvaluatorTest {
 
+  private static final Map<Term, String> DEFAULT_VALUES = new HashMap<>();
+  static {
+    DEFAULT_VALUES.put(DwcTerm.basisOfRecord, BasisOfRecord.FOSSIL_SPECIMEN.name());
+  }
+  Term[] COLUMN_MAPPING = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
+
   @Test
   public void testToVerbatimOccurrence(){
 
-    Map<Term, String> defaultValues = new HashMap<>();
-    defaultValues.put(DwcTerm.basisOfRecord, BasisOfRecord.FOSSIL_SPECIMEN.name());
 
     //test expected data
-    Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
-    OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            DwcTerm.Occurrence, columnMapping, Optional.of(defaultValues));
-
+    OccurrenceInterpretationEvaluator evaluator = createInterpreter(COLUMN_MAPPING);
     String[] record = {"1", "2000-01-01", "2000-01-02"};
     VerbatimOccurrence occ = evaluator.toVerbatimOccurrence(record);
 
@@ -64,5 +65,26 @@ public class OccurrenceInterpretationEvaluatorTest {
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
             DwcTerm.Occurrence, columnMapping, Optional.empty());
     assertNull(evaluator.evaluate(null, null));
+  }
+
+  @Test
+  public void testEvaluateWithDefaultValues(){
+    Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified, DwcTerm.basisOfRecord};
+    OccurrenceInterpretationEvaluator evaluator = createInterpreter(columnMapping);
+
+    //ensure the specified value is provided
+    String[] record = {"1", "2000-01-01", "2000-01-02", BasisOfRecord.LIVING_SPECIMEN.name()};
+    VerbatimOccurrence occ = evaluator.toVerbatimOccurrence(record);
+    assertEquals(BasisOfRecord.LIVING_SPECIMEN.name(), occ.getVerbatimField(DwcTerm.basisOfRecord));
+
+    record = new String[]{"2", "2000-01-01", "2000-01-02", ""};
+    occ = evaluator.toVerbatimOccurrence(record);
+    assertEquals(BasisOfRecord.FOSSIL_SPECIMEN.name(), occ.getVerbatimField(DwcTerm.basisOfRecord));
+  }
+
+  private OccurrenceInterpretationEvaluator createInterpreter(Term[] columnMapping) {
+    //test expected data
+    return new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
+            DwcTerm.Occurrence, columnMapping, Optional.of(DEFAULT_VALUES));
   }
 }

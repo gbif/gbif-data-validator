@@ -20,6 +20,8 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,30 +76,35 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   }
 
   /**
-   * -- Visible For Testing --
    * Build a VerbatimOccurrence from a record represented as an array of values (as String).
    * Values indices shall match the column mapping of this evaluator.
    * @param record
    * @return new VerbatimOccurrence, never null
    */
+  @VisibleForTesting
   protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
     IntStream.range(0, Math.min(record.length, columnMapping.length))
             .filter(idx -> columnMapping[idx] != null)
             .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
 
-    defaultValues.ifPresent(map -> map.forEach( (k,v) -> verbatimOccurrence.setVerbatimField(k,v)));
+    //only set a default value if the field is currently empty (this matches the crawler behavior)
+    defaultValues.ifPresent(map -> map.forEach( (k,v) -> {
+      if(StringUtils.isBlank(verbatimOccurrence.getVerbatimField(k))) {
+        verbatimOccurrence.setVerbatimField(k,v);
+      }
+    }));
     return verbatimOccurrence;
   }
 
   /**
-   * -- Visible For Testing --
    * Creates a RecordEvaluationResult from an OccurrenceInterpretationResult.
    * Responsible to put the related data (e.g. field + current value) into the RecordEvaluationResult instance.
    * @param lineNumber
    * @param result
    * @return
    */
+  @VisibleForTesting
   protected RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
 
     LOG.info("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
