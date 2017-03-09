@@ -4,8 +4,10 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
+import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.model.ValidationErrorCode;
@@ -14,6 +16,9 @@ import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluatorFactory;
+import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
+import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
+import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
@@ -22,11 +27,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import akka.actor.AbstractLoggingActor;
@@ -50,7 +57,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private final Map<Term, TabularDataFile> rowTypeDataFile;
   private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
-  private final List<ValidationResultElement> resourceStructureResultElement;
+  private final Collection<ValidationResultElement> validationResultElements;
   private final AtomicInteger workerCompleted;
 
   private int numOfWorkers;
@@ -69,7 +76,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     rowTypeCollectorProviders = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
-    resourceStructureResultElement = new ArrayList<>();
+    validationResultElements = new ConcurrentLinkedQueue<>();
 
     receive(
             //this should only be called once
@@ -79,7 +86,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
               workingDir.mkdir();
               processDataFile(factory, fileSplitSize);
             })
-              .match(DataWorkResult.class, this::processResults).build()
+              .match(DataWorkResult.class, this::processRecordBasedResults)
+              .match(MetadataWorkResult.class, this::processMetadataBasedResults).build()
     );
   }
 
@@ -101,6 +109,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
       EvaluationChain.Builder evaluationChainBuilder =
               EvaluationChain.Builder.using(dwcDataFile, factory)
+                      .evaluateMetadataContent()
                       .evaluateCoreUniqueness()
                       .evaluateReferentialIntegrity();
       // .evaluateChecklist(); fix UUID for folder name
@@ -111,6 +120,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
       EvaluationChain evaluationChain = evaluationChainBuilder.build();
       numOfWorkers.add(evaluationChain.getNumberOfRowTypeEvaluationUnits());
+      numOfWorkers.add(evaluationChain.getNumberOfMetadataEvaluationUnits());
 
       this.numOfWorkers = numOfWorkers.intValue();
 
@@ -118,8 +128,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       log().info(evaluationChain.toString());
 
       //now trigger everything
-      processRowTypeEvaluationUnit(evaluationChain);
-      processEvaluationUnit(evaluationChain);
+      startAllActors(evaluationChain);
     }
   }
 
@@ -169,22 +178,19 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * @return is the resource integrity allows to continue the evaluation or not
    */
   private StructuralEvaluationResult evaluateResourceIntegrityAndStructure(DataFile dataFile, EvaluatorFactory factory) {
-    Optional<List<ValidationResultElement>> validationResultElements =
-            factory.createResourceStructureEvaluator(dataFile.getFileFormat())
-                    .evaluate(dataFile);
 
-    if (validationResultElements.isPresent()) {
-      List<ValidationResultElement> validationResultElementList = new ArrayList<>(validationResultElements.get());
+    StructuralEvaluationChain evaluationChain = StructuralEvaluationChain.Builder.using(dataFile, factory).build();
+    Optional<List<ValidationResultElement>> validationResultElementList = evaluationChain.runResourceStructureEvaluator();
+
+    if (validationResultElementList.isPresent()) {
       //check if we have an issue that requires to stop the evaluation process
-      if (validationResultElements.get().stream()
-              .filter(vre -> vre.contains(EvaluationCategory.RESOURCE_INTEGRITY))
-              .findAny().isPresent()) {
+      if (evaluationChain.evaluationStopped()) {
         emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
                 new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                        GBIF_INDEXING_PROFILE, validationResultElementList)));
+                        GBIF_INDEXING_PROFILE, validationResultElementList.get())));
         return StructuralEvaluationResult.createStopEvaluation();
       }
-      resourceStructureResultElement.addAll(validationResultElementList);
+      validationResultElements.addAll(validationResultElementList.get());
     }
 
     // try to prepare the DataFile
@@ -203,66 +209,86 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Triggers processing of all rowTypeEvaluationUnit in the {@link EvaluationChain}.
+   * Triggers processing of all metadataEvaluator and rowTypeEvaluation from the chain.
    * @param evaluationChain
    */
-  private void processRowTypeEvaluationUnit(EvaluationChain evaluationChain) {
-    evaluationChain.runRowTypeEvaluation( rtEvaluator -> {
-      ActorRef actor = createSingleActor(rtEvaluator);
-      actor.tell(rtEvaluator.getDataFile(), self());
-    });
-  }
+  private void startAllActors(EvaluationChain evaluationChain) {
+    MetadataEvaluatorRunner metadataEvaluatorRunner = (dwcDataFile, metadataEvaluator) -> {
+      ActorRef actor = createSingleActor(metadataEvaluator);
+      actor.tell(dwcDataFile, self());
+    };
+    evaluationChain.runMetadataContentEvaluation(metadataEvaluatorRunner);
 
-  /**
-   * Triggers processing of all recordEvaluationUnit in the {@link EvaluationChain}.
-   * Creates a Actor/Worker for each evaluation unit.
-   */
-  private void processEvaluationUnit(EvaluationChain evaluationChain) {
-    evaluationChain.runRecordEvaluation( rtEvaluator -> {
-      ActorRef workerRouter = createWorkerRoutes(rtEvaluator);
-      rtEvaluator.getDataFiles().forEach(dataFile -> workerRouter.tell(dataFile, self()));
-    });
+    RecordCollectionEvaluatorRunner runner = (dwcDataFile, rowType, recordCollectionEvaluator) -> {
+      ActorRef actor = createSingleActor(rowType, recordCollectionEvaluator);
+      actor.tell(dwcDataFile, self());
+    };
+    evaluationChain.runRowTypeEvaluation(runner);
+
+    RecordEvaluatorRunner recordEvaluatorRunner = (dataFiles, rowType, recordEvaluator) -> {
+      ActorRef workerRouter = createWorkerRoutes(Math.min(dataFiles.size(), MAX_WORKER),
+              rowType, recordEvaluator);
+      dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
+    };
+    evaluationChain.runRecordEvaluation(recordEvaluatorRunner);
   }
 
   /**
    * Creates the worker router using the calculated number of workers.
    */
-  private ActorRef createWorkerRoutes(EvaluationChain.RecordEvaluationUnit evaluationUnit) {
-    log().info("Created routes for " + evaluationUnit.getRowType());
+  private ActorRef createWorkerRoutes(int poolSize, Term rowType, RecordEvaluator recordEvaluator) {
+    log().info("Created routes for " + rowType);
     String actorName = "dataFileRouter_" + UUID.randomUUID();
     return getContext().actorOf(
-            new RoundRobinPool(Math.min(evaluationUnit.getDataFiles().size(), MAX_WORKER)).props(Props.create(DataFileRecordsActor.class,
-                    evaluationUnit.getRecordEvaluator(),
-                    rowTypeCollectorProviders.get(evaluationUnit.getRowType()))),
+            new RoundRobinPool(poolSize).props(Props.create(DataFileRecordsActor.class,
+                    recordEvaluator, rowTypeCollectorProviders.get(rowType))),
             actorName);
+  }
+
+  /**
+   * Creates an Actor for the provided {@link Term} and {@link RecordCollectionEvaluator}.
+   */
+  private ActorRef createSingleActor(MetadataEvaluator metadataEvaluator) {
+    String actorName =  "MetadataEvaluatorActor_" + UUID.randomUUID();
+    return getContext().actorOf(Props.create(MetadataContentActor.class, metadataEvaluator), actorName);
   }
 
   /**
    * Creates an Actor for the provided {@link EvaluationChain.RowTypeEvaluationUnit}.
    */
-  private ActorRef createSingleActor(EvaluationChain.RowTypeEvaluationUnit rowTypeEvaluationUnit) {
+  private ActorRef createSingleActor(Term rowType, RecordCollectionEvaluator recordCollectionEvaluator) {
     String actorName =  "RowTypeEvaluationUnitActor_" + UUID.randomUUID();
-      return getContext().actorOf(Props.create(DataFileRowTypeActor.class,
-              rowTypeEvaluationUnit.getRowType(),
-              rowTypeEvaluationUnit.getRecordCollectionEvaluator(),
-              rowTypeCollectorProviders.get(rowTypeEvaluationUnit.getRowType())), actorName);
+    return getContext().actorOf(Props.create(DataFileRowTypeActor.class,
+            rowType, recordCollectionEvaluator, rowTypeCollectorProviders.get(rowType)), actorName);
   }
 
   /**
    * Called when a single worker finished its work.
    * This can represent en entire file or a part of a file
    */
-  private void processResults(DataWorkResult result) {
+  private void processRecordBasedResults(DataWorkResult result) {
 
     //FIXME
     if(DataWorkResult.Result.FAILED == result.getResult()) {
       log().error("DataWorkResult = FAILED: {}", result);
     }
+    collectResult(result);
+    incrementWorkerCompleted();
+  }
 
+  private void processMetadataBasedResults(MetadataWorkResult result) {
+    if(DataWorkResult.Result.SUCCESS == result.getResult()) {
+      result.getValidationResultElements().ifPresent(validationResultElements::addAll);
+    }
+    incrementWorkerCompleted();
+  }
+
+  /**
+   * Once a response is received, increment counter and check for completion.
+   */
+  private void incrementWorkerCompleted() {
     int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
     log().info("Got {} worker response(s)", numberOfWorkersCompleted);
-
-    collectResult(result);
 
     if (numberOfWorkersCompleted == numOfWorkers) {
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(), buildResult()));
@@ -280,23 +306,36 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Builds the ValidationResult from the aggregated data.
+   * Builds and merges the ValidationResult from the aggregated data.
    */
   private ValidationResult buildResult() {
-    List<ValidationResultElement> validationResultElements = new ArrayList<>();
-    rowTypeCollectors.forEach((rowType, collectorList) -> validationResultElements.add(
+    List<ValidationResultElement> resultElements = new ArrayList<>();
+    rowTypeCollectors.forEach((rowType, collectorList) -> resultElements.add(
                                                             CollectorGroup.mergeAndGetResult(
                                                             rowTypeDataFile.get(rowType),
                                                             rowTypeDataFile.get(rowType).getSourceFileName(),
                                                             collectorList)
     ));
 
-    //FIXME results should be merged
-    validationResultElements.addAll(resourceStructureResultElement);
+    //merge all ValidationResultElement into those collected by rowType
+    validationResultElements.forEach(
+            vre -> {
+              Optional<ValidationResultElement> currentElement = resultElements.stream()
+                      .filter(re -> vre.getFileName().equals(vre.getFileName()))
+                      .findFirst();
+
+              if (currentElement.isPresent()) {
+                currentElement.get().getIssues().addAll(vre.getIssues());
+              } else {
+                resultElements.add(vre);
+              }
+            }
+    );
 
     return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
-            GBIF_INDEXING_PROFILE, validationResultElements);
+            GBIF_INDEXING_PROFILE, resultElements);
   }
+
 
   /**
    * Emit the provided response to the parent Actor and stop this Actor.

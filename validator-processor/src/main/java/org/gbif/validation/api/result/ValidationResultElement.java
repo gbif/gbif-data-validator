@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.MoreObjects;
+
 /**
  * A {@link ValidationResultElement} represents an element in the resource in validation.
  * For DarwinCore Archive this could be the meta.xml, a core file or an extension file.
@@ -138,10 +140,23 @@ public class ValidationResultElement implements Serializable {
   public boolean contains(EvaluationCategory evaluationCategory) {
     if(issues != null) {
       return issues.stream()
-              .filter( vi -> EvaluationCategory.RESOURCE_INTEGRITY.equals(vi.getIssue().getCategory()))
+              .filter( vi -> evaluationCategory.equals(vi.getIssue().getCategory()))
               .findAny().isPresent();
     }
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+            .add("fileName", fileName)
+            .add("fileType", fileType)
+            .add("rowType", rowType)
+            .add("issues", issues)
+            .add("numberOfLines", numberOfLines)
+            .add("termsFrequency", termsFrequency)
+            .add("interpretedValueCounts", interpretedValueCounts)
+            .toString();
   }
 
 }

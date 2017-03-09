@@ -4,20 +4,20 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
+import org.gbif.validation.api.MetadataEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.evaluator.EvaluatorFactory;
+import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
+import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
+import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.base.MoreObjects;
 
@@ -30,7 +30,7 @@ public class EvaluationChain {
   /**
    * Container class holding data between initialization and processing phase for {@link RecordEvaluator}.
    */
-  public static class RecordEvaluationUnit {
+  private static class RecordEvaluationUnit {
     private final List<TabularDataFile> dataFiles;
     private final Term rowType;
     private final RecordEvaluator recordEvaluator;
@@ -66,7 +66,7 @@ public class EvaluationChain {
   /**
    * Container class holding data between initialization and processing phase for {@link RecordCollectionEvaluator}.
    */
-  public static class RowTypeEvaluationUnit {
+  private static class RowTypeEvaluationUnit {
     private final DwcDataFile dataFile;
     private final Term rowType;
     private final RecordCollectionEvaluator recordCollectionEvaluator;
@@ -86,10 +86,6 @@ public class EvaluationChain {
       return rowType;
     }
 
-    public Optional<Stream<RecordEvaluationResult>>  evaluate() throws IOException {
-      return recordCollectionEvaluator.evaluate(dataFile);
-    }
-
     public RecordCollectionEvaluator getRecordCollectionEvaluator() {
       return recordCollectionEvaluator;
     }
@@ -104,6 +100,32 @@ public class EvaluationChain {
     }
   }
 
+  private static class MetadataEvaluationUnit {
+    private final DwcDataFile dwcDataFile;
+    private final MetadataEvaluator metadataEvaluator;
+
+    MetadataEvaluationUnit(DwcDataFile dwcDataFile, MetadataEvaluator metadataEvaluator) {
+      this.dwcDataFile = dwcDataFile;
+      this.metadataEvaluator = metadataEvaluator;
+    }
+
+    public DwcDataFile getDwcDataFile() {
+      return dwcDataFile;
+    }
+
+    public MetadataEvaluator getMetadataEvaluator() {
+      return metadataEvaluator;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+              .add("dwcDataFile", dwcDataFile)
+              .add("metadataEvaluator", metadataEvaluator)
+              .toString();
+    }
+  }
+
   /**
    * Builder class allowing to build an instance of {@link EvaluationChain}.
    */
@@ -112,6 +134,7 @@ public class EvaluationChain {
 
     private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits = new ArrayList<>();
     private final List<RecordEvaluationUnit> recordEvaluationUnits = new ArrayList<>();
+    private final List<MetadataEvaluationUnit> metadataEvaluationUnits = new ArrayList<>();
 
     private final EvaluatorFactory factory;
 
@@ -166,6 +189,11 @@ public class EvaluationChain {
       return this;
     }
 
+    public Builder evaluateMetadataContent(){
+      metadataEvaluationUnits.add(new MetadataEvaluationUnit(dwcDataFile, factory.createMetadataContentEvaluator()));
+      return this;
+    }
+
     public Builder evaluateChecklist() {
 
       if (dwcDataFile.getByRowType(DwcTerm.Taxon) == null) {
@@ -180,33 +208,50 @@ public class EvaluationChain {
     }
 
     public EvaluationChain build() {
-      return new EvaluationChain(rowTypeEvaluationUnits, recordEvaluationUnits);
+      return new EvaluationChain(metadataEvaluationUnits, rowTypeEvaluationUnits, recordEvaluationUnits);
     }
   }
 
   private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits;
   private final List<RecordEvaluationUnit> recordEvaluationUnits;
+  private final List<MetadataEvaluationUnit> metadataEvaluationUnits;
 
-  private EvaluationChain(List<RowTypeEvaluationUnit> rowTypeEvaluationUnits,
+  private EvaluationChain(List<MetadataEvaluationUnit> metadataEvaluationUnits,
+                          List<RowTypeEvaluationUnit> rowTypeEvaluationUnits,
                           List<RecordEvaluationUnit> recordEvaluationUnits) {
+    this.metadataEvaluationUnits = metadataEvaluationUnits;
     this.rowTypeEvaluationUnits = rowTypeEvaluationUnits;
     this.recordEvaluationUnits = recordEvaluationUnits;
   }
 
-  /**
-   * Run the provided function on all RowTypeEvaluationUnit in the evaluation chain.
-   * @param fct
-   */
-  public void runRowTypeEvaluation(Consumer<RowTypeEvaluationUnit> fct) {
-    rowTypeEvaluationUnits.forEach(fct);
+  public void runMetadataContentEvaluation(MetadataEvaluatorRunner runner) {
+    metadataEvaluationUnits.forEach( unit -> runner.run(unit.getDwcDataFile(), unit.getMetadataEvaluator()));
   }
 
   /**
-   * Run the provided function on all RecordEvaluationUnit in the evaluation chain.
-   * @param fct
+   * Run the provided function on all {@link RowTypeEvaluationUnit} in the evaluation chain.
+   * The provided function is responsible to actually "run" the evaluation which provides
+   * the ability to run it synchronously or asynchronously.
+   * @param runner
    */
-  public void runRecordEvaluation(Consumer<RecordEvaluationUnit> fct) {
-    recordEvaluationUnits.forEach(fct);
+  public void runRowTypeEvaluation(RecordCollectionEvaluatorRunner runner) {
+    rowTypeEvaluationUnits.forEach( unit -> runner.run(unit.getDataFile(),
+            unit.getRowType(), unit.getRecordCollectionEvaluator()));
+  }
+
+  /**
+   * Run the provided function on all {@link RecordEvaluationUnit} in the evaluation chain.
+   * The provided function is responsible to actually "run" the evaluation which provides
+   * the ability to run it synchronously or asynchronously.
+   * @param runner
+   */
+  public void runRecordEvaluation(RecordEvaluatorRunner runner) {
+    recordEvaluationUnits.forEach( unit -> runner.run(unit.getDataFiles(),
+            unit.getRowType(), unit.getRecordEvaluator()));
+  }
+
+  public int getNumberOfMetadataEvaluationUnits() {
+    return metadataEvaluationUnits.size();
   }
 
   public int getNumberOfRowTypeEvaluationUnits() {

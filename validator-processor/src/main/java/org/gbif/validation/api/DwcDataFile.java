@@ -2,6 +2,7 @@ package org.gbif.validation.api;
 
 import org.gbif.dwc.terms.Term;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -16,22 +17,26 @@ import java.util.Optional;
  */
 public class DwcDataFile {
 
-  private DataFile dataFile;
+  private final DataFile dataFile;
 
   //currently organized as "star schema"
-  private TabularDataFile core;
-  private Optional<List<TabularDataFile>> extensions;
+  private final TabularDataFile core;
+  private final List<TabularDataFile> extensions;
   private final Map<Term, TabularDataFile> tabularDataFileByTerm;
+  private final Path metadataFilePath;
 
-  public DwcDataFile(DataFile dataFile, TabularDataFile core, Optional<List<TabularDataFile>> extensions) {
+  public DwcDataFile(DataFile dataFile, TabularDataFile core, List<TabularDataFile> extensions,
+                     Path metadataFilePath) {
     this.dataFile = dataFile;
     this.core = core;
     this.extensions = extensions;
+    this.metadataFilePath = metadataFilePath;
 
     Map<Term, TabularDataFile> fileByRowType = new HashMap<>();
     fileByRowType.put(core.getRowType(), core);
 
-    extensions.ifPresent( ext -> ext.stream().forEach( e -> fileByRowType.put(e.getRowType(), e)));
+    getExtensions().ifPresent(ext -> ext.stream()
+            .forEach(e -> fileByRowType.put(e.getRowType(), e)));
 
     tabularDataFileByTerm = Collections.unmodifiableMap(fileByRowType);
   }
@@ -41,7 +46,7 @@ public class DwcDataFile {
   }
 
   public List<TabularDataFile> getTabularDataFiles() {
-    return new ArrayList(tabularDataFileByTerm.values());
+    return new ArrayList<>(tabularDataFileByTerm.values());
   }
 
   /**
@@ -58,7 +63,10 @@ public class DwcDataFile {
   }
 
   public Optional<List<TabularDataFile>> getExtensions() {
-    return extensions;
+    return  Optional.ofNullable(extensions);
   }
 
+  public Optional<Path> getMetadataFilePath() {
+    return Optional.ofNullable(metadataFilePath);
+  }
 }

@@ -7,8 +7,10 @@ import java.io.Serializable;
 import java.util.List;
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.Validate;
+import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 
+import static org.gbif.validation.api.model.EvaluationCategory.METADATA_CONTENT;
 import static org.gbif.validation.api.model.EvaluationCategory.RESOURCE_STRUCTURE;
 
 /**
@@ -44,7 +46,7 @@ public class ValidationIssues {
   }
 
   /**
-   * Get a new instance of a {@link ValidationIssue} representing a issue with related data on the resource structure.
+   * Get a new instance of a {@link ValidationIssue} representing an issue with related data on the resource structure.
    * Note that the scope of {@link ValidationIssue} is at rowType level and NOT line/record level.
    * Therefore, relatedData should respect that scope.
    * @param evaluationType
@@ -52,9 +54,18 @@ public class ValidationIssues {
    * @return
    */
   public static ValidationIssue withRelatedData(EvaluationType evaluationType, String relatedData){
-    Validate.validState(RESOURCE_STRUCTURE.equals(evaluationType.getCategory()),
-            "withRelatedData can only be used with EvaluationCategory %s", RESOURCE_STRUCTURE);
+    Preconditions.checkState(RESOURCE_STRUCTURE == evaluationType.getCategory() || METADATA_CONTENT == evaluationType.getCategory(),
+            "withRelatedData can only be used with EvaluationCategory %s, %s", RESOURCE_STRUCTURE, METADATA_CONTENT);
     return new ValidationIssueWithRelatedData(evaluationType, relatedData);
+  }
+
+  /**
+   * Get a new instance of a {@link ValidationIssue} representing an issue only (no data attached).
+   * @param evaluationType
+   * @return
+   */
+  public static ValidationIssue withEvaluationTypeOnly(EvaluationType evaluationType){
+    return new ValidationIssueWithRelatedData(evaluationType, null);
   }
 
   /**
@@ -126,6 +137,7 @@ public class ValidationIssues {
 
   private static class ValidationIssueWithRelatedData extends ValidationIssueBase {
     private final String relatedData;
+
     ValidationIssueWithRelatedData(EvaluationType issue, String relatedData) {
       super(issue);
       this.relatedData = relatedData;
@@ -133,6 +145,14 @@ public class ValidationIssues {
 
     public String getRelatedData() {
       return relatedData;
+    }
+
+    @Override
+    public String toString() {
+      return MoreObjects.toStringHelper(this)
+              .add("issue", issue)
+              .add("relatedData", relatedData)
+              .toString();
     }
   }
 

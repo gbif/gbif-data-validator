@@ -8,8 +8,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -50,9 +50,9 @@ public class FileNormalizerTest {
   @Test
   public void normalizeTarget() throws IOException {
     File normalizedFolder = folder.newFolder();
-
+    Map<Path, Charset> charsets = new HashMap<>();
     Map<Path, Integer> normalizedContent = FileNormalizer.normalizeTarget(TEST_FOLDER.toPath(),
-            normalizedFolder.toPath(), Optional.empty());
+            normalizedFolder.toPath(), charsets);
     assertEquals(2, normalizedContent.size());
     assertEquals(3, normalizedContent.get(Paths.get("utf8_lf.txt")).intValue());
     assertEquals(2, normalizedContent.get(Paths.get("subsubfolder/utf8_lf.txt")).intValue());
@@ -60,8 +60,7 @@ public class FileNormalizerTest {
 
   private void testNormalizer(Path testFile, Charset charset) throws IOException {
     File normalizedFile = folder.newFile();
-    long numberOfLine = FileNormalizer.normalizeFile(testFile, normalizedFile.toPath(),
-            Optional.of(charset));
+    long numberOfLine = FileNormalizer.normalizeFile(testFile, normalizedFile.toPath(), charset);
 
     assertEquals(3, numberOfLine);
 
@@ -78,10 +77,21 @@ public class FileNormalizerTest {
   @Test
   public void testNormalizerUsingTarget() throws IOException {
     File normalizedFolder = folder.newFolder();
-    Map<Path, Integer> normalizedContent = FileNormalizer.normalizeTarget(UTF8_LF_TEST_FILE.toPath(),
-            normalizedFolder.toPath(), Optional.empty());
+    Map<Path, Charset> charsets = new HashMap<>();
+    charsets.put(Paths.get(LATIN_CRLF_TEST_FILE.getName()), StandardCharsets.ISO_8859_1);
+
+    //test without sending the encoding so the default (UTF-8) is used
+    Map<Path, Integer> normalizedContent = FileNormalizer.normalizeTarget(LATIN_CRLF_TEST_FILE.toPath(),
+            normalizedFolder.toPath(), null);
     assertEquals(1, normalizedContent.size());
-    assertEquals(3, normalizedContent.get(Paths.get(UTF8_LF_TEST_FILE.getName())).intValue());
+    // 0 is expected
+    assertEquals(0, normalizedContent.get(Paths.get(LATIN_CRLF_TEST_FILE.getName())).intValue());
+
+    //test sending the right encoding
+    normalizedContent = FileNormalizer.normalizeTarget(LATIN_CRLF_TEST_FILE.toPath(),
+            normalizedFolder.toPath(), charsets);
+    assertEquals(1, normalizedContent.size());
+    assertEquals(3, normalizedContent.get(Paths.get(LATIN_CRLF_TEST_FILE.getName())).intValue());
   }
 
 }

@@ -39,10 +39,10 @@ public class EvaluationChainTest {
               TestUtils.getEvaluatorFactory());
 
       evaluationChainBuilder.evaluateReferentialIntegrity();
-      evaluationChainBuilder.build().runRowTypeEvaluation(rowTypeEvaluationUnit -> {
+      evaluationChainBuilder.build().runRowTypeEvaluation((dataFile, rowType, recordCollectionEvaluator) -> {
         try {
-          Optional<Stream<RecordEvaluationResult>> result = rowTypeEvaluationUnit.evaluate();
-          if(DwcTerm.Identification.equals(rowTypeEvaluationUnit.getRowType())){
+          Optional<Stream<RecordEvaluationResult>> result = recordCollectionEvaluator.evaluate(dataFile);
+          if(DwcTerm.Identification.equals(rowType)){
             assertTrue("Got referential integrity issue on Identification extensions", result.isPresent());
           }
         } catch (IOException e) {

@@ -16,6 +16,7 @@ import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -32,6 +33,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,7 +123,8 @@ public class DataFileFactory {
     Objects.requireNonNull(destinationFolder, "destinationFolder shall be provided");
     Preconditions.checkState(Files.isDirectory(destinationFolder), "destinationFolder should point to a folder");
 
-    List<TabularDataFile> dataFileList = normalizeAndPrepare(dataFile, destinationFolder);
+    DataFilePreview dataFilePreview = DataFilePreview.extractFrom(dataFile);
+    List<TabularDataFile> dataFileList = normalizeAndPrepare(dataFile, destinationFolder, dataFilePreview);
 
     Map<DwcFileType, List<TabularDataFile>> dfPerDwcFileType = dataFileList.stream()
             .collect(Collectors.groupingBy(TabularDataFile::getType));
@@ -135,7 +138,8 @@ public class DataFileFactory {
 
     Optional<TabularDataFile> coreDf = coreTabularDataFile.stream().findFirst();
     return new DwcDataFile(dataFile, coreDf.get(),
-            Optional.ofNullable(dfPerDwcFileType.get(DwcFileType.EXTENSION)));
+            dfPerDwcFileType.get(DwcFileType.EXTENSION),
+            dataFilePreview.getMetadataFilePath().orElse(null));
   }
 
   /**
@@ -143,7 +147,8 @@ public class DataFileFactory {
    *
    * @return list of prepared {@link TabularDataFile}
    */
-  private static List<TabularDataFile> normalizeAndPrepare(DataFile dataFile, Path destinationFolder)
+  private static List<TabularDataFile> normalizeAndPrepare(DataFile dataFile, Path destinationFolder,
+                                                           DataFilePreview dataFilePreview)
           throws IOException, UnsupportedDataFileException {
 
     //Spreadsheet is a special case since the crawling will not take it at the moment
@@ -153,9 +158,8 @@ public class DataFileFactory {
       pathAndLines.put(conversionResult.getResultPath().getFileName(), conversionResult.getNumOfLines());
       return prepareDwcBased(conversionResult.getResultPath(), dataFile, pathAndLines);
     } else {
-      //FIXME we should use the character encoding defined in the meta.xml
       Map<Path, Integer> normalizedFiles = FileNormalizer.normalizeTarget(dataFile.getFilePath(),
-              destinationFolder, Optional.empty());
+              destinationFolder, dataFilePreview.getCharsetsByPath());
       return prepareDwcBased(destinationFolder, dataFile, normalizedFiles);
     }
   }
@@ -181,10 +185,10 @@ public class DataFileFactory {
       //add the core first, if there is no core the exception must be handled by the caller
       ArchiveFile core = archive.getCore();
       if (core != null) {
-        //if the location is not set on the core we assume the archive is a single file
-        String location = core.getLocation() != null ? core.getLocation() : archive.getLocation().getName();
-        dataFileList.add(createDwcBasedTabularDataFile(core, originalDataFile.getSourceFileName(),
-                DwcFileType.CORE, pathAndLines.get(Paths.get(location))));
+        dataFileList.add(createDwcBasedTabularDataFile(core,
+                core.getLocationFile() != null ? core.getLocationFile().getName() :
+                        originalDataFile.getSourceFileName(),
+                DwcFileType.CORE, pathAndLines.get(Paths.get(safeGetCoreLocation(archive)))));
       }
       for (ArchiveFile ext : archive.getExtensions()) {
         dataFileList.add(createDwcBasedTabularDataFile(ext,
@@ -271,6 +275,84 @@ public class DataFileFactory {
     }
 
     return conversionResult;
+  }
+
+  /**
+   * When used on a single file the location comes from the Archive object. This method simply makes it
+   * easier to get.
+   * @param archive
+   * @return
+   */
+  private static String safeGetCoreLocation(Archive archive) {
+    if(archive.getCore() == null || archive.getCore().getLocation() == null) {
+      return archive.getLocation().getName();
+    }
+    return archive.getCore().getLocation();
+  }
+
+  /**
+   * Internal class used to store basic data about a {@link DataFile} before we apply transformations.
+   */
+  private static class DataFilePreview {
+
+    private final Map<Path, Charset> charsetsByPath;
+    private final Path metadataFilePath;
+
+    private DataFilePreview(Path metadataFilePath, Map<Path, Charset> charsetsByPath) {
+      this.metadataFilePath = metadataFilePath;
+      this.charsetsByPath = charsetsByPath;
+    }
+
+    /**
+     * If possible, tries to extract {@link DataFilePreview} from the provided {@link DataFile}.
+     * @param dataFile
+     * @return
+     * @throws IOException
+     * @throws UnsupportedCharsetException
+     */
+    static DataFilePreview extractFrom(DataFile dataFile) throws IOException, UnsupportedCharsetException {
+      Map<Path, Charset> charsetsByPath = new HashMap<>();
+      Path metadataFilePath = null;
+
+      if(dataFile.getFileFormat().isTabularBased()) {
+        try {
+          Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+          if (archive.getMetadataLocationFile() != null) {
+            metadataFilePath = archive.getMetadataLocationFile().toPath();
+          }
+
+          ArchiveFile core = archive.getCore();
+          if (core != null) {
+            extractCharset(core.getEncoding()).ifPresent(cs -> charsetsByPath.put(Paths.get(safeGetCoreLocation(archive)), cs));
+          }
+          for (ArchiveFile ext : archive.getExtensions()) {
+            extractCharset(ext.getEncoding()).ifPresent(cs -> charsetsByPath.put(Paths.get(safeGetCoreLocation(archive)), cs));
+          }
+        } catch (UnkownDelimitersException ignore) {
+          //ignore, it is not the goal of this function
+        }
+      }
+
+      return new DataFilePreview(metadataFilePath, charsetsByPath);
+    }
+
+    /**
+     * Tries to parse the charsetName and return Optional.empty if null or empty.
+     * @param charsetName
+     * @return
+     * @throws UnsupportedCharsetException
+     */
+    private static Optional<Charset> extractCharset(String charsetName) throws UnsupportedCharsetException {
+      return StringUtils.isBlank(charsetName) ? Optional.empty() : Optional.of(Charset.forName(charsetName));
+    }
+
+    public Map<Path, Charset> getCharsetsByPath() {
+      return charsetsByPath;
+    }
+
+    public Optional<Path> getMetadataFilePath() {
+      return Optional.ofNullable(metadataFilePath);
+    }
   }
 
 }
