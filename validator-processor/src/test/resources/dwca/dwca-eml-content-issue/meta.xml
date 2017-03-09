@@ -4,7 +4,7 @@
       <location>occurrence.txt</location>
     </files>
     <id index="0" />
-    <field index="1" term="http://purl.org/dc/terms/type"/
+    <field index="1" term="http://purl.org/dc/terms/type"/>
     <field index="2" term="http://purl.org/dc/terms/language"/>
     <field index="3" term="http://purl.org/dc/terms/license"/>
     <field index="4" term="http://purl.org/dc/terms/rightsHolder"/>

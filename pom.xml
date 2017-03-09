@@ -45,11 +45,12 @@
     <!-- GBIF VERSIONS -->
     <dwc-api.version>1.17-SNAPSHOT</dwc-api.version>
     <dwca-io.version>1.30-SNAPSHOT</dwca-io.version>
-    <gbif-api.version>0.50</gbif-api.version>
+    <gbif-api.version>0.52-SNAPSHOT</gbif-api.version>
     <gbif-common.version>0.33-SNAPSHOT</gbif-common.version>
     <gbif-common-ws.version>0.38-SNAPSHOT</gbif-common-ws.version>
     <gbif-occurrence.version>0.62</gbif-occurrence.version>
     <gbif-checklistbank.version>2.50</gbif-checklistbank.version>
+    <gbif-registry.version>2.64-SNAPSHOT</gbif-registry.version>
 
     <!-- GBIF libraries -->
     <gbif-microservice.version>0.6</gbif-microservice.version>
@@ -169,6 +170,11 @@
         <groupId>org.gbif</groupId>
         <artifactId>gbif-parsers</artifactId>
         <version>${gbif-parsers.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif.registry</groupId>
+        <artifactId>registry-metadata</artifactId>
+        <version>${gbif-registry.version}</version>
       </dependency>
 
       <dependency>
