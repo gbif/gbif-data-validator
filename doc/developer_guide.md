@@ -40,7 +40,7 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 
 ## Evaluation Chain
 
-The evaluation of the submitted DataFile is achieve by a chain of evaluators. One can find 2 types of evaluation chain based on the nature of the evaluators: [StructuralEvaluationChain](#structuralevaluationchain) and [EvaluationChain](#evaluationchain).
+The evaluation of the submitted `DataFile` is achieve by a chain of evaluators. One can find 2 types of evaluation chain based on the nature of the evaluators: [StructuralEvaluationChain](#structuralevaluationchain) and [EvaluationChain](#evaluationchain). Example can be found in the implementation based on Akka Actors [DataFileProcessorMaster](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/DataFileProcessorMaster.java).
 
 ### StructuralEvaluationChain
 The [StructuralEvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/evaluator/StructuralEvaluationChain.java) is used to build and store the sequence of evaluation that will be performed on the structure of the `DataFile` submitted. The `StructuralEvaluationChain` shall be run sequentially and can stop before it reaches the last evaluation. The condition to stop depends on the [EvaluationCategory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java) of a validation result received. For example if DarwinCore Archive and cannot be opened/extracted we would stop the evaluation since nothing else could be evaluated.
