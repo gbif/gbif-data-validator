@@ -40,16 +40,16 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 
 ## Evaluation Chain
 
-The evaluation of the submitted DataFile is achieve by a chain of evaluators. One can find 2 types of evaluation chain based on the nature of the evaluators: [StructuralEvaluationChain](#StructuralEvaluationChain) and [EvaluationChain](#EvaluationChain)
+The evaluation of the submitted DataFile is achieve by a chain of evaluators. One can find 2 types of evaluation chain based on the nature of the evaluators: [StructuralEvaluationChain](#structuralevaluationchain) and [EvaluationChain](#evaluationchain).
 
-### __StructuralEvaluationChain__
-The StructuralEvaluationChain is used to build and store the sequence of evaluation that will be performed on the structure of the DataFile submitted. Do to the nature of the validations, the StructuralEvaluationChain shall be run sequentially and can stop before it reaches the last evaluation.
+### StructuralEvaluationChain
+The [StructuralEvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/evaluator/StructuralEvaluationChain.java) is used to build and store the sequence of evaluation that will be performed on the structure of the `DataFile` submitted. The `StructuralEvaluationChain` shall be run sequentially and can stop before it reaches the last evaluation. The condition to stop depends on the [EvaluationCategory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java) of a validation result received. For example if DarwinCore Archive and cannot be opened/extracted we would stop the evaluation since nothing else could be evaluated.
 
 #### ResourceStructureEvaluator
-[ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself. If the evaluation bring results, depending of the [EvaluationCategory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java), the evaluation chain can be stopped. For example if DarwinCore Archive and cannot be opened/extracted.
+[ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself.
 
-### __EvaluationChain__
-[EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build/configure/define the sequence of evaluation that will be performed.
+### EvaluationChain
+[EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build/configure/define the sequence of evaluation that will be performed on the content of the `DataFile`.
 
 ### RecordCollectionEvaluator
 [RecordCollectionEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordCollectionEvaluator.java) operates at a higher level than RecordEvaluator and work on more than one record but, it also produces RecordEvaluationResult at a record level.
@@ -60,16 +60,17 @@ The StructuralEvaluationChain is used to build and store the sequence of evaluat
 
 ## EvaluationChain example
 
-Example of simple evaluation chain based from unit test:
+Example of evaluation chain based from unit test. Please note that some code was removed to make it more readable, see [EvaluationChainTest]( https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/test/java/org/gbif/validation/evaluator/EvaluationChainTest.java) for the complete example.
 ```java
-List<TabularDataFile> dataFiles = DataFileFactory.prepareDataFile(dwcaDataFile);
-EvaluationChain.Builder builder = EvaluationChain.Builder.using(dwcaDataFile, dataFiles,
-              TestUtils.getEvaluatorFactory());
+DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
+EvaluationChain.Builder builder = EvaluationChain.Builder.using(dwcDataFile, TestUtils.getEvaluatorFactory());
 
-builder.evaluateReferentialIntegrity();
-builder.build().runRowTypeEvaluation(rowTypeEvaluationUnit -> {
-  Optional<Stream<RecordEvaluationResult>> result = rowTypeEvaluationUnit.evaluate();
-  if(DwcTerm.Identification.equals(rowTypeEvaluationUnit.getRowType())){
+builder.evaluateUniqueness()
+       .evaluateReferentialIntegrity();
+
+builder.build().runRowTypeEvaluation((dwcDF, rowType, recordCollectionEvaluator) -> {
+  Optional<Stream<RecordEvaluationResult>> result = recordCollectionEvaluator.evaluate(dwcDF);
+  if (DwcTerm.Identification.equals(rowType)) {
     assertTrue("Got referential integrity issue on Identification extensions", result.isPresent());
   }
 });
