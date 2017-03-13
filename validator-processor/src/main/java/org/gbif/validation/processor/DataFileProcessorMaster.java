@@ -17,7 +17,7 @@ import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluationChain;
 import org.gbif.validation.evaluator.EvaluatorFactory;
-import org.gbif.validation.evaluator.ConstitutionEvaluationChain;
+import org.gbif.validation.evaluator.ResourceConstitutionEvaluationChain;
 import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
@@ -181,7 +181,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private StructuralEvaluationResult evaluateResourceIntegrityAndStructure(DataFile dataFile, EvaluatorFactory factory) {
 
-    ConstitutionEvaluationChain evaluationChain = ConstitutionEvaluationChain.Builder.using(dataFile, factory).build();
+    ResourceConstitutionEvaluationChain evaluationChain = ResourceConstitutionEvaluationChain.Builder.using(dataFile, factory).build();
     Optional<List<ValidationResultElement>> validationResultElementList = evaluationChain.runResourceStructureEvaluator();
 
     if (validationResultElementList.isPresent()) {
