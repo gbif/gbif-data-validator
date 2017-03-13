@@ -32,11 +32,10 @@ public class TabularDataFile {
   private final DwcFileType type;
   private final Term[] columns;
 
-  private final Optional<TermIndex> recordIdentifier;
+  private final TermIndex recordIdentifier;
+  private final Map<Term, String> defaultValues;
 
-  private final Optional<Map<Term, String>> defaultValues;
-
-  private final Optional<Integer> fileLineOffset;
+  private final Integer fileLineOffset;
   private final boolean hasHeaders;
 
   private final Charset characterEncoding;
@@ -63,9 +62,9 @@ public class TabularDataFile {
    */
   public TabularDataFile(Path filePath, String sourceFileName,
                          Term rowType, DwcFileType type, Term[] columns,
-                         Optional<TermIndex> recordIdentifier,
-                         Optional<Map<Term, String>> defaultValues,
-                         Optional<Integer> fileLineOffset, boolean hasHeaders,
+                         @Nullable TermIndex recordIdentifier,
+                         @Nullable Map<Term, String> defaultValues,
+                         @Nullable Integer fileLineOffset, boolean hasHeaders,
                          Charset characterEncoding,
                          Character delimiterChar, Character quoteChar, Integer numOfLines) {
     this.filePath = filePath;
@@ -74,7 +73,7 @@ public class TabularDataFile {
     this.type = type;
     this.columns = Arrays.copyOf(columns, columns.length);
     this.recordIdentifier = recordIdentifier;
-    this.defaultValues = defaultValues.map( dv -> new HashMap<>(dv));
+    this.defaultValues = (defaultValues != null) ? new HashMap<>(defaultValues) : null;
     this.fileLineOffset = fileLineOffset;
     this.hasHeaders = hasHeaders;
     this.characterEncoding = characterEncoding;
@@ -126,7 +125,7 @@ public class TabularDataFile {
   }
 
   public Optional<TermIndex> getRecordIdentifier() {
-    return recordIdentifier;
+    return Optional.ofNullable(recordIdentifier);
   }
 
   public Integer getNumOfLines() {
@@ -148,7 +147,7 @@ public class TabularDataFile {
    * @return
    */
   public Optional<Integer> getFileLineOffset() {
-    return fileLineOffset;
+    return Optional.ofNullable(fileLineOffset);
   }
 
   /**
@@ -156,7 +155,7 @@ public class TabularDataFile {
    * @return
    */
   public Optional<Map<Term, String>> getDefaultValues() {
-    return defaultValues;
+    return Optional.ofNullable(defaultValues);
   }
 
   /**

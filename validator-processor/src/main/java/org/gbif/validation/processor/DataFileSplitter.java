@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 /**
@@ -49,7 +48,7 @@ class DataFileSplitter {
                       splitFolder,
                       splits[idx],
                       inputHasHeaders && (idx == 0),
-                      Optional.of((idx * fileSplitSize)))));
+                      (idx * fileSplitSize))));
     }
     return splitDataFiles;
   }
@@ -66,7 +65,7 @@ class DataFileSplitter {
    * @return new {@link DataFile} representing a portion of the provided dataFile.
    */
   private static TabularDataFile newSplitDataFile(TabularDataFile dataFile, String baseDir, String fileName,
-                                           boolean withHeader, Optional<Integer> offset) {
+                                           boolean withHeader, Integer offset) {
     //Creates the file to be used
     File splitFile = new File(baseDir, fileName);
     splitFile.deleteOnExit();

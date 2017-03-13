@@ -94,12 +94,12 @@ public class DataFileFactory {
    * @return
    */
   public static TabularDataFile newTabularDataFileSplit(TabularDataFile tabDatafile, Path splitFilePath,
-                                                        Optional<Integer> lineOffset, boolean withHeader) {
+                                                        Integer lineOffset, boolean withHeader) {
     //FIXME lineNumber
     return new TabularDataFile(splitFilePath,
             tabDatafile.getSourceFileName(),
             tabDatafile.getRowType(), tabDatafile.getType(), tabDatafile.getColumns(),
-            tabDatafile.getRecordIdentifier(), tabDatafile.getDefaultValues(),
+            tabDatafile.getRecordIdentifier().orElse(null), tabDatafile.getDefaultValues().orElse(null),
             lineOffset, withHeader, tabDatafile.getCharacterEncoding(), tabDatafile.getDelimiterChar(),
             tabDatafile.getQuoteChar(), -1);
   }
@@ -217,14 +217,14 @@ public class DataFileFactory {
                                                                DwcFileType type,
                                                                int numberOfLines) throws IOException {
     Term[] headers = archiveFile.getHeader();
-    Optional<Map<Term, String>> defaultValues = archiveFile.getDefaultValues();
-    Optional<TermIndex> recordIdentifier = archiveFile.getId() == null ? Optional.empty() :
-            Optional.of(new TermIndex(archiveFile.getId().getIndex(), archiveFile.getId().getTerm()));
+    Map<Term, String> defaultValues = archiveFile.getDefaultValues().orElse(null);
+    TermIndex recordIdentifier = archiveFile.getId() == null ? null :
+            new TermIndex(archiveFile.getId().getIndex(), archiveFile.getId().getTerm());
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             sourceFileName,
             archiveFile.getRowType(), type, headers, recordIdentifier, defaultValues,
-            Optional.empty(), //no line offset
+            null, //no line offset
             archiveFile.getIgnoreHeaderLines()!= null
             && archiveFile.getIgnoreHeaderLines() > 0,
             Charset.forName(archiveFile.getEncoding()),
