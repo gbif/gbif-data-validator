@@ -1,4 +1,4 @@
-package org.gbif.validation.processor;
+package org.gbif.validation.evaluator;
 
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
@@ -8,7 +8,6 @@ import org.gbif.validation.api.MetadataEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;

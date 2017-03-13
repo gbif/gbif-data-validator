@@ -1,10 +1,9 @@
-package org.gbif.validation.processor;
+package org.gbif.validation.evaluator;
 
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.result.ValidationResultElement;
-import org.gbif.validation.evaluator.EvaluatorFactory;
 
 import java.util.ArrayList;
 import java.util.List;

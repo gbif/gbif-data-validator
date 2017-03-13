@@ -1,4 +1,4 @@
-package org.gbif.validation.processor;
+package org.gbif.validation.evaluator;
 
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.validation.TestUtils;
