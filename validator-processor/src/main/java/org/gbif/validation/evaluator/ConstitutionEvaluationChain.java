@@ -10,10 +10,12 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * The {@link StructuralEvaluationChain} is used to build and store the sequence of evaluation that will be performed.
- * An {@link StructuralEvaluationChain} is specific to each {@link DataFile} and they should NOT be reused.
+ * The {@link ConstitutionEvaluationChain} is used to build and store the sequence of evaluation that will be performed
+ * to evaluate the constitution on the {@link DataFile}. The constitution of a {@link DataFile} represents if the file
+ * is represented (usually by the meta.xml file) the way it is expected.
+ * An {@link ConstitutionEvaluationChain} is specific to each {@link DataFile} and they should NOT be reused.
  */
-public class StructuralEvaluationChain {
+public class ConstitutionEvaluationChain {
 
   private final DataFile dataFile;
   private final List<ResourceStructureEvaluator> resourceStructureEvaluators;
@@ -25,13 +27,13 @@ public class StructuralEvaluationChain {
    * @param dataFile
    * @param resourceStructureEvaluators
    */
-  private StructuralEvaluationChain(DataFile dataFile, List<ResourceStructureEvaluator> resourceStructureEvaluators) {
+  private ConstitutionEvaluationChain(DataFile dataFile, List<ResourceStructureEvaluator> resourceStructureEvaluators) {
     this.dataFile = dataFile;
     this.resourceStructureEvaluators = resourceStructureEvaluators;
   }
 
   /**
-   * Builder class allowing to build an instance of {@link StructuralEvaluationChain}.
+   * Builder class allowing to build an instance of {@link ConstitutionEvaluationChain}.
    */
   public static class Builder {
     private final DataFile dataFile;
@@ -52,8 +54,8 @@ public class StructuralEvaluationChain {
       resourceStructureEvaluators.add(factory.createResourceStructureEvaluator(dataFile.getFileFormat()));
     }
 
-    public StructuralEvaluationChain build() {
-      return new StructuralEvaluationChain(dataFile, resourceStructureEvaluators);
+    public ConstitutionEvaluationChain build() {
+      return new ConstitutionEvaluationChain(dataFile, resourceStructureEvaluators);
     }
   }
 
