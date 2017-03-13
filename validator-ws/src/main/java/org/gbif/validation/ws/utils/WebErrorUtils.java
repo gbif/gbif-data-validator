@@ -3,7 +3,6 @@ package org.gbif.validation.ws.utils;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.result.ValidationResult;
 
-import java.util.Optional;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 
@@ -25,7 +24,7 @@ public class WebErrorUtils {
   public static WebApplicationException errorResponse(String uploadFileName, Response.Status status,
                                                       ValidationErrorCode errorCode) {
     Response.ResponseBuilder repBuilder = Response.status(status);
-    repBuilder.entity(ValidationResult.onError(uploadFileName, null, errorCode, Optional.empty()));
+    repBuilder.entity(ValidationResult.onError(uploadFileName, null, errorCode, null));
     return new WebApplicationException(repBuilder.build());
   }
 

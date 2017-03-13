@@ -6,7 +6,6 @@ import org.gbif.validation.api.model.ValidationProfile;
 
 import java.io.Serializable;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 
@@ -29,10 +28,19 @@ public class ValidationResult implements Serializable {
 
   private final List<ValidationResultElement> results;
 
+  /**
+   * Creates a {@link ValidationResult} after an error occurred.
+   *
+   * @param fileName
+   * @param fileFormat can be null
+   * @param errorCode
+   * @param errorMessage can be null
+   *
+   * @return new {@link ValidationResult} instance
+   */
   public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat,
-                                         ValidationErrorCode errorCode,
-                                         Optional<String> errorMessage) {
-    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode, errorMessage.orElse(null));
+                                         ValidationErrorCode errorCode, @Nullable String errorMessage) {
+    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode, errorMessage);
   }
 
   /**

@@ -199,10 +199,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     try {
       dwcDataFile = DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
     } catch (IOException ioEx){
-      emitErrorAndStop(dataFile, ValidationErrorCode.IO_ERROR, Optional.empty());
+      emitErrorAndStop(dataFile, ValidationErrorCode.IO_ERROR, null);
       stopEvaluation = true;
     } catch(UnsupportedDataFileException ex) {
-      emitErrorAndStop(dataFile, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT, Optional.of(ex.getMessage()));
+      emitErrorAndStop(dataFile, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT, ex.getMessage());
       stopEvaluation = true;
     }
     return new StructuralEvaluationResult(stopEvaluation, dwcDataFile);
@@ -346,7 +346,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     getContext().stop(self());
   }
 
-  private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, Optional<String> errorMessage) {
+  private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, String errorMessage) {
     JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED, dataJob.getJobId(),
             ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(), errorCode, errorMessage));
     context().parent().tell(response, self());

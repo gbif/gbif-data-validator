@@ -21,6 +21,11 @@ public class StructuralEvaluationChain {
 
   private boolean evaluationStopped = false;
 
+  /**
+   * Use {@link Builder}.
+   * @param dataFile
+   * @param resourceStructureEvaluators
+   */
   private StructuralEvaluationChain(DataFile dataFile, List<ResourceStructureEvaluator> resourceStructureEvaluators) {
     this.dataFile = dataFile;
     this.resourceStructureEvaluators = resourceStructureEvaluators;
@@ -81,6 +86,10 @@ public class StructuralEvaluationChain {
             .findAny().isPresent();
   }
 
+  /**
+   * Checks if the evaluation chain reached the end or it was stopped before.
+   * @return
+   */
   public boolean evaluationStopped() {
     return evaluationStopped;
   }

@@ -16,6 +16,7 @@ import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -100,6 +101,9 @@ public class EvaluationChain {
     }
   }
 
+  /**
+   * Container class holding data between initialization and processing phase for {@link MetadataEvaluator}.
+   */
   private static class MetadataEvaluationUnit {
     private final DwcDataFile dwcDataFile;
     private final MetadataEvaluator metadataEvaluator;
@@ -142,7 +146,7 @@ public class EvaluationChain {
      *
      * @param dwcDataFile dataFile received for validation
      * @param factory
-     * @return
+     * @return new instance of {@link Builder}
      */
     public static Builder using(DwcDataFile dwcDataFile, EvaluatorFactory factory) {
       return new Builder(dwcDataFile, factory);
@@ -216,6 +220,13 @@ public class EvaluationChain {
   private final List<RecordEvaluationUnit> recordEvaluationUnits;
   private final List<MetadataEvaluationUnit> metadataEvaluationUnits;
 
+  /**
+   * Use {@link Builder}.
+   *
+   * @param metadataEvaluationUnits
+   * @param rowTypeEvaluationUnits
+   * @param recordEvaluationUnits
+   */
   private EvaluationChain(List<MetadataEvaluationUnit> metadataEvaluationUnits,
                           List<RowTypeEvaluationUnit> rowTypeEvaluationUnits,
                           List<RecordEvaluationUnit> recordEvaluationUnits) {
@@ -224,29 +235,35 @@ public class EvaluationChain {
     this.recordEvaluationUnits = recordEvaluationUnits;
   }
 
+  /**
+   * Run all the {@link MetadataEvaluator} using the provided {@link MetadataEvaluatorRunner}.
+   *
+   * @param runner
+   */
   public void runMetadataContentEvaluation(MetadataEvaluatorRunner runner) {
-    metadataEvaluationUnits.forEach( unit -> runner.run(unit.getDwcDataFile(), unit.getMetadataEvaluator()));
+    Objects.requireNonNull(runner, "MetadataEvaluatorRunner shall be provided");
+    metadataEvaluationUnits.forEach(unit -> runner.run(unit.getDwcDataFile(), unit.getMetadataEvaluator()));
   }
 
   /**
-   * Run the provided function on all {@link RowTypeEvaluationUnit} in the evaluation chain.
-   * The provided function is responsible to actually "run" the evaluation which provides
-   * the ability to run it synchronously or asynchronously.
+   * Run all the {@link RecordCollectionEvaluator} using the provided {@link RecordCollectionEvaluatorRunner}.
+   *
    * @param runner
    */
   public void runRowTypeEvaluation(RecordCollectionEvaluatorRunner runner) {
-    rowTypeEvaluationUnits.forEach( unit -> runner.run(unit.getDataFile(),
+    Objects.requireNonNull(runner, "RecordCollectionEvaluatorRunner shall be provided");
+    rowTypeEvaluationUnits.forEach(unit -> runner.run(unit.getDataFile(),
             unit.getRowType(), unit.getRecordCollectionEvaluator()));
   }
 
   /**
-   * Run the provided function on all {@link RecordEvaluationUnit} in the evaluation chain.
-   * The provided function is responsible to actually "run" the evaluation which provides
-   * the ability to run it synchronously or asynchronously.
+   * Run all the {@link RecordEvaluator} using the provided {@link RecordEvaluatorRunner}.
+   *
    * @param runner
    */
   public void runRecordEvaluation(RecordEvaluatorRunner runner) {
-    recordEvaluationUnits.forEach( unit -> runner.run(unit.getDataFiles(),
+    Objects.requireNonNull(runner, "RecordEvaluatorRunner shall be provided");
+    recordEvaluationUnits.forEach(unit -> runner.run(unit.getDataFiles(),
             unit.getRowType(), unit.getRecordEvaluator()));
   }
 
