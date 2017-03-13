@@ -6,34 +6,34 @@ The current implementation requires Unix utilities such as `awk`, `split` (see [
 
 These utilities expect `lf` endline characters. Therefore, we normalize files in order to allow evaluations to be performed. At the moment, [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java) is responsible to coordinate this task.
 
-## DataFile
+## DataFiles
+
+### DataFileFactory
+ [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java) is the entry point for everything related to DataFile, DwcDataFile and TabularDataFile.
+
+### DataFile
 [DataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DataFile.java)
-represents the resource to be validated as provided by the user.
+represents the resource to be validated as provided by the user. It can represent any format from [FileFormat](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/FileFormat.java).
 
-DataFile instances are obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java).
-
-## DwcDataFile
+### DwcDataFile
 DataFile are transformed and prepared in order to facilitate their usage within the evaluation chain.
 
-Including :
+Preparation and transformation includes:
  * Counting the number of lines
  * Extracting the headers
  * Darwin Core Archive into a list of all its components (core + extensions)
  * Excel file into CSV
  * Standardisation of end line characters
 
-The result of those operations is kept in a [DwcDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFile.java) and can be obtained by [DataFileFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/DataFileFactory.java) `prepareDataFile` method.
+The result of those operations is kept in a [DwcDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFile.java) and is obtained by the `prepareDataFile` method of the DataFileFactory.
 
-## TabularDataFile
-[TabularDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/TabularDataFile.java)
-represents data held into a file in tabular format.
+### TabularDataFile
+Inside the DwcDataFile, we have one [TabularDataFile](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/TabularDataFile.java) per [rowType](http://rs.tdwg.org/dwc/terms/guides/text/index.htm#coreTag). It basically represents what is required to be validated, in a standardized format.
 
-## Additional TabularDataFile Transformations
+Additionally, a TabularDataFile can be transformed again under some circumstances. The best example is when a TabularDataFile
+needs tp be split into multiple (smaller) tabular files to run some evaluations in parallel.
 
-A TabularDataFile can be transformed again under some circumstances. The best example is when a TabularDataFile
-needs tp be split into multiple (smaller) tabular files.
-
-## RecordSource
+### RecordSource
 [RecordSource](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordSource.java) allows to expose records independently from their source.
 
 RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/source/RecordSourceFactory.java).
