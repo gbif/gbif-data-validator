@@ -113,8 +113,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
               EvaluationChain.Builder.using(dwcDataFile, factory)
                       .evaluateMetadataContent()
                       .evaluateCoreUniqueness()
-                      .evaluateReferentialIntegrity();
-      // .evaluateChecklist(); fix UUID for folder name
+                      .evaluateReferentialIntegrity()
+                      .evaluateChecklist();
 
       //numOfWorkers is used to know how many responses we are expecting
       final MutableInt numOfWorkers = new MutableInt(0);

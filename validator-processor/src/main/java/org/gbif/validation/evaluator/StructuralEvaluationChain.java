@@ -77,7 +77,7 @@ public class StructuralEvaluationChain {
   }
 
   private static boolean containsResourceIntegrity(List<ValidationResultElement> validationResultElements) {
-    if (validationResultElements != null){
+    if (validationResultElements == null){
       return false;
     }
     return validationResultElements.stream()

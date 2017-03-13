@@ -8,6 +8,7 @@ import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.checklistbank.neo.UsageDao;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
+import org.gbif.nub.lookup.straight.IdLookupPassThru;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
@@ -27,7 +28,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import com.codahale.metrics.MetricRegistry;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +40,8 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
 
 /**
  * {@link RecordCollectionEvaluator} implementation to evaluate Checklist using ChecklistBank Normalizer.
- * Currently, no nub matching is done
+ * Currently, no nub matching is done.
+ * Not Thread-Safe.
  */
 public class ChecklistEvaluator implements RecordCollectionEvaluator {
 
@@ -66,12 +70,12 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
     TabularDataFile taxonFile = dwcDataFile.getByRowType(DwcTerm.Taxon);
     Preconditions.checkNotNull(taxonFile, "No Taxon TabularDataFile is defined");
 
-    //The dataset key is obtained from the temporary directory name which is assumed to be an UUID
-    UUID datasetKey = UUID.fromString(dwcDataFile.getDataFile().getFilePath().getFileName().toString());
-
+    //The generated a random dataset key, we only need it as a key
+    UUID datasetKey = UUID.randomUUID();
     try {
       //Run normalizer with no NubLookup
-      Normalizer normalizer = Normalizer.create(configuration, datasetKey);
+      Normalizer normalizer = Normalizer.create(configuration, datasetKey, taxonFile.getFilePath().toFile(),
+              new MetricRegistry(), Maps.newHashMap(), new IdLookupPassThru());
       normalizer.run();
      // result.setStats(normalizer.getStats());
 
@@ -79,7 +83,8 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
     } catch (Exception ex) {
       LOG.error("Error running checklist normalizer", ex);
       throw new RuntimeException(ex);
-    } finally {
+    }
+    finally {
       removeTempDirs(datasetKey);
     }
   }
@@ -89,7 +94,22 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
    */
   private Stream<RecordEvaluationResult> collectUsagesData(UUID datasetKey) {
     List<RecordEvaluationResult> results = new ArrayList<>();
-    UsageDao dao = UsageDao.persistentDao(configuration.neo, datasetKey, true, null, false);
+    //FIX ME, should be READ_ONLY but it throws:
+    /**
+     Caused by: java.lang.UnsupportedOperationException: Can't mark read only index.
+     at org.neo4j.kernel.api.impl.schema.ReadOnlyDatabaseSchemaIndex.markAsOnline(ReadOnlyDatabaseSchemaIndex.java:93)
+     at org.neo4j.kernel.api.impl.schema.LuceneIndexAccessor.force(LuceneIndexAccessor.java:77)
+     at org.neo4j.kernel.impl.api.index.OnlineIndexProxy.force(OnlineIndexProxy.java:133)
+     at org.neo4j.kernel.impl.api.index.AbstractDelegatingIndexProxy.force(AbstractDelegatingIndexProxy.java:82)
+     at org.neo4j.kernel.impl.api.index.ContractCheckingIndexProxy.force(ContractCheckingIndexProxy.java:125)
+     at org.neo4j.kernel.impl.api.index.IndexingService.forceAll(IndexingService.java:697)
+     at org.neo4j.kernel.impl.storageengine.impl.recordstorage.RecordStorageEngine.flushAndForce(RecordStorageEngine.java:473)
+     at org.neo4j.kernel.impl.transaction.log.checkpoint.CheckPointerImpl.doCheckPoint(CheckPointerImpl.java:203)
+     at org.neo4j.kernel.impl.transaction.log.checkpoint.CheckPointerImpl.forceCheckPoint(CheckPointerImpl.java:114)
+     at org.neo4j.kernel.NeoStoreDataSource$5.shutdown(NeoStoreDataSource.java:917)
+     at org.neo4j.kernel.lifecycle.LifeSupport$LifecycleInstance.shutdown(LifeSupport.java:488)
+     */
+    UsageDao dao = UsageDao.persistentDao(configuration.neo, datasetKey, false, null, false);
     try (Transaction tx = dao.beginTx()) {
       // iterate over all node and collect their issues
       StreamSupport.stream(dao.allNodes().spliterator(),false).forEach(node -> {
@@ -171,6 +191,4 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
       }
     }
   }
-
-
 }

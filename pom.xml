@@ -49,7 +49,7 @@
     <gbif-common.version>0.33-SNAPSHOT</gbif-common.version>
     <gbif-common-ws.version>0.38-SNAPSHOT</gbif-common-ws.version>
     <gbif-occurrence.version>0.62</gbif-occurrence.version>
-    <gbif-checklistbank.version>2.50</gbif-checklistbank.version>
+    <gbif-checklistbank.version>2.53-SNAPSHOT</gbif-checklistbank.version>
     <gbif-registry.version>2.64-SNAPSHOT</gbif-registry.version>
 
     <!-- GBIF libraries -->
@@ -57,9 +57,9 @@
     <gbif-parsers.version>0.31-SNAPSHOT</gbif-parsers.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
 
-    <!-- older lucene version required by checklistbank normalizer -->
-    <lucene.version>3.6.2</lucene.version>
-    <neo4j.version>2.3.6</neo4j.version>
+    <!-- lucene version required by neo4j -->
+    <lucene-neo4j.version>5.5.0</lucene-neo4j.version>
+    <neo4j.version>3.1.1</neo4j.version>
 
     <jersey.version>1.19.3</jersey.version>
     <jackson.version>1.9.12</jackson.version>
@@ -175,6 +175,13 @@
         <groupId>org.gbif.registry</groupId>
         <artifactId>registry-metadata</artifactId>
         <version>${gbif-registry.version}</version>
+        <exclusions>
+          <exclusion>
+            <!-- digester via cglib brings in an old asm version, conflicting with kryo -->
+            <artifactId>asm</artifactId>
+            <groupId>asm</groupId>
+          </exclusion>
+        </exclusions>
       </dependency>
 
       <dependency>
@@ -286,7 +293,12 @@
       <dependency>
         <groupId>org.apache.lucene</groupId>
         <artifactId>lucene-core</artifactId>
-        <version>${lucene.version}</version>
+        <version>${lucene-neo4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.lucene</groupId>
+        <artifactId>lucene-analyzers-common</artifactId>
+        <version>5.4.1</version>
       </dependency>
       <dependency>
         <groupId> org.neo4j</groupId>
