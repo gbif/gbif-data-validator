@@ -40,15 +40,15 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 
 ## Evaluation Chain
 
-The evaluation of the submitted DataFile is achieve by an chain of evaluators.
+The evaluation of the submitted DataFile is achieve by a chain of evaluators. One can find 2 types of evaluation chain based on the nature of the evaluators: [StructuralEvaluationChain](#StructuralEvaluationChain) and [EvaluationChain](#EvaluationChain)
 
-### StructuralEvaluationChain
+### __StructuralEvaluationChain__
 The StructuralEvaluationChain is used to build and store the sequence of evaluation that will be performed on the structure of the DataFile submitted. Do to the nature of the validations, the StructuralEvaluationChain shall be run sequentially and can stop before it reaches the last evaluation.
 
 #### ResourceStructureEvaluator
 [ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself. If the evaluation bring results, depending of the [EvaluationCategory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java), the evaluation chain can be stopped. For example if DarwinCore Archive and cannot be opened/extracted.
 
-### EvaluationChain
+### __EvaluationChain__
 [EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build/configure/define the sequence of evaluation that will be performed.
 
 ### RecordCollectionEvaluator
