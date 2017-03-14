@@ -25,6 +25,7 @@ import org.gbif.ws.json.JacksonJsonContextResolver;
 import org.gbif.ws.mixin.Mixins;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -104,11 +105,11 @@ public class EvaluatorFactory {
    *
    * @param rowType rowType targeted by this uniqueness validation
    * @param caseSensitive
-   *
+   * @param workingFolder folder specific to the rsource to evaluate where temporary files will be created
    * @return
    */
-  public static RecordCollectionEvaluator createUniquenessEvaluator(Term rowType, boolean caseSensitive) {
-    return new UniquenessEvaluator(rowType, caseSensitive);
+  public static RecordCollectionEvaluator createUniquenessEvaluator(Term rowType, boolean caseSensitive, Path workingFolder) {
+    return new UniquenessEvaluator(rowType, caseSensitive, workingFolder);
   }
 
   /**
@@ -126,11 +127,11 @@ public class EvaluatorFactory {
 
   /**
    * Creates a {@link RecordCollectionEvaluator} instance for a evaluating checklist.
-   *
+   * @param workingFolder folder specific to the rsource to evaluate where temporary files will be created
    * @return
    */
-  public RecordCollectionEvaluator createChecklistEvaluator() {
-    return new ChecklistEvaluator(normalizerConfiguration);
+  public RecordCollectionEvaluator createChecklistEvaluator(Path workingFolder) {
+    return new ChecklistEvaluator(normalizerConfiguration, workingFolder);
   }
 
   /**

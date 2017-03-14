@@ -110,7 +110,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       init(dwcDataFile.getTabularDataFiles());
 
       EvaluationChain.Builder evaluationChainBuilder =
-              EvaluationChain.Builder.using(dwcDataFile, factory)
+              EvaluationChain.Builder.using(dwcDataFile, factory, workingDir.toPath())
                       .evaluateMetadataContent()
                       .evaluateCoreUniqueness()
                       .evaluateReferentialIntegrity()

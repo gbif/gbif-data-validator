@@ -12,6 +12,7 @@ import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -134,6 +135,7 @@ public class EvaluationChain {
    */
   public static class Builder {
     private final DwcDataFile dwcDataFile;
+    private final Path workingFolder;
 
     private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits = new ArrayList<>();
     private final List<RecordEvaluationUnit> recordEvaluationUnits = new ArrayList<>();
@@ -147,13 +149,14 @@ public class EvaluationChain {
      * @param factory
      * @return new instance of {@link Builder}
      */
-    public static Builder using(DwcDataFile dwcDataFile, EvaluatorFactory factory) {
-      return new Builder(dwcDataFile, factory);
+    public static Builder using(DwcDataFile dwcDataFile, EvaluatorFactory factory, Path workingFolder) {
+      return new Builder(dwcDataFile, factory, workingFolder);
     }
 
-    private Builder(DwcDataFile dwcDataFile, EvaluatorFactory factory) {
+    private Builder(DwcDataFile dwcDataFile, EvaluatorFactory factory, Path workingFolder) {
       this.dwcDataFile = dwcDataFile;
       this.factory = factory;
+      this.workingFolder = workingFolder;
     }
 
     /**
@@ -171,7 +174,7 @@ public class EvaluationChain {
     public Builder evaluateCoreUniqueness() {
       rowTypeEvaluationUnits.add(new RowTypeEvaluationUnit(
               dwcDataFile, dwcDataFile.getCore().getRowType(),
-              EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowType(), true)
+              EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowType(), true, workingFolder)
       ));
       return this;
     }
@@ -205,7 +208,7 @@ public class EvaluationChain {
       rowTypeEvaluationUnits.add(
               new RowTypeEvaluationUnit(
                       dwcDataFile, DwcTerm.Taxon,
-                      factory.createChecklistEvaluator()
+                      factory.createChecklistEvaluator(workingFolder)
               ));
       return this;
     }

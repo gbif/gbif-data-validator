@@ -9,14 +9,13 @@ import org.gbif.checklistbank.neo.UsageDao;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.nub.lookup.straight.IdLookupPassThru;
-import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,17 +44,26 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
  */
 public class ChecklistEvaluator implements RecordCollectionEvaluator {
 
-  private static final Predicate<InterpretationRemark> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
-
   private static final Logger LOG = LoggerFactory.getLogger(ChecklistEvaluator.class);
+  private static final Predicate<InterpretationRemark> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
 
   private final NormalizerConfiguration configuration;
 
   /**
-   * Default constructor: requires a NormalizerConfiguration object.
+   *
+   * @param configuration
+   * @param workingFolder where temporary results will be stored. The called is responsible to delete it.
    */
-  public ChecklistEvaluator(NormalizerConfiguration configuration) {
-    this.configuration = configuration;
+  public ChecklistEvaluator(NormalizerConfiguration configuration, Path workingFolder) {
+    this.configuration = new NormalizerConfiguration();
+
+    //use our own neo repository
+    this.configuration.neo.neoRepository = workingFolder.resolve("neo").toFile();
+
+    //copy other known configuration
+    this.configuration.neo.batchSize = configuration.neo.batchSize;
+    this.configuration.neo.mappedMemory = configuration.neo.mappedMemory;
+    this.configuration.poolSize = configuration.poolSize;
   }
 
   /**
@@ -83,9 +91,6 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
     } catch (Exception ex) {
       LOG.error("Error running checklist normalizer", ex);
       throw new RuntimeException(ex);
-    }
-    finally {
-      removeTempDirs(datasetKey);
     }
   }
 
@@ -119,7 +124,9 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
       });
       //get the graph/tree
       //result.setGraph(getTree(dao, GraphFormat.TEXT));
-      return results.stream();
+
+      //we filter out results with no details. This can happen when the normalizer flag issue we are not interested in.
+      return results.stream().filter( rer -> rer.getDetails() != null && !rer.getDetails().isEmpty() );
     } finally {
       if (dao != null) {
         dao.close();
@@ -155,14 +162,6 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
   }
 
   /**
-   * Remove temporary directories created to validate the data file.
-   */
-  private void removeTempDirs(UUID datasetKey) {
-    //deleteIfExists(configuration.archiveDir(datasetKey));
-    deleteIfExists(configuration.neo.kvp(datasetKey));
-    deleteIfExists(configuration.neo.neoDir(datasetKey));
-  }
-  /**
    * Gets the checklist tree.
    */
 //  private static String getTree(UsageDao dao, GraphFormat format) {
@@ -176,19 +175,4 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
 //    }
 //  }
 
-
-  /**
-   * Deletes a file or directory recursively if it exists.
-   */
-  private static void deleteIfExists(File file) {
-    if(file.exists()) {
-      if(file.isDirectory()) {
-        FileUtils.deleteDirectoryRecursively(file);
-      } else {
-        if(!file.delete()) {
-          LOG.warn("Error deleting file {}", file);
-        }
-      }
-    }
-  }
 }

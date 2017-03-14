@@ -11,6 +11,7 @@ import org.gbif.validation.util.FileBashUtilities;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,15 +31,17 @@ public class UniquenessEvaluator implements RecordCollectionEvaluator {
   org.gbif.utils.file.FileUtils GBIF_FILE_UTILS = new org.gbif.utils.file.FileUtils();
 
   private final Term rowType;
-  private boolean caseSensitive;
+  private final boolean caseSensitive;
+  private final Path workingFolder;
 
   /**
    *
    * @param rowType Term used as identifier for the dataFile (start at 1)
    */
-  public UniquenessEvaluator(Term rowType, boolean caseSensitive) {
+  public UniquenessEvaluator(Term rowType, boolean caseSensitive, Path workingFolder) {
     this.rowType = rowType;
     this.caseSensitive = caseSensitive;
+    this.workingFolder = workingFolder;
   }
 
   @Override
@@ -50,7 +53,7 @@ public class UniquenessEvaluator implements RecordCollectionEvaluator {
     int idColumnIndex = dataFile.getRecordIdentifier().get().getIndex();
 
     File sourceFile = dataFile.getFilePath().toFile();
-    File sortedFile = dataFile.getFilePath().getParent().resolve(sourceFile.getName() + "_sorted").toFile();
+    File sortedFile = workingFolder.resolve(sourceFile.getName() + "_sorted").toFile();
 
     GBIF_FILE_UTILS.sort(sourceFile, sortedFile, Charsets.UTF_8.toString(), idColumnIndex,
             dataFile.getDelimiterChar().toString(), null, "\n", dataFile.isHasHeaders() ? 1 : 0, null, caseSensitive);

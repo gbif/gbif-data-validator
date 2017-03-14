@@ -9,6 +9,7 @@ import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -34,9 +35,10 @@ public class EvaluationChainTest {
   @Test
   public void testBasicEvaluationChain() throws UnsupportedDataFileException {
     try {
-      DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dwcaDataFile, folder.newFolder().toPath());
+      Path testFolder = folder.newFolder().toPath();
+      DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dwcaDataFile, testFolder);
       EvaluationChain.Builder evaluationChainBuilder = EvaluationChain.Builder.using(dwcDataFile,
-              TestUtils.getEvaluatorFactory());
+              TestUtils.getEvaluatorFactory(), testFolder);
 
       evaluationChainBuilder.evaluateReferentialIntegrity();
       evaluationChainBuilder.build().runRowTypeEvaluation((dataFile, rowType, recordCollectionEvaluator) -> {

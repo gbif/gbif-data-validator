@@ -1,46 +1,49 @@
 package org.gbif.validation.evaluator;
 
 import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
-import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.DwcDataFile;
+import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.source.UnsupportedDataFileException;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Optional;
+import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import static junit.framework.TestCase.fail;
 
 /**
  *
  */
 public class ChecklistValidatorTest {
 
-  private static File testChecklistFile = FileUtils.getClasspathFile("checklists/00000001-c6af-11e2-9b88-00145eb45e9a");
-  private static File normalizerConfigFile = FileUtils.getClasspathFile("checklists/clb-normalizer.yaml");
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
 
-//  @Test
-//  public void testChecklistEvaluator() {
-//    NormalizerConfiguration config = getNormalizerConfiguration();
-//    config.archiveRepository = FileUtils.getClasspathFile("checklists");
-//    ChecklistEvaluator checklistEvaluator = new ChecklistEvaluator(config);
-//
-//    DataFile testChecklistDataFile = new DataFile(testChecklistFile.toPath(), "00000001-c6af-11e2-9b88-00145eb45e9a",
-//            FileFormat.DWCA, "");
-//
-//    try {
-//      Optional<Stream<RecordEvaluationResult>> a = checklistEvaluator.evaluate(testChecklistDataFile);
-//      a.get().forEach(System.out::println);
-//    } catch (IOException e) {
-//      fail(e.getMessage());
-//    }
-//  }
+  private DataFile checklistDataFile = org.gbif.validation.TestUtils.getDataFile(
+          "checklists/00000001-c6af-11e2-9b88-00145eb45e9a", "test", FileFormat.TABULAR);
 
-  private static NormalizerConfiguration getNormalizerConfiguration() {
+  @Test
+  public void testChecklistEvaluator() throws IOException, UnsupportedDataFileException {
+    ChecklistEvaluator checklistEvaluator = new ChecklistEvaluator(new NormalizerConfiguration(),
+            folder.newFolder().toPath());
+
+    Path testFolder = folder.newFolder().toPath();
+    DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(checklistDataFile, testFolder);
+
     try {
-      ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-      return mapper.readValue(normalizerConfigFile.toURI().toURL(),
-              NormalizerConfiguration.class);
-    } catch (IOException ex) {
-      throw new IllegalStateException(ex);
+      Optional<Stream<RecordEvaluationResult>> a = checklistEvaluator.evaluate(dwcDataFile);
+      a.get().forEach(System.out::println);
+    } catch (IOException e) {
+      fail(e.getMessage());
     }
   }
+
 }

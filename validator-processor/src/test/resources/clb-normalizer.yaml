@@ -2,4 +2,3 @@ poolSize: 2
 neo:
   neoRepository: /tmp/validation/checklists/neo
   mappedMemory: 2048
-archiveRepository: /tmp/validation/fileupload/

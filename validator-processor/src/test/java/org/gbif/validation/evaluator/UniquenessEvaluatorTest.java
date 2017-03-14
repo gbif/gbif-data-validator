@@ -13,6 +13,7 @@ import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -40,9 +41,10 @@ public class UniquenessEvaluatorTest {
             FileFormat.DWCA, "");
 
     try {
-      DwcDataFile dwcaContent = DataFileFactory.prepareDataFile(df, folder.newFolder().toPath());
+      Path testFolder = folder.newFolder().toPath();
+      DwcDataFile dwcaContent = DataFileFactory.prepareDataFile(df,testFolder);
 
-      UniquenessEvaluator ue = new UniquenessEvaluator(DwcTerm.Occurrence, false);
+      UniquenessEvaluator ue = new UniquenessEvaluator(DwcTerm.Occurrence, false, testFolder);
       Optional<Stream<RecordEvaluationResult>> uniquenessEvaluatorResult = ue.evaluate(dwcaContent);
 
       RecordEvaluationResult recordEvaluationResult = uniquenessEvaluatorResult.get().findFirst().get();
