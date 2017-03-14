@@ -1,7 +1,8 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.api.model.registry.Contact;
 import org.gbif.api.model.registry.Dataset;
-import org.gbif.registry.metadata.contact.ContactAdapter;
+import org.gbif.registry.metadata.CitationGenerator;
 import org.gbif.registry.metadata.parse.DatasetParser;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DwcDataFile;
@@ -14,7 +15,6 @@ import org.gbif.validation.api.result.ValidationResultElement;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,24 +46,25 @@ class BasicMetadataEvaluator implements MetadataEvaluator {
 
     List<ValidationResultElement> validationResultElements = new ArrayList<>();
     List<ValidationIssue> validationIssues = new ArrayList<>();
-    if(dwcDataFile.getMetadataFilePath().isPresent()) {
-      Path metadataFilePath = dwcDataFile.getMetadataFilePath().get();
-      try {
-        InputStream is = FileUtils.getInputStream(metadataFilePath.toFile());
-        Dataset dataset = DatasetParser.build(is);
 
-        List<Function<Dataset, Optional<ValidationIssue>>> datasetEvalChain = Arrays.asList(
-                BasicMetadataEvaluator::evaluateTitle,
-                BasicMetadataEvaluator::evaluateLicense,
-                BasicMetadataEvaluator::evaluateDescription,
-                BasicMetadataEvaluator::evaluateContact);
+    dwcDataFile.getMetadataFilePath().ifPresent(metadataFilePath -> {
+              try {
+                InputStream is = FileUtils.getInputStream(metadataFilePath.toFile());
+                Dataset dataset = DatasetParser.build(is);
 
-        datasetEvalChain.forEach( eval -> eval.apply(dataset).ifPresent(validationIssues::add));
-      } catch (IOException ex) {
-        LOG.warn("IOException from BasicMetadataEvaluator is unexpected.", ex);
-        validationIssues.add(ValidationIssues.withException(EvaluationType.UNHANDLED_ERROR, ex.getMessage()));
-      }
-    }
+                List<Function<Dataset, Optional<ValidationIssue>>> datasetEvalChain = Arrays.asList(
+                        BasicMetadataEvaluator::evaluateTitle,
+                        BasicMetadataEvaluator::evaluateLicense,
+                        BasicMetadataEvaluator::evaluateDescription,
+                        BasicMetadataEvaluator::evaluateContact);
+
+                datasetEvalChain.forEach(eval -> eval.apply(dataset).ifPresent(validationIssues::add));
+              } catch (IOException ex) {
+                LOG.warn("IOException from BasicMetadataEvaluator is unexpected.", ex);
+                validationIssues.add(ValidationIssues.withException(EvaluationType.UNHANDLED_ERROR, ex.getMessage()));
+              }
+            }
+    );
 
     if(!validationIssues.isEmpty()) {
       validationResultElements.add(
@@ -105,36 +106,14 @@ class BasicMetadataEvaluator implements MetadataEvaluator {
   }
 
   private static Optional<ValidationIssue> evaluateContact(Dataset dataset) {
-    //TODO use the same method than regsitry-metadata to get contacts
-    if(dataset.getContacts() == null || dataset.getContacts().isEmpty()) {
+    List<Contact> authorList = CitationGenerator.getAuthors(dataset.getContacts());
+    //we want at least 1 author and for ALL authors it must be possible to generate an author name
+    if(authorList.size() < 1 || authorList.size() != CitationGenerator.generateAuthorsName(authorList).size()) {
       return Optional.of(
               ValidationIssues.withEvaluationTypeOnly(
-                      EvaluationType.RESOURCE_CREATOR_MISSING_OR_INCOMPLETE));
+                      EvaluationType.RESOURCE_CONTACTS_MISSING_OR_INCOMPLETE));
     }
-
-    ContactAdapter contactAdapter = new ContactAdapter(dataset.getContacts());
-    if (contactAdapter.getCreators().isEmpty()) {
-      return Optional.of(
-              ValidationIssues.withEvaluationTypeOnly(
-                      EvaluationType.RESOURCE_CREATOR_MISSING_OR_INCOMPLETE));
-    }
-
-
-    //we need to check if all "creators" have a first and last name.
-//    List<Contact> contactsWithoutCompleteName = contactAdapter.getCreators().stream()
-//            .filter( cnt -> StringUtils.isBlank(cnt.getFirstName()) || StringUtils.isBlank(cnt.getLastName()))
-//            .collect(Collectors.toList());
-//
-//    if(!contactsWithoutCompleteName.isEmpty()){
-//
-//      //String authorNames = CitationGenerator.
-//
-//      //ValidationIssues.withRelatedData()
-//    }
-
     return Optional.empty();
-
   }
-
 
 }

@@ -344,7 +344,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void emitResponseAndStop(JobStatusResponse<?> response) {
     context().parent().tell(response, self());
-    deleteWorkingDir();
+    cleanup();
     getContext().stop(self());
   }
 
@@ -352,14 +352,14 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED, dataJob.getJobId(),
             ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(), errorCode, errorMessage));
     context().parent().tell(response, self());
-    deleteWorkingDir();
+    cleanup();
     getContext().stop(self());
   }
 
   /**
    * Deletes the working directory if it exists.
    */
-  private void deleteWorkingDir() {
+  private void cleanup() {
     if (workingDir.exists()) {
       FileUtils.deleteDirectoryRecursively(workingDir);
     }
