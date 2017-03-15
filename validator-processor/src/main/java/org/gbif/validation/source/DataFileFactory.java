@@ -186,8 +186,7 @@ public class DataFileFactory {
       ArchiveFile core = archive.getCore();
       if (core != null) {
         dataFileList.add(createDwcBasedTabularDataFile(core,
-                core.getLocationFile() != null ? core.getLocationFile().getName() :
-                        originalDataFile.getSourceFileName(),
+                determineSourceFilename(originalDataFile, core),
                 DwcFileType.CORE, pathAndLines.get(Paths.get(safeGetCoreLocation(archive)))));
       }
       for (ArchiveFile ext : archive.getExtensions()) {
@@ -220,6 +219,8 @@ public class DataFileFactory {
     Map<Term, String> defaultValues = archiveFile.getDefaultValues().orElse(null);
     TermIndex recordIdentifier = archiveFile.getId() == null ? null :
             new TermIndex(archiveFile.getId().getIndex(), archiveFile.getId().getTerm());
+
+    //if TermIndex is null we need to report an error
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             sourceFileName,
@@ -280,14 +281,33 @@ public class DataFileFactory {
   /**
    * When used on a single file the location comes from the Archive object. This method simply makes it
    * easier to get.
+   *
    * @param archive
+   *
    * @return
    */
   private static String safeGetCoreLocation(Archive archive) {
-    if(archive.getCore() == null || archive.getCore().getLocation() == null) {
+    if (archive.getCore() == null || archive.getCore().getLocation() == null) {
       return archive.getLocation().getName();
     }
     return archive.getCore().getLocation();
+  }
+
+  /**
+   * This method allows to use the name of the {@link ArchiveFile} instead of the {@link DataFile} when used
+   * the {@link FileFormat} is {@link FileFormat#DWCA}.
+   *
+   * @param originalDataFile
+   * @param core
+   *
+   * @return
+   */
+  private static String determineSourceFilename(DataFile originalDataFile, ArchiveFile core) {
+    if (FileFormat.DWCA == originalDataFile.getFileFormat() && core.getLocationFile() != null) {
+      return core.getLocationFile().getName();
+    }
+
+    return originalDataFile.getSourceFileName();
   }
 
   /**

@@ -14,6 +14,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static org.gbif.validation.source.DataFileFactory.prepareDataFile;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -26,16 +28,18 @@ public class DataFileFactoryTest {
   private static final String TEST_EMPTY_CSV_FILE_LOCATION = "tabular/empty.csv";
   private static final String TEST_EMPTY_XLSX_FILE_LOCATION = "workbooks/empty.xlsx";
 
+  private static final String TEST_OCC_XLSX_FILE_LOCATION = "workbooks/occurrence-workbook.xlsx";
+
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
   @Test
-  public void testPrepareSourceDwc() throws IOException, UnsupportedDataFileException {
+  public void testPrepareDataFile() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "");
 
-    DwcDataFile preparedDwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
+    DwcDataFile preparedDwcDataFile = prepareDataFile(dataFile, folder.newFolder().toPath());
     //the test Dwc folder contains 1 core + 2 extensions
     assertEquals(3, preparedDwcDataFile.getTabularDataFiles().size());
 
@@ -43,16 +47,30 @@ public class DataFileFactoryTest {
     assertTrue(StringUtils.endsWith(preparedDwcDataFile.getCore().getFilePath().toString(), ".txt"));
   }
 
-  /**
-   * Should throw UnsupportedDataFileException: Unable to detect field delimiter
-   * @throws IOException
-   * @throws UnsupportedDataFileException
-   */
+  @Test
+  public void testXLSXFile() throws IOException, UnsupportedDataFileException {
+    File testFile = FileUtils.getClasspathFile(TEST_OCC_XLSX_FILE_LOCATION);
+    DataFile dataFile = new DataFile(testFile.toPath(), "my-xlsx-file.xlsx", FileFormat.SPREADSHEET,
+            ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET);
+    DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
+    //ensure we got a tabularDataFile
+    assertEquals(1, dwcDataFile.getTabularDataFiles().size());
+
+    //ensure the name of the original file is preserved
+    assertEquals("my-xlsx-file.xlsx", dwcDataFile.getTabularDataFiles().get(0).getSourceFileName());
+  }
+
+
+    /**
+     * Should throw UnsupportedDataFileException: Unable to detect field delimiter
+     * @throws IOException
+     * @throws UnsupportedDataFileException
+     */
   @Test( expected = UnsupportedDataFileException.class)
   public void testEmptyCSV() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_EMPTY_CSV_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "empty-csv", FileFormat.TABULAR, "");
-    DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
+    prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 
   /**
@@ -65,7 +83,7 @@ public class DataFileFactoryTest {
     File testFile = FileUtils.getClasspathFile(TEST_EMPTY_XLSX_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "empty-xlsx", FileFormat.SPREADSHEET,
             ExtraMediaTypes.APPLICATION_EXCEL);
-    DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
+    prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 
 }
