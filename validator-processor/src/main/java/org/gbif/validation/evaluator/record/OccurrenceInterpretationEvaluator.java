@@ -62,7 +62,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   @Override
   public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
-    LOG.info("Evaluating line {} and record {}", lineNumber, record);
+    LOG.debug("Evaluating line {} and record {}", lineNumber, record);
     if (record == null || record.length == 0) {
       return null;
     }
@@ -106,8 +106,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    */
   @VisibleForTesting
   protected RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
-
-    LOG.info("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
+    LOG.debug("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
     RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(rowType, lineNumber);
 
     Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();

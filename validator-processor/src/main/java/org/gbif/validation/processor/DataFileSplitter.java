@@ -43,12 +43,15 @@ class DataFileSplitter {
       String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
 
       boolean inputHasHeaders = dataFile.isHasHeaders();
+      //number of lines in the last file
+      int remainingLines =  dataFile.getNumOfLines() - (splits.length - 1 * fileSplitSize);
       IntStream.range(0, splits.length)
               .forEach(idx -> splitDataFiles.add(newSplitDataFile(dataFile,
                       splitFolder,
                       splits[idx],
                       inputHasHeaders && (idx == 0),
-                      (idx * fileSplitSize))));
+                      (idx * fileSplitSize),
+                      idx < splits.length -1 ? fileSplitSize : remainingLines)));
     }
     return splitDataFiles;
   }
@@ -65,13 +68,13 @@ class DataFileSplitter {
    * @return new {@link DataFile} representing a portion of the provided dataFile.
    */
   private static TabularDataFile newSplitDataFile(TabularDataFile dataFile, String baseDir, String fileName,
-                                           boolean withHeader, Integer offset) {
+                                           boolean withHeader, Integer offset, Integer numberOfLines) {
     //Creates the file to be used
     File splitFile = new File(baseDir, fileName);
     splitFile.deleteOnExit();
 
     return DataFileFactory.newTabularDataFileSplit(dataFile, Paths.get(splitFile.getAbsolutePath()),
-            offset, withHeader);
+            offset, numberOfLines, withHeader);
 
   }
 }

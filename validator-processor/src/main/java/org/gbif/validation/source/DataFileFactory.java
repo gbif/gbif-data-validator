@@ -90,18 +90,18 @@ public class DataFileFactory {
    * @param tabDatafile
    * @param splitFilePath
    * @param lineOffset
+   * @param numberOfLines
    * @param withHeader
    * @return
    */
   public static TabularDataFile newTabularDataFileSplit(TabularDataFile tabDatafile, Path splitFilePath,
-                                                        Integer lineOffset, boolean withHeader) {
-    //FIXME lineNumber
+                                                        Integer lineOffset, Integer numberOfLines, boolean withHeader) {
     return new TabularDataFile(splitFilePath,
             tabDatafile.getSourceFileName(),
             tabDatafile.getRowType(), tabDatafile.getType(), tabDatafile.getColumns(),
             tabDatafile.getRecordIdentifier().orElse(null), tabDatafile.getDefaultValues().orElse(null),
             lineOffset, withHeader, tabDatafile.getCharacterEncoding(), tabDatafile.getDelimiterChar(),
-            tabDatafile.getQuoteChar(), -1);
+            tabDatafile.getQuoteChar(), numberOfLines);
   }
 
   /**

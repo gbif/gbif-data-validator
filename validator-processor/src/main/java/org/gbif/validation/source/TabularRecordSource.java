@@ -20,7 +20,7 @@ class TabularRecordSource implements RecordSource {
   TabularRecordSource(TabularDataFile tabularDataFile) throws IOException {
     this.tabularDataFile = tabularDataFile;
 
-    csvReader = new  CSVReader(tabularDataFile.getFilePath().toFile(),
+    csvReader = new CSVReader(tabularDataFile.getFilePath().toFile(),
             tabularDataFile.getCharacterEncoding().name(),
             tabularDataFile.getDelimiterChar().toString(),
             tabularDataFile.getQuoteChar(),

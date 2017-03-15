@@ -56,19 +56,22 @@ class DataFileRecordsActor extends AbstractLoggingActor {
    * @return
    */
   private DataWorkResult processDataFile(TabularDataFile dataFile, RecordEvaluator recordEvaluator, CollectorGroup collectors) {
-    long line = dataFile.getFileLineOffset().orElse(0) + 1; //we report line number starting at 1
+    //add one if there is a header since the source will not send it
+    long lineNumber = dataFile.getFileLineOffset().orElse(0) + (dataFile.isHasHeaders() ? + 1 : 0);
     log().info("Starting to read: " + dataFile.getFilePath());
     try (RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(dataFile)) {
       String[] record;
       while ((record = recordSource.read()) != null) {
-        line++;
+        //we report line number starting at 1 so we will increment
+        //the counter before reporting the line number
+        lineNumber++;
         collectors.collectMetrics(record);
-        collectors.collectResult(recordEvaluator.evaluate(line, record));
+        collectors.collectResult(recordEvaluator.evaluate(lineNumber, record));
       }
-      log().info("Done reading: " + dataFile.getFilePath() + " " + line + " lines");
+      log().info("Done reading: " + dataFile.getFilePath() + " finished at line " + lineNumber + " (including offset)");
       return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.SUCCESS, collectors);
     } catch (Exception ex) {
-      log().error("Error while evaluating line {} of {}: {}", line, dataFile.getFilePath(), ex.getMessage());
+      log().error("Error while evaluating line {} of {}: {}", lineNumber, dataFile.getFilePath(), ex.getMessage());
       return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.FAILED, collectors);
     }
   }

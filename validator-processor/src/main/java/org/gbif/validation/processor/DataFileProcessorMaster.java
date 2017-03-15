@@ -1,7 +1,6 @@
 package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.MetadataEvaluator;
@@ -360,9 +359,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Deletes the working directory if it exists.
    */
   private void cleanup() {
-    if (workingDir.exists()) {
-      FileUtils.deleteDirectoryRecursively(workingDir);
-    }
+    //TODO add debug configuration
+//    if (workingDir.exists()) {
+//      FileUtils.deleteDirectoryRecursively(workingDir);
+//    }
   }
 
   private static class StructuralEvaluationResult {
