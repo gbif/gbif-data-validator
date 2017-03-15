@@ -44,7 +44,7 @@ class DataFileSplitter {
 
       boolean inputHasHeaders = dataFile.isHasHeaders();
       //number of lines in the last file
-      int remainingLines =  dataFile.getNumOfLines() - (splits.length - 1 * fileSplitSize);
+      int remainingLines =  dataFile.getNumOfLines() - ((splits.length - 1) * fileSplitSize);
       IntStream.range(0, splits.length)
               .forEach(idx -> splitDataFiles.add(newSplitDataFile(dataFile,
                       splitFolder,

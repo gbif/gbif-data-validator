@@ -27,6 +27,9 @@ public class DataFileSplitterTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
+  private static final int SPLIT_SIZE = 2;
+  private static final int EXPECTED_NUMBER_OF_SPLIT = 3;
+  private static final int EXPECTED_NUMBER_OF_LINES = 5;
   private File testFile = FileUtils.getClasspathFile("splitter/original_file.csv");
 
   @Test
@@ -36,13 +39,20 @@ public class DataFileSplitterTest {
 
     try {
       List<TabularDataFile> dataFileSplits = DataFileSplitter.splitDataFile(dwcDataFile.getCore(),
-              2, folder.newFolder().toPath());
-      assertEquals(3, dataFileSplits.size());
+              SPLIT_SIZE, folder.newFolder().toPath());
+      assertEquals(EXPECTED_NUMBER_OF_SPLIT, dataFileSplits.size());
 
-      //check the offset
-      assertEquals(0, dataFileSplits.get(0).getFileLineOffset().get().intValue());
+      //check the offset and numberOfLines
+      assertEquals(0, dataFileSplits.get(0).getFileLineOffset().orElse(-1).intValue());
+      assertEquals(SPLIT_SIZE, dataFileSplits.get(0).getNumOfLines().intValue());
+
       assertEquals(2, dataFileSplits.get(1).getFileLineOffset().get().intValue());
+      assertEquals(SPLIT_SIZE, dataFileSplits.get(1).getNumOfLines().intValue());
+
       assertEquals(4, dataFileSplits.get(2).getFileLineOffset().get().intValue());
+      //EXPECTED_NUMBER_OF_SPLIT -1 since the last split contains the remaining
+      assertEquals(EXPECTED_NUMBER_OF_LINES - ((EXPECTED_NUMBER_OF_SPLIT -1) * SPLIT_SIZE), dataFileSplits.get(2)
+              .getNumOfLines().intValue());
 
     } catch (IOException e) {
       fail(e.getMessage());
