@@ -1,4 +1,4 @@
-Evaluation Type represents what the evaluation discovered which not always an issue.
+Evaluation Type represents what the evaluation discovered which is not always an issue.
 
 ### Resource Integrity
 |Key            |Description    |
