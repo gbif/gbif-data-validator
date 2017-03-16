@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * This class contains functions that encapsulate Linux commands.
@@ -67,13 +69,16 @@ public class FileBashUtilities {
 
   /**
    * Split a text file into pieces of size 'splitSize'.
+   * @return paths of all files produced by the command sorted by natural order of {@link String} to get
+   * file.txtaa before file.txtbb.
+   * Never null.
    */
   public static String[] splitFile(String filePath, int splitSize, String outputDir) throws IOException {
     File outDir = new File(outputDir);
     File inFile = new File(filePath);
-    checkArgument((outDir.exists() && outDir.isDirectory()) || !outDir.exists(), "Output path is not a directory");
-    checkArgument((outDir.exists() && outDir.list().length == 0) || !outDir.exists(),
-                  "Output directory should be empty");
+    checkArgument(!outDir.exists() || outDir.isDirectory(), "Output directory is not a directory");
+    checkArgument(!outDir.exists() || outDir.list().length == 0, "Output directory should be empty");
+
     checkArgument(inFile.exists(), "Input file doesn't exist");
 
     if (!outDir.exists()) {
@@ -81,8 +86,12 @@ public class FileBashUtilities {
     }
 
     executeSimpleCmd(String.format("split -l %s %s %s", Integer.toString(splitSize), filePath,
-                                   Paths.get(outputDir, inFile.getName())));
-    return outDir.list();
+            Paths.get(outputDir, inFile.getName())));
+    String[] outputContent = Optional.ofNullable(outDir.list()).orElse(new String[0]);
+    //sort using the ascending, natural order of String to get file.txtaa before file.txtbb
+    Arrays.sort(outputContent);
+
+    return outputContent;
   }
 
   /**
