@@ -44,6 +44,9 @@ This is a simple project:
  1. A Java based web service provides the entry for validation of data.  A client can POST a dataset, or provide a callback URL to an online dataset for validation.  Since validation may take some time, this returns a callback to check the job status.  Once complete, the validation report is available as JSON.  During validation, the service makes use of both libraries for validation, and online web services.
  2. A simple Node based web application provides a basic front end to the validation web service.  This application is part of the [GBIF.org project](https://github.com/gbif/portal16)   .
 
+## Documentation
+ * [API](https://github.com/gbif/gbif-data-validator/blob/master/doc/api.md)
+ * [Evaluation Types](https://github.com/gbif/gbif-data-validator/blob/master/doc/evaluation_types.md)
 
 ## Contributions and process
 
