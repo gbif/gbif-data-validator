@@ -15,11 +15,11 @@ public class ValidationWsConfiguration {
    * Url to the GBIF Rest API.
    */
   private String apiUrl;
-
   private URL extensionDiscoveryUrl;
+  private boolean preserveTemporaryFiles;
 
-  private Optional<String> gangliaHost;
-  private Optional<Integer> gangliaPort;
+  private String gangliaHost;
+  private Integer gangliaPort;
 
   /**
    * Maximum number of lines a file can contains until we split it.
@@ -89,19 +89,27 @@ public class ValidationWsConfiguration {
     this.jobResultStorageDir = jobResultStorageDir;
   }
 
-  public Optional<String> getGangliaHost() {
-    return gangliaHost;
+  public boolean isPreserveTemporaryFiles() {
+    return preserveTemporaryFiles;
   }
 
-  public void setGangliaHost(Optional<String> gangliaHost) {
+  public void setPreserveTemporaryFiles(boolean preserveTemporaryFiles) {
+    this.preserveTemporaryFiles = preserveTemporaryFiles;
+  }
+
+  public Optional<String> getGangliaHost() {
+    return Optional.ofNullable(gangliaHost);
+  }
+
+  public void setGangliaHost(String gangliaHost) {
     this.gangliaHost = gangliaHost;
   }
 
   public Optional<Integer> getGangliaPort() {
-    return gangliaPort;
+    return Optional.ofNullable(gangliaPort);
   }
 
-  public void setGangliaPort(Optional<Integer> gangliaPort) {
+  public void setGangliaPort(Integer gangliaPort) {
     this.gangliaPort = gangliaPort;
   }
 }

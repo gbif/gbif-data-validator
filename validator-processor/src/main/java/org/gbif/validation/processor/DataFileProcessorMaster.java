@@ -1,6 +1,7 @@
 package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
+import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.MetadataEvaluator;
@@ -59,6 +60,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
   private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
   private final Collection<ValidationResultElement> validationResultElements;
+  private final boolean preserveTemporaryFiles;
   private final AtomicInteger workerCompleted;
 
   private int numOfWorkers;
@@ -71,13 +73,15 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Full constructor.
    */
-  DataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir) {
+  DataFileProcessorMaster(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
+                          boolean preserveTemporaryFiles) {
 
     rowTypeDataFile = new ConcurrentHashMap<>();
     rowTypeCollectorProviders = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
     validationResultElements = new ConcurrentLinkedQueue<>();
+    this.preserveTemporaryFiles = preserveTemporaryFiles;
 
     receive(
             //this should only be called once
@@ -90,6 +94,19 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
               .match(DataWorkResult.class, this::processRecordBasedResults)
               .match(MetadataWorkResult.class, this::processMetadataBasedResults).build()
     );
+  }
+
+  /**
+   * Creates Actor {@link Props}.
+   * @param factory
+   * @param fileSplitSize
+   * @param baseWorkingDir
+   * @param preserveTemporaryFiles
+   * @return
+   */
+  public static Props createProps(EvaluatorFactory factory, Integer fileSplitSize, String baseWorkingDir,
+                            boolean preserveTemporaryFiles) {
+    return Props.create(DataFileProcessorMaster.class, factory, fileSplitSize, baseWorkingDir, preserveTemporaryFiles);
   }
 
   /**
@@ -359,10 +376,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Deletes the working directory if it exists.
    */
   private void cleanup() {
-    //TODO add debug configuration
-//    if (workingDir.exists()) {
-//      FileUtils.deleteDirectoryRecursively(workingDir);
-//    }
+    if (!preserveTemporaryFiles && workingDir.exists()) {
+      FileUtils.deleteDirectoryRecursively(workingDir);
+    }
   }
 
   private static class StructuralEvaluationResult {

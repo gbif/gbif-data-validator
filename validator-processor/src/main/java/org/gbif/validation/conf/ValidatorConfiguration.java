@@ -15,16 +15,19 @@ public class ValidatorConfiguration {
   private final NormalizerConfiguration normalizerConfiguration;
   private final URL extensionListURL;
 
-  private final Optional<String> gangliaHost;
-  private final Optional<Integer> gangliaPort;
+  private final boolean preserveTemporaryFiles;
+
+  private final String gangliaHost;
+  private final Integer gangliaPort;
 
   public static class Builder {
     private String apiUrl;
     private NormalizerConfiguration normalizerConfiguration;
     private URL extensionListURL;
+    private boolean preserveTemporaryFiles = false;
 
-    private Optional<String> gangliaHost;
-    private Optional<Integer> gangliaPort;
+    private String gangliaHost;
+    private Integer gangliaPort;
 
     public Builder setApiUrl(String apiUrl) {
       this.apiUrl = apiUrl;
@@ -41,19 +44,24 @@ public class ValidatorConfiguration {
       return this;
     }
 
-    public Builder setGangliaHost(Optional<String> gangliaHost) {
+    public Builder setPreserveTemporaryFiles(boolean preserveTemporaryFiles) {
+      this.preserveTemporaryFiles = preserveTemporaryFiles;
+      return this;
+    }
+
+    public Builder setGangliaHost(String gangliaHost) {
       this.gangliaHost = gangliaHost;
       return this;
     }
 
-    public Builder setGangliaPort(Optional<Integer> gangliaPort) {
+    public Builder setGangliaPort(Integer gangliaPort) {
       this.gangliaPort = gangliaPort;
       return this;
     }
 
     public ValidatorConfiguration build(){
       return new ValidatorConfiguration(apiUrl, normalizerConfiguration,
-              extensionListURL, gangliaHost, gangliaPort);
+              extensionListURL, preserveTemporaryFiles , gangliaHost, gangliaPort);
     }
   }
 
@@ -62,10 +70,12 @@ public class ValidatorConfiguration {
   }
 
   public ValidatorConfiguration(String apiUrl, NormalizerConfiguration normalizerConfiguration,
-                                URL extensionListURL, Optional<String> gangliaHost, Optional<Integer> gangliaPort){
+                                URL extensionListURL,  boolean preserveTemporaryFiles,
+                                String gangliaHost, Integer gangliaPort){
     this.apiUrl = apiUrl;
     this.normalizerConfiguration = normalizerConfiguration;
     this.extensionListURL = extensionListURL;
+    this.preserveTemporaryFiles = preserveTemporaryFiles;
 
     this.gangliaHost = gangliaHost;
     this.gangliaPort = gangliaPort;
@@ -83,11 +93,20 @@ public class ValidatorConfiguration {
     return extensionListURL;
   }
 
+  /**
+   * Should the temporary created for validation should be preserved.
+   * This is mostly for debugging purpose.
+   * @return
+   */
+  public boolean isPreservedTemporaryFiles() {
+    return preserveTemporaryFiles;
+  }
+
   public Optional<String> getGangliaHost() {
-    return gangliaHost;
+    return Optional.ofNullable(gangliaHost);
   }
 
   public Optional<Integer> getGangliaPort() {
-    return gangliaPort;
+    return Optional.ofNullable(gangliaPort);
   }
 }

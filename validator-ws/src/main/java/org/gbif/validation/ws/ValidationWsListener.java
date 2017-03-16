@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,6 +31,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.google.common.collect.Lists;
 import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,9 +84,12 @@ public class ValidationWsListener extends GbifServletListener {
         LOG.error("Can't set ExtensionDiscoveryUrl", e);
       }
 
-      //optionally, Ganglia settings
-      configuration.setGangliaHost(Optional.ofNullable(properties.getProperty(ConfKeys.GANGLIA_HOST)));
-      configuration.setGangliaPort(Optional.ofNullable(NumberParser.parseInteger(properties.getProperty(ConfKeys.GANGLIA_PORT))));
+      //optional settings
+      configuration.setPreserveTemporaryFiles(
+              BooleanUtils.toBooleanDefaultIfNull(
+                BooleanUtils.toBoolean(properties.getProperty(ConfKeys.PRESERVE_TEMPORARY_FILES)), false));
+      configuration.setGangliaHost(properties.getProperty(ConfKeys.GANGLIA_HOST));
+      configuration.setGangliaPort(NumberParser.parseInteger(properties.getProperty(ConfKeys.GANGLIA_PORT)));
 
       return configuration;
     }
@@ -140,13 +143,15 @@ public class ValidationWsListener extends GbifServletListener {
               .setApiUrl(configuration.getApiUrl())
               .setNormalizerConfiguration(getNormalizerConfiguration())
               .setExtensionListURL(configuration.getExtensionDiscoveryUrl())
-              .setGangliaHost(configuration.getGangliaHost())
-              .setGangliaPort(configuration.getGangliaPort())
+              .setPreserveTemporaryFiles(configuration.isPreserveTemporaryFiles())
+              .setGangliaHost(configuration.getGangliaHost().orElse(null))
+              .setGangliaPort(configuration.getGangliaPort().orElse(null))
               .build();
 
       return new ActorPropsSupplier(new EvaluatorFactory(config),
-                                    configuration.getFileSplitSize(),
-                                    configuration.getWorkingDir());
+              configuration.getFileSplitSize(),
+              configuration.getWorkingDir(),
+              config.isPreservedTemporaryFiles());
     }
 
     /**

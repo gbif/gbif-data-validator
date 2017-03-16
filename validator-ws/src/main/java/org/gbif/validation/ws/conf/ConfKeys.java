@@ -12,6 +12,8 @@ public final class ConfKeys {
   public static final String FILE_SPLIT_SIZE = "fileSplitSize";
   public static final String RESULT_STORAGE_DIR_CONF_KEY = "jobResultStorageDir";
 
+  public static final String PRESERVE_TEMPORARY_FILES = "preserveTemporaryFiles";
+
   public static final String GANGLIA_HOST = "gangliaHost";
   public static final String GANGLIA_PORT = "gangliaPort";
 

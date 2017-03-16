@@ -18,8 +18,9 @@ public class ActorPropsSupplier implements Supplier<Props> {
   /**
    * Default constructor, the parameters received are used to build actor instances.
    */
-  public ActorPropsSupplier(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir) {
-    props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize, workingDir);
+  public ActorPropsSupplier(EvaluatorFactory evaluatorFactory, Integer fileSplitSize, String workingDir,
+                            boolean preserveTemporaryFiles) {
+    props =  DataFileProcessorMaster.createProps(evaluatorFactory, fileSplitSize, workingDir, preserveTemporaryFiles);
   }
 
   /**
