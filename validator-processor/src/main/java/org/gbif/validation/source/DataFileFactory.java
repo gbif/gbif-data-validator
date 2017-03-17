@@ -131,9 +131,15 @@ public class DataFileFactory {
     List<TabularDataFile> coreTabularDataFile =
             dfPerDwcFileType.getOrDefault(DwcFileType.CORE, new ArrayList<>());
 
+    // Those checks belong to an Evaluator
     if(coreTabularDataFile.size() != 1) {
       LOG.warn("DataFile should have exactly 1 core. {}", dataFile);
       throw new UnsupportedDataFileException("DataFile should have exactly 1 core. Found " + coreTabularDataFile.size());
+    }
+
+    if(!coreTabularDataFile.get(0).getRecordIdentifier().isPresent()) {
+      LOG.warn("DataFile should have record identifier.", dataFile);
+      throw new UnsupportedDataFileException("DataFile should have record identifier.");
     }
 
     Optional<TabularDataFile> coreDf = coreTabularDataFile.stream().findFirst();

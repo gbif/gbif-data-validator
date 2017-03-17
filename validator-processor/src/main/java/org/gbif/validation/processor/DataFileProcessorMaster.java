@@ -4,7 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
@@ -266,7 +266,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates an Actor for the provided {@link Term} and {@link RecordCollectionEvaluator}.
    */
-  private ActorRef createSingleActor(MetadataEvaluator metadataEvaluator) {
+  private ActorRef createSingleActor(DwcDataFileEvaluator metadataEvaluator) {
     String actorName =  "MetadataEvaluatorActor_" + UUID.randomUUID();
     return getContext().actorOf(Props.create(MetadataContentActor.class, metadataEvaluator), actorName);
   }

@@ -11,7 +11,7 @@ import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 import org.gbif.occurrence.processor.interpreting.TaxonomyInterpreter;
 import org.gbif.utils.HttpUtil;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
@@ -135,10 +135,10 @@ public class EvaluatorFactory {
   }
 
   /**
-   * Creates a {@link MetadataEvaluator} to evaluate the content of the metadata document (EML).
+   * Creates a {@link DwcDataFileEvaluator} to evaluate the content of the metadata document (EML).
    * @return
    */
-  public MetadataEvaluator createMetadataContentEvaluator() {
+  public DwcDataFileEvaluator createMetadataContentEvaluator() {
     return new BasicMetadataEvaluator();
   }
 

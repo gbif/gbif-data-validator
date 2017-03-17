@@ -4,7 +4,7 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
@@ -102,13 +102,13 @@ public class EvaluationChain {
   }
 
   /**
-   * Container class holding data between initialization and processing phase for {@link MetadataEvaluator}.
+   * Container class holding data between initialization and processing phase for {@link DwcDataFileEvaluator}.
    */
   private static class MetadataEvaluationUnit {
     private final DwcDataFile dwcDataFile;
-    private final MetadataEvaluator metadataEvaluator;
+    private final DwcDataFileEvaluator metadataEvaluator;
 
-    MetadataEvaluationUnit(DwcDataFile dwcDataFile, MetadataEvaluator metadataEvaluator) {
+    MetadataEvaluationUnit(DwcDataFile dwcDataFile, DwcDataFileEvaluator metadataEvaluator) {
       this.dwcDataFile = dwcDataFile;
       this.metadataEvaluator = metadataEvaluator;
     }
@@ -117,7 +117,7 @@ public class EvaluationChain {
       return dwcDataFile;
     }
 
-    public MetadataEvaluator getMetadataEvaluator() {
+    public DwcDataFileEvaluator getMetadataEvaluator() {
       return metadataEvaluator;
     }
 
@@ -238,7 +238,7 @@ public class EvaluationChain {
   }
 
   /**
-   * Run all the {@link MetadataEvaluator} using the provided {@link MetadataEvaluatorRunner}.
+   * Run all the {@link DwcDataFileEvaluator} using the provided {@link MetadataEvaluatorRunner}.
    *
    * @param runner
    */

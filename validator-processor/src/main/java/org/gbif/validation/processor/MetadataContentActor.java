@@ -1,7 +1,7 @@
 package org.gbif.validation.processor;
 
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.result.ValidationResultElement;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import static akka.pattern.Patterns.pipe;
  */
 class MetadataContentActor extends AbstractLoggingActor {
 
-  public MetadataContentActor(MetadataEvaluator metadataEvaluator) {
+  public MetadataContentActor(DwcDataFileEvaluator metadataEvaluator) {
     receive(
             //this should only be called once
             match(DwcDataFile.class, dataFileMessage -> {
@@ -33,7 +33,7 @@ class MetadataContentActor extends AbstractLoggingActor {
   /**
    * Runs the validation and converts the result into a {@link MetadataWorkResult}.
    */
-  private MetadataWorkResult processDataFile(DwcDataFile dwcaDataFile, MetadataEvaluator metadataEvaluator) {
+  private MetadataWorkResult processDataFile(DwcDataFile dwcaDataFile, DwcDataFileEvaluator metadataEvaluator) {
     try {
       List<ValidationResultElement> evaluatorResult =
               metadataEvaluator.evaluate(dwcaDataFile).orElse(null);

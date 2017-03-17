@@ -6,7 +6,7 @@ import org.gbif.registry.metadata.CitationGenerator;
 import org.gbif.registry.metadata.parse.DatasetParser;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
@@ -27,17 +27,17 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Basic implementation of {@link MetadataEvaluator} that evaluate the content of the metadata document.
+ * Basic implementation of {@link DwcDataFileEvaluator} that evaluate the content of the metadata document.
  *
  */
-class BasicMetadataEvaluator implements MetadataEvaluator {
+class BasicMetadataEvaluator implements DwcDataFileEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(BasicMetadataEvaluator.class);
   private static final int MIN_TITLE_LENGTH = 10;
   private static final int MIN_DESCRIPTION_LENGTH = 25;
 
   /**
-   * Only runs if the metadata file exists, otherwise it returns
+   * Only runs if the metadata file exists, otherwise it returns {@code Optional.empty()}.
    * @param dwcDataFile
    * @return
    */

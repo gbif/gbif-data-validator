@@ -1,12 +1,12 @@
 package org.gbif.validation.evaluator.runner;
 
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.MetadataEvaluator;
+import org.gbif.validation.api.DwcDataFileEvaluator;
 
 /**
- * Functional interface to define how to run a {@link MetadataEvaluator}
+ * Functional interface to define how to run a {@link DwcDataFileEvaluator}
  */
 @FunctionalInterface
 public interface MetadataEvaluatorRunner {
-  void run(DwcDataFile dataFile, MetadataEvaluator metadataEvaluator);
+  void run(DwcDataFile dataFile, DwcDataFileEvaluator metadataEvaluator);
 }
