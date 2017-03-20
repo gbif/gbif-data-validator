@@ -7,12 +7,14 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.util.List;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 
 import org.apache.commons.lang3.Validate;
 
 /**
  * Class to evaluate the structure of a record.
  */
+@ThreadSafe
 public class RecordStructureEvaluator implements RecordEvaluator {
 
   private final Term rowType;

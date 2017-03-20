@@ -26,7 +26,6 @@ public class DataFileFactoryTest {
 
   private static final String TEST_DWC_FILE_LOCATION = "dwca/dwca-taxon";
   private static final String TEST_EMPTY_CSV_FILE_LOCATION = "tabular/empty.csv";
-  private static final String TEST_NO_ID_CSV_FILE_LOCATION = "tabular/no_id.csv";
   private static final String TEST_EMPTY_XLSX_FILE_LOCATION = "workbooks/empty.xlsx";
 
   private static final String TEST_OCC_XLSX_FILE_LOCATION = "workbooks/occurrence-workbook.xlsx";
@@ -72,18 +71,6 @@ public class DataFileFactoryTest {
   public void testEmptyCSV() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_EMPTY_CSV_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "empty-csv", FileFormat.TABULAR, "");
-    prepareDataFile(dataFile, folder.newFolder().toPath());
-  }
-
-  /**
-   * Should throw UnsupportedDataFileException: Unable to detect field delimiter
-   * @throws IOException
-   * @throws UnsupportedDataFileException
-   */
-  @Test( expected = UnsupportedDataFileException.class)
-  public void testCSVnoRecordId() throws IOException, UnsupportedDataFileException {
-    File testFile = FileUtils.getClasspathFile(TEST_NO_ID_CSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "no-id", FileFormat.TABULAR, "");
     prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 

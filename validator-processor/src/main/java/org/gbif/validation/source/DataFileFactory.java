@@ -108,11 +108,10 @@ public class DataFileFactory {
    * Prepare the {@link DataFile} for evaluation.
    * This step includes reading the headers from the file and generating a list of {@link TabularDataFile}.
    *
-   *
    * @param dataFile
    * @param destinationFolder Preparing {@link DataFile} includes rewriting them in a normalized format. This {@link Path}
    *                          represents the destination of normalized files.
-   * @return a list of {@link TabularDataFile}
+   * @return unvalidated {@link DwcDataFile}
    * @throws IOException
    * @throws UnsupportedDataFileException
    */
@@ -131,19 +130,14 @@ public class DataFileFactory {
     List<TabularDataFile> coreTabularDataFile =
             dfPerDwcFileType.getOrDefault(DwcFileType.CORE, new ArrayList<>());
 
-    // Those checks belong to an Evaluator
-    if(coreTabularDataFile.size() != 1) {
+    // Not really possible but just in case
+    if(coreTabularDataFile.size() > 1) {
       LOG.warn("DataFile should have exactly 1 core. {}", dataFile);
       throw new UnsupportedDataFileException("DataFile should have exactly 1 core. Found " + coreTabularDataFile.size());
     }
 
-    if(!coreTabularDataFile.get(0).getRecordIdentifier().isPresent()) {
-      LOG.warn("DataFile should have record identifier.", dataFile);
-      throw new UnsupportedDataFileException("DataFile should have record identifier.");
-    }
-
     Optional<TabularDataFile> coreDf = coreTabularDataFile.stream().findFirst();
-    return new DwcDataFile(dataFile, coreDf.get(),
+    return new DwcDataFile(dataFile, coreDf.orElse(null),
             dfPerDwcFileType.get(DwcFileType.EXTENSION),
             dataFilePreview.getMetadataFilePath().orElse(null));
   }

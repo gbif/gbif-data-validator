@@ -26,9 +26,9 @@ import com.google.common.base.Preconditions;
  * {@link RecordCollectionEvaluator} implementation to evaluate the uniqueness of the records identifier
  * in a {@link TabularDataFile}
  */
-public class UniquenessEvaluator implements RecordCollectionEvaluator {
+class UniquenessEvaluator implements RecordCollectionEvaluator {
 
-  org.gbif.utils.file.FileUtils GBIF_FILE_UTILS = new org.gbif.utils.file.FileUtils();
+  private org.gbif.utils.file.FileUtils GBIF_FILE_UTILS = new org.gbif.utils.file.FileUtils();
 
   private final Term rowType;
   private final boolean caseSensitive;

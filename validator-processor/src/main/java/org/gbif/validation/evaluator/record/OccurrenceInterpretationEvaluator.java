@@ -18,6 +18,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import javax.validation.constraints.NotNull;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -31,6 +32,7 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
 /**
  * Class to evaluate an occurrence record using an {@link OccurrenceInterpreter}.
  */
+@ThreadSafe
 public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
   private final OccurrenceInterpreter interpreter;

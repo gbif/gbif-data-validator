@@ -27,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * extension.
  *
  */
-public class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
+class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(ReferentialIntegrityEvaluator.class);
   private static final int MAX_SAMPLE = 10;

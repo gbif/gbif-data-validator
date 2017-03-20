@@ -43,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Creates instances of RecordProcessor.
+ * Creates instances of mostly all evaluators.
  */
 public class EvaluatorFactory {
 
@@ -127,11 +127,19 @@ public class EvaluatorFactory {
 
   /**
    * Creates a {@link RecordCollectionEvaluator} instance for a evaluating checklist.
-   * @param workingFolder folder specific to the rsource to evaluate where temporary files will be created
+   * @param workingFolder folder specific to the resource to evaluate where temporary files will be created
    * @return
    */
   public RecordCollectionEvaluator createChecklistEvaluator(Path workingFolder) {
     return new ChecklistEvaluator(normalizerConfiguration, workingFolder);
+  }
+
+  /**
+   * Creates a {@link DwcDataFileEvaluator} to evaluate prerequisites of the evaluation.
+   * @return
+   */
+  public DwcDataFileEvaluator createPrerequisiteEvaluator() {
+    return new PrerequisiteEvaluator();
   }
 
   /**

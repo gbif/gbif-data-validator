@@ -18,12 +18,12 @@ import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.EvaluationChain;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.evaluator.ResourceConstitutionEvaluationChain;
+import org.gbif.validation.evaluator.DwcDataFileSupplier;
 import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 import org.gbif.validation.jobserver.messages.DataJob;
 import org.gbif.validation.source.DataFileFactory;
-import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
@@ -197,9 +197,14 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private StructuralEvaluationResult evaluateResourceIntegrityAndStructure(DataFile dataFile, EvaluatorFactory factory) {
 
-    ResourceConstitutionEvaluationChain evaluationChain = ResourceConstitutionEvaluationChain.Builder.using(dataFile, factory).build();
-    Optional<List<ValidationResultElement>> validationResultElementList = evaluationChain.runResourceStructureEvaluator();
+    DwcDataFileSupplier transformer = () -> DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
+    ResourceConstitutionEvaluationChain evaluationChain =
+            ResourceConstitutionEvaluationChain.Builder.using(dataFile, factory)
+                    .transformedBy(transformer)
+                    .evaluateDwcDataFile(factory.createPrerequisiteEvaluator())
+                    .build();
 
+    Optional<List<ValidationResultElement>> validationResultElementList = evaluationChain.run();
     if (validationResultElementList.isPresent()) {
       //check if we have an issue that requires to stop the evaluation process
       if (evaluationChain.evaluationStopped()) {
@@ -211,19 +216,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       validationResultElements.addAll(validationResultElementList.get());
     }
 
-    // try to prepare the DataFile
-    boolean stopEvaluation = false;
-    DwcDataFile dwcDataFile = null;
-    try {
-      dwcDataFile = DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
-    } catch (IOException ioEx){
-      emitErrorAndStop(dataFile, ValidationErrorCode.IO_ERROR, null);
-      stopEvaluation = true;
-    } catch(UnsupportedDataFileException ex) {
-      emitErrorAndStop(dataFile, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT, ex.getMessage());
-      stopEvaluation = true;
-    }
-    return new StructuralEvaluationResult(stopEvaluation, dwcDataFile);
+    return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
   }
 
   /**

@@ -2,18 +2,56 @@ package org.gbif.validation.evaluator;
 
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
+import org.gbif.validation.api.model.DwcFileType;
+import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.result.ValidationIssue;
+import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Ensure all the component we expect from {@link DwcDataFile} are available.
+ * Ensure all the components we expect from {@link DwcDataFile} are available and meet the expected
+ * prerequisites.
  */
-public class PrerequisiteEvaluator implements DwcDataFileEvaluator {
+class PrerequisiteEvaluator implements DwcDataFileEvaluator {
 
   @Override
   public Optional<List<ValidationResultElement>> evaluate(DwcDataFile dwcDataFile) {
-    return null;
+
+    if (dwcDataFile.getCore() == null || dwcDataFile.getCore().getRowType() == null) {
+      return Optional.of(
+              generateValidationResultElement(dwcDataFile.getDataFile().getSourceFileName(),
+                      EvaluationType.CORE_ROWTYPE_UNDETERMINED));
+    }
+
+    if (!dwcDataFile.getCore().getRecordIdentifier().isPresent()) {
+      return Optional.of(
+              generateValidationResultElement(dwcDataFile.getDataFile().getSourceFileName(),
+                      EvaluationType.RECORD_IDENTIFIER_NOT_FOUND));
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Generate a {@code List<ValidationResultElement>} for a single {@link EvaluationType} one the core.
+   *
+   * @param filename
+   * @param evaluationType
+   *
+   * @return
+   */
+  private static List<ValidationResultElement> generateValidationResultElement(String filename, EvaluationType evaluationType) {
+    List<ValidationResultElement> validationResultElements = new ArrayList<>();
+    List<ValidationIssue> validationIssues = new ArrayList<>();
+    validationIssues.add(ValidationIssues.withEvaluationTypeOnly(evaluationType));
+    validationResultElements.add(
+            new ValidationResultElement(
+                    filename, null, DwcFileType.CORE,
+                    null, validationIssues));
+    return validationResultElements;
   }
 }
