@@ -7,6 +7,6 @@ import org.gbif.validation.api.DwcDataFileEvaluator;
  * Functional interface to define how to run a {@link DwcDataFileEvaluator}
  */
 @FunctionalInterface
-public interface MetadataEvaluatorRunner {
+public interface DwcDataFileEvaluatorRunner {
   void run(DwcDataFile dataFile, DwcDataFileEvaluator metadataEvaluator);
 }

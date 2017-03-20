@@ -19,7 +19,7 @@ import org.gbif.validation.evaluator.EvaluationChain;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.evaluator.ResourceConstitutionEvaluationChain;
 import org.gbif.validation.evaluator.DwcDataFileSupplier;
-import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
+import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 import org.gbif.validation.jobserver.messages.DataJob;
@@ -138,7 +138,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
       EvaluationChain evaluationChain = evaluationChainBuilder.build();
       numOfWorkers.add(evaluationChain.getNumberOfRowTypeEvaluationUnits());
-      numOfWorkers.add(evaluationChain.getNumberOfMetadataEvaluationUnits());
+      numOfWorkers.add(evaluationChain.getNumberOfDwcDataFileEvaluationUnits());
 
       this.numOfWorkers = numOfWorkers.intValue();
 
@@ -223,11 +223,11 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * @param evaluationChain
    */
   private void startAllActors(EvaluationChain evaluationChain) {
-    MetadataEvaluatorRunner metadataEvaluatorRunner = (dwcDataFile, metadataEvaluator) -> {
-      ActorRef actor = createSingleActor(metadataEvaluator);
+    DwcDataFileEvaluatorRunner dwcDataFileEvaluatorRunner = (dwcDataFile, dwcDataFileEvaluator) -> {
+      ActorRef actor = createSingleActor(dwcDataFileEvaluator);
       actor.tell(dwcDataFile, self());
     };
-    evaluationChain.runMetadataContentEvaluation(metadataEvaluatorRunner);
+    evaluationChain.runDwcDataFileEvaluation(dwcDataFileEvaluatorRunner);
 
     RecordCollectionEvaluatorRunner runner = (dwcDataFile, rowType, recordCollectionEvaluator) -> {
       ActorRef actor = createSingleActor(rowType, recordCollectionEvaluator);

@@ -8,7 +8,7 @@ import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.evaluator.runner.MetadataEvaluatorRunner;
+import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
 
@@ -104,28 +104,28 @@ public class EvaluationChain {
   /**
    * Container class holding data between initialization and processing phase for {@link DwcDataFileEvaluator}.
    */
-  private static class MetadataEvaluationUnit {
+  private static class DwcDataFileEvaluationUnit {
     private final DwcDataFile dwcDataFile;
-    private final DwcDataFileEvaluator metadataEvaluator;
+    private final DwcDataFileEvaluator dwcDataFileEvaluator;
 
-    MetadataEvaluationUnit(DwcDataFile dwcDataFile, DwcDataFileEvaluator metadataEvaluator) {
+    DwcDataFileEvaluationUnit(DwcDataFile dwcDataFile, DwcDataFileEvaluator dwcDataFileEvaluator) {
       this.dwcDataFile = dwcDataFile;
-      this.metadataEvaluator = metadataEvaluator;
+      this.dwcDataFileEvaluator = dwcDataFileEvaluator;
     }
 
     public DwcDataFile getDwcDataFile() {
       return dwcDataFile;
     }
 
-    public DwcDataFileEvaluator getMetadataEvaluator() {
-      return metadataEvaluator;
+    public DwcDataFileEvaluator getDwcDataFileEvaluator() {
+      return dwcDataFileEvaluator;
     }
 
     @Override
     public String toString() {
       return MoreObjects.toStringHelper(this)
               .add("dwcDataFile", dwcDataFile)
-              .add("metadataEvaluator", metadataEvaluator)
+              .add("dwcDataFileEvaluator", dwcDataFileEvaluator)
               .toString();
     }
   }
@@ -139,7 +139,7 @@ public class EvaluationChain {
 
     private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits = new ArrayList<>();
     private final List<RecordEvaluationUnit> recordEvaluationUnits = new ArrayList<>();
-    private final List<MetadataEvaluationUnit> metadataEvaluationUnits = new ArrayList<>();
+    private final List<DwcDataFileEvaluationUnit> dwcDataFileEvaluationUnits = new ArrayList<>();
 
     private final EvaluatorFactory factory;
 
@@ -195,8 +195,13 @@ public class EvaluationChain {
       return this;
     }
 
-    public Builder evaluateMetadataContent(){
-      metadataEvaluationUnits.add(new MetadataEvaluationUnit(dwcDataFile, factory.createMetadataContentEvaluator()));
+    /**
+     * Check the metadata content based on the default evaluator returned by the {@link EvaluatorFactory}.
+     *
+     * @return
+     */
+    public Builder evaluateMetadataContent() {
+      dwcDataFileEvaluationUnits.add(new DwcDataFileEvaluationUnit(dwcDataFile, factory.createMetadataContentEvaluator()));
       return this;
     }
 
@@ -214,37 +219,37 @@ public class EvaluationChain {
     }
 
     public EvaluationChain build() {
-      return new EvaluationChain(metadataEvaluationUnits, rowTypeEvaluationUnits, recordEvaluationUnits);
+      return new EvaluationChain(dwcDataFileEvaluationUnits, rowTypeEvaluationUnits, recordEvaluationUnits);
     }
   }
 
   private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits;
   private final List<RecordEvaluationUnit> recordEvaluationUnits;
-  private final List<MetadataEvaluationUnit> metadataEvaluationUnits;
+  private final List<DwcDataFileEvaluationUnit> dwcDataFileEvaluationUnits;
 
   /**
    * Use {@link Builder}.
    *
-   * @param metadataEvaluationUnits
+   * @param dwcDataFileEvaluationUnits
    * @param rowTypeEvaluationUnits
    * @param recordEvaluationUnits
    */
-  private EvaluationChain(List<MetadataEvaluationUnit> metadataEvaluationUnits,
+  private EvaluationChain(List<DwcDataFileEvaluationUnit> dwcDataFileEvaluationUnits,
                           List<RowTypeEvaluationUnit> rowTypeEvaluationUnits,
                           List<RecordEvaluationUnit> recordEvaluationUnits) {
-    this.metadataEvaluationUnits = metadataEvaluationUnits;
+    this.dwcDataFileEvaluationUnits = dwcDataFileEvaluationUnits;
     this.rowTypeEvaluationUnits = rowTypeEvaluationUnits;
     this.recordEvaluationUnits = recordEvaluationUnits;
   }
 
   /**
-   * Run all the {@link DwcDataFileEvaluator} using the provided {@link MetadataEvaluatorRunner}.
+   * Run all the {@link DwcDataFileEvaluator} using the provided {@link DwcDataFileEvaluatorRunner}.
    *
    * @param runner
    */
-  public void runMetadataContentEvaluation(MetadataEvaluatorRunner runner) {
-    Objects.requireNonNull(runner, "MetadataEvaluatorRunner shall be provided");
-    metadataEvaluationUnits.forEach(unit -> runner.run(unit.getDwcDataFile(), unit.getMetadataEvaluator()));
+  public void runDwcDataFileEvaluation(DwcDataFileEvaluatorRunner runner) {
+    Objects.requireNonNull(runner, "DwcDataFileEvaluatorRunner shall be provided");
+    dwcDataFileEvaluationUnits.forEach(unit -> runner.run(unit.getDwcDataFile(), unit.getDwcDataFileEvaluator()));
   }
 
   /**
@@ -269,8 +274,8 @@ public class EvaluationChain {
             unit.getRowType(), unit.getRecordEvaluator()));
   }
 
-  public int getNumberOfMetadataEvaluationUnits() {
-    return metadataEvaluationUnits.size();
+  public int getNumberOfDwcDataFileEvaluationUnits() {
+    return dwcDataFileEvaluationUnits.size();
   }
 
   public int getNumberOfRowTypeEvaluationUnits() {
