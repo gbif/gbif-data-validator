@@ -43,16 +43,19 @@ RecordSource are obtained by [RecordSourceFactory](https://github.com/gbif/gbif-
 The evaluation of the submitted `DataFile` is achieve by a chain of evaluators. One can find 2 types of evaluation chain based on the nature of the evaluators: [ResourceConstitutionEvaluationChain](#resourceconstitutionevaluationchain) and [EvaluationChain](#evaluationchain). Example can be found in the implementation based on Akka Actors [DataFileProcessorMaster](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/DataFileProcessorMaster.java).
 
 ### ResourceConstitutionEvaluationChain
-The [ResourceConstitutionEvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/evaluator/ConstitutionEvaluationChain.java) is used to build and store the sequence of evaluation that will be performed on the constitution of the `DataFile` submitted. The `ConstitutionEvaluationChain` shall be run sequentially and can stop before it reaches the last evaluation. The condition to stop depends on the [EvaluationCategory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java) of a validation result received. For example if DarwinCore Archive and cannot be opened/extracted we would stop the evaluation since nothing else could be evaluated.
+The [ResourceConstitutionEvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/evaluator/ResourceConstitutionEvaluationChain.java) is used to build and store the sequence of evaluation that will be performed on the constitution of the `DataFile` submitted. The `ResourceConstitutionEvaluationChain` shall be run sequentially and can stop before it reaches the last evaluation. The condition to stop depends on the [EvaluationCategory](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/model/EvaluationCategory.java) of a validation result received. For example if DarwinCore Archive and cannot be opened/extracted we would stop the evaluation since nothing else could be evaluated.
 
 #### ResourceStructureEvaluator
 [ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself.
 
+#### DwcDataFileEvaluator
+[DwcDataFileEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFileEvaluator.java) can be used in the evaluation chain to evaluate pre-requisites.
+
 ### EvaluationChain
 [EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build/configure/define the sequence of evaluation that will be performed on the content of the `DataFile`. This main evaluation chain is run by calling the 3 different `run` methods including a [runner](https://github.com/gbif/gbif-data-validator/tree/master/validator-processor/src/main/java/org/gbif/validation/evaluator/runner) as lambda expression for each of them. The reason behind the usage of the different `runner` is to allow the caller to run it synchronously or asynchronously. It also allows the caller to decide how to collect the different results.
 
-### MetadataEvaluator
-[MetadataEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/MetadataEvaluator.java) is responsible to evluate the content of the metadata document (EML).
+### DwcDataFileEvaluator
+[DwcDataFileEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFileEvaluator.java) is responsible to evaluate the content `DwcDataFile` which is ostly of the metadata document (EML) at this point.
 
 ### RecordCollectionEvaluator
 [RecordCollectionEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordCollectionEvaluator.java) operates at a higher level than RecordEvaluator and work on more than one record but, it also produces RecordEvaluationResult at a record level.
