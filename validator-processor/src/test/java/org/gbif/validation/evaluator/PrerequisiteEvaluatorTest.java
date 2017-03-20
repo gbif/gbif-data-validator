@@ -17,6 +17,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import static org.gbif.validation.TestUtils.getFirstValidationIssue;
 import static org.gbif.validation.source.DataFileFactory.prepareDataFile;
 
 import static junit.framework.TestCase.assertEquals;
@@ -46,6 +47,6 @@ public class PrerequisiteEvaluatorTest {
     Optional<List<ValidationResultElement>> result = prerequisiteEvaluator.evaluate(dwcFile);
 
     assertTrue(result.isPresent());
-    assertEquals(EvaluationType.CORE_ROWTYPE_UNDETERMINED, result.get().get(0).getIssues().get(0).getIssue());
+    assertEquals(EvaluationType.CORE_ROWTYPE_UNDETERMINED,  getFirstValidationIssue(result.get()).getIssue());
   }
 }

@@ -134,15 +134,26 @@ public class ResourceConstitutionEvaluationChain {
     return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);
   }
 
+  /**
+   *
+   * @param result
+   * @param accumulator
+   * @return should the evaluation continue?
+   */
   private static boolean accumulateAndContinue(List<ValidationResultElement> result,
                                     List<ValidationResultElement> accumulator) {
     if(result == null){
-      return false;
+      return true;
     }
     accumulator.addAll(result);
-    return containsResourceIntegrity(result);
+    return !containsResourceIntegrity(result);
   }
 
+  /**
+   *
+   * @param validationResultElements
+   * @return Does validationResultElements contains a EvaluationCategory.RESOURCE_INTEGRITY
+   */
   private static boolean containsResourceIntegrity(List<ValidationResultElement> validationResultElements) {
     if (validationResultElements == null){
       return false;
@@ -160,6 +171,11 @@ public class ResourceConstitutionEvaluationChain {
     return evaluationStopped;
   }
 
+  /**
+   * Returns the {@link DwcDataFile} transformed by the previously registered {@link DwcDataFileSupplier} (if any).
+   *
+   * @return {@link DwcDataFile} or null if no transformation was applied or an error occurred.
+   */
   public DwcDataFile getTransformedDataFile() {
     return transformedDataFile;
   }

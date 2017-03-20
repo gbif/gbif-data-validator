@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import static org.gbif.validation.TestUtils.XML_CATALOG;
 import static org.gbif.validation.TestUtils.getDwcaDataFile;
+import static org.gbif.validation.TestUtils.getFirstValidationIssue;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -36,6 +37,6 @@ public class EmlResourceStructureEvaluatorTest {
     Optional<List<ValidationResultElement>> result =
             EML_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence-eml-broken", "test"));
     assertTrue(result.isPresent());
-    assertEquals(EvaluationType.EML_GBIF_SCHEMA, result.get().get(0).getIssues().get(0).getIssue());
+    assertEquals(EvaluationType.EML_GBIF_SCHEMA,  getFirstValidationIssue(result.get()).getIssue());
   }
 }

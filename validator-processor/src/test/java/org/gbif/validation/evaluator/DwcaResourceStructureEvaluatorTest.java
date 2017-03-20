@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import static org.gbif.validation.TestUtils.XML_CATALOG;
 import static org.gbif.validation.TestUtils.getDwcaDataFile;
+import static org.gbif.validation.TestUtils.getFirstValidationIssue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,7 +54,7 @@ public class DwcaResourceStructureEvaluatorTest {
     Optional<List<ValidationResultElement>> result =
             DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence-broken", "test"));
     assertTrue(result.isPresent());
-    assertEquals(EvaluationType.DWCA_UNREADABLE, result.get().get(0).getIssues().get(0).getIssue());
+    assertEquals(EvaluationType.DWCA_UNREADABLE,  getFirstValidationIssue(result.get()).getIssue());
   }
 
   @Test
@@ -61,7 +62,7 @@ public class DwcaResourceStructureEvaluatorTest {
     Optional<List<ValidationResultElement>> result =
             DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence-schema", "test"));
     assertTrue(result.isPresent());
-    assertEquals(EvaluationType.DWCA_META_XML_SCHEMA, result.get().get(0).getIssues().get(0).getIssue());
+    assertEquals(EvaluationType.DWCA_META_XML_SCHEMA,  getFirstValidationIssue(result.get()).getIssue());
   }
 
   @Test
@@ -69,7 +70,7 @@ public class DwcaResourceStructureEvaluatorTest {
     Optional<List<ValidationResultElement>> result =
             DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence-no-meta", "test"));
     assertTrue(result.isPresent());
-    assertEquals(EvaluationType.DWCA_META_XML_NOT_FOUND, result.get().get(0).getIssues().get(0).getIssue());
+    assertEquals(EvaluationType.DWCA_META_XML_NOT_FOUND,  getFirstValidationIssue(result.get()).getIssue());
   }
 
 }

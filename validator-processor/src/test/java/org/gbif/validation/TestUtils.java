@@ -7,6 +7,8 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.result.ValidationIssue;
+import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.dwc.extensions.ExtensionManagerFactoryTestAdapter;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -14,6 +16,7 @@ import org.gbif.validation.evaluator.EvaluatorFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -94,5 +97,14 @@ public class TestUtils {
     return new DataFile(dwcaFolder.toPath(), sourceFileName, fileFormat, "");
   }
 
+  /**
+   * Utility method to get the first {@link ValidationIssue} from a list of {@link ValidationResultElement}.
+   * This method doesn't check if it exits first.
+   * @param validationResultElementList
+   * @return
+   */
+  public static ValidationIssue getFirstValidationIssue(List<ValidationResultElement> validationResultElementList) {
+    return validationResultElementList.get(0).getIssues().get(0);
+  }
 
 }
