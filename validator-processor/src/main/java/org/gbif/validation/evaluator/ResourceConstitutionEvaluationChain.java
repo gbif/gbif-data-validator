@@ -121,6 +121,7 @@ public class ResourceConstitutionEvaluationChain {
           }
         }
       } catch (UnsupportedDataFileException ex) {
+        //TODO maybe it would be better to report that as an errorCode and errorMessage?
         validationResultElements.add(ValidationResultElement.onException(dataFile.getSourceFileName(),
                 EvaluationType.UNHANDLED_ERROR, ex.getMessage()));
         evaluationStopped = true;

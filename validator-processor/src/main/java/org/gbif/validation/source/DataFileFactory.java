@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveFile;
+import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
@@ -194,9 +195,9 @@ public class DataFileFactory {
                 ext.getLocationFile().getName(), DwcFileType.EXTENSION,
                 pathAndLines.get(Paths.get(ext.getLocation()))));
       }
-    } catch (UnkownDelimitersException udEx) {
+    } catch (UnkownDelimitersException | UnsupportedArchiveException ex) {
       //re-throw the exception as UnsupportedDataFileException
-      throw new UnsupportedDataFileException(udEx.getMessage());
+      throw new UnsupportedDataFileException(ex.getMessage());
     }
     return dataFileList;
   }
