@@ -6,6 +6,8 @@ Evaluation Type represents what the evaluation discovered which is not always an
 DWCA_UNREADABLE | Impossible to read or extract the DarwinCore Archive
 DWCA_META_XML_NOT_FOUND | Impossible to find the meta.xml file
 DWCA_META_XML_SCHEMA | meta.xml file can not be validated against its schema
+RECORD_IDENTIFIER_NOT_FOUND | No record identifier was found within the file
+CORE_ROWTYPE_UNDETERMINED | No rowType could be found or determined
 
 ### Resource Structure
 |Key            |Description    |
