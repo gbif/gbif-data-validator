@@ -59,13 +59,10 @@ Represents the result of an evaluation of the structure of the entire resource.
   "count": 2,
   "sample": [
     {
-      "relatedData": {
-        "dwc:occurrenceID": "1",
-        "lines": [
-          "1",
-          "2"
-        ]
-      }
+      "recordId": "1"
+    },
+    {
+       "recordId": "5"
     }
   ]
 }
