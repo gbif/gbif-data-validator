@@ -47,13 +47,16 @@ Specifications of the GBIF Data Validator API response.
 
 ## Issues structure
 
+List of possible "issues" can be found [here](https://github.com/gbif/gbif-data-validator/blob/master/doc/evaluation_types.md).
+
 ### Resource structure
 Represents the result of an evaluation of the structure of the entire resource.
 
 ```json
 {
-  "issue": "DUPLICATED_IDENTIFIER",
-  "count": 1,
+  "issue": "RECORD_NOT_UNIQUELY_IDENTIFIED",
+  "issueCategory": "RESOURCE_STRUCTURE",
+  "count": 2,
   "sample": [
     {
       "relatedData": {
