@@ -44,7 +44,7 @@ CORE_ROWTYPE_UNDETERMINED | No rowType could be found or determined
 |COORDINATE_REPROJECTION_SUSPICIOUS|
 |COORDINATE_PRECISION_INVALID|
 |COORDINATE_UNCERTAINTY_METERS_INVALID|
-|COUNTRY_COORDINATE_MISMATCH|
+|COUNTRY_COORDINATE_MISMATCH| Geographic coordinates fall outside the area defined by the referenced boundary of the country [1]
 |COUNTRY_MISMATCH|
 |COUNTRY_INVALID|
 |COUNTRY_DERIVED_FROM_COORDINATES|
@@ -115,3 +115,5 @@ NAME_PARENT_MISMATCH
 ORTHOGRAPHIC_VARIANT
 HOMONYM
 PUBLISHED_BEFORE_GENUS
+
+[1] Mostly based on [Exclusive economic zone (EEZ)](https://en.wikipedia.org/wiki/Exclusive_economic_zone)
