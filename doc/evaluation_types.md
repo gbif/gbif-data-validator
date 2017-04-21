@@ -54,7 +54,7 @@ CORE_ROWTYPE_UNDETERMINED | No rowType could be found or determined
 |PRESUMED_SWAPPED_COORDINATE|
 |PRESUMED_NEGATED_LONGITUDE|
 |PRESUMED_NEGATED_LATITUDE|
-|RECORDED_DATE_MISMATCH|
+|RECORDED_DATE_MISMATCH| The date represented by `eventDate` and the atomic version (`year`, `month`, `day`) does not represent the same date. Warning: https://github.com/gbif/parsers/issues/8
 |RECORDED_DATE_INVALID|
 |RECORDED_DATE_UNLIKELY|
 |TAXON_MATCH_FUZZY|
@@ -70,8 +70,8 @@ CORE_ROWTYPE_UNDETERMINED | No rowType could be found or determined
 |ELEVATION_NON_NUMERIC|
 |MODIFIED_DATE_INVALID|
 |MODIFIED_DATE_UNLIKELY|
-|IDENTIFIED_DATE_UNLIKELY| Is the value dateIdentified likely? e.g. not in the future. Warning: https://github.com/gbif/parsers/issues/9
-|IDENTIFIED_DATE_INVALID| Is the value dateIdentified valid? Can it be turned into a valid date?
+|IDENTIFIED_DATE_UNLIKELY| The value of `dateIdentified` unlikely. e.g date in the future. Warning: https://github.com/gbif/parsers/issues/9
+|IDENTIFIED_DATE_INVALID| The value of `dateIdentified` invalid. Can not be turned into a valid date.
 |BASIS_OF_RECORD_INVALID|
 |TYPE_STATUS_INVALID|
 |MULTIMEDIA_DATE_INVALID|
