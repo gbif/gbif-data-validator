@@ -70,8 +70,8 @@ CORE_ROWTYPE_UNDETERMINED | No rowType could be found or determined
 |ELEVATION_NON_NUMERIC|
 |MODIFIED_DATE_INVALID|
 |MODIFIED_DATE_UNLIKELY|
-|IDENTIFIED_DATE_UNLIKELY|
-|IDENTIFIED_DATE_INVALID|
+|IDENTIFIED_DATE_UNLIKELY| Is the value dateIdentified likely? e.g. not in the future. Warning: https://github.com/gbif/parsers/issues/9
+|IDENTIFIED_DATE_INVALID| Is the value dateIdentified valid? Can it be turned into a valid date?
 |BASIS_OF_RECORD_INVALID|
 |TYPE_STATUS_INVALID|
 |MULTIMEDIA_DATE_INVALID|
