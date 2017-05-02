@@ -43,18 +43,18 @@
     <!-- VERSIONS -->
 
     <!-- GBIF VERSIONS -->
-    <dwc-api.version>1.17-SNAPSHOT</dwc-api.version>
-    <dwca-io.version>1.30-SNAPSHOT</dwca-io.version>
-    <gbif-api.version>0.52-SNAPSHOT</gbif-api.version>
-    <gbif-common.version>0.33-SNAPSHOT</gbif-common.version>
-    <gbif-common-ws.version>0.38-SNAPSHOT</gbif-common-ws.version>
-    <gbif-occurrence.version>0.63-SNAPSHOT</gbif-occurrence.version>
+    <dwc-api.version>1.17</dwc-api.version>
+    <dwca-io.version>1.30</dwca-io.version>
+    <gbif-api.version>0.52</gbif-api.version>
+    <gbif-common.version>0.33</gbif-common.version>
+    <gbif-common-ws.version>0.38</gbif-common-ws.version>
+    <gbif-occurrence.version>0.64</gbif-occurrence.version>
     <gbif-checklistbank.version>2.53-SNAPSHOT</gbif-checklistbank.version>
-    <gbif-registry.version>2.64-SNAPSHOT</gbif-registry.version>
+    <gbif-registry.version>2.64</gbif-registry.version>
 
     <!-- GBIF libraries -->
     <gbif-microservice.version>0.6</gbif-microservice.version>
-    <gbif-parsers.version>0.31-SNAPSHOT</gbif-parsers.version>
+    <gbif-parsers.version>0.31</gbif-parsers.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
 
     <!-- lucene version required by neo4j -->
