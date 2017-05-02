@@ -74,7 +74,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     if (datasetKey != null) {
       verbatimOccurrence.setDatasetKey(UUID.fromString(datasetKey));
     }
-    return toEvaluationResult(lineNumber, interpreter.interpret(verbatimOccurrence));
+    return toEvaluationResult(lineNumber, interpreter.interpret(verbatimOccurrence, null));
   }
 
   /**
@@ -111,7 +111,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
     LOG.debug("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
     RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(rowType, lineNumber);
 
-    Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
+    Map<Term, String> verbatimFields = result.getUpdated().getVerbatimFields();
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
 
     result.getUpdated().getIssues().stream()
