@@ -49,7 +49,7 @@
     <gbif-common.version>0.33</gbif-common.version>
     <gbif-common-ws.version>0.38</gbif-common-ws.version>
     <gbif-occurrence.version>0.64</gbif-occurrence.version>
-    <gbif-checklistbank.version>2.53-SNAPSHOT</gbif-checklistbank.version>
+    <gbif-checklistbank.version>2.53</gbif-checklistbank.version>
     <gbif-registry.version>2.64</gbif-registry.version>
 
     <!-- GBIF libraries -->
