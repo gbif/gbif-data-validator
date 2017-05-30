@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
@@ -164,7 +163,7 @@ public class EvaluationChain {
      * @param dataFile all the same rowType
      * @return
      */
-    public Builder evaluateRecords(Term rowType, List<Term> columns, Optional<Map<Term, String>> defaultValues,
+    public Builder evaluateRecords(Term rowType, List<Term> columns, Map<Term, String> defaultValues,
                                    List<TabularDataFile> dataFile) {
       recordEvaluationUnits.add(new RecordEvaluationUnit(dataFile, rowType,
               factory.create(rowType, columns, defaultValues)));

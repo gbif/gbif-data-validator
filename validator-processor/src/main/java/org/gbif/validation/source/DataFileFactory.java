@@ -15,6 +15,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.util.FileNormalizer;
 import org.gbif.ws.util.ExtraMediaTypes;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
@@ -215,7 +216,12 @@ public class DataFileFactory {
   private static TabularDataFile createDwcBasedTabularDataFile(ArchiveFile archiveFile,
                                                                String sourceFileName,
                                                                DwcFileType type,
-                                                               int numberOfLines) throws IOException {
+                                                               Integer numberOfLines) throws IOException {
+    //make sure the file really exists
+    if(!archiveFile.getLocationFile().exists()) {
+      throw new FileNotFoundException(archiveFile.getLocation());
+    }
+
     Term[] headers = archiveFile.getHeader();
     Map<Term, String> defaultValues = archiveFile.getDefaultValues().orElse(null);
     TermIndex recordIdentifier = archiveFile.getId() == null ? null :
@@ -330,8 +336,9 @@ public class DataFileFactory {
      * @return
      * @throws IOException
      * @throws UnsupportedCharsetException
+     * @throws UnsupportedArchiveException
      */
-    static DataFilePreview extractFrom(DataFile dataFile) throws IOException, UnsupportedCharsetException {
+    static DataFilePreview extractFrom(DataFile dataFile) throws IOException, UnsupportedCharsetException, UnsupportedArchiveException {
       Map<Path, Charset> charsetsByPath = new HashMap<>();
       Path metadataFilePath = null;
 

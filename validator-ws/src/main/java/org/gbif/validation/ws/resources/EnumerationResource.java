@@ -40,9 +40,8 @@ public class EnumerationResource {
    * @return
    */
   private static Map<String, Enum<?>[]> initEnumerations() {
-      return AVAILABLE_ENUMS.stream().collect(Collectors.toMap(Class::getSimpleName, Class::getEnumConstants));
+    return AVAILABLE_ENUMS.stream().collect(Collectors.toMap(Class::getSimpleName, Class::getEnumConstants));
   }
-
 
   /**
    * An inventory of the enumerations supported.

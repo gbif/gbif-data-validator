@@ -11,7 +11,6 @@ import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -38,7 +37,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   private final OccurrenceInterpreter interpreter;
   private final Term rowType;
   private final Term[] columnMapping;
-  private final Optional<Map<Term, String>> defaultValues;
+  private final Map<Term, String> defaultValues;
 
   private static final Logger LOG = LoggerFactory.getLogger(OccurrenceInterpretationEvaluator.class);
 
@@ -52,7 +51,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param defaultValues
    */
   public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term rowType,
-                                           Term[] columnMapping, Optional<Map<Term, String>> defaultValues ) {
+                                           Term[] columnMapping,Map<Term, String> defaultValues ) {
     Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
     Validate.notNull(columnMapping, "columnMapping must not be null");
 
@@ -91,11 +90,13 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
             .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
 
     //only set a default value if the field is currently empty (this matches the crawler behavior)
-    defaultValues.ifPresent(map -> map.forEach( (k,v) -> {
-      if(StringUtils.isBlank(verbatimOccurrence.getVerbatimField(k))) {
-        verbatimOccurrence.setVerbatimField(k,v);
-      }
-    }));
+    if (defaultValues != null) {
+      defaultValues.forEach((k, v) -> {
+        if (StringUtils.isBlank(verbatimOccurrence.getVerbatimField(k))) {
+          verbatimOccurrence.setVerbatimField(k, v);
+        }
+      });
+    }
     return verbatimOccurrence;
   }
 

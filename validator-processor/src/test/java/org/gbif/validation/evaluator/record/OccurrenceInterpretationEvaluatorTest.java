@@ -9,7 +9,6 @@ import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -63,7 +62,7 @@ public class OccurrenceInterpretationEvaluatorTest {
   public void testEvaluateWithNulls(){
     Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            DwcTerm.Occurrence, columnMapping, Optional.empty());
+            DwcTerm.Occurrence, columnMapping, null);
     assertNull(evaluator.evaluate(null, null));
   }
 
@@ -85,6 +84,6 @@ public class OccurrenceInterpretationEvaluatorTest {
   private OccurrenceInterpretationEvaluator createInterpreter(Term[] columnMapping) {
     //test expected data
     return new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            DwcTerm.Occurrence, columnMapping, Optional.of(DEFAULT_VALUES));
+            DwcTerm.Occurrence, columnMapping, DEFAULT_VALUES);
   }
 }

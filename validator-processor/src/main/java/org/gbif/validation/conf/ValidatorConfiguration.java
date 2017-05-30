@@ -20,6 +20,9 @@ public class ValidatorConfiguration {
   private final String gangliaHost;
   private final Integer gangliaPort;
 
+  //eventually we could allow to not run it for very large datasets
+  private final boolean runOccurrenceInterpretation = true;
+
   public static class Builder {
     private String apiUrl;
     private NormalizerConfiguration normalizerConfiguration;
@@ -100,6 +103,11 @@ public class ValidatorConfiguration {
    */
   public boolean isPreservedTemporaryFiles() {
     return preserveTemporaryFiles;
+  }
+
+
+  public boolean isRunOccurrenceInterpretation() {
+    return runOccurrenceInterpretation;
   }
 
   public Optional<String> getGangliaHost() {

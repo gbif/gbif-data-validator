@@ -170,7 +170,7 @@ public class EvaluatorFactory {
    * @return new instance
    */
   public RecordEvaluator create(Term rowType, List<Term> columns,
-                                Optional<Map<Term, String>> defaultValues) {
+                                Map<Term, String> defaultValues) {
     Objects.requireNonNull(columns, "columns shall be provided");
     Objects.requireNonNull(rowType, "rowType shall be provided");
 

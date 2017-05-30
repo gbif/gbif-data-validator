@@ -7,6 +7,7 @@ import org.gbif.validation.api.model.FileFormat;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,6 +26,7 @@ import static org.junit.Assert.assertTrue;
 public class DataFileFactoryTest {
 
   private static final String TEST_DWC_FILE_LOCATION = "dwca/dwca-taxon";
+  private static final String TEST_BROKEN_META_FILE_LOCATION = "dwca/dwca-meta-broken";
   private static final String TEST_EMPTY_CSV_FILE_LOCATION = "tabular/empty.csv";
   private static final String TEST_EMPTY_XLSX_FILE_LOCATION = "workbooks/empty.xlsx";
 
@@ -45,6 +47,18 @@ public class DataFileFactoryTest {
 
     // the filePath should point to the component file
     assertTrue(StringUtils.endsWith(preparedDwcDataFile.getCore().getFilePath().toString(), ".txt"));
+  }
+
+  /**
+   * Test an archive with a meta.xml that points to a non-existing file.
+   * @throws IOException
+   * @throws UnsupportedDataFileException
+   */
+  @Test (expected = FileNotFoundException.class)
+  public void testPrepareDataFileBrokenMeta() throws IOException, UnsupportedDataFileException {
+    File testFile = FileUtils.getClasspathFile(TEST_BROKEN_META_FILE_LOCATION);
+    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-broken-meta", FileFormat.DWCA, "");
+    DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 
   @Test
