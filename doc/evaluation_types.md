@@ -72,7 +72,7 @@ CORE_ROWTYPE_UNDETERMINED | No rowType could be found or determined
 |MODIFIED_DATE_UNLIKELY|
 |IDENTIFIED_DATE_UNLIKELY| The value of `dateIdentified` unlikely. e.g date in the future. Warning: https://github.com/gbif/parsers/issues/9
 |IDENTIFIED_DATE_INVALID| The value of `dateIdentified` invalid. Can not be turned into a valid date.
-|BASIS_OF_RECORD_INVALID|
+|BASIS_OF_RECORD_INVALID| The value of `basisOfRecord` is either missing, or invalid. Value must match [Darwin Core Type Vocabulary](http://rs.gbif.org/vocabulary/dwc/basis_of_record.xml).
 |TYPE_STATUS_INVALID|
 |MULTIMEDIA_DATE_INVALID|
 |MULTIMEDIA_URI_INVALID|
