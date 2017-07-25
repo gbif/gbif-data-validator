@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -19,6 +20,6 @@ public interface RecordSource extends Closeable {
   Term[] getHeaders();
 
   @Nullable
-  String[] read() throws IOException;
+  List<String> read() throws IOException;
 
 }

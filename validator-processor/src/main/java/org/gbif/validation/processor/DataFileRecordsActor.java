@@ -8,6 +8,8 @@ import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.source.RecordSourceFactory;
 
+import java.util.List;
+
 import akka.actor.AbstractLoggingActor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +62,7 @@ class DataFileRecordsActor extends AbstractLoggingActor {
     long lineNumber = dataFile.getFileLineOffset().orElse(0) + (dataFile.isHasHeaders() ? + 1 : 0);
     log().info("Starting to read: " + dataFile.getFilePath());
     try (RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(dataFile)) {
-      String[] record;
+      List<String> record;
       while ((record = recordSource.read()) != null) {
         //we report line number starting at 1 so we will increment
         //the counter before reporting the line number

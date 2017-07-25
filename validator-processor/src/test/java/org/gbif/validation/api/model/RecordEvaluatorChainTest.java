@@ -3,7 +3,9 @@ package org.gbif.validation.api.model;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.validation.api.RecordEvaluator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import javax.annotation.Nullable;
 
 import org.junit.Test;
@@ -23,7 +25,7 @@ public class RecordEvaluatorChainTest {
 
     RecordEvaluator recordEvaluatorChain = new RecordEvaluatorChain(Arrays.asList(myRecordEvaluator1, myRecordEvaluator2));
 
-    RecordEvaluationResult result = recordEvaluatorChain.evaluate(1l, new String[0]);
+    RecordEvaluationResult result = recordEvaluatorChain.evaluate(1l, new ArrayList<>());
 
     assertNotNull(result);
     //the order should be preserved MyRecordEvaluator1 first
@@ -35,7 +37,7 @@ public class RecordEvaluatorChainTest {
   private static class MyRecordEvaluator1 implements RecordEvaluator {
     @Nullable
     @Override
-    public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
+    public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable List<String> record) {
       return RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, lineNumber).addBaseDetail(
               EvaluationType.COLUMN_MISMATCH, "MyRecordEvaluator1", "MyRecordEvaluator1").build();
     }
@@ -44,7 +46,7 @@ public class RecordEvaluatorChainTest {
   private static class MyRecordEvaluator2 implements RecordEvaluator {
     @Nullable
     @Override
-    public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
+    public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable List<String> record) {
       return RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, lineNumber).addBaseDetail(
               EvaluationType.COLUMN_MISMATCH, "MyRecordEvaluator2", "MyRecordEvaluator2").build();
     }

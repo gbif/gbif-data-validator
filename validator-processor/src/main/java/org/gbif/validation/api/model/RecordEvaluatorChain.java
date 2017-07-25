@@ -27,7 +27,7 @@ public class RecordEvaluatorChain implements RecordEvaluator {
 
   @Nullable
   @Override
-  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable List<String> record) {
     RecordEvaluationResult combinedResult = null;
     for(RecordEvaluator evaluator : evaluators) {
       combinedResult = RecordEvaluationResult.Builder.merge(combinedResult, evaluator.evaluate(lineNumber, record));

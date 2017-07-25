@@ -2,6 +2,7 @@ package org.gbif.validation.api;
 
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -18,6 +19,6 @@ public interface RecordEvaluator {
    * @return the result of the evaluation or null if no result can be generated (e.g. empty record)
    */
   @Nullable
-  RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record);
+  RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable List<String> record);
 
 }

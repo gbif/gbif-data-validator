@@ -28,10 +28,10 @@ public class TermsFrequencyCollectorTest {
    * @param tfc
    */
   private static void testTermsFrequencyCollector(TermsFrequencyCollector tfc) {
-    tfc.collect(new String[]{"1", "2000-01-01", "Gulo gulo"});
-    tfc.collect(new String[]{"2", "2000-01-01", ""});
-    tfc.collect(new String[]{"3", "2000-01-01", " "});
-    tfc.collect(new String[]{"4", null, "\t"});
+    tfc.collect(Arrays.asList("1", "2000-01-01", "Gulo gulo"));
+    tfc.collect(Arrays.asList("2", "2000-01-01", ""));
+    tfc.collect(Arrays.asList("3", "2000-01-01", " "));
+    tfc.collect(Arrays.asList("4", null, "\t"));
 
     assertEquals(4, tfc.getTermFrequency().get(DwcTerm.occurrenceID).intValue());
     assertEquals(3, tfc.getTermFrequency().get(DwcTerm.eventDate).intValue());

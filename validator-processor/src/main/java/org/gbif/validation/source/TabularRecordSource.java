@@ -36,14 +36,8 @@ class TabularRecordSource implements RecordSource {
 
   @Nullable
   @Override
-  public String[] read() throws IOException {
-    List<String> line = tabularReader.read();
-
-    if(line == null){
-      return null;
-    }
-    //FIXME we should probably return the List here
-    return line.toArray(new String[line.size()]);
+  public List<String> read() throws IOException {
+    return tabularReader.read();
   }
 
   @Override

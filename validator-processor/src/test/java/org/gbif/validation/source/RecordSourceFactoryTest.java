@@ -38,7 +38,7 @@ public class RecordSourceFactoryTest {
 
     TabularDataFile taxonDataFile = preparedDwcDataFile.getByRowType(DwcTerm.Taxon);
     try (RecordSource rs = RecordSourceFactory.fromTabularDataFile(taxonDataFile)) {
-      assertEquals("1559060", rs.read()[0]);
+      assertEquals("1559060", rs.read().get(0));
     }
   }
 
@@ -56,7 +56,7 @@ public class RecordSourceFactoryTest {
     assertEquals(DwcTerm.Occurrence, tabularDataFile.getRowType());
 
     try(RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(tabularDataFile)) {
-      assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read()[0]);
+      assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read().get(0));
     }
   }
 

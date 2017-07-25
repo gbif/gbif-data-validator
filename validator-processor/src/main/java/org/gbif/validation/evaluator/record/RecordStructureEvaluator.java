@@ -32,9 +32,9 @@ public class RecordStructureEvaluator implements RecordEvaluator {
   }
 
   @Override
-  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, String[] record) {
-    if (record.length != expectedColumnCount) {
-      return toColumnCountMismatchResult(lineNumber, expectedColumnCount, record.length);
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, List<String> record) {
+    if (record.size() != expectedColumnCount) {
+      return toColumnCountMismatchResult(lineNumber, expectedColumnCount, record.size());
     }
     return null;
   }

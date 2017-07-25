@@ -2,6 +2,7 @@ package org.gbif.validation.api;
 
 import org.gbif.dwc.terms.Term;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -9,7 +10,7 @@ import java.util.Map;
  */
 public interface RecordMetricsCollector {
 
-  void collect(String[] recordData);
+  void collect(List<String> recordData);
 
   Map<Term, Long> getTermFrequency();
 }

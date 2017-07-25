@@ -10,6 +10,7 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
@@ -62,9 +63,9 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   }
 
   @Override
-  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable String[] record) {
+  public RecordEvaluationResult evaluate(@Nullable Long lineNumber, @Nullable List<String> record) {
     LOG.debug("Evaluating line {} and record {}", lineNumber, record);
-    if (record == null || record.length == 0) {
+    if (record == null || record.isEmpty()) {
       return null;
     }
 
@@ -83,11 +84,11 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @return new VerbatimOccurrence, never null
    */
   @VisibleForTesting
-  protected VerbatimOccurrence toVerbatimOccurrence(@NotNull String[] record) {
+  protected VerbatimOccurrence toVerbatimOccurrence(@NotNull List<String> record) {
     VerbatimOccurrence verbatimOccurrence = new VerbatimOccurrence();
-    IntStream.range(0, Math.min(record.length, columnMapping.length))
+    IntStream.range(0, Math.min(record.size(), columnMapping.length))
             .filter(idx -> columnMapping[idx] != null)
-            .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record[i]));
+            .forEach(i -> verbatimOccurrence.setVerbatimField(columnMapping[i], record.get(i)));
 
     //only set a default value if the field is currently empty (this matches the crawler behavior)
     if (defaultValues != null) {

@@ -41,7 +41,7 @@ public class CollectorGroup {
    * Call collect on all metrics collector(s)
    * @param record
    */
-  public void collectMetrics(String[] record) {
+  public void collectMetrics(List<String> record) {
     metricsCollector.collect(record);
   }
 

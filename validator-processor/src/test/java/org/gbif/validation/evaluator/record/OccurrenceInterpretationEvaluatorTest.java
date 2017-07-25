@@ -7,7 +7,9 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.Test;
@@ -33,7 +35,7 @@ public class OccurrenceInterpretationEvaluatorTest {
 
     //test expected data
     OccurrenceInterpretationEvaluator evaluator = createInterpreter(COLUMN_MAPPING);
-    String[] record = {"1", "2000-01-01", "2000-01-02"};
+    List<String> record = Arrays.asList("1", "2000-01-01", "2000-01-02");
     VerbatimOccurrence occ = evaluator.toVerbatimOccurrence(record);
 
     assertEquals("1", occ.getVerbatimField(DwcTerm.occurrenceID));
@@ -42,7 +44,7 @@ public class OccurrenceInterpretationEvaluatorTest {
     assertEquals(BasisOfRecord.FOSSIL_SPECIMEN.name(), occ.getVerbatimField(DwcTerm.basisOfRecord));
 
     //test record with less data than declared columns
-    record = new String[]{"1", "2000-01-01"};
+    record = Arrays.asList("1", "2000-01-01");
     occ = evaluator.toVerbatimOccurrence(record);
     assertEquals("1", occ.getVerbatimField(DwcTerm.occurrenceID));
     assertEquals("2000-01-01", occ.getVerbatimField(DwcTerm.eventDate));
@@ -50,7 +52,7 @@ public class OccurrenceInterpretationEvaluatorTest {
     assertEquals(BasisOfRecord.FOSSIL_SPECIMEN.name(), occ.getVerbatimField(DwcTerm.basisOfRecord));
 
     //test record with more data than declared columns
-    record = new String[]{"1", "2000-01-01", "2000-01-02", "xyz"};
+    record = Arrays.asList("1", "2000-01-01", "2000-01-02", "xyz");
     occ = evaluator.toVerbatimOccurrence(record);
     assertEquals("1", occ.getVerbatimField(DwcTerm.occurrenceID));
     assertEquals("2000-01-01", occ.getVerbatimField(DwcTerm.eventDate));
@@ -72,11 +74,11 @@ public class OccurrenceInterpretationEvaluatorTest {
     OccurrenceInterpretationEvaluator evaluator = createInterpreter(columnMapping);
 
     //ensure the specified value is provided
-    String[] record = {"1", "2000-01-01", "2000-01-02", BasisOfRecord.LIVING_SPECIMEN.name()};
+    List<String> record = Arrays.asList("1", "2000-01-01", "2000-01-02", BasisOfRecord.LIVING_SPECIMEN.name());
     VerbatimOccurrence occ = evaluator.toVerbatimOccurrence(record);
     assertEquals(BasisOfRecord.LIVING_SPECIMEN.name(), occ.getVerbatimField(DwcTerm.basisOfRecord));
 
-    record = new String[]{"2", "2000-01-01", "2000-01-02", ""};
+    record = Arrays.asList("2", "2000-01-01", "2000-01-02", "");
     occ = evaluator.toVerbatimOccurrence(record);
     assertEquals(BasisOfRecord.FOSSIL_SPECIMEN.name(), occ.getVerbatimField(DwcTerm.basisOfRecord));
   }
