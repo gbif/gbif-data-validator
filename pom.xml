@@ -53,7 +53,7 @@
     <gbif-registry.version>2.64</gbif-registry.version>
 
     <!-- GBIF libraries -->
-    <gbif-microservice.version>0.6</gbif-microservice.version>
+    <gbif-microservice.version>0.7</gbif-microservice.version>
     <gbif-parsers.version>0.31</gbif-parsers.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
 
