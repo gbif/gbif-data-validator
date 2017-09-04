@@ -1,5 +1,6 @@
 package org.gbif.validation.util;
 
+import org.gbif.api.model.checklistbank.NameUsage;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
@@ -29,6 +30,25 @@ public class OccurrenceToTermsHelper {
     fields.put(DwcTerm.decimalLatitude, occurrence.getDecimalLatitude());
     fields.put(DwcTerm.decimalLongitude, occurrence.getDecimalLongitude());
     fields.put(GbifTerm.taxonKey, occurrence.getTaxonKey());
+
+    return fields;
+  }
+
+
+  /**
+   * FIXME incomplete
+   * @param nameUsage
+   * @return
+   */
+  public static Map<Term, Object> getTermsMap(NameUsage nameUsage) {
+
+    Map<Term, Object> fields = new HashMap<>();
+
+    fields.put(DwcTerm.kingdom, nameUsage.getKingdom());
+    fields.put(DwcTerm.family, nameUsage.getFamily());
+
+    fields.put(DwcTerm.taxonRank, nameUsage.getRank());
+
 
     return fields;
   }

@@ -13,6 +13,7 @@ import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -25,9 +26,10 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import com.google.common.base.Preconditions;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.ResourceIterator;
 import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,20 +91,34 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
   /**
    * Collect issues and graph data from the normalization result.
    */
-  private Stream<RecordEvaluationResult> collectUsagesData(UsageDao dao) {
-    List<RecordEvaluationResult> results = new ArrayList<>();
+  private Stream<RecordEvaluationResult> collectUsagesData(final UsageDao dao) {
+   List<RecordEvaluationResult> results = new ArrayList<>();
     try (Transaction tx = dao.beginTx()) {
       // iterate over all node and collect their issues
-      StreamSupport.stream(dao.allNodes().spliterator(),false).forEach(node -> {
+
+      //use a stream
+      ResourceIterator<Node> it = dao.allNodes().iterator();
+      while(it.hasNext()){
+        Node node = it.next();
         NameUsage usage = dao.readUsage(node, false);
-        usage.getIssues().stream().forEach( issue ->
-                results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId()))));
-      });
+        results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId())));
+      }
+
+//      StreamSupport.stream(dao.allNodes().spliterator(),false)
+//              .map(node -> {
+//        NameUsage usage = dao.readUsage(node, false);
+//        results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId())));
+//                return node;
+      //  return toEvaluationResult(usage, dao.readVerbatim(node.getId()));
+        //usage.getIssues().stream().forEach( issue ->
+        //        results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId()))));
+//      });
       //get the graph/tree
       //result.setGraph(getTree(dao, GraphFormat.TEXT));
 
       //we filter out results with no details. This can happen when the normalizer flag issue we are not interested in.
-      return results.stream().filter( rer -> rer.getDetails() != null && !rer.getDetails().isEmpty() );
+     // return results.stream().filter( rer -> rer.getDetails() != null && !rer.getDetails().isEmpty() );
+      return results.stream();
     }
   }
 
@@ -117,10 +133,7 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
   protected RecordEvaluationResult toEvaluationResult(NameUsage nameUsage, VerbatimNameUsage verbatimNameUsage) {
 
     RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(DwcTerm.Taxon, nameUsage.getTaxonID());
-
-   // Map<Term, String> verbatimFields = result.getOriginal().getVerbatimFields();
-  //  builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
-
+    builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(nameUsage));
     nameUsage.getIssues().stream().filter(IS_MAPPED).
             forEach(issue -> {
               Map<Term, String> relatedData = issue.getRelatedTerms()

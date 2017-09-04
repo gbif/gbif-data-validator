@@ -20,6 +20,9 @@ public class CollectorFactory {
   private static final List<Term> OCCURRENCE_INTERPRETED_TERMS = Collections.unmodifiableList(
           Arrays.asList(DwcTerm.year, DwcTerm.decimalLatitude, DwcTerm.decimalLongitude, GbifTerm.taxonKey));
 
+  private static final List<Term> TAXON_INTERPRETED_TERMS = Collections.unmodifiableList(
+          Arrays.asList(DwcTerm.kingdom, DwcTerm.family, DwcTerm.taxonRank));
+
   /**
    * Create a {@link ResultsCollector} to collected interpreted terms if applicable.
    * Interpreted terms are only available for a limited set of rowType where we apply interpretation in
@@ -34,9 +37,16 @@ public class CollectorFactory {
   public static Optional<InterpretedTermsCountCollector> createInterpretedTermsCountCollector(@NotNull Term rowType,
                                                                                 boolean useConcurrentMap) {
     Objects.requireNonNull(rowType, "rowType shall be provided");
-    return DwcTerm.Occurrence == rowType ? Optional.of(new InterpretedTermsCountCollector(
-            OCCURRENCE_INTERPRETED_TERMS,
-            useConcurrentMap)) : Optional.empty();
+    if(DwcTerm.Occurrence == rowType) {
+      return Optional.of(new InterpretedTermsCountCollector(OCCURRENCE_INTERPRETED_TERMS, useConcurrentMap));
+    }
+
+    if(DwcTerm.Taxon == rowType) {
+      return Optional.of(new InterpretedTermsCountCollector(TAXON_INTERPRETED_TERMS, useConcurrentMap));
+    }
+
+    return Optional.empty();
   }
+
 
 }

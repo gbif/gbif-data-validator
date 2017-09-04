@@ -65,7 +65,9 @@ public class RecordEvaluationResult implements Serializable {
 
   @Override
   public String toString() {
-    return "recordId: " + recordId + ", lineNumber: " + lineNumber + ", details: " + details;
+    return "recordId: " + recordId + ", lineNumber: " + lineNumber +
+            ", details: " + details +
+            ", interpretedData " + interpretedData;
   }
 
   /**
