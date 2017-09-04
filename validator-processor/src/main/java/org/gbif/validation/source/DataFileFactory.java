@@ -1,8 +1,8 @@
 package org.gbif.validation.source;
 
+import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
@@ -182,7 +182,7 @@ public class DataFileFactory {
 
     List<TabularDataFile> dataFileList = new ArrayList<>();
     try {
-      Archive archive = ArchiveFactory.openArchive(pathToOpen.toFile());
+      Archive archive = DwcFiles.fromLocation(pathToOpen);
 
       //add the core first, if there is no core the exception must be handled by the caller
       ArchiveFile core = archive.getCore();
@@ -344,7 +344,7 @@ public class DataFileFactory {
 
       if(dataFile.getFileFormat().isTabularBased()) {
         try {
-          Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+          Archive archive = DwcFiles.fromLocation(dataFile.getFilePath());
           if (archive.getMetadataLocationFile() != null) {
             metadataFilePath = archive.getMetadataLocationFile().toPath();
           }
