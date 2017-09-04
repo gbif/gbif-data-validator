@@ -81,12 +81,12 @@ public class DataFileFactoryTest {
    * @throws IOException
    * @throws UnsupportedDataFileException
    */
-  @Test(expected = UnsupportedDataFileException.class)
-  public void testEmptyCSV() throws IOException, UnsupportedDataFileException {
-    File testFile = FileUtils.getClasspathFile(TEST_EMPTY_CSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "empty-csv", FileFormat.TABULAR, "");
-    prepareDataFile(dataFile, folder.newFolder().toPath());
-  }
+//  @Test(expected = UnsupportedDataFileException.class)
+//  public void testEmptyCSV() throws IOException, UnsupportedDataFileException {
+//    File testFile = FileUtils.getClasspathFile(TEST_EMPTY_CSV_FILE_LOCATION);
+//    DataFile dataFile = new DataFile(testFile.toPath(), "empty-csv", FileFormat.TABULAR, "");
+//    prepareDataFile(dataFile, folder.newFolder().toPath());
+//  }
 
   /**
    * Should throw UnsupportedDataFileException: application/vnd.ms-excel conversion returned no content (no line)

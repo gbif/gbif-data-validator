@@ -59,7 +59,7 @@
 
     <!-- lucene version required by neo4j -->
     <lucene-neo4j.version>5.5.0</lucene-neo4j.version>
-    <neo4j.version>3.1.1</neo4j.version>
+    <neo4j.version>3.2.3</neo4j.version>
 
     <jersey.version>1.19.3</jersey.version>
     <jackson.version>1.9.12</jackson.version>
