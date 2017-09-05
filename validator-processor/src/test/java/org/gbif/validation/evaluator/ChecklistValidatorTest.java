@@ -5,7 +5,6 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.model.FileFormat;
-import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
@@ -13,8 +12,6 @@ import org.gbif.validation.source.UnsupportedDataFileException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,10 +40,8 @@ public class ChecklistValidatorTest {
     DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(checklistDataFile, testFolder);
 
     InterpretedTermsCountCollector interpretedTermsCountCollector = new InterpretedTermsCountCollector(Collections.singletonList(DwcTerm.taxonRank), false);
-
     try {
-      Optional<Stream<RecordEvaluationResult>> a = checklistEvaluator.evaluate(dwcDataFile);
-      a.get().forEach(interpretedTermsCountCollector::collect);
+      checklistEvaluator.evaluate(dwcDataFile, interpretedTermsCountCollector::collect);
       assertEquals(Long.valueOf(20), interpretedTermsCountCollector.getInterpretedCounts().get(DwcTerm.taxonRank));
     } catch (IOException e) {
       fail(e.getMessage());

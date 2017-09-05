@@ -3,8 +3,7 @@ package org.gbif.validation.api;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 
 import java.io.IOException;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -14,13 +13,12 @@ import javax.validation.constraints.NotNull;
 public interface RecordCollectionEvaluator {
 
   /**
-   * Evaluates a collection of record and produces (optionally since it may not produce any result) a {@link Stream} of
-   * {@link RecordEvaluationResult}. {@link Stream} is used since it may produce a large quantity of results and the
-   * caller may want to limit and/or filter them.
+   * Evaluates a collection of record and produces (optionally since it may not produce any result)
+   * {@link RecordEvaluationResult}. Since it may produce a large quantity of results and the caller may want to
+   * limit and/or filter them, we use a {@link Consumer}.
    *
    * @param dwcDataFile
-   *
-   * @return optionally, a {@link Stream} of {@link RecordEvaluationResult}.
+   * @param
    */
-  Optional<Stream<RecordEvaluationResult>> evaluate(@NotNull DwcDataFile dwcDataFile) throws IOException;
+  void evaluate(@NotNull DwcDataFile dwcDataFile, @NotNull Consumer<RecordEvaluationResult> resultConsumer) throws IOException;
 }

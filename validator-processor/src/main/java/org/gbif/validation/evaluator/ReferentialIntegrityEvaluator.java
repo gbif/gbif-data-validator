@@ -14,8 +14,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
@@ -46,7 +45,7 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
    * @return
    */
   @Override
-  public Optional<Stream<RecordEvaluationResult>> evaluate(DwcDataFile dwcDataFile) throws IOException {
+  public void evaluate(DwcDataFile dwcDataFile, Consumer<RecordEvaluationResult> resultConsumer) throws IOException {
 
     TabularDataFile coreDf = dwcDataFile.getCore();
     TabularDataFile extDf = dwcDataFile.getByRowType(extensionRowType);
@@ -64,7 +63,7 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
             coreDf.getDelimiterChar().toString(),
             coreDf.isHasHeaders());
 
-    return Optional.of(Arrays.stream(result).map(rec -> buildResult(extensionRowType, rec)));
+    Arrays.stream(result).forEach(rec -> resultConsumer.accept(buildResult(extensionRowType, rec)));
   }
 
   private static RecordEvaluationResult buildResult(Term rowType, String unlinkedId){

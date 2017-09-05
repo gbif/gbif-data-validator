@@ -46,9 +46,7 @@ public class OccurrenceToTermsHelper {
 
     fields.put(DwcTerm.kingdom, nameUsage.getKingdom());
     fields.put(DwcTerm.family, nameUsage.getFamily());
-
     fields.put(DwcTerm.taxonRank, nameUsage.getRank());
-
 
     return fields;
   }

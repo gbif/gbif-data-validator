@@ -17,15 +17,12 @@ import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
 import org.neo4j.graphdb.Node;
@@ -66,14 +63,14 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
     this.configuration.poolSize = configuration.poolSize;
   }
 
+
   /**
    * The NormalizerConfiguration instance is used to run a single Normalizer each time this method is executed.
    *
-   * @return
    * @throws IOException
    */
   @Override
-  public Optional<Stream<RecordEvaluationResult>> evaluate(DwcDataFile dwcDataFile) throws IOException {
+  public void evaluate(DwcDataFile dwcDataFile, Consumer<RecordEvaluationResult> resultConsumer) throws IOException {
 
     TabularDataFile taxonFile = dwcDataFile.getByRowType(DwcTerm.Taxon);
     Preconditions.checkNotNull(taxonFile, "No Taxon TabularDataFile is defined");
@@ -84,32 +81,26 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
       Normalizer normalizer = Normalizer.create(datasetKey, dao, taxonFile.getFilePath().toFile(),
               new IdLookupPassThru(), configuration.neo.batchSize);
       normalizer.run(false);
-      return Optional.of(collectUsagesData(dao));
+      collectUsagesData(dao, resultConsumer);
     }
   }
 
   /**
    * Collect issues and graph data from the normalization result.
    */
-  private Stream<RecordEvaluationResult> collectUsagesData(final UsageDao dao) {
-   List<RecordEvaluationResult> results = new ArrayList<>();
+  private void collectUsagesData(final UsageDao dao, final Consumer<RecordEvaluationResult> resultConsumer) {
+
     try (Transaction tx = dao.beginTx()) {
       // iterate over all node and collect their issues
 
-      //use a stream
       ResourceIterator<Node> it = dao.allNodes().iterator();
       while(it.hasNext()){
         Node node = it.next();
         NameUsage usage = dao.readUsage(node, false);
-        results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId())));
+        resultConsumer.accept(toEvaluationResult(usage, dao.readVerbatim(node.getId())));
       }
 
-//      StreamSupport.stream(dao.allNodes().spliterator(),false)
-//              .map(node -> {
-//        NameUsage usage = dao.readUsage(node, false);
-//        results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId())));
-//                return node;
-      //  return toEvaluationResult(usage, dao.readVerbatim(node.getId()));
+
         //usage.getIssues().stream().forEach( issue ->
         //        results.add(toEvaluationResult(usage, dao.readVerbatim(node.getId()))));
 //      });
@@ -118,7 +109,7 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
 
       //we filter out results with no details. This can happen when the normalizer flag issue we are not interested in.
      // return results.stream().filter( rer -> rer.getDetails() != null && !rer.getDetails().isEmpty() );
-      return results.stream();
+     // return results.stream();
     }
   }
 

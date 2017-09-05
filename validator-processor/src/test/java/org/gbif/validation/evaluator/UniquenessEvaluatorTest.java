@@ -14,8 +14,8 @@ import org.gbif.validation.source.UnsupportedDataFileException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,9 +45,10 @@ public class UniquenessEvaluatorTest {
       DwcDataFile dwcaContent = DataFileFactory.prepareDataFile(df,testFolder);
 
       UniquenessEvaluator ue = new UniquenessEvaluator(DwcTerm.Occurrence, false, testFolder);
-      Optional<Stream<RecordEvaluationResult>> uniquenessEvaluatorResult = ue.evaluate(dwcaContent);
+      List<RecordEvaluationResult> results = new ArrayList<>();
+      ue.evaluate(dwcaContent, results::add);
 
-      RecordEvaluationResult recordEvaluationResult = uniquenessEvaluatorResult.get().findFirst().get();
+      RecordEvaluationResult recordEvaluationResult = results.get(0);
       RecordEvaluationResultDetails recordEvaluationResultDetails = recordEvaluationResult.getDetails().get(0);
       assertEquals(EvaluationType.RECORD_NOT_UNIQUELY_IDENTIFIED, recordEvaluationResultDetails.getEvaluationType());
       assertEquals("19", recordEvaluationResult.getRecordId());

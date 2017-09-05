@@ -10,8 +10,8 @@ import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -43,9 +43,10 @@ public class EvaluationChainTest {
       evaluationChainBuilder.evaluateReferentialIntegrity();
       evaluationChainBuilder.build().runRowTypeEvaluation((dataFile, rowType, recordCollectionEvaluator) -> {
         try {
-          Optional<Stream<RecordEvaluationResult>> result = recordCollectionEvaluator.evaluate(dataFile);
+          List<RecordEvaluationResult> results = new ArrayList<>();
+          recordCollectionEvaluator.evaluate(dataFile, results::add);
           if(DwcTerm.Identification.equals(rowType)){
-            assertTrue("Got referential integrity issue on Identification extensions", result.isPresent());
+            assertTrue("Got referential integrity issue on Identification extensions", !results.isEmpty());
           }
         } catch (IOException e) {
           fail(e.getMessage());

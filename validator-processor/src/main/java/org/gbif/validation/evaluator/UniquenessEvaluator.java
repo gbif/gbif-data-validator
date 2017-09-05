@@ -15,8 +15,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
 
 import com.google.common.base.Charsets;
@@ -45,7 +44,7 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
   }
 
   @Override
-  public Optional<Stream<RecordEvaluationResult>> evaluate(@NotNull DwcDataFile dwcDataFile) throws IOException {
+  public void evaluate(@NotNull DwcDataFile dwcDataFile, Consumer<RecordEvaluationResult> resultConsumer) throws IOException {
 
     TabularDataFile dataFile = dwcDataFile.getByRowType(rowType);
     Preconditions.checkState(dataFile != null && dataFile.getRecordIdentifier().isPresent(),
@@ -62,7 +61,7 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
     String[] result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex + 1,
             dataFile.getDelimiterChar().toString());
 
-    return Optional.of(Arrays.stream(result).map(rec -> buildResult(rowType, rec)));
+    Arrays.stream(result).forEach(rec -> resultConsumer.accept(buildResult(rowType, rec)));
   }
 
   private static RecordEvaluationResult buildResult(Term rowType, String nonUniqueId){

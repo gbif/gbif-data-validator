@@ -13,8 +13,8 @@ import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,8 +41,9 @@ public class ReferentialIntegrityEvaluatorTest {
     DwcDataFile dwcDf = DataFileFactory.prepareDataFile(df, folder.newFolder().toPath());
 
     try {
-      Optional<Stream<RecordEvaluationResult>> result = riEvaluator.evaluate(dwcDf);
-      RecordEvaluationResult recordEvaluationResult =  result.get().findFirst().get();
+      List<RecordEvaluationResult> results = new ArrayList<>();
+      riEvaluator.evaluate(dwcDf, results::add);
+      RecordEvaluationResult recordEvaluationResult =  results.get(0);
       RecordEvaluationResultDetails recordEvaluationResultDetails = recordEvaluationResult.getDetails().get(0);
       assertEquals(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION, recordEvaluationResultDetails.getEvaluationType());
       assertEquals("ZZ", recordEvaluationResult.getRecordId());

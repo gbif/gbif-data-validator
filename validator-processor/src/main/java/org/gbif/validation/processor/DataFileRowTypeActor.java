@@ -4,12 +4,8 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
-import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
-
-import java.util.Optional;
-import java.util.stream.Stream;
 
 import akka.actor.AbstractLoggingActor;
 
@@ -53,10 +49,7 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
     CollectorGroup collector = collectorGroupProvider.newCollectorGroup();
     try {
 
-      Optional<Stream<RecordEvaluationResult>> evaluatorResult = evaluator.evaluate(dwcaDataFile);
-
-      //this will pull all the results and let the collector decide how to collect it
-      evaluatorResult.ifPresent(stream -> stream.forEach(result -> collector.collectResult(result)));
+      evaluator.evaluate(dwcaDataFile, collector::collectResult);
 
       return new DataWorkResult(rowType, DataWorkResult.Result.SUCCESS, collector);
     } catch (Exception ex) {
