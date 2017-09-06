@@ -45,7 +45,6 @@ public class DwcaResourceStructureEvaluatorTest {
   public void dwcaResourceStructureEvaluatorTest() {
     Optional<List<ValidationResultElement>> result =
             DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence", "test"));
-
     assertFalse(result.isPresent());
   }
 

@@ -9,7 +9,7 @@ import org.apache.tika.Tika;
 /**
  * Utility class to automatically detect the media types based on file or bytes.
  */
-class FileTypeDetector {
+public class FileTypeDetector {
 
   private static final Tika TIKA = new Tika();
 
