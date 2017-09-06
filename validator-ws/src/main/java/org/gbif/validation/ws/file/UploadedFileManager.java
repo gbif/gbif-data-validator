@@ -1,5 +1,6 @@
-package org.gbif.validation.ws.resources;
+package org.gbif.validation.ws.file;
 
+import org.gbif.detect.FileTypeDetector;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
 
+
 /**
  * Class responsible to manage files uploaded for validation.
  * This class will unzip the file is required.
@@ -67,8 +69,7 @@ public class UploadedFileManager {
   private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
 
   private static final List<String> ZIP_CONTENT_TYPE = Arrays.asList(CommonMediaTypes.ZIP.getMediaType().toString(),
-          ExtraMediaTypes.APPLICATION_XZIP_COMPRESSED);
-
+          ExtraMediaTypes.APPLICATION_GZIP);
   private static final List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN,
                                                                           ExtraMediaTypes.TEXT_CSV,
                                                                           ExtraMediaTypes.TEXT_TSV);
@@ -169,7 +170,7 @@ public class UploadedFileManager {
         //the connection name has the original URL
         String tempFilename = FilenameUtils.getName(urlConnection.getURL().toString());
         if(StringUtils.isNotBlank(tempFilename)) {
-          filename = Optional.ofNullable(tempFilename);
+          filename = Optional.of(tempFilename);
         }
       }
     }
@@ -257,28 +258,30 @@ public class UploadedFileManager {
     throws IOException {
 
     Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
+    String detectedContentType = FileTypeDetector.detectFormat(inputStream);
+
     DataFile transferredDataFile;
     try {
       //check if we have something to unzip
-      if (ZIP_CONTENT_TYPE.contains(contentType)) {
+      if (ZIP_CONTENT_TYPE.contains(detectedContentType)) {
         try {
           unzip(inputStream, destinationFolder);
 
           //a little bit risky to assume that the file is a Dwc-A, we should accept a zip csv
           transferredDataFile = DataFileFactory.newDataFile(determineDataFilePath(destinationFolder),
-                  filename, FileFormat.DWCA, contentType);
+                  filename, FileFormat.DWCA, detectedContentType);
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
           throw new RuntimeException(arEx);
         }
-      } else if (TABULAR_CONTENT_TYPES.contains(contentType)) {
+      } else if (TABULAR_CONTENT_TYPES.contains(detectedContentType)) {
         transferredDataFile = DataFileFactory.newDataFile(copyInputStream(destinationFolder, inputStream, filename),
-                filename, FileFormat.TABULAR, contentType);
-      } else if (SPREADSHEET_CONTENT_TYPES.contains(contentType)) {
+                filename, FileFormat.TABULAR, detectedContentType);
+      } else if (SPREADSHEET_CONTENT_TYPES.contains(detectedContentType)) {
         transferredDataFile = DataFileFactory.newDataFile(copyInputStream(destinationFolder, inputStream, filename),
-                filename, FileFormat.SPREADSHEET, contentType);
+                filename, FileFormat.SPREADSHEET, detectedContentType);
       } else {
-        LOG.warn("Unsupported file type: {}", contentType);
+        LOG.warn("Unsupported file type: {}", detectedContentType);
         return Optional.empty();
       }
     } catch (IOException ioEx) {
@@ -287,7 +290,6 @@ public class UploadedFileManager {
       //propagate exception
       throw ioEx;
     }
-
     return Optional.of(transferredDataFile);
   }
 

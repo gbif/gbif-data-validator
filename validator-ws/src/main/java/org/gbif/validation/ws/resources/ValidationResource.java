@@ -5,6 +5,8 @@ import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.ws.conf.ValidationWsConfiguration;
+import org.gbif.validation.ws.file.FileSizeException;
+import org.gbif.validation.ws.file.UploadedFileManager;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,8 +30,6 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.odftoolkit.odfdom.dom.attribute.style.StyleNumFormatAttribute.Value.a;
-
 /**
  *  Asynchronous web resource to process data validations.
  *  Internally, redirects all the requests to a JobServer instances that coordinates all data validations.
@@ -45,7 +45,6 @@ public class ValidationResource {
   private final UploadedFileManager fileTransferManager;
   private final JobServer<?> jobServer;
   private final ValidationWsConfiguration configuration;
-
 
   private URI getJobRedirectUri(long jobId) {
     return URI.create(configuration.getApiDataValidationPath() + STATUS_PATH + jobId);

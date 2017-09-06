@@ -1,4 +1,4 @@
-package org.gbif.validation.ws.resources;
+package org.gbif.validation.ws.file;
 
 import java.io.IOException;
 

@@ -1,6 +1,6 @@
 package org.gbif.validation.ws.provider;
 
-import org.gbif.validation.ws.resources.FileSizeException;
+import org.gbif.validation.ws.file.FileSizeException;
 import org.gbif.ws.response.GbifResponseStatus;
 
 import javax.ws.rs.core.Response;
