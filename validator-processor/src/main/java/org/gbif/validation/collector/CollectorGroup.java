@@ -24,17 +24,20 @@ public class CollectorGroup {
 
   private final RecordMetricsCollector metricsCollector;
   private final RecordEvaluationResultCollector resultsCollector;
-  private final Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector;
+  private final InterpretedTermsCountCollector interpretedTermsCountCollector;
 
   private final List<ResultsCollector> recordsCollectors;
 
-  CollectorGroup(List<Term> termsColumnsMapping, Optional<InterpretedTermsCountCollector> interpretedTermsCountCollector) {
+  CollectorGroup(List<Term> termsColumnsMapping, InterpretedTermsCountCollector interpretedTermsCountCollector) {
     metricsCollector = new TermsFrequencyCollector(termsColumnsMapping, true);
     resultsCollector = new RecordEvaluationResultCollector(RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE, true);
     recordsCollectors = new ArrayList<>();
     recordsCollectors.add(resultsCollector);
     this.interpretedTermsCountCollector = interpretedTermsCountCollector;
-    interpretedTermsCountCollector.ifPresent(recordsCollectors::add);
+
+    if(interpretedTermsCountCollector != null) {
+      recordsCollectors.add(interpretedTermsCountCollector);
+    }
   }
 
   /**
@@ -79,13 +82,16 @@ public class CollectorGroup {
             newEvaluationTypeEnumMap(baseCollector.resultsCollector.getSamples());
 
     Map<Term, Long> mergedInterpretedTermsCount = CollectorUtils.
-            newHashMapInit(baseCollector.interpretedTermsCountCollector.map(
+            newHashMapInit(Optional.ofNullable(baseCollector.interpretedTermsCountCollector).map(
                     InterpretedTermsCountCollector::getInterpretedCounts));
 
     collectors.stream().skip(1).forEach(coll -> {
               coll.metricsCollector.getTermFrequency().forEach((k, v) -> mergedTermFrequency.merge(k, v, Long::sum));
               coll.resultsCollector.getAggregatedCounts().forEach((k, v) -> mergedAggregatedCounts.merge(k, v, Long::sum));
-              coll.interpretedTermsCountCollector.ifPresent(itcc -> itcc.getInterpretedCounts().forEach((k, v) -> mergedInterpretedTermsCount.merge(k, v, Long::sum)));
+              if(coll.interpretedTermsCountCollector != null) {
+                coll.interpretedTermsCountCollector.getInterpretedCounts()
+                        .forEach((k, v) -> mergedInterpretedTermsCount.merge(k, v, Long::sum));
+              }
               coll.resultsCollector.getSamples().forEach((k, v) -> mergedSamples.merge(k, v, (o, n) -> {
                 List<ValidationResultDetails> a = new ArrayList<>(o);
                 a.addAll(n);

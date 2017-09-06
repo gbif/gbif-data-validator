@@ -179,7 +179,7 @@ public class EvaluatorFactory {
 
     if (DwcTerm.Occurrence == rowType) {
       evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
-              DwcTerm.Occurrence, columns.toArray(new Term[columns.size()]), defaultValues));
+              columns.toArray(new Term[columns.size()]), defaultValues));
     }
     return new RecordEvaluatorChain(evaluators);
   }

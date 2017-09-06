@@ -75,7 +75,7 @@ public class ValidationResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/submit")
-  public Response submit(@Context HttpServletRequest request) {
+  public Response submit(@Context HttpServletRequest request) throws FileSizeException {
     Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(request);
     if (dataFile.isPresent()) {
       return buildResponseFromStatus(jobServer.submit(dataFile.get()));
@@ -87,11 +87,14 @@ public class ValidationResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/submiturl")
-  public Response onValidateFile(@QueryParam("fileUrl") String fileURL) {
+  public Response onValidateFile(@QueryParam("fileUrl") String fileURL) throws FileSizeException {
     try {
       //this should also become asynchronous at some point
       Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(new URL(fileURL));
       return buildResponseFromStatus(jobServer.submit(dataFile.get()));
+    } catch (FileSizeException fsEx) {
+      // let FileSizeExceptionMapper handle it
+      throw fsEx;
     } catch (IOException ioEx) {
       LOG.warn("Can not download file submitted", ioEx);
     }

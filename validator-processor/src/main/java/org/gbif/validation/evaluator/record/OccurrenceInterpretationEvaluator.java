@@ -2,6 +2,7 @@ package org.gbif.validation.evaluator.record;
 
 import org.gbif.api.model.occurrence.VerbatimOccurrence;
 import org.gbif.api.vocabulary.OccurrenceIssue;
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.GbifTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.occurrence.processor.interpreting.OccurrenceInterpreter;
@@ -35,8 +36,9 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
 @ThreadSafe
 public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
 
+  private static final Term OCC_ROW_TYPE = DwcTerm.Occurrence;
+
   private final OccurrenceInterpreter interpreter;
-  private final Term rowType;
   private final Term[] columnMapping;
   private final Map<Term, String> defaultValues;
 
@@ -51,13 +53,12 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
    * @param columnMapping indices based column mapping. Unmapped column are expected to be represented by null
    * @param defaultValues
    */
-  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter, Term rowType,
+  public OccurrenceInterpretationEvaluator(OccurrenceInterpreter interpreter,
                                            Term[] columnMapping,Map<Term, String> defaultValues ) {
     Validate.notNull(interpreter, "OccurrenceInterpreter must not be null");
     Validate.notNull(columnMapping, "columnMapping must not be null");
 
     this.interpreter = interpreter;
-    this.rowType = rowType;
     this.columnMapping = columnMapping;
     this.defaultValues = defaultValues;
   }
@@ -111,7 +112,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   @VisibleForTesting
   protected RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
     LOG.debug("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
-    RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(rowType, lineNumber);
+    RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(OCC_ROW_TYPE, lineNumber);
 
     Map<Term, String> verbatimFields = result.getUpdated().getVerbatimFields();
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));

@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -24,7 +25,6 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -49,8 +49,6 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
 
-import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-
 /**
  * Class responsible to manage files uploaded for validation.
  * This class will unzip the file is required.
@@ -63,9 +61,9 @@ public class UploadedFileManager {
   private static final String ZIP_CONTENT_TYPE = CommonMediaTypes.ZIP.getMediaType().toString();
 
   //Files with name in the list will be ignored from a zip file
-  protected static final List<String> FILE_EXCLUSION_LIST = Arrays.asList(".DS_Store");
+  protected static final List<String> FILE_EXCLUSION_LIST = Collections.singletonList(".DS_Store");
   //Folders with name in the list (from the root, not recursively) will be ignored from a zip file
-  protected static final List<String> FOLDER_EXCLUSION_LIST = Arrays.asList("__MACOSX");
+  protected static final List<String> FOLDER_EXCLUSION_LIST = Collections.singletonList("__MACOSX");
 
   private static final Pattern FILENAME_PATTERN = Pattern.compile("filename[ ]*=[ ]*[\\S]+",Pattern.CASE_INSENSITIVE);
   private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
@@ -212,7 +210,7 @@ public class UploadedFileManager {
   /**
    * Handles the upload of data file from request parameters.
    */
-  public Optional<DataFile> uploadDataFile(HttpServletRequest request) {
+  public Optional<DataFile> uploadDataFile(HttpServletRequest request) throws FileSizeException {
     Optional<String> uploadedFileName = Optional.empty();
     try {
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
@@ -227,7 +225,7 @@ public class UploadedFileManager {
       }
     } catch (FileUploadException fileUploadEx) {
       LOG.error("FileUpload issue", fileUploadEx);
-      throw new WebApplicationException(fileUploadEx, SC_BAD_REQUEST);
+      throw new FileSizeException(fileUploadEx);
     } catch (IOException ioEx) {
       LOG.error("Can't handle uploaded file", ioEx);
       throw errorResponse(uploadedFileName.orElse(""), Response.Status.BAD_REQUEST, ValidationErrorCode.IO_ERROR);
@@ -349,18 +347,9 @@ public class UploadedFileManager {
 
     @Override
     protected void raiseError(long pSizeMax, long pCount) throws IOException {
-      throw new FileDownloadSizeException(
+      throw new FileSizeException(
         String.format("Download was rejected because its size (%s) exceeds the configured maximum (%s)",
                       pCount, pSizeMax));
-    }
-  }
-
-  /**
-   * {@link IOException} triggered when the limit set for download size is reached.
-   */
-  private static class FileDownloadSizeException extends IOException {
-    private FileDownloadSizeException(String pMsg) {
-      super(pMsg);
     }
   }
 

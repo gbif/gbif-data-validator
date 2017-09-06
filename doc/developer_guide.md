@@ -49,13 +49,13 @@ The [ResourceConstitutionEvaluationChain](https://github.com/gbif/gbif-data-vali
 [ResourceStructureEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/ResourceStructureEvaluator.java) represents an evaluation against the structure of the resource itself.
 
 #### DwcDataFileEvaluator
-[DwcDataFileEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFileEvaluator.java) can be used in the evaluation chain to evaluate pre-requisites.
+[DwcDataFileEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFileEvaluator.java) can be used in the evaluation chain to evaluate pre-requisites (see PrerequisiteEvaluator).
 
 ### EvaluationChain
 [EvaluationChain](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/processor/EvaluationChain.java) is used to build/configure/define the sequence of evaluation that will be performed on the content of the `DataFile`. This main evaluation chain is run by calling the 3 different `run` methods including a [runner](https://github.com/gbif/gbif-data-validator/tree/master/validator-processor/src/main/java/org/gbif/validation/evaluator/runner) as lambda expression for each of them. The reason behind the usage of the different `runner` is to allow the caller to run it synchronously or asynchronously. It also allows the caller to decide how to collect the different results.
 
 ### DwcDataFileEvaluator
-[DwcDataFileEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFileEvaluator.java) is responsible to evaluate the content `DwcDataFile` which is ostly of the metadata document (EML) at this point.
+[DwcDataFileEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/DwcDataFileEvaluator.java) is responsible to evaluate the content `DwcDataFile` which is mostly of the metadata document (EML) at this point.
 
 ### RecordCollectionEvaluator
 [RecordCollectionEvaluator](https://github.com/gbif/gbif-data-validator/blob/master/validator-processor/src/main/java/org/gbif/validation/api/RecordCollectionEvaluator.java) operates at a higher level than RecordEvaluator and work on more than one record but, it also produces RecordEvaluationResult at a record level.
