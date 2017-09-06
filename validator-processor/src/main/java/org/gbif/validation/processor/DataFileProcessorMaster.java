@@ -328,21 +328,33 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     ));
 
     //merge all ValidationResultElement into those collected by rowType
-    validationResultElements.forEach(
+    mergeIssuesOnFilename(validationResultElements, resultElements);
+
+    return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
+            GBIF_INDEXING_PROFILE, resultElements);
+  }
+
+  /**
+   * Given 2 collections of {@link ValidationResultElement}, for each element of source merge the issues into
+   * the mergeInto collection if it contains a {@link ValidationResultElement} with the same filename. Otherwise,
+   * the {@link ValidationResultElement} is added to the mergeInto collection.x
+   *
+   * @param source
+   * @param mergeInto
+   */
+  static void mergeIssuesOnFilename(final Collection<ValidationResultElement> source, final Collection<ValidationResultElement> mergeInto) {
+    source.forEach(
             vre -> {
-              Optional<ValidationResultElement> currentElement = resultElements.stream()
+              Optional<ValidationResultElement> currentElement = mergeInto.stream()
                       .filter(re -> vre.getFileName().equals(re.getFileName()))
                       .findFirst();
               if (currentElement.isPresent()) {
                 currentElement.get().getIssues().addAll(vre.getIssues());
               } else {
-                resultElements.add(vre);
+                mergeInto.add(vre);
               }
             }
     );
-
-    return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
-            GBIF_INDEXING_PROFILE, resultElements);
   }
 
 

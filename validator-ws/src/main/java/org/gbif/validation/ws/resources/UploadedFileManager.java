@@ -58,8 +58,6 @@ public class UploadedFileManager {
 
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
-  private static final String ZIP_CONTENT_TYPE = CommonMediaTypes.ZIP.getMediaType().toString();
-
   //Files with name in the list will be ignored from a zip file
   protected static final List<String> FILE_EXCLUSION_LIST = Collections.singletonList(".DS_Store");
   //Folders with name in the list (from the root, not recursively) will be ignored from a zip file
@@ -67,6 +65,9 @@ public class UploadedFileManager {
 
   private static final Pattern FILENAME_PATTERN = Pattern.compile("filename[ ]*=[ ]*[\\S]+",Pattern.CASE_INSENSITIVE);
   private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
+
+  private static final List<String> ZIP_CONTENT_TYPE = Arrays.asList(CommonMediaTypes.ZIP.getMediaType().toString(),
+          ExtraMediaTypes.APPLICATION_XZIP_COMPRESSED);
 
   private static final List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN,
                                                                           ExtraMediaTypes.TEXT_CSV,
@@ -194,11 +195,11 @@ public class UploadedFileManager {
    * @throws IOException
    */
   public UploadedFileManager(String workingDirectory) throws IOException {
-    this.workingDirectory =  Paths.get(workingDirectory,FILEUPLOAD_TMP_FOLDER);
+    this.workingDirectory =  Paths.get(workingDirectory, FILEUPLOAD_TMP_FOLDER);
 
     File workingDirectoryFile = this.workingDirectory.toFile();
     if(!workingDirectoryFile.exists()) {
-      Files.createDirectory(this.workingDirectory);
+      Files.createDirectories(this.workingDirectory);
     }
 
     DiskFileItemFactory diskFileItemFactory = new DiskFileItemFactory(MAX_SIZE_BEFORE_DISK_IN_BYTES,
@@ -233,8 +234,14 @@ public class UploadedFileManager {
     throw errorResponse(Response.Status.BAD_REQUEST, ValidationErrorCode.UNSUPPORTED_FILE_FORMAT);
   }
 
-  public Optional<DataFile> uploadDataFile(URL fileToDownload) throws IOException {
-    return uploadDataFile(null, null, fileToDownload);
+  /**
+   * Download a dataFile from a URL.
+   * @param fileToDownload
+   * @return
+   * @throws IOException
+   */
+  public Optional<DataFile> downloadDataFile(URL fileToDownload) throws IOException {
+    return downloadDataFile(null, null, fileToDownload);
   }
 
   /**
@@ -253,14 +260,13 @@ public class UploadedFileManager {
     DataFile transferredDataFile;
     try {
       //check if we have something to unzip
-      if (ZIP_CONTENT_TYPE.equalsIgnoreCase(contentType)) {
+      if (ZIP_CONTENT_TYPE.contains(contentType)) {
         try {
           unzip(inputStream, destinationFolder);
 
           //a little bit risky to assume that the file is a Dwc-A, we should accept a zip csv
           transferredDataFile = DataFileFactory.newDataFile(determineDataFilePath(destinationFolder),
                   filename, FileFormat.DWCA, contentType);
-
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
           throw new RuntimeException(arEx);
@@ -294,9 +300,9 @@ public class UploadedFileManager {
 
   /**
    * Uploads a file using two optional parameters for file name and content type.
-   * If any of those parameters are null, the fileToDownload url is analized to extract them.
+   * If any of those parameters are null, the fileToDownload url is analyzed to extract them.
    */
-  private Optional<DataFile> uploadDataFile(@Nullable String providedFilename,
+  private Optional<DataFile> downloadDataFile(@Nullable String providedFilename,
                                             @Nullable String providedContentType,
                                             URL fileToDownload) throws IOException {
 
@@ -308,6 +314,7 @@ public class UploadedFileManager {
                                 getContentType(providedContentType,urlConnection), in);
     }
   }
+
 
   /**
    * This function is used to determine the final {@link Path} to use for the {@link DataFile}.

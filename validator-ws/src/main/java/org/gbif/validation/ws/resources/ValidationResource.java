@@ -28,6 +28,8 @@ import com.sun.jersey.api.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.odftoolkit.odfdom.dom.attribute.style.StyleNumFormatAttribute.Value.a;
+
 /**
  *  Asynchronous web resource to process data validations.
  *  Internally, redirects all the requests to a JobServer instances that coordinates all data validations.
@@ -90,8 +92,11 @@ public class ValidationResource {
   public Response onValidateFile(@QueryParam("fileUrl") String fileURL) throws FileSizeException {
     try {
       //this should also become asynchronous at some point
-      Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(new URL(fileURL));
-      return buildResponseFromStatus(jobServer.submit(dataFile.get()));
+      Optional<DataFile> dataFile = fileTransferManager.downloadDataFile(new URL(fileURL));
+      Optional<JobStatusResponse> jsResponse = dataFile.map(jobServer::submit);
+      if(jsResponse.isPresent()) {
+        return buildResponseFromStatus(jsResponse.get());
+      }
     } catch (FileSizeException fsEx) {
       // let FileSizeExceptionMapper handle it
       throw fsEx;

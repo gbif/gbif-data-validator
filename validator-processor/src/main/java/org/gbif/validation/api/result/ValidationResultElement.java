@@ -48,6 +48,17 @@ public class ValidationResultElement implements Serializable {
     return new ValidationResultElement(fileName, null, null, null, issues);
   }
 
+  /**
+   * Get a new {@link ValidationResultElement} for {@link DwcFileType#METADATA}.
+   *
+   * @param fileName
+   * @param issues
+   * @return
+   */
+  public static ValidationResultElement forMetadata(String fileName, List<ValidationIssue> issues){
+    return new ValidationResultElement(fileName, null, DwcFileType.METADATA, null, issues);
+  }
+
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
                                  List<ValidationIssue> issues){
     this(fileName, numberOfLines, fileType, rowType, issues, null, null);

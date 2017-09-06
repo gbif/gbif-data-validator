@@ -7,7 +7,6 @@ import org.gbif.registry.metadata.parse.DatasetParser;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
-import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
@@ -67,11 +66,8 @@ class BasicMetadataEvaluator implements DwcDataFileEvaluator {
     );
 
     if(!validationIssues.isEmpty()) {
-      validationResultElements.add(
-              new ValidationResultElement(
-                      dwcDataFile.getMetadataFilePath().map( p -> p.getFileName().toString()).orElse(""),
-                      null, DwcFileType.METADATA,
-                      null, validationIssues));
+      validationResultElements.add(ValidationResultElement.forMetadata(
+              dwcDataFile.getMetadataFilePath().map( p -> p.getFileName().toString()).orElse(""), validationIssues));
     }
 
     return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);
