@@ -32,7 +32,6 @@ public class OccurrenceInterpretationEvaluatorTest {
   @Test
   public void testToVerbatimOccurrence(){
 
-
     //test expected data
     OccurrenceInterpretationEvaluator evaluator = createInterpreter(COLUMN_MAPPING);
     List<String> record = Arrays.asList("1", "2000-01-01", "2000-01-02");
@@ -64,7 +63,7 @@ public class OccurrenceInterpretationEvaluatorTest {
   public void testEvaluateWithNulls(){
     Term[] columnMapping = new Term[]{DwcTerm.occurrenceID, DwcTerm.eventDate, DcTerm.modified};
     OccurrenceInterpretationEvaluator evaluator = new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            DwcTerm.Occurrence, columnMapping, null);
+            columnMapping, null);
     assertNull(evaluator.evaluate(null, null));
   }
 
@@ -86,6 +85,6 @@ public class OccurrenceInterpretationEvaluatorTest {
   private OccurrenceInterpretationEvaluator createInterpreter(Term[] columnMapping) {
     //test expected data
     return new OccurrenceInterpretationEvaluator(Mockito.mock(OccurrenceInterpreter.class),
-            DwcTerm.Occurrence, columnMapping, DEFAULT_VALUES);
+            columnMapping, DEFAULT_VALUES);
   }
 }

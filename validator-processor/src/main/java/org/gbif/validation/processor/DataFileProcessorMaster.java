@@ -331,9 +331,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     validationResultElements.forEach(
             vre -> {
               Optional<ValidationResultElement> currentElement = resultElements.stream()
-                      .filter(re -> vre.getFileName().equals(vre.getFileName()))
+                      .filter(re -> vre.getFileName().equals(re.getFileName()))
                       .findFirst();
-
               if (currentElement.isPresent()) {
                 currentElement.get().getIssues().addAll(vre.getIssues());
               } else {

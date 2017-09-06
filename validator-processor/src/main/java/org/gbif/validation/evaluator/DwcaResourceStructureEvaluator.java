@@ -59,11 +59,11 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
         try {
           getMetaXMLValidator().validate(new StreamSource(metaXmlFile.getAbsolutePath()));
 
-          evaluateArchiveFile(archive.getCore()).ifPresent(vre -> validationResultElements.add(vre));
+          evaluateArchiveFile(archive.getCore()).ifPresent(validationResultElements::add);
           if (!archive.getExtensions().isEmpty()) {
             archive.getExtensions().forEach(
                     ext -> evaluateArchiveFile(ext).
-                            ifPresent(vre -> validationResultElements.add(vre))
+                            ifPresent(validationResultElements::add)
             );
           }
         } catch (SAXException e) {

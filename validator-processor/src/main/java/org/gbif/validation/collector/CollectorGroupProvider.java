@@ -28,7 +28,7 @@ public class CollectorGroupProvider {
    */
   public CollectorGroup newCollectorGroup() {
     return new CollectorGroup(columns,
-            CollectorFactory.createInterpretedTermsCountCollector(rowType, true));
+            CollectorFactory.createInterpretedTermsCountCollector(rowType, true).orElse(null));
   }
 
 }

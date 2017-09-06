@@ -1,7 +1,7 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.dwc.DwcFiles;
 import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
@@ -44,7 +44,7 @@ class EmlResourceStructureEvaluator implements ResourceStructureEvaluator {
     List<ValidationResultElement> validationResultElements = new ArrayList<>();
 
     try {
-      Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+      Archive archive = DwcFiles.fromLocation(dataFile.getFilePath());
       File datasetMetadataFile = archive.getMetadataLocationFile();
       if (datasetMetadataFile.exists()) {
         try {
