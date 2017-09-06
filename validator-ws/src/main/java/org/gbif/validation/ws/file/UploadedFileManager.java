@@ -1,12 +1,13 @@
 package org.gbif.validation.ws.file;
 
-import org.gbif.detect.FileTypeDetector;
+import org.gbif.common.parsers.date.TemporalAccessorUtils;
+import org.gbif.detect.MediaTypeAndFormatDetector;
+import org.gbif.exception.UnsupportedMediaTypeException;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.source.DataFileFactory;
+import org.gbif.validation.util.Cleanable;
 import org.gbif.validation.ws.conf.ValidationWsConfiguration;
-import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,8 +18,10 @@ import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,10 +29,9 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import com.sun.jersey.multipart.file.DefaultMediaTypePredictor.CommonMediaTypes;
+import com.google.common.base.Preconditions;
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -42,12 +44,16 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.LimitedInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.filefilter.AgeFileFilter;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.ParseException;
 import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.gbif.detect.MediaTypeAndFormatDetector.detectMediaType;
+import static org.gbif.validation.conf.SupportedMediaTypes.ZIP_CONTENT_TYPE;
 import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
 
 
@@ -56,7 +62,7 @@ import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
  * This class will unzip the file is required.
  *
  */
-public class UploadedFileManager {
+public class UploadedFileManager implements Cleanable {
 
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
@@ -67,17 +73,6 @@ public class UploadedFileManager {
 
   private static final Pattern FILENAME_PATTERN = Pattern.compile("filename[ ]*=[ ]*[\\S]+",Pattern.CASE_INSENSITIVE);
   private static final Pattern QUOTE_PATTERN = Pattern.compile("\"");
-
-  private static final List<String> ZIP_CONTENT_TYPE = Arrays.asList(CommonMediaTypes.ZIP.getMediaType().toString(),
-          ExtraMediaTypes.APPLICATION_GZIP);
-  private static final List<String> TABULAR_CONTENT_TYPES = Arrays.asList(MediaType.TEXT_PLAIN,
-                                                                          ExtraMediaTypes.TEXT_CSV,
-                                                                          ExtraMediaTypes.TEXT_TSV);
-
-  private static final List<String> SPREADSHEET_CONTENT_TYPES = Arrays.asList(
-    ExtraMediaTypes.APPLICATION_EXCEL,
-    ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET,
-    ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET);
 
   private static final int FILE_DOWNLOAD_TIMEOUT_MS = 10000;
   private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
@@ -153,10 +148,9 @@ public class UploadedFileManager {
   }
 
   /**
-   * if the provided file name is empty/null, this functions treis to gets it from the urlConnection.
+   * if the provided file name is empty/null, this functions tries to gets it from the urlConnection.
    */
   private static String getFilename(String providedFilename, URLConnection urlConnection) {
-
     Optional<String> filename = Optional.ofNullable(StringUtils.trimToNull(providedFilename));
     if (!filename.isPresent()) {
       //Get it from the Content disposition
@@ -212,7 +206,7 @@ public class UploadedFileManager {
   /**
    * Handles the upload of data file from request parameters.
    */
-  public Optional<DataFile> uploadDataFile(HttpServletRequest request) throws FileSizeException {
+  public Optional<DataFile> uploadDataFile(HttpServletRequest request) throws FileSizeException, UnsupportedMediaTypeException {
     Optional<String> uploadedFileName = Optional.empty();
     try {
       List<FileItem> uploadedContent = servletBasedFileUpload.parseRequest(request);
@@ -241,7 +235,7 @@ public class UploadedFileManager {
    * @return
    * @throws IOException
    */
-  public Optional<DataFile> downloadDataFile(URL fileToDownload) throws IOException {
+  public Optional<DataFile> downloadDataFile(URL fileToDownload) throws IOException, UnsupportedMediaTypeException {
     return downloadDataFile(null, null, fileToDownload);
   }
 
@@ -255,48 +249,49 @@ public class UploadedFileManager {
    * @throws IOException
    */
   private Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream)
-    throws IOException {
+    throws IOException, UnsupportedMediaTypeException {
 
     Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
-    String detectedContentType = FileTypeDetector.detectFormat(inputStream);
+    String detectedContentType = detectMediaType(inputStream);
 
-    DataFile transferredDataFile;
+    Path dataFilePath;
     try {
       //check if we have something to unzip
       if (ZIP_CONTENT_TYPE.contains(detectedContentType)) {
         try {
           unzip(inputStream, destinationFolder);
-
-          //a little bit risky to assume that the file is a Dwc-A, we should accept a zip csv
-          transferredDataFile = DataFileFactory.newDataFile(determineDataFilePath(destinationFolder),
-                  filename, FileFormat.DWCA, detectedContentType);
+          dataFilePath = determineDataFilePath(destinationFolder);
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
           throw new RuntimeException(arEx);
         }
-      } else if (TABULAR_CONTENT_TYPES.contains(detectedContentType)) {
-        transferredDataFile = DataFileFactory.newDataFile(copyInputStream(destinationFolder, inputStream, filename),
-                filename, FileFormat.TABULAR, detectedContentType);
-      } else if (SPREADSHEET_CONTENT_TYPES.contains(detectedContentType)) {
-        transferredDataFile = DataFileFactory.newDataFile(copyInputStream(destinationFolder, inputStream, filename),
-                filename, FileFormat.SPREADSHEET, detectedContentType);
-      } else {
-        LOG.warn("Unsupported file type: {}", detectedContentType);
-        return Optional.empty();
       }
+      else {
+        dataFilePath = copyInputStream(destinationFolder, inputStream, filename);
+      }
+
+      // from here we can decide to change the content type (e.g. zipped excel file)
+      Optional<MediaTypeAndFormatDetector.MediaTypeAndFormat> mediaTypeAndFormat =
+              MediaTypeAndFormatDetector.evaluateMediaTypeAndFormat(dataFilePath, detectedContentType);
+
+      if(!mediaTypeAndFormat.isPresent()){
+        throw new UnsupportedMediaTypeException("Unsupported file type: " + detectedContentType);
+      }
+
+      return mediaTypeAndFormat
+              .map( mtf -> DataFileFactory.newDataFile(dataFilePath, filename, mtf.getFileFormat(), mtf.getMediaType()));
     } catch (IOException ioEx) {
       LOG.warn("Deleting temporary content of {} after IOException.", filename);
       FileUtils.deleteDirectory(destinationFolder.toFile());
       //propagate exception
       throw ioEx;
     }
-    return Optional.of(transferredDataFile);
   }
 
   /**
    * Handles the file transfer from a FileItem.
    */
-  private Optional<DataFile> handleFileTransfer(FileItem fileItem) throws IOException {
+  private Optional<DataFile> handleFileTransfer(FileItem fileItem) throws IOException, UnsupportedMediaTypeException {
     return handleFileTransfer(fileItem.getName(), fileItem.getContentType(), fileItem.getInputStream());
   }
 
@@ -306,7 +301,7 @@ public class UploadedFileManager {
    */
   private Optional<DataFile> downloadDataFile(@Nullable String providedFilename,
                                             @Nullable String providedContentType,
-                                            URL fileToDownload) throws IOException {
+                                            URL fileToDownload) throws IOException, UnsupportedMediaTypeException {
 
     try (InputStream in = new FileDownloadLimitedInputStream(fileToDownload.openStream(), MAX_UPLOAD_SIZE_IN_BYTES)) {
       URLConnection urlConnection = fileToDownload.openConnection();
@@ -316,7 +311,6 @@ public class UploadedFileManager {
                                 getContentType(providedContentType,urlConnection), in);
     }
   }
-
 
   /**
    * This function is used to determine the final {@link Path} to use for the {@link DataFile}.
@@ -343,6 +337,19 @@ public class UploadedFileManager {
    */
   private Path generateRandomFolderPath() {
     return workingDirectory.resolve(UUID.randomUUID().toString());
+  }
+
+  @Override
+  public void cleanUntil(LocalDateTime dateTimeLimit) {
+    Objects.requireNonNull(dateTimeLimit, "dateTimeLimit shall be provided");
+    Preconditions.checkArgument(dateTimeLimit.isBefore(LocalDateTime.now()),
+            "dateTimeLimit can not be in the future");
+    
+    Iterator<File> filesToDelete =
+            FileUtils.iterateFiles(workingDirectory.toFile(),
+                    new AgeFileFilter(TemporalAccessorUtils.toDate(dateTimeLimit)), TrueFileFilter.TRUE);
+    //TODO
+    filesToDelete.forEachRemaining( f-> System.out.println(f + " flag for deletion"));
   }
 
   /**
