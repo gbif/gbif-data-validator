@@ -214,6 +214,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
         return StructuralEvaluationResult.createStopEvaluation();
       }
       validationResultElements.addAll(validationResultElementList.get());
+
+      context().parent().tell(new JobStatusResponse<>(JobStatus.RUNNING, dataJob.getJobId(),
+              new ValidationResult(null, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                      GBIF_INDEXING_PROFILE, validationResultElementList.get())), self());
     }
 
     return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
