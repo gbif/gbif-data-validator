@@ -1,5 +1,6 @@
 package org.gbif.validation.ws.resources;
 
+import org.gbif.exception.UnsupportedMediaTypeException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationResult;
@@ -76,7 +77,7 @@ public class ValidationResource {
   @Consumes(MediaType.MULTIPART_FORM_DATA)
   @Produces(MediaType.APPLICATION_JSON)
   @Path("/submit")
-  public Response submit(@Context HttpServletRequest request) throws FileSizeException {
+  public Response submit(@Context HttpServletRequest request) throws FileSizeException, UnsupportedMediaTypeException {
     Optional<DataFile> dataFile = fileTransferManager.uploadDataFile(request);
     if (dataFile.isPresent()) {
       return buildResponseFromStatus(jobServer.submit(dataFile.get()));
@@ -88,7 +89,7 @@ public class ValidationResource {
   @Produces(MediaType.APPLICATION_JSON)
   @Consumes(MediaType.APPLICATION_JSON)
   @Path("/submiturl")
-  public Response onValidateFile(@QueryParam("fileUrl") String fileURL) throws FileSizeException {
+  public Response onValidateFile(@QueryParam("fileUrl") String fileURL) throws FileSizeException, UnsupportedMediaTypeException {
     try {
       //this should also become asynchronous at some point
       Optional<DataFile> dataFile = fileTransferManager.downloadDataFile(new URL(fileURL));
