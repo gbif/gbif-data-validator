@@ -96,6 +96,7 @@ public class UploadedFileManager implements Cleanable {
 
     try (ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP,
             zippedInputStream)) {
+      LOG.info("Unzipping");
       Optional<ZipArchiveEntry> entry = Optional.ofNullable((ZipArchiveEntry) ais.getNextEntry());
       while (entry.isPresent()) {
         String entryName = entry.get().getName();
@@ -253,6 +254,8 @@ public class UploadedFileManager implements Cleanable {
 
     Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
     String detectedContentType = detectMediaType(inputStream);
+
+    LOG.info("detectedContentType:" + detectedContentType);
 
     Path dataFilePath;
     try {
