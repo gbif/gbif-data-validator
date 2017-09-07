@@ -2,6 +2,7 @@ package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.model.JobStatusResponse;
 
+import java.io.IOException;
 import java.util.Optional;
 
 /**
@@ -12,7 +13,7 @@ public interface JobStorage {
   /**
    * Gets the data stored of jobId.
    */
-  Optional<JobStatusResponse<?>> get(long jobId);
+  Optional<JobStatusResponse<?>> get(long jobId) throws IOException ;
 
   /**
    * Stores/overwrites the data of a jobId.

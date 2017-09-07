@@ -64,16 +64,12 @@ public class FileJobStorage implements JobStorage {
    * Return and Optional.empty() is the file is not found.
    */
   @Override
-  public Optional<JobStatusResponse<?>> get(long jobId) {
-    try {
-      File jobFile = getJobResultFile(jobId);
-      if (jobFile.exists()) {
-        return Optional.ofNullable(OBJECT_READER.readValue(jobFile));
-      }
-      return Optional.empty();
-    } catch (IOException ex) {
-      throw new RuntimeException(ex);
+  public Optional<JobStatusResponse<?>> get(long jobId) throws IOException {
+    File jobFile = getJobResultFile(jobId);
+    if (jobFile.exists()) {
+      return Optional.ofNullable(OBJECT_READER.readValue(jobFile));
     }
+    return Optional.empty();
   }
 
   /**

@@ -5,10 +5,11 @@ import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.jobserver.messages.DataJob;
 
-import static  org.gbif.validation.jobserver.util.ActorSelectionUtil.getRunningActor;
-
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Date;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -16,8 +17,12 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Kill;
 import akka.actor.Props;
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.gbif.validation.jobserver.util.ActorSelectionUtil.getNumberOfRunningActor;
+import static org.gbif.validation.jobserver.util.ActorSelectionUtil.getRunningActor;
 
 /**
  * Manages the job submission and status retrieval.
@@ -28,12 +33,11 @@ public class JobServer<T> {
   private static final Logger LOG = LoggerFactory.getLogger(JobServer.class);
 
   private final ActorSystem system;
-
   private final AtomicLong jobIdSeed;
-
   private final JobStorage jobStorage;
-
   private final ActorRef jobMonitor;
+
+  private final ConcurrentHashMap<Path, Long> preSubmittedJob = new ConcurrentHashMap<>();
 
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
@@ -51,7 +55,9 @@ public class JobServer<T> {
    * If the job is accepted the response contains the new jobId ACCEPTED as the job status.
    */
   public JobStatusResponse<?> submit(DataFile dataFile) {
-    long  newJobId = jobIdSeed.getAndIncrement();
+    long newJobId = jobIdSeed.getAndIncrement();
+    
+    LOG.info("Number of running actors:" +  getNumberOfRunningActor(system).map( a -> a.toString()).orElse("?"));
     jobMonitor.tell(new DataJob<>(newJobId, dataFile), jobMonitor);
     return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId);
   }
@@ -61,7 +67,14 @@ public class JobServer<T> {
    */
   public JobStatusResponse<?> status(long jobId) {
     //the job storage is checked first
-    Optional<JobStatusResponse<?>> result = jobStorage.get(jobId);
+    Optional<JobStatusResponse<?>> result = Optional.empty();
+    try {
+      result = jobStorage.get(jobId);
+    } catch (IOException ioEx) {
+      // log and continue as if it was not found
+      LOG.warn("Exception while getting job from the jobStorage " + jobId, ioEx);
+    }
+
     if (result.isPresent()) {
       return result.get();
     }
@@ -83,6 +96,15 @@ public class JobServer<T> {
       return response;
     }
     return new JobStatusResponse(JobStatus.NOT_FOUND, jobId);
+  }
+
+  /**
+   * Only used when a job can not be started in an asynchronous context.
+   * @param jobStatus
+   */
+  public void pushFailedJobStatus(JobStatusResponse<?> jobStatus) {
+    Preconditions.checkArgument(JobStatus.FAILED == jobStatus.getStatus());
+    jobStorage.put(jobStatus);
   }
 
   /**
