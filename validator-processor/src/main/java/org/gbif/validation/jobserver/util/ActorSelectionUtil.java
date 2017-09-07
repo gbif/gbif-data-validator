@@ -7,6 +7,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSelection;
 import akka.actor.ActorSystem;
 import akka.util.Timeout;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Function1;
@@ -56,13 +57,12 @@ public class ActorSelectionUtil {
            return true;
         }
       };
-      Integer number = system.child(ACTOR_SELECTION_PATH).elements().count(trueFunction);
+      Integer number = system.child(StringUtils.removeEnd(ACTOR_SELECTION_PATH, "/")).elements().count(trueFunction);
       return Optional.of(number);
     } catch (Exception ex) {
       LOG.warn("getNumberOfRunningActor failed", ex);
       return Optional.empty();
     }
   }
-
 
 }

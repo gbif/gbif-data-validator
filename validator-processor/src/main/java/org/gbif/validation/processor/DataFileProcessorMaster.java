@@ -283,7 +283,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void processRecordBasedResults(DataWorkResult result) {
 
-    //FIXME
     if(DataWorkResult.Result.FAILED == result.getResult()) {
       log().error("DataWorkResult = FAILED: {}", result);
       validationResultElements.add(ValidationResultElement.onException(
