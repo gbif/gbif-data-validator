@@ -1,7 +1,6 @@
 package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
@@ -16,10 +15,10 @@ import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
+import org.gbif.validation.evaluator.DwcDataFileSupplier;
 import org.gbif.validation.evaluator.EvaluationChain;
 import org.gbif.validation.evaluator.EvaluatorFactory;
 import org.gbif.validation.evaluator.ResourceConstitutionEvaluationChain;
-import org.gbif.validation.evaluator.DwcDataFileSupplier;
 import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
@@ -386,9 +385,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Deletes the working directory if it exists.
    */
   private void cleanup() {
-    if (!preserveTemporaryFiles && workingDir.exists()) {
-      FileUtils.deleteDirectoryRecursively(workingDir);
-    }
+//    if (!preserveTemporaryFiles && workingDir.exists()) {
+//      FileUtils.deleteDirectoryRecursively(workingDir);
+//    }
   }
 
   private static class StructuralEvaluationResult {

@@ -274,6 +274,10 @@ public class UploadedFileManager implements Cleanable {
       Optional<MediaTypeAndFormatDetector.MediaTypeAndFormat> mediaTypeAndFormat =
               MediaTypeAndFormatDetector.evaluateMediaTypeAndFormat(dataFilePath, detectedContentType);
 
+      LOG.info("mediaTypeAndFormat:" + mediaTypeAndFormat.get().getMediaType());
+      LOG.info("mediaTypeAndFormat:" + mediaTypeAndFormat.get().getFileFormat());
+      LOG.info("dataFilePath:" + dataFilePath);
+
       if(!mediaTypeAndFormat.isPresent()){
         throw new UnsupportedMediaTypeException("Unsupported file type: " + detectedContentType);
       }
@@ -344,7 +348,7 @@ public class UploadedFileManager implements Cleanable {
     Objects.requireNonNull(dateTimeLimit, "dateTimeLimit shall be provided");
     Preconditions.checkArgument(dateTimeLimit.isBefore(LocalDateTime.now()),
             "dateTimeLimit can not be in the future");
-    
+
     Iterator<File> filesToDelete =
             FileUtils.iterateFiles(workingDirectory.toFile(),
                     new AgeFileFilter(TemporalAccessorUtils.toDate(dateTimeLimit)), TrueFileFilter.TRUE);
