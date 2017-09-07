@@ -8,6 +8,7 @@ package org.gbif.validation.api.model;
 public enum EvaluationType {
 
   UNHANDLED_ERROR(EvaluationCategory.RESOURCE_INTEGRITY),
+  UNREADABLE_SECTION_ERROR(EvaluationCategory.RESOURCE_INTEGRITY),
 
   DWCA_UNREADABLE(EvaluationCategory.RESOURCE_INTEGRITY),
   DWCA_META_XML_NOT_FOUND(EvaluationCategory.RESOURCE_INTEGRITY),

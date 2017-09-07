@@ -8,6 +8,7 @@ import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.model.ValidationErrorCode;
@@ -281,6 +282,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     //FIXME
     if(DataWorkResult.Result.FAILED == result.getResult()) {
       log().error("DataWorkResult = FAILED: {}", result);
+      validationResultElements.add(ValidationResultElement.onException(
+              result.getDataFile().getSourceFileName(),
+              EvaluationType.UNREADABLE_SECTION_ERROR, ""));
     }
     collectResult(result);
     incrementWorkerCompleted();
