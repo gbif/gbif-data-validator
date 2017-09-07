@@ -1,11 +1,15 @@
 package org.gbif.validation.ws.file;
 
 
+import org.gbif.exception.UnsupportedMediaTypeException;
 import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.api.DataFile;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
 
 import org.apache.commons.compress.archivers.ArchiveException;
 import org.junit.Rule;
@@ -24,6 +28,17 @@ public class UploadedFileManagerTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
+  @Test
+  public void testTandleFileTransfer() throws IOException, UnsupportedMediaTypeException {
+    File testFolder = folder.newFolder("subfolder");
+    File f = FileUtils.getClasspathFile("dwca/Archive.zip");
+
+    //we use an non-buffered InputStream by purpose
+    InputStream fis = new FileInputStream(f);
+    UploadedFileManager a = new UploadedFileManager(testFolder.getAbsolutePath());
+    Optional<DataFile> df = a.handleFileTransfer("Archive.zip", "application/zip", fis);
+    assertEquals(3, df.get().getFilePath().toFile().listFiles().length);
+  }
 
   @Test
   public void testUnzipWithFolders() {

@@ -9,6 +9,7 @@ import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.util.Cleanable;
 import org.gbif.validation.ws.conf.ValidationWsConfiguration;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -96,7 +97,6 @@ public class UploadedFileManager implements Cleanable {
 
     try (ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP,
             zippedInputStream)) {
-      LOG.info("Unzipping");
       Optional<ZipArchiveEntry> entry = Optional.ofNullable((ZipArchiveEntry) ais.getNextEntry());
       while (entry.isPresent()) {
         String entryName = entry.get().getName();
@@ -249,20 +249,21 @@ public class UploadedFileManager implements Cleanable {
    * @return a {@link DataFile} instance that represents the file that was transferred.
    * @throws IOException
    */
-  private Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream)
+  protected Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream)
     throws IOException, UnsupportedMediaTypeException {
 
-    Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
-    String detectedContentType = detectMediaType(inputStream);
+    // "mark" needs to be supported in order to detect the media type by reading the first byte(s).
+    InputStream inputStreamWithMarkSupport = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
 
-    LOG.info("detectedContentType:" + detectedContentType);
+    Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
+    String detectedContentType = detectMediaType(inputStreamWithMarkSupport);
 
     Path dataFilePath;
     try {
       //check if we have something to unzip
       if (ZIP_CONTENT_TYPE.contains(detectedContentType)) {
         try {
-          unzip(inputStream, destinationFolder);
+          unzip(inputStreamWithMarkSupport, destinationFolder);
           dataFilePath = determineDataFilePath(destinationFolder);
         } catch (ArchiveException arEx) {
           LOG.error("Issue while unzipping data from {}.", filename, arEx);
@@ -270,7 +271,7 @@ public class UploadedFileManager implements Cleanable {
         }
       }
       else {
-        dataFilePath = copyInputStream(destinationFolder, inputStream, filename);
+        dataFilePath = copyInputStream(destinationFolder, inputStreamWithMarkSupport, filename);
       }
 
       // from here we can decide to change the content type (e.g. zipped excel file)

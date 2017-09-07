@@ -8,9 +8,11 @@ import javax.ws.rs.core.MediaType;
 import com.google.common.collect.ImmutableList;
 
 /**
- *
+ * Contains MediaType supprted by the validator.
  */
 public class SupportedMediaTypes {
+
+  private SupportedMediaTypes() {}
 
   public static final List<String> ZIP_CONTENT_TYPE = ImmutableList.of(
           org.apache.tika.mime.MediaType.APPLICATION_ZIP.toString(),
@@ -24,4 +26,5 @@ public class SupportedMediaTypes {
           ExtraMediaTypes.APPLICATION_EXCEL,
           ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET,
           ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET);
+
 }

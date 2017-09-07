@@ -29,7 +29,7 @@ public class MediaTypeAndFormatDetector {
   private MediaTypeAndFormatDetector() {}
 
   /**
-   *
+   * @see org.apache.tika.detect.Detector
    * @param filePath
    * @return detected media type
    * @throws IOException
@@ -40,6 +40,7 @@ public class MediaTypeAndFormatDetector {
 
   /**
    * detected media type
+   * @see org.apache.tika.detect.Detector
    * @param is
    * @return
    * @throws IOException
