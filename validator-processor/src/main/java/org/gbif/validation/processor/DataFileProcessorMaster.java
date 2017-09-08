@@ -317,7 +317,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void collectResult(DataWorkResult result) {
     rowTypeCollectors.compute(result.getRowType(), (key, val) -> {
-      val.add(result.getCollectors());
+      if(result.getCollectors() != null) {
+        val.add(result.getCollectors());
+      }
       return val;
     });
   }
