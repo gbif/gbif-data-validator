@@ -7,6 +7,7 @@ import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.JobStatusResponse;
@@ -57,9 +58,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   private static final int MAX_WORKER = Runtime.getRuntime().availableProcessors() * 50;
 
-  private final Map<Term, TabularDataFile> rowTypeDataFile;
-  private final Map<Term, CollectorGroupProvider> rowTypeCollectorProviders;
-  private final Map<Term, List<CollectorGroup>> rowTypeCollectors;
+  private final Map<RowTypeKey, TabularDataFile> rowTypeDataFile;
+  private final Map<RowTypeKey, CollectorGroupProvider> rowTypeCollectorProviders;
+  private final Map<RowTypeKey, List<CollectorGroup>> rowTypeCollectors;
   private final Collection<ValidationResultElement> validationResultElements;
   private final boolean preserveTemporaryFiles;
   private final AtomicInteger workerCompleted;
@@ -157,10 +158,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void init(Iterable<TabularDataFile> dataFiles){
     dataFiles.forEach(df -> {
-      rowTypeCollectors.putIfAbsent(df.getRowType(), new ArrayList<>());
-      rowTypeDataFile.put(df.getRowType(), df);
+      rowTypeCollectors.putIfAbsent(df.getRowTypeKey(), new ArrayList<>());
+      rowTypeDataFile.put(df.getRowTypeKey(), df);
       List<Term> columns = Arrays.asList(df.getColumns());
-      rowTypeCollectorProviders.put(df.getRowType(), new CollectorGroupProvider(df.getRowType(), columns));
+      rowTypeCollectorProviders.put(df.getRowTypeKey(), new CollectorGroupProvider(df.getRowTypeKey().getRowType(), columns));
     });
   }
 
@@ -182,7 +183,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       try {
         List<TabularDataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
         numOfWorkers.add(splitDataFile.size());
-        evaluationChainBuilder.evaluateRecords(df.getRowType(), columns, df.getDefaultValues().orElse(null), splitDataFile);
+        evaluationChainBuilder.evaluateRecords(df.getRowTypeKey().getRowType(), columns,
+                df.getDefaultValues().orElse(null), splitDataFile);
       } catch (IOException ioEx) {
         log().error("Failed to split data", ioEx);
       }
@@ -234,8 +236,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     };
     evaluationChain.runDwcDataFileEvaluation(dwcDataFileEvaluatorRunner);
 
-    RecordCollectionEvaluatorRunner runner = (dwcDataFile, rowType, recordCollectionEvaluator) -> {
-      ActorRef actor = createSingleActor(rowType, recordCollectionEvaluator);
+    RecordCollectionEvaluatorRunner runner = (dwcDataFile, rowTypeKey, recordCollectionEvaluator) -> {
+      ActorRef actor = createSingleActor(rowTypeKey, recordCollectionEvaluator);
       actor.tell(dwcDataFile, self());
     };
     evaluationChain.runRowTypeEvaluation(runner);
@@ -271,10 +273,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates an Actor for the provided {@link EvaluationChain.RowTypeEvaluationUnit}.
    */
-  private ActorRef createSingleActor(Term rowType, RecordCollectionEvaluator recordCollectionEvaluator) {
+  private ActorRef createSingleActor(RowTypeKey rowTypeKey, RecordCollectionEvaluator recordCollectionEvaluator) {
     String actorName =  "RowTypeEvaluationUnitActor_" + UUID.randomUUID();
     return getContext().actorOf(Props.create(DataFileRowTypeActor.class,
-            rowType, recordCollectionEvaluator, rowTypeCollectorProviders.get(rowType)), actorName);
+            rowTypeKey, recordCollectionEvaluator, rowTypeCollectorProviders.get(rowTypeKey)), actorName);
   }
 
   /**
@@ -316,7 +318,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Collects individual results and aggregates them in the internal data structures.
    */
   private void collectResult(DataWorkResult result) {
-    rowTypeCollectors.compute(result.getRowType(), (key, val) -> {
+    rowTypeCollectors.compute(result.getRowTypeKey(), (key, val) -> {
         val.add(result.getCollectors());
       return val;
     });

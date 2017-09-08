@@ -1,9 +1,9 @@
 package org.gbif.validation.processor;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 
@@ -23,17 +23,17 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
 
   /**
    *
-   * @param rowType represent the context under which this actor operates within the {@link DataFile} that will be received
+   * @param rowTypeKey represent the context under which this actor operates within the {@link DataFile} that will be received
    * @param evaluator
    * @param collector
    */
-  public DataFileRowTypeActor(Term rowType, RecordCollectionEvaluator evaluator,
+  public DataFileRowTypeActor(RowTypeKey rowTypeKey, RecordCollectionEvaluator evaluator,
                               CollectorGroupProvider collector) {
     receive(
             //this should only be called once
             match(DwcDataFile.class, dataFileMessage -> {
               pipe(
-                      future(() -> processDataFile(dataFileMessage, rowType, evaluator, collector), getContext().dispatcher()),
+                      future(() -> processDataFile(dataFileMessage, rowTypeKey, evaluator, collector), getContext().dispatcher()),
                       getContext().dispatcher()
               ).to(sender());
             }).build()
@@ -43,7 +43,7 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
   /**
    * Runs the validation and converts the result into a DataWorkResult.
    */
-  private DataWorkResult processDataFile(DwcDataFile dwcaDataFile, Term rowType,
+  private DataWorkResult processDataFile(DwcDataFile dwcaDataFile, RowTypeKey rowTypeKey,
                                          RecordCollectionEvaluator evaluator,
                                          CollectorGroupProvider collectorGroupProvider) {
     CollectorGroup collector = collectorGroupProvider.newCollectorGroup();
@@ -51,10 +51,10 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
 
       evaluator.evaluate(dwcaDataFile, collector::collectResult);
 
-      return new DataWorkResult(rowType, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.SUCCESS, collector);
+      return new DataWorkResult(rowTypeKey, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.SUCCESS, collector);
     } catch (Exception ex) {
       log().error(ex, "Error checking records integrity, datafile {}", dwcaDataFile);
-      return new DataWorkResult(rowType, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.FAILED, collector);
+      return new DataWorkResult(rowTypeKey, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.FAILED, collector);
     }
   }
 }

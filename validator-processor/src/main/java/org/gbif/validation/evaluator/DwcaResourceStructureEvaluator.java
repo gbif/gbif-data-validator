@@ -8,7 +8,7 @@ import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
-import org.gbif.validation.api.model.DwcFileType;
+import org.gbif.validation.api.vocabulary.DwcFileType;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;

@@ -5,8 +5,9 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordSource;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,7 +37,7 @@ public class RecordSourceFactoryTest {
 
     DwcDataFile preparedDwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
-    TabularDataFile taxonDataFile = preparedDwcDataFile.getByRowType(DwcTerm.Taxon);
+    TabularDataFile taxonDataFile = preparedDwcDataFile.getByRowTypeKey(RowTypeKey.forCore(DwcTerm.Taxon));
     try (RecordSource rs = RecordSourceFactory.fromTabularDataFile(taxonDataFile)) {
       assertEquals("1559060", rs.read().get(0));
     }
@@ -53,7 +54,7 @@ public class RecordSourceFactoryTest {
     assertEquals(1, preparedTabularDataFile.getTabularDataFiles().size());
     TabularDataFile tabularDataFile = preparedTabularDataFile.getTabularDataFiles().get(0);
     assertEquals('\t', tabularDataFile.getDelimiterChar().charValue());
-    assertEquals(DwcTerm.Occurrence, tabularDataFile.getRowType());
+    assertEquals(DwcTerm.Occurrence, tabularDataFile.getRowTypeKey().getRowType());
 
     try(RecordSource recordSource = RecordSourceFactory.fromTabularDataFile(tabularDataFile)) {
       assertEquals("http://coldb.mnhn.fr/catalognumber/mnhn/p/p00501568", recordSource.read().get(0));

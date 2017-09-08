@@ -1,6 +1,6 @@
 package org.gbif.validation.api;
 
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 
 import java.nio.file.Path;
 import java.util.Objects;

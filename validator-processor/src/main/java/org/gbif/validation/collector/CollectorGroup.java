@@ -107,8 +107,8 @@ public class CollectorGroup {
 
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines().longValue(),
-            dataFile.getType(),
-            dataFile.getRowType(),
+            dataFile.getRowTypeKey().getDwcFileType(),
+            dataFile.getRowTypeKey().getRowType(),
             mergedAggregatedCounts, resampledMergedSamples,
             mergedTermFrequency,
             mergedInterpretedTermsCount);

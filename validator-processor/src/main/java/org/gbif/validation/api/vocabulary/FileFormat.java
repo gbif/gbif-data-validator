@@ -1,4 +1,4 @@
-package org.gbif.validation.api.model;
+package org.gbif.validation.api.vocabulary;
 
 /**
  * Data file format.

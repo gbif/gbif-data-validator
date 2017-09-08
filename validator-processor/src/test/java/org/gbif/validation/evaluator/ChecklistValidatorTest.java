@@ -4,7 +4,7 @@ import org.gbif.checklistbank.cli.normalizer.NormalizerConfiguration;
 import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.collector.InterpretedTermsCountCollector;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;

@@ -3,7 +3,7 @@ package org.gbif.validation.source;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.File;

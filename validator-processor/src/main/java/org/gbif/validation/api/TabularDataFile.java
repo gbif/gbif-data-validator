@@ -1,7 +1,7 @@
 package org.gbif.validation.api;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.model.DwcFileType;
+import org.gbif.validation.api.vocabulary.DwcFileType;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -25,11 +25,11 @@ import javax.annotation.Nullable;
  */
 public class TabularDataFile {
 
+  private final RowTypeKey rowTypeKey;
+
   private final Path filePath;
   private final String sourceFileName;
 
-  private final Term rowType;
-  private final DwcFileType type;
   private final Term[] columns;
 
   private final TermIndex recordIdentifier;
@@ -48,8 +48,7 @@ public class TabularDataFile {
    *
    * @param filePath path where the file is located
    * @param sourceFileName Name of the file as received. For safety reason this name should only be used to display.
-   * @param rowType the rowType (sometimes called "class") of this file in the context of DarwinCore
-   * @param type the type of file in the context of DarwinCore
+   * @param rowTypeKey the rowTypeKey (rowType + dwcFileType) of this file in the context of DarwinCore
    * @param columns columns of the file, in the right order
    * @param recordIdentifier {@link Term} and its index used to uniquely identifier a record within the file
    * @param defaultValues default values to use for specific {@Term}
@@ -61,16 +60,17 @@ public class TabularDataFile {
    * @param numOfLines
    */
   public TabularDataFile(Path filePath, String sourceFileName,
-                         Term rowType, DwcFileType type, Term[] columns,
+                         RowTypeKey rowTypeKey, Term[] columns,
                          @Nullable TermIndex recordIdentifier,
                          @Nullable Map<Term, String> defaultValues,
                          @Nullable Integer fileLineOffset, boolean hasHeaders,
                          Charset characterEncoding,
                          Character delimiterChar, Character quoteChar, Integer numOfLines) {
+    Objects.requireNonNull(rowTypeKey, "rowTypeKey shall be provided");
+
     this.filePath = filePath;
     this.sourceFileName = sourceFileName;
-    this.rowType = rowType;
-    this.type = type;
+    this.rowTypeKey = rowTypeKey;
     this.columns = Arrays.copyOf(columns, columns.length);
     this.recordIdentifier = recordIdentifier;
     this.defaultValues = (defaultValues != null) ? new HashMap<>(defaultValues) : null;
@@ -112,12 +112,12 @@ public class TabularDataFile {
     return quoteChar;
   }
 
-  public Term getRowType() {
-    return rowType;
+  public DwcFileType getDwcFileType() {
+    return rowTypeKey.getDwcFileType();
   }
 
-  public DwcFileType getType() {
-    return type;
+  public RowTypeKey getRowTypeKey() {
+    return rowTypeKey;
   }
 
   public Term[] getColumns() {
@@ -185,9 +185,8 @@ public class TabularDataFile {
             Objects.equals(quoteChar, dataFile.quoteChar) &&
             Arrays.equals(columns, dataFile.columns) &&
             Objects.equals(recordIdentifier, dataFile.recordIdentifier) &&
-            Objects.equals(rowType, dataFile.rowType) &&
+            Objects.equals(rowTypeKey, dataFile.rowTypeKey) &&
             Objects.equals(defaultValues, dataFile.defaultValues) &&
-            Objects.equals(type, dataFile.type) &&
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
@@ -201,9 +200,8 @@ public class TabularDataFile {
             sourceFileName,
             columns,
             recordIdentifier,
-            rowType,
+            rowTypeKey,
             defaultValues,
-            type,
             characterEncoding,
             delimiterChar,
             quoteChar,

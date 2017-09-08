@@ -1,7 +1,7 @@
 package org.gbif.validation.api.result;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.model.DwcFileType;
+import org.gbif.validation.api.vocabulary.DwcFileType;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
 

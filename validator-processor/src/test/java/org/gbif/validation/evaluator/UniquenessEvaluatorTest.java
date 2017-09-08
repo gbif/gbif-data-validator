@@ -4,10 +4,11 @@ import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.model.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
 
@@ -44,7 +45,7 @@ public class UniquenessEvaluatorTest {
       Path testFolder = folder.newFolder().toPath();
       DwcDataFile dwcaContent = DataFileFactory.prepareDataFile(df,testFolder);
 
-      UniquenessEvaluator ue = new UniquenessEvaluator(DwcTerm.Occurrence, false, testFolder);
+      UniquenessEvaluator ue = new UniquenessEvaluator(RowTypeKey.forCore(DwcTerm.Occurrence), false, testFolder);
       List<RecordEvaluationResult> results = new ArrayList<>();
       ue.evaluate(dwcaContent, results::add);
 

@@ -1,6 +1,6 @@
 package org.gbif.validation.jobserver;
 
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;

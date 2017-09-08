@@ -7,6 +7,7 @@ import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
@@ -68,13 +69,13 @@ public class EvaluationChain {
    */
   private static class RowTypeEvaluationUnit {
     private final DwcDataFile dataFile;
-    private final Term rowType;
+    private final RowTypeKey rowTypeKey;
     private final RecordCollectionEvaluator recordCollectionEvaluator;
 
-    RowTypeEvaluationUnit(DwcDataFile dataFile, Term rowType,
+    RowTypeEvaluationUnit(DwcDataFile dataFile, RowTypeKey rowTypeKey,
                           RecordCollectionEvaluator recordCollectionEvaluator) {
       this.dataFile = dataFile;
-      this.rowType = rowType;
+      this.rowTypeKey = rowTypeKey;
       this.recordCollectionEvaluator = recordCollectionEvaluator;
     }
 
@@ -82,8 +83,8 @@ public class EvaluationChain {
       return dataFile;
     }
 
-    public Term getRowType() {
-      return rowType;
+    public RowTypeKey getRowTypeKey() {
+      return rowTypeKey;
     }
 
     public RecordCollectionEvaluator getRecordCollectionEvaluator() {
@@ -94,7 +95,7 @@ public class EvaluationChain {
     public String toString() {
       return MoreObjects.toStringHelper(this)
               .add("dataFile", dataFile)
-              .add("rowType", rowType)
+              .add("rowTypeKey", rowTypeKey)
               .add("recordCollectionEvaluator", recordCollectionEvaluator)
               .toString();
     }
@@ -172,8 +173,8 @@ public class EvaluationChain {
 
     public Builder evaluateCoreUniqueness() {
       rowTypeEvaluationUnits.add(new RowTypeEvaluationUnit(
-              dwcDataFile, dwcDataFile.getCore().getRowType(),
-              EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowType(), true, workingFolder)
+              dwcDataFile, dwcDataFile.getCore().getRowTypeKey(),
+              EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowTypeKey(), true, workingFolder)
       ));
       return this;
     }
@@ -187,8 +188,8 @@ public class EvaluationChain {
       rowTypeEvaluationUnits.addAll(
               dwcDataFile.getExtensions().get().stream()
                       .map(df -> new RowTypeEvaluationUnit(
-                              dwcDataFile, df.getRowType(),
-                              EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowType()))
+                              dwcDataFile, df.getRowTypeKey(),
+                              EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowTypeKey().getRowType()))
                       )
                       .collect(Collectors.toList()));
       return this;
@@ -205,15 +206,18 @@ public class EvaluationChain {
     }
 
     public Builder evaluateChecklist() {
-
-      if (dwcDataFile.getByRowType(DwcTerm.Taxon) == null) {
+      List<TabularDataFile> taxonTabularDataFile = dwcDataFile.getByRowType(DwcTerm.Taxon);
+      if (taxonTabularDataFile.isEmpty()) {
         return this;
       }
-      rowTypeEvaluationUnits.add(
-              new RowTypeEvaluationUnit(
-                      dwcDataFile, DwcTerm.Taxon,
-                      factory.createChecklistEvaluator(workingFolder)
-              ));
+
+      for(TabularDataFile tfd : taxonTabularDataFile) {
+        rowTypeEvaluationUnits.add(
+                new RowTypeEvaluationUnit(
+                        dwcDataFile, tfd.getRowTypeKey(),
+                        factory.createChecklistEvaluator(workingFolder)
+                ));
+      }
       return this;
     }
 
@@ -259,7 +263,7 @@ public class EvaluationChain {
   public void runRowTypeEvaluation(RecordCollectionEvaluatorRunner runner) {
     Objects.requireNonNull(runner, "RecordCollectionEvaluatorRunner shall be provided");
     rowTypeEvaluationUnits.forEach(unit -> runner.run(unit.getDataFile(),
-            unit.getRowType(), unit.getRecordCollectionEvaluator()));
+            unit.getRowTypeKey(), unit.getRecordCollectionEvaluator()));
   }
 
   /**

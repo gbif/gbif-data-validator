@@ -17,6 +17,7 @@ import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -72,13 +73,14 @@ public class ChecklistEvaluator implements RecordCollectionEvaluator {
   @Override
   public void evaluate(DwcDataFile dwcDataFile, Consumer<RecordEvaluationResult> resultConsumer) throws IOException {
 
-    TabularDataFile taxonFile = dwcDataFile.getByRowType(DwcTerm.Taxon);
-    Preconditions.checkNotNull(taxonFile, "No Taxon TabularDataFile is defined");
+    List<TabularDataFile> taxonFile = dwcDataFile.getByRowType(DwcTerm.Taxon);
+    Preconditions.checkState(!taxonFile.isEmpty(), "No Taxon TabularDataFile is defined");
+    Preconditions.checkState(taxonFile.size() == 1, "More than 1 Taxon TabularDataFile is defined");
 
     //The generated a random dataset key, we only need it as a key
     UUID datasetKey = UUID.randomUUID();
     try (UsageDao dao = UsageDao.temporaryDao(configuration.neo.mappedMemory)) {
-      Normalizer normalizer = Normalizer.create(datasetKey, dao, taxonFile.getFilePath().toFile(),
+      Normalizer normalizer = Normalizer.create(datasetKey, dao, taxonFile.get(0).getFilePath().toFile(),
               new IdLookupPassThru(), configuration.neo.batchSize);
       normalizer.run(false);
       collectUsagesData(dao, resultConsumer);

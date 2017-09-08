@@ -3,7 +3,7 @@ package org.gbif.validation.evaluator;
 import org.gbif.validation.TestUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;

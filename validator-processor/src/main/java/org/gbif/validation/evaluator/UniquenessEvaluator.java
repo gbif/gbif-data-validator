@@ -1,8 +1,8 @@
 package org.gbif.validation.evaluator;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
@@ -29,16 +29,16 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
 
   private org.gbif.utils.file.FileUtils GBIF_FILE_UTILS = new org.gbif.utils.file.FileUtils();
 
-  private final Term rowType;
+  private final RowTypeKey rowTypeKey;
   private final boolean caseSensitive;
   private final Path workingFolder;
 
   /**
    *
-   * @param rowType Term used as identifier for the dataFile (start at 1)
+   * @param rowTypeKey Term used as identifier for the dataFile (start at 1)
    */
-  public UniquenessEvaluator(Term rowType, boolean caseSensitive, Path workingFolder) {
-    this.rowType = rowType;
+  public UniquenessEvaluator(RowTypeKey rowTypeKey, boolean caseSensitive, Path workingFolder) {
+    this.rowTypeKey = rowTypeKey;
     this.caseSensitive = caseSensitive;
     this.workingFolder = workingFolder;
   }
@@ -46,9 +46,9 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
   @Override
   public void evaluate(@NotNull DwcDataFile dwcDataFile, Consumer<RecordEvaluationResult> resultConsumer) throws IOException {
 
-    TabularDataFile dataFile = dwcDataFile.getByRowType(rowType);
+    TabularDataFile dataFile = dwcDataFile.getByRowTypeKey(rowTypeKey);
     Preconditions.checkState(dataFile != null && dataFile.getRecordIdentifier().isPresent(),
-            "DwcDataFile {} shall have a record identifier", rowType);
+            "DwcDataFile {} shall have a record identifier", rowTypeKey);
     int idColumnIndex = dataFile.getRecordIdentifier().get().getIndex();
 
     File sourceFile = dataFile.getFilePath().toFile();
@@ -61,15 +61,15 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
     String[] result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex + 1,
             dataFile.getDelimiterChar().toString());
 
-    Arrays.stream(result).forEach(rec -> resultConsumer.accept(buildResult(rowType, rec)));
+    Arrays.stream(result).forEach(rec -> resultConsumer.accept(buildResult(rowTypeKey, rec)));
   }
 
-  private static RecordEvaluationResult buildResult(Term rowType, String nonUniqueId){
+  private static RecordEvaluationResult buildResult(RowTypeKey rowTypeKey, String nonUniqueId){
     List<RecordEvaluationResultDetails>resultDetails = new ArrayList<>(1);
     resultDetails.add(new RecordEvaluationResultDetails(EvaluationType.RECORD_NOT_UNIQUELY_IDENTIFIED,
             null, null));
 
-    return new RecordEvaluationResult(rowType, null,  nonUniqueId, resultDetails, null);
+    return new RecordEvaluationResult(rowTypeKey.getRowType(), null,  nonUniqueId, resultDetails, null);
   }
 
 }

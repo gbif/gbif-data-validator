@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 /**
@@ -22,7 +23,7 @@ public class DwcDataFile {
   //currently organized as "star schema"
   private final TabularDataFile core;
   private final List<TabularDataFile> extensions;
-  private final Map<Term, TabularDataFile> tabularDataFileByTerm;
+  private final Map<RowTypeKey, TabularDataFile> tabularDataFileByTerm;
   private final Path metadataFilePath;
 
   public DwcDataFile(DataFile dataFile, TabularDataFile core, List<TabularDataFile> extensions,
@@ -32,11 +33,10 @@ public class DwcDataFile {
     this.extensions = extensions;
     this.metadataFilePath = metadataFilePath;
 
-    Map<Term, TabularDataFile> fileByRowType = new HashMap<>();
-    fileByRowType.put(core.getRowType(), core);
-
+    Map<RowTypeKey, TabularDataFile> fileByRowType = new HashMap<>();
+    fileByRowType.put(core.getRowTypeKey(), core);
     getExtensions().ifPresent(ext -> ext.stream()
-            .forEach(e -> fileByRowType.put(e.getRowType(), e)));
+            .forEach(e -> fileByRowType.put(e.getRowTypeKey(), e)));
 
     tabularDataFileByTerm = Collections.unmodifiableMap(fileByRowType);
   }
@@ -50,12 +50,19 @@ public class DwcDataFile {
   }
 
   /**
-   *
+   * Considering a core and at least one extension can share the same rowType, this function returns a list.
    * @param term
    * @return matching {@link TabularDataFile} or null
    */
-  public TabularDataFile getByRowType(Term term) {
-    return tabularDataFileByTerm.get(term);
+  public List<TabularDataFile> getByRowType(Term term) {
+    return tabularDataFileByTerm.entrySet().stream()
+            .filter( e -> term == e.getKey().getRowType())
+            .map(Map.Entry::getValue)
+            .collect(Collectors.toList());
+  }
+
+  public TabularDataFile getByRowTypeKey(RowTypeKey rowTypeKey) {
+    return tabularDataFileByTerm.get(rowTypeKey);
   }
 
   public TabularDataFile getCore() {

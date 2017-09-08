@@ -8,10 +8,11 @@ import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.utils.file.csv.UnkownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.TermIndex;
-import org.gbif.validation.api.model.DwcFileType;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.DwcFileType;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.util.FileNormalizer;
 import org.gbif.ws.util.ExtraMediaTypes;
 
@@ -100,7 +101,7 @@ public class DataFileFactory {
                                                         Integer lineOffset, Integer numberOfLines, boolean withHeader) {
     return new TabularDataFile(splitFilePath,
             tabDatafile.getSourceFileName(),
-            tabDatafile.getRowType(), tabDatafile.getType(), tabDatafile.getColumns(),
+            tabDatafile.getRowTypeKey(), tabDatafile.getColumns(),
             tabDatafile.getRecordIdentifier().orElse(null), tabDatafile.getDefaultValues().orElse(null),
             lineOffset, withHeader, tabDatafile.getCharacterEncoding(), tabDatafile.getDelimiterChar(),
             tabDatafile.getQuoteChar(), numberOfLines);
@@ -109,6 +110,7 @@ public class DataFileFactory {
   /**
    * Prepare the {@link DataFile} for evaluation.
    * This step includes reading the headers from the file and generating a list of {@link TabularDataFile}.
+   * The resulting {@link DwcDataFile} is not guarantee to be valid.
    *
    * @param dataFile
    * @param destinationFolder Preparing {@link DataFile} includes rewriting them in a normalized format. This {@link Path}
@@ -128,7 +130,7 @@ public class DataFileFactory {
     List<TabularDataFile> dataFileList = normalizeAndPrepare(dataFile, destinationFolder, dataFilePreview);
 
     Map<DwcFileType, List<TabularDataFile>> dfPerDwcFileType = dataFileList.stream()
-            .collect(Collectors.groupingBy(TabularDataFile::getType));
+            .collect(Collectors.groupingBy( df -> df.getRowTypeKey().getDwcFileType()));
     List<TabularDataFile> coreTabularDataFile =
             dfPerDwcFileType.getOrDefault(DwcFileType.CORE, new ArrayList<>());
 
@@ -230,8 +232,8 @@ public class DataFileFactory {
     //if TermIndex is null we need to report an error
 
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
-            sourceFileName,
-            archiveFile.getRowType(), type, headers, recordIdentifier, defaultValues,
+            sourceFileName, RowTypeKey.get(archiveFile.getRowType(), type),
+            headers, recordIdentifier, defaultValues,
             null, //no line offset
             archiveFile.getIgnoreHeaderLines()!= null
             && archiveFile.getIgnoreHeaderLines() > 0,

@@ -32,14 +32,14 @@ class DataFileSplitter {
    * @throws IOException
    */
   static List<TabularDataFile> splitDataFile(TabularDataFile dataFile, Integer fileSplitSize, Path baseDir) throws IOException {
-    Objects.requireNonNull(dataFile.getRowType(), "DataFile rowType shall be provided");
+    Objects.requireNonNull(dataFile.getRowTypeKey(), "DataFile getRowTypeKey shall be provided");
     Objects.requireNonNull(dataFile.getFilePath(), "DataFile filePath shall be provided");
 
     List<TabularDataFile> splitDataFiles = new ArrayList<>();
     if (dataFile.getNumOfLines() <= fileSplitSize) {
       splitDataFiles.add(dataFile);
     } else {
-      String splitFolder = baseDir.resolve(dataFile.getRowType().simpleName() + "_split").toAbsolutePath().toString();
+      String splitFolder = baseDir.resolve(dataFile.getRowTypeKey().name() + "_split").toAbsolutePath().toString();
       String[] splits = FileBashUtilities.splitFile(dataFile.getFilePath().toString(), fileSplitSize, splitFolder);
 
       boolean inputHasHeaders = dataFile.isHasHeaders();
@@ -75,6 +75,5 @@ class DataFileSplitter {
 
     return DataFileFactory.newTabularDataFileSplit(dataFile, Paths.get(splitFile.getAbsolutePath()),
             offset, numberOfLines, withHeader);
-
   }
 }

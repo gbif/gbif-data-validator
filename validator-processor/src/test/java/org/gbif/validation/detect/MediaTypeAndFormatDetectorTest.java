@@ -2,7 +2,7 @@ package org.gbif.validation.detect;
 
 import org.gbif.detect.MediaTypeAndFormatDetector;
 import org.gbif.utils.file.FileUtils;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.ws.util.ExtraMediaTypes;
 
 import java.io.IOException;

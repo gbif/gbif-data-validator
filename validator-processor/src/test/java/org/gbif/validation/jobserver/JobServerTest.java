@@ -1,7 +1,7 @@
 package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.impl.InMemoryJobStorage;
 

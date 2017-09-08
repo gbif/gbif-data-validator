@@ -6,7 +6,7 @@ import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.conf.ValidatorConfiguration;

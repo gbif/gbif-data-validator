@@ -1,6 +1,6 @@
 package org.gbif.validation.api.result;
 
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 

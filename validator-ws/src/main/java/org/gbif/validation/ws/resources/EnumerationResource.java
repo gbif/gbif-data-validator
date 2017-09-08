@@ -2,7 +2,7 @@ package org.gbif.validation.ws.resources;
 
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.ws.server.interceptor.NullToNotFound;
 

@@ -1,6 +1,6 @@
 package org.gbif.detect;
 
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.vocabulary.FileFormat;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +20,7 @@ import static org.gbif.validation.conf.SupportedMediaTypes.ZIP_CONTENT_TYPE;
 /**
  * Utility class to:
  * - automatically detect the media types based on file or bytes.
- * - decide org.gbif.validation.api.model.FileFormat based on media type
+ * - decide org.gbif.validation.api.vocabulary.FileFormat based on media type
  */
 public class MediaTypeAndFormatDetector {
 

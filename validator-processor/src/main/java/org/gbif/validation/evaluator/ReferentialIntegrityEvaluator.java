@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 import com.google.common.base.Preconditions;
@@ -34,6 +36,7 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
   private final Term extensionRowType;
 
   ReferentialIntegrityEvaluator(Term extensionRowType) {
+    Objects.requireNonNull(extensionRowType, "extensionRowType shall be provided");
     this.extensionRowType = extensionRowType;
   }
 
@@ -48,7 +51,7 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
   public void evaluate(DwcDataFile dwcDataFile, Consumer<RecordEvaluationResult> resultConsumer) throws IOException {
 
     TabularDataFile coreDf = dwcDataFile.getCore();
-    TabularDataFile extDf = dwcDataFile.getByRowType(extensionRowType);
+    TabularDataFile extDf = dwcDataFile.getByRowTypeKey(RowTypeKey.forExtension(extensionRowType));
 
     Preconditions.checkState(coreDf != null && coreDf.getRecordIdentifier().isPresent(),
             "DwcDataFile core shall have a record identifier");

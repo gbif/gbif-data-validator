@@ -15,7 +15,8 @@ import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
-import org.gbif.validation.api.model.FileFormat;
+import org.gbif.validation.api.RowTypeKey;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
 import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.evaluator.record.OccurrenceInterpretationEvaluator;
@@ -103,13 +104,13 @@ public class EvaluatorFactory {
   /**
    * Creates a {@link RecordCollectionEvaluator} that validates the uniqueness of the value on a specific column index.
    *
-   * @param rowType rowType targeted by this uniqueness validation
+   * @param rowTypeKey rowTypeKey targeted by this uniqueness validation
    * @param caseSensitive
    * @param workingFolder folder specific to the rsource to evaluate where temporary files will be created
    * @return
    */
-  public static RecordCollectionEvaluator createUniquenessEvaluator(Term rowType, boolean caseSensitive, Path workingFolder) {
-    return new UniquenessEvaluator(rowType, caseSensitive, workingFolder);
+  public static RecordCollectionEvaluator createUniquenessEvaluator(RowTypeKey rowTypeKey, boolean caseSensitive, Path workingFolder) {
+    return new UniquenessEvaluator(rowTypeKey, caseSensitive, workingFolder);
   }
 
   /**

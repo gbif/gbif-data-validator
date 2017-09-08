@@ -67,10 +67,10 @@ class DataFileRecordsActor extends AbstractLoggingActor {
         collectors.collectResult(recordEvaluator.evaluate(lineNumber, record));
       }
       log().info("Done reading: " + dataFile.getFilePath() + " finished at line " + lineNumber + " (including offset)");
-      return new DataWorkResult(dataFile.getRowType(), dataFile.getSourceFileName(), DataWorkResult.Result.SUCCESS, collectors);
+      return new DataWorkResult(dataFile.getRowTypeKey(), dataFile.getSourceFileName(), DataWorkResult.Result.SUCCESS, collectors);
     } catch (Exception ex) {
       log().error("Error while evaluating line {} of {}: {}", lineNumber, dataFile.getFilePath(), ex.getMessage());
-      return new DataWorkResult(dataFile.getRowType(), dataFile.getSourceFileName(), DataWorkResult.Result.FAILED, collectors);
+      return new DataWorkResult(dataFile.getRowTypeKey(), dataFile.getSourceFileName(), DataWorkResult.Result.FAILED, collectors);
     }
   }
 

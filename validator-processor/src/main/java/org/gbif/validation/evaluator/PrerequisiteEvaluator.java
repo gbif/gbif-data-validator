@@ -2,11 +2,11 @@ package org.gbif.validation.evaluator;
 
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
-import org.gbif.validation.api.model.DwcFileType;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.api.vocabulary.DwcFileType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +21,8 @@ class PrerequisiteEvaluator implements DwcDataFileEvaluator {
   @Override
   public Optional<List<ValidationResultElement>> evaluate(DwcDataFile dwcDataFile) {
 
-    if (dwcDataFile.getCore() == null || dwcDataFile.getCore().getRowType() == null) {
+    if (dwcDataFile.getCore() == null || dwcDataFile.getCore().getRowTypeKey() == null ||
+            dwcDataFile.getCore().getRowTypeKey().getRowType() == null) {
       return Optional.of(
               generateValidationResultElement(dwcDataFile.getDataFile().getSourceFileName(),
                       EvaluationType.CORE_ROWTYPE_UNDETERMINED));
