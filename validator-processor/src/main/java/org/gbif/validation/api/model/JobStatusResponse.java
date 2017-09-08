@@ -73,4 +73,5 @@ public class JobStatusResponse<T> {
   public T getResult() {
     return result;
   }
+
 }

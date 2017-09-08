@@ -24,7 +24,7 @@ public class WebErrorUtils {
   public static WebApplicationException errorResponse(String uploadFileName, Response.Status status,
                                                       ValidationErrorCode errorCode) {
     Response.ResponseBuilder repBuilder = Response.status(status);
-    repBuilder.entity(ValidationResult.onError(uploadFileName, null, errorCode, null));
+    repBuilder.entity(ValidationResult.onError(uploadFileName, null, null, errorCode, null));
     return new WebApplicationException(repBuilder.build());
   }
 

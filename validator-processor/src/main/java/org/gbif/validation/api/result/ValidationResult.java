@@ -19,6 +19,7 @@ public class ValidationResult implements Serializable {
   private final Boolean indexeable;
 
   private final String fileName;
+  private final String receivedMediaType;
   private final FileFormat fileFormat;
   private final ValidationProfile validationProfile;
 
@@ -33,34 +34,39 @@ public class ValidationResult implements Serializable {
    *
    * @param fileName
    * @param fileFormat can be null
+   * @param receivedMediaType can be null
    * @param errorCode
    * @param errorMessage can be null
    *
    * @return new {@link ValidationResult} instance
    */
   public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat,
+                                         @Nullable String receivedMediaType,
                                          ValidationErrorCode errorCode, @Nullable String errorMessage) {
-    return new ValidationResult(false, fileName, fileFormat, null, null, errorCode, errorMessage);
+    return new ValidationResult(false, fileName, fileFormat, receivedMediaType, null, null, errorCode, errorMessage);
   }
 
   /**
    *
    * @param indexeable
    * @param fileName
+   * @param receivedMediaType
    * @param fileFormat
    * @param validationProfile
    * @param results
    */
-  public ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                   List<ValidationResultElement> results) {
-    this(indexeable, fileName, fileFormat, validationProfile, results, null, null);
+  public ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, String receivedMediaType,
+                          ValidationProfile validationProfile, List<ValidationResultElement> results) {
+    this(indexeable, fileName, fileFormat, receivedMediaType, validationProfile, results, null, null);
   }
 
-  private ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, ValidationProfile validationProfile,
-                          List<ValidationResultElement> results, ValidationErrorCode errorCode, String errorMessage) {
+  private ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, String receivedMediaType,
+                           ValidationProfile validationProfile, List<ValidationResultElement> results,
+                           ValidationErrorCode errorCode, String errorMessage) {
     this.indexeable = indexeable;
     this.fileName = fileName;
     this.fileFormat = fileFormat;
+    this.receivedMediaType = receivedMediaType;
     this.validationProfile = validationProfile;
     this.results = results;
     this.errorCode = errorCode;
@@ -95,4 +101,7 @@ public class ValidationResult implements Serializable {
     return errorMessage;
   }
 
+  public String getReceivedMediaType() {
+    return receivedMediaType;
+  }
 }

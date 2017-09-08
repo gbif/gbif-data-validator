@@ -38,7 +38,7 @@ public class UniquenessEvaluatorTest {
   public void testUniqueness() throws UnsupportedDataFileException {
 
     DataFile df = DataFileFactory.newDataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca",
-            FileFormat.DWCA, "");
+            FileFormat.DWCA, "", "");
 
     try {
       Path testFolder = folder.newFolder().toPath();

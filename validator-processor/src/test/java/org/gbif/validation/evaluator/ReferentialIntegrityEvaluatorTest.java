@@ -37,7 +37,7 @@ public class ReferentialIntegrityEvaluatorTest {
   public void dwcaResourceStructureEvaluatorTest() throws IOException, UnsupportedDataFileException {
     ReferentialIntegrityEvaluator riEvaluator = new ReferentialIntegrityEvaluator(DwcTerm.Identification);
 
-    DataFile df = new DataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca", FileFormat.DWCA, "");
+    DataFile df = new DataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca", FileFormat.DWCA, "", "");
     DwcDataFile dwcDf = DataFileFactory.prepareDataFile(df, folder.newFolder().toPath());
 
     try {

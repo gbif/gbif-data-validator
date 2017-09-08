@@ -39,7 +39,7 @@ public class DataFileFactoryTest {
   public void testPrepareDataFile() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "");
+    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "", "");
 
     DwcDataFile preparedDwcDataFile = prepareDataFile(dataFile, folder.newFolder().toPath());
     //the test Dwc folder contains 1 core + 2 extensions
@@ -57,7 +57,7 @@ public class DataFileFactoryTest {
   @Test (expected = FileNotFoundException.class)
   public void testPrepareDataFileBrokenMeta() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_BROKEN_META_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-broken-meta", FileFormat.DWCA, "");
+    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-broken-meta", FileFormat.DWCA, "", "");
     DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 
@@ -65,7 +65,7 @@ public class DataFileFactoryTest {
   public void testXLSXFile() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_OCC_XLSX_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "my-xlsx-file.xlsx", FileFormat.SPREADSHEET,
-            ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET);
+            ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET, ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET);
     DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
     //ensure we got a tabularDataFile
     assertEquals(1, dwcDataFile.getTabularDataFiles().size());
@@ -97,7 +97,7 @@ public class DataFileFactoryTest {
   public void testEmptySpreadsheet() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_EMPTY_XLSX_FILE_LOCATION);
     DataFile dataFile = new DataFile(testFile.toPath(), "empty-xlsx", FileFormat.SPREADSHEET,
-            ExtraMediaTypes.APPLICATION_EXCEL);
+            ExtraMediaTypes.APPLICATION_EXCEL, ExtraMediaTypes.APPLICATION_EXCEL);
     prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 

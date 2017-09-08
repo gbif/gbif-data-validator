@@ -39,7 +39,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
  * Main factory used to create and prepare {@link DataFile} and {@link TabularDataFile}.
  * Those objects are not simple to create so we centralize this process here.
@@ -79,12 +78,13 @@ public class DataFileFactory {
    * @param filePath
    * @param sourceFileName
    * @param fileFormat
-   * @param contentType
+   * @param receivedAsMediaType
+   * @param mediaType
    * @return
    */
   public static DataFile newDataFile(Path filePath, String sourceFileName, FileFormat fileFormat,
-                                        String contentType) {
-    return new DataFile(filePath, sourceFileName, fileFormat, contentType);
+                                     String receivedAsMediaType, String mediaType) {
+    return new DataFile(filePath, sourceFileName, fileFormat, receivedAsMediaType, mediaType);
   }
 
   /**
@@ -262,24 +262,24 @@ public class DataFileFactory {
     Files.createDirectory(conversionFolder);
 
     Path spreadsheetFile = spreadsheetDataFile.getFilePath();
-    String contentType = spreadsheetDataFile.getContentType();
+    String mediaType = spreadsheetDataFile.getMediaType();
 
     Path csvFile = destinationFolder.resolve(UUID.randomUUID() + CSV_EXT);
     SpreadsheetConversionResult conversionResult;
-    if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(contentType) ||
-            ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(contentType)) {
+    if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(mediaType) ||
+            ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(mediaType)) {
       conversionResult = SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile, SELECT_EXCEL_SHEET);
-    } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(contentType)) {
+    } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(mediaType)) {
       conversionResult = SpreadsheetConverters.convertOdsToCSV(spreadsheetFile, csvFile);
     } else {
-      LOG.warn("Unhandled contentType {}", contentType);
-      throw new UnsupportedDataFileException(contentType + " can not be converted");
+      LOG.warn("Unhandled mediaType {}", mediaType);
+      throw new UnsupportedDataFileException(mediaType + " can not be converted");
     }
 
     //If no lines were converted
     if (conversionResult.getNumOfLines() <= 0) {
       LOG.warn("No line written while converting {}", spreadsheetDataFile);
-      throw new UnsupportedDataFileException(contentType + " conversion returned no content (no line)");
+      throw new UnsupportedDataFileException(mediaType + " conversion returned no content (no line)");
     }
 
     return conversionResult;

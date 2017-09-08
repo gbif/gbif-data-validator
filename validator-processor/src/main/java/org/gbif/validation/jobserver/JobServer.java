@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
@@ -21,7 +22,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.gbif.validation.jobserver.util.ActorSelectionUtil.getNumberOfRunningActor;
+import static org.gbif.validation.jobserver.util.ActorSelectionUtil.getJobServerChildren;
 import static org.gbif.validation.jobserver.util.ActorSelectionUtil.getRunningActor;
 
 /**
@@ -56,8 +57,8 @@ public class JobServer<T> {
    */
   public JobStatusResponse<?> submit(DataFile dataFile) {
     long newJobId = jobIdSeed.getAndIncrement();
-    
-    LOG.info("Number of running actors:" +  getNumberOfRunningActor(system).map( a -> a.toString()).orElse("?"));
+
+    LOG.info("Running actors:" + getJobServerChildren(system).stream().collect(Collectors.joining(",")));
     jobMonitor.tell(new DataJob<>(newJobId, dataFile), jobMonitor);
     return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId);
   }

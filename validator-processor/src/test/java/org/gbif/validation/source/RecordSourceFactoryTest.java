@@ -32,7 +32,7 @@ public class RecordSourceFactoryTest {
   public void testPrepareDwcA() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "");
+    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "", "");
 
     DwcDataFile preparedDwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
@@ -46,7 +46,7 @@ public class RecordSourceFactoryTest {
   public void testPrepareTabular() throws IOException, UnsupportedDataFileException {
 
     File testFile = FileUtils.getClasspathFile(TEST_TSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "");
+    DataFile dataFile = new DataFile(testFile.toPath(), "validator_test_file_all_issues.tsv", FileFormat.TABULAR, "", "");
 
     DwcDataFile preparedTabularDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 

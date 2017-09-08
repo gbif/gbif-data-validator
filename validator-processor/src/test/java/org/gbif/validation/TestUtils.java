@@ -83,7 +83,7 @@ public class TestUtils {
    */
   public static DataFile getDwcaDataFile(String resourcePath, String sourceFileName) {
     File dwcaFolder = FileUtils.getClasspathFile(resourcePath);
-    return new DataFile(dwcaFolder.toPath(), sourceFileName, FileFormat.DWCA, "");
+    return new DataFile(dwcaFolder.toPath(), sourceFileName, FileFormat.DWCA, "", "");
   }
 
   /**
@@ -94,7 +94,7 @@ public class TestUtils {
    */
   public static DataFile getDataFile(String resourcePath, String sourceFileName, FileFormat fileFormat) {
     File dwcaFolder = FileUtils.getClasspathFile(resourcePath);
-    return new DataFile(dwcaFolder.toPath(), sourceFileName, fileFormat, "");
+    return new DataFile(dwcaFolder.toPath(), sourceFileName, fileFormat, "", "");
   }
 
   /**

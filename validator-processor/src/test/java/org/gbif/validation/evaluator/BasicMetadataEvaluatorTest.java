@@ -42,7 +42,7 @@ public class BasicMetadataEvaluatorTest {
 
     BasicMetadataEvaluator basicMetadataEvaluator = new BasicMetadataEvaluator();
 
-    DataFile df = new DataFile(DWC_ARCHIVE.toPath(), "dwca-eml-content-issue", FileFormat.DWCA, "");
+    DataFile df = new DataFile(DWC_ARCHIVE.toPath(), "dwca-eml-content-issue", FileFormat.DWCA, "", "");
     DwcDataFile dwcDf = DataFileFactory.prepareDataFile(df, folder.newFolder().toPath());
 
     Optional<List<ValidationResultElement>> result = basicMetadataEvaluator.evaluate(dwcDf);

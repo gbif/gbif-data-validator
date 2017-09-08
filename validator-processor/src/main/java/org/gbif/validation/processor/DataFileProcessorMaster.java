@@ -1,6 +1,7 @@
 package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
+import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
@@ -209,14 +210,14 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       if (evaluationChain.evaluationStopped()) {
         emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
                 new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                        GBIF_INDEXING_PROFILE, validationResultElementList.get())));
+                        dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElementList.get())));
         return StructuralEvaluationResult.createStopEvaluation();
       }
       validationResultElements.addAll(validationResultElementList.get());
 
       context().parent().tell(new JobStatusResponse<>(JobStatus.RUNNING, dataJob.getJobId(),
               new ValidationResult(null, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                      GBIF_INDEXING_PROFILE, validationResultElementList.get())), self());
+                      dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElementList.get())), self());
     }
 
     return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
@@ -337,7 +338,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     mergeIssuesOnFilename(validationResultElements, resultElements);
 
     return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
-            GBIF_INDEXING_PROFILE, resultElements);
+            dataJob.getJobData().getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, resultElements);
   }
 
   /**
@@ -375,7 +376,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, String errorMessage) {
     JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED, dataJob.getJobId(),
-            ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(), errorCode, errorMessage));
+            ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                    dataFile.getReceivedAsMediaType(), errorCode, errorMessage));
     context().parent().tell(response, self());
     cleanup();
     getContext().stop(self());
@@ -385,9 +387,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Deletes the working directory if it exists.
    */
   private void cleanup() {
-//    if (!preserveTemporaryFiles && workingDir.exists()) {
-//      FileUtils.deleteDirectoryRecursively(workingDir);
-//    }
+    if (!preserveTemporaryFiles && workingDir.exists()) {
+      FileUtils.deleteDirectoryRecursively(workingDir);
+    }
   }
 
   private static class StructuralEvaluationResult {

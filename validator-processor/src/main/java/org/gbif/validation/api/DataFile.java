@@ -6,7 +6,6 @@ import java.nio.file.Path;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
-
 /**
  * Represents data held in a file or a folder containing multiple files.
  * This class is thread-safe and immutable.
@@ -16,7 +15,8 @@ public class DataFile {
   private final Path filePath;
   private final String sourceFileName;
   private final FileFormat fileFormat;
-  private final String contentType;
+  private final String receivedAsMediaType;
+  private final String mediaType;
 
   /**
    * Complete constructor of {@link DataFile}
@@ -24,13 +24,15 @@ public class DataFile {
    * @param filePath       path where the file is located
    * @param sourceFileName Name of the file as received. For safety reason this name should only be used to display.
    * @param fileFormat
-   * @param contentType    as received by the "resource" layer
+   * @param receivedAsMediaType as received by the "resource" layer
+   * @param mediaType as detected by the file transfer manager
    */
-  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String contentType) {
+  public DataFile(Path filePath, String sourceFileName, FileFormat fileFormat, String receivedAsMediaType, String mediaType) {
     this.filePath = filePath;
     this.sourceFileName = sourceFileName;
     this.fileFormat = fileFormat;
-    this.contentType = contentType;
+    this.receivedAsMediaType = receivedAsMediaType;
+    this.mediaType = mediaType;
   }
 
   /**
@@ -55,11 +57,13 @@ public class DataFile {
     return fileFormat;
   }
 
-
-  public String getContentType() {
-    return contentType;
+  public String getReceivedAsMediaType() {
+    return receivedAsMediaType;
   }
 
+  public String getMediaType() {
+    return mediaType;
+  }
 
   @Override
   public String toString() {
@@ -67,7 +71,8 @@ public class DataFile {
             "filePath=" + filePath +
             ", sourceFileName=" + sourceFileName +
             ", fileFormat=" + fileFormat +
-            ", contentType=" + contentType +
+            ", receivedAsMediaType=" + receivedAsMediaType +
+            ", mediaType=" + mediaType +
             '}';
   }
 
@@ -79,7 +84,8 @@ public class DataFile {
     return Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(fileFormat, dataFile.fileFormat) &&
-            Objects.equals(contentType, dataFile.contentType);
+            Objects.equals(receivedAsMediaType, dataFile.receivedAsMediaType) &&
+            Objects.equals(mediaType, dataFile.mediaType);
   }
 
   @Override
@@ -88,7 +94,8 @@ public class DataFile {
             filePath,
             sourceFileName,
             fileFormat,
-            contentType);
+            receivedAsMediaType,
+            mediaType);
   }
 
 }

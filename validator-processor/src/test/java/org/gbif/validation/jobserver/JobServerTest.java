@@ -80,7 +80,7 @@ public class JobServerTest {
   }
 
   private static DataFile createNewDataFile(){
-    return new DataFile(Paths.get(""), "", FileFormat.TABULAR, "");
+    return new DataFile(Paths.get(""), "", FileFormat.TABULAR, "", "");
   }
 
 }

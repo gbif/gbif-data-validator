@@ -24,7 +24,7 @@ public class MockActor extends AbstractLoggingActor {
         Thread.sleep(waitBeforeDie);
         JobStatusResponse<ValidationResult>
           result = new JobStatusResponse<>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
-                new ValidationResult(true, "mockFile", FileFormat.TABULAR, ValidationProfile.GBIF_INDEXING_PROFILE,
+                new ValidationResult(true, "mockFile", FileFormat.TABULAR, "", ValidationProfile.GBIF_INDEXING_PROFILE,
                         null));
         sender().tell(result, self());
       }).matchAny(this::unhandled)

@@ -42,7 +42,7 @@ public class PrerequisiteEvaluatorTest {
   @Test
   public void testCSVWithoutRecordId() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_NO_ID_CSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "no-id", FileFormat.TABULAR, "");
+    DataFile dataFile = new DataFile(testFile.toPath(), "no-id", FileFormat.TABULAR, "", "");
     DwcDataFile dwcFile = prepareDataFile(dataFile, folder.newFolder().toPath());
     Optional<List<ValidationResultElement>> result = prerequisiteEvaluator.evaluate(dwcFile);
 

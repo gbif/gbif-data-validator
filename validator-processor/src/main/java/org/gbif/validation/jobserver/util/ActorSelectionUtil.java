@@ -1,5 +1,7 @@
 package org.gbif.validation.jobserver.util;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -9,15 +11,16 @@ import akka.actor.ActorSystem;
 import akka.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Function1;
+import scala.collection.JavaConversions;
 import scala.concurrent.Await;
 import scala.concurrent.Future;
-import scala.runtime.AbstractFunction1;
 
 /**
  * Utility class to select/find actor in the System of actors.
  */
 public class ActorSelectionUtil {
+
+  static final String JOB_MONITOR_ACTOR_NAME = "JobMonitor";
 
   //Path used to find actors in the system of actors
   private static final String ACTOR_SELECTION_PATH = "/user/JobMonitor/";
@@ -49,18 +52,17 @@ public class ActorSelectionUtil {
     }
   }
 
-  public static Optional<Integer> getNumberOfRunningActor(final ActorSystem system) {
+  /**
+   *
+   * @param system
+   * @return
+   */
+  public static List<String> getJobServerChildren(final ActorSystem system) {
     try {
-      Function1<String, Object> trueFunction = new AbstractFunction1<String, Object>() {
-        public Object apply(String someInt) {
-           return true;
-        }
-      };
-      Integer number = system.child("JobMonitor").elements().count(trueFunction);
-      return Optional.of(number);
+      return JavaConversions.seqAsJavaList(system.child(JOB_MONITOR_ACTOR_NAME).elements().toSeq());
     } catch (Exception ex) {
-      LOG.warn("getNumberOfRunningActor failed", ex);
-      return Optional.empty();
+      LOG.warn("getRunningActor failed", ex);
+      return Collections.emptyList();
     }
   }
 

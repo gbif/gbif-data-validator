@@ -255,13 +255,13 @@ public class UploadedFileManager implements Cleanable {
     // "mark" needs to be supported in order to detect the media type by reading the first byte(s).
     InputStream inputStreamWithMarkSupport = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
 
-    Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
-    String detectedContentType = detectMediaType(inputStreamWithMarkSupport);
+    final Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
+    final String detectedMediaType = detectMediaType(inputStreamWithMarkSupport);
 
     Path dataFilePath;
     try {
       //check if we have something to unzip
-      if (ZIP_CONTENT_TYPE.contains(detectedContentType)) {
+      if (ZIP_CONTENT_TYPE.contains(detectedMediaType)) {
         try {
           unzip(inputStreamWithMarkSupport, destinationFolder);
           dataFilePath = determineDataFilePath(destinationFolder);
@@ -276,18 +276,19 @@ public class UploadedFileManager implements Cleanable {
 
       // from here we can decide to change the content type (e.g. zipped excel file)
       Optional<MediaTypeAndFormatDetector.MediaTypeAndFormat> mediaTypeAndFormat =
-              MediaTypeAndFormatDetector.evaluateMediaTypeAndFormat(dataFilePath, detectedContentType);
+              MediaTypeAndFormatDetector.evaluateMediaTypeAndFormat(dataFilePath, detectedMediaType);
 
       LOG.info("mediaTypeAndFormat:" + mediaTypeAndFormat.get().getMediaType());
       LOG.info("mediaTypeAndFormat:" + mediaTypeAndFormat.get().getFileFormat());
       LOG.info("dataFilePath:" + dataFilePath);
 
-      if(!mediaTypeAndFormat.isPresent()){
-        throw new UnsupportedMediaTypeException("Unsupported file type: " + detectedContentType);
+      if (!mediaTypeAndFormat.isPresent()) {
+        throw new UnsupportedMediaTypeException("Unsupported file type: " + detectedMediaType);
       }
 
       return mediaTypeAndFormat
-              .map( mtf -> DataFileFactory.newDataFile(dataFilePath, filename, mtf.getFileFormat(), mtf.getMediaType()));
+              .map(mtf -> DataFileFactory.newDataFile(dataFilePath, filename, mtf.getFileFormat(),
+                      detectedMediaType, mtf.getMediaType()));
     } catch (IOException ioEx) {
       LOG.warn("Deleting temporary content of {} after IOException.", filename);
       FileUtils.deleteDirectory(destinationFolder.toFile());

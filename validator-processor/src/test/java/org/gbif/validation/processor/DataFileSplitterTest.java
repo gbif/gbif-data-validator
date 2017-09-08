@@ -34,7 +34,7 @@ public class DataFileSplitterTest {
 
   @Test
   public void testFileSplit() throws IOException, UnsupportedDataFileException {
-    DataFile dataFile = new DataFile(testFile.toPath(), "original_file.csv", FileFormat.TABULAR, "");
+    DataFile dataFile = new DataFile(testFile.toPath(), "original_file.csv", FileFormat.TABULAR, "", "");
     DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
     try {
