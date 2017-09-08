@@ -7,6 +7,7 @@ Specifications of the GBIF Data Validator API response.
   "indexeable": "[true|false]",
   "fileName": "myoccurrencefile.csv",
   "fileFormat": "[delimited | dwca | excel]",
+  "receivedMediaType": "text/csv",
   "validationProfile": "GBIF_INDEXING_PROFILE",
   "errorCode": "INVALID_FILE_FORMAT",
   "errorMessage": "Invalid file format",
