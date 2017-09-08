@@ -1,3 +1,7 @@
 GBIF Data Validator Documentation
 
-* [DataFile](doc/data_files.md)
+## Usage
+* [Command Line](cli.md)
+
+## Design
+* [DataFile](data_files.md)
