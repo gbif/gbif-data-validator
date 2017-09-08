@@ -286,7 +286,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     if(DataWorkResult.Result.FAILED == result.getResult()) {
       log().error("DataWorkResult = FAILED: {}", result);
       validationResultElements.add(ValidationResultElement.onException(
-              result.getDataFile().getSourceFileName(),
+              result.getFileName(),
               EvaluationType.UNREADABLE_SECTION_ERROR, ""));
     }
     collectResult(result);
@@ -317,9 +317,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void collectResult(DataWorkResult result) {
     rowTypeCollectors.compute(result.getRowType(), (key, val) -> {
-      if(result.getCollectors() != null) {
         val.add(result.getCollectors());
-      }
       return val;
     });
   }

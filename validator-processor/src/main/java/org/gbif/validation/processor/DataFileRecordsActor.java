@@ -11,8 +11,6 @@ import org.gbif.validation.source.RecordSourceFactory;
 import java.util.List;
 
 import akka.actor.AbstractLoggingActor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static akka.dispatch.Futures.future;
 import static akka.japi.pf.ReceiveBuilder.match;
@@ -24,8 +22,6 @@ import static akka.pattern.Patterns.pipe;
  *
  */
 class DataFileRecordsActor extends AbstractLoggingActor {
-
-  private static final Logger LOG = LoggerFactory.getLogger(DataFileRecordsActor.class);
 
   /**
    * Creates a new instance of {@link DataFileRecordsActor} that can receive {@link DataFile} messages.
@@ -71,10 +67,10 @@ class DataFileRecordsActor extends AbstractLoggingActor {
         collectors.collectResult(recordEvaluator.evaluate(lineNumber, record));
       }
       log().info("Done reading: " + dataFile.getFilePath() + " finished at line " + lineNumber + " (including offset)");
-      return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.SUCCESS, collectors);
+      return new DataWorkResult(dataFile.getRowType(), dataFile.getSourceFileName(), DataWorkResult.Result.SUCCESS, collectors);
     } catch (Exception ex) {
       log().error("Error while evaluating line {} of {}: {}", lineNumber, dataFile.getFilePath(), ex.getMessage());
-      return new DataWorkResult(dataFile.getRowType(), DataWorkResult.Result.FAILED, collectors);
+      return new DataWorkResult(dataFile.getRowType(), dataFile.getSourceFileName(), DataWorkResult.Result.FAILED, collectors);
     }
   }
 

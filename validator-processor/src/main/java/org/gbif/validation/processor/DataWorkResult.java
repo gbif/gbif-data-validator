@@ -1,7 +1,6 @@
 package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.DataFile;
 import org.gbif.validation.collector.CollectorGroup;
 
 /**
@@ -16,8 +15,8 @@ class DataWorkResult {
     SUCCESS, FAILED;
   }
 
-  private DataFile dataFile;
   private Term rowType;
+  private String fileName;
 
   private CollectorGroup collectors;
 
@@ -35,21 +34,15 @@ class DataWorkResult {
    * Full constructor.
    * Builds an instance using a dataFile and a result.
    */
-  DataWorkResult(Term rowType, Result result, CollectorGroup collectors) {
+  DataWorkResult(Term rowType, String fileName, Result result, CollectorGroup collectors) {
     this.rowType = rowType;
+    this.fileName = fileName;
     this.result = result;
     this.collectors = collectors;
   }
 
   public CollectorGroup getCollectors() {
     return collectors;
-  }
-
-  /**
-   * Data file processed.
-   */
-  public DataFile getDataFile() {
-    return dataFile;
   }
 
   public Term getRowType() {
@@ -60,6 +53,13 @@ class DataWorkResult {
     this.rowType = rowType;
   }
 
+  public String getFileName() {
+    return fileName;
+  }
+
+  public void setFileName(String fileName) {
+    this.fileName = fileName;
+  }
 
   /**
    * Status result of processing a data file.
@@ -72,9 +72,8 @@ class DataWorkResult {
     this.result = result;
   }
 
-
   @Override
   public String toString() {
-    return "Result: " + result != null ? result.name() : "null" + " Datafile: " + dataFile.getFilePath();
+    return "Result: " + (result != null ? result.name() : "null") + ", FileName: " + fileName;
   }
 }

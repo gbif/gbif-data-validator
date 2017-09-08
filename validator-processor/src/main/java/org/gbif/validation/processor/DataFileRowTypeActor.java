@@ -51,10 +51,10 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
 
       evaluator.evaluate(dwcaDataFile, collector::collectResult);
 
-      return new DataWorkResult(rowType, DataWorkResult.Result.SUCCESS, collector);
+      return new DataWorkResult(rowType, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.SUCCESS, collector);
     } catch (Exception ex) {
       log().error(ex, "Error checking records integrity, datafile {}", dwcaDataFile);
-      return new DataWorkResult(rowType, DataWorkResult.Result.FAILED, collector);
+      return new DataWorkResult(rowType, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.FAILED, collector);
     }
   }
 }
