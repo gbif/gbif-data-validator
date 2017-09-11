@@ -284,13 +284,17 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * This can represent en entire file or a part of a file
    */
   private void processRecordBasedResults(DataWorkResult result) {
-
     if(DataWorkResult.Result.FAILED == result.getResult()) {
       log().error("DataWorkResult = FAILED: {}", result);
       validationResultElements.add(ValidationResultElement.onException(
               result.getFileName(),
               EvaluationType.UNREADABLE_SECTION_ERROR, ""));
     }
+
+    if(result.getRowTypeKey() == null) {
+      log().error("RowTypeKey shall never be null: " +  result);
+    }
+
     collectResult(result);
     incrementWorkerCompleted();
   }
