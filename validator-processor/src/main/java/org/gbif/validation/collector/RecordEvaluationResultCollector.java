@@ -164,7 +164,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
             .append("-")
             .append(rerd.getRelatedData() == null ? "" :
                     rerd.getRelatedData().entrySet().stream()
-                            .sorted()
+                            //sort by simpleName, we simply want a fix ordering
+                            .sorted((o1, o2) -> o1.getKey().simpleName().compareTo(o2.getKey().simpleName()))
                             .map(me -> StringUtils.defaultString(me.getValue(), "null"))
                             .collect(Collectors.joining("-")));
     return st.toString();
