@@ -7,8 +7,6 @@ import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 
-import java.util.Objects;
-
 import akka.actor.AbstractLoggingActor;
 
 import static akka.dispatch.Futures.future;
@@ -31,7 +29,7 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
    */
   public DataFileRowTypeActor(RowTypeKey rowTypeKey, RecordCollectionEvaluator evaluator,
                               CollectorGroupProvider collector) {
-    Objects.requireNonNull(rowTypeKey, "rowTypeKey shall be provided");
+    //Objects.requireNonNull(rowTypeKey, "rowTypeKey shall be provided");
     receive(
             //this should only be called once
             match(DwcDataFile.class, dataFileMessage -> {
@@ -54,6 +52,9 @@ class DataFileRowTypeActor extends AbstractLoggingActor {
 
       evaluator.evaluate(dwcaDataFile, collector::collectResult);
 
+      if(rowTypeKey == null) {
+        log().warning("rowTypeKey is null here ->" + evaluator.getClass());
+      }
       return new DataWorkResult(rowTypeKey, dwcaDataFile.getDataFile().getSourceFileName(), DataWorkResult.Result.SUCCESS, collector);
     } catch (Exception ex) {
       log().error(ex, "Error checking records integrity, datafile {}", dwcaDataFile);
