@@ -3,6 +3,8 @@ package org.gbif.validation.processor;
 import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.collector.CollectorGroup;
 
+import java.util.Objects;
+
 /**
  * This class encapsulates the result of processing a file by an Akka actor.
  */
@@ -34,7 +36,8 @@ class DataWorkResult {
    * Full constructor.
    * Builds an instance using a dataFile and a result.
    */
-  DataWorkResult(RowTypeKey rowType, String fileName, Result result, CollectorGroup collectors) {
+  DataWorkResult(RowTypeKey rowTypeKey, String fileName, Result result, CollectorGroup collectors) {
+    Objects.requireNonNull(rowTypeKey, "rowTypeKey shall be provided");
     this.rowTypeKey = rowTypeKey;
     this.fileName = fileName;
     this.result = result;

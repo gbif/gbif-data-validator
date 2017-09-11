@@ -292,7 +292,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     }
 
     if(result.getRowTypeKey() == null) {
-      log().error("RowTypeKey shall never be null: " +  result);
+      log().error("RowTypeKey shall never be null: " +  result + ", " + result.getFileName()
+      + ", " + result.getCollectors());
     }
 
     collectResult(result);
