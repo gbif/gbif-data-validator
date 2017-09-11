@@ -142,6 +142,7 @@ public class ValidationWsListener extends GbifServletListener {
       expose(JOB_SERVER_TYPE_LITERAL);
       expose(ValidationWsConfiguration.class);
       expose(HttpUtil.class);
+      expose(UploadedFileManager.class);
     }
 
     /**
