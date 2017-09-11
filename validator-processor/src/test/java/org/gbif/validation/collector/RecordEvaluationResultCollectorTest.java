@@ -20,31 +20,38 @@ public class RecordEvaluationResultCollectorTest {
     RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, "2", "3");
     collector.collect(bldr.build());
-    assertEquals(1l, collector.getAggregatedCounts().get(EvaluationType.COLUMN_MISMATCH).longValue());
+    assertEquals(1L, collector.getAggregatedCounts().get(EvaluationType.COLUMN_MISMATCH).longValue());
   }
 
   @Test
-  public void testCollectorSamplingLimit(){
-    testCollectorSamplingLimit(new RecordEvaluationResultCollector(1, false));
-    testCollectorSamplingLimit(new RecordEvaluationResultCollector(1, true));
+  public void testCollectorSamplingLimit() {
+    testCollectorSamplingLimit(new RecordEvaluationResultCollector(1, false), 2L, 1L);
+    testCollectorSamplingLimit(new RecordEvaluationResultCollector(1, true), 2L, 1L);
+
+    // still expecting 1 as sample size considering the input data is the same.
+    testCollectorSamplingLimit(new RecordEvaluationResultCollector(2, false), 2L, 1L);
+    testCollectorSamplingLimit(new RecordEvaluationResultCollector(2, true), 2L, 1L);
   }
 
   /**
-   *
-   * @param collector expected to have maxNumberOfSample == 1
+   * Test functions that add 2 RecordEvaluationResult of type {@code COLUMN_MISMATCH} with the same
+   * expected and found data.
+   * @param collector
+   * @param expectedCount expected evaluation type count
+   * @param expectedSampleSize expected size of the sample taken
    */
-  private static void testCollectorSamplingLimit(RecordEvaluationResultCollector collector) {
-    RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l);
+  private static void testCollectorSamplingLimit(RecordEvaluationResultCollector collector, long expectedCount,
+                                                 long expectedSampleSize) {
+    RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1L);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, "2", "3");
     collector.collect(bldr.build());
 
-    bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 2l);
+    bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 2L);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, "2", "3");
     collector.collect(bldr.build());
 
-    //count should be 2
-    assertEquals(2l, collector.getAggregatedCounts().get(EvaluationType.COLUMN_MISMATCH).longValue());
-    //sampling should be 1
-    assertEquals(1l, collector.getSamples().get(EvaluationType.COLUMN_MISMATCH).size());
+    assertEquals(expectedCount, collector.getAggregatedCounts().get(EvaluationType.COLUMN_MISMATCH).longValue());
+    assertEquals(expectedSampleSize, collector.getSamples().get(EvaluationType.COLUMN_MISMATCH).size());
   }
+
 }

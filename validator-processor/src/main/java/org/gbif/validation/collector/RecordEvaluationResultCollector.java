@@ -3,19 +3,21 @@ package org.gbif.validation.collector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.api.model.RecordEvaluationResultDetails;
 import org.gbif.validation.api.result.ValidationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Basic implementation of a {@link ResultsCollector}.
@@ -43,8 +45,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
    */
   private interface InnerRecordEvaluationResultCollector extends Serializable {
     void countAndPrepare(EvaluationType type);
-    void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<ValidationResultDetails>,
-            Collection<ValidationResultDetails>> samplingFunction);
+    void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String, ValidationResultDetails>,
+            Map<String, ValidationResultDetails>> samplingFunction);
     Map<EvaluationType, Long> getAggregatedCounts();
     Map<EvaluationType, List<ValidationResultDetails>> getSamples();
   }
@@ -54,7 +56,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
    */
   private static class RecordEvaluationResultCollectorSingleThread implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, Long> issueCounter;
-    private final Map<EvaluationType, Collection<ValidationResultDetails>> issueSampling;
+    private final Map<EvaluationType,  Map<String,ValidationResultDetails>> issueSampling;
 
     RecordEvaluationResultCollectorSingleThread() {
       issueCounter = new EnumMap<>(EvaluationType.class);
@@ -64,19 +66,19 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     @Override
     public void countAndPrepare(EvaluationType type) {
       issueCounter.compute(type, (k, v) -> (v == null) ? 1 : ++v);
-      issueSampling.putIfAbsent(type, new ArrayList<>());
+      issueSampling.putIfAbsent(type, new HashMap<>());
     }
 
     @Override
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<ValidationResultDetails>,
-            Collection<ValidationResultDetails>> samplingFunction) {
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String,ValidationResultDetails>,
+            Map<String,ValidationResultDetails>> samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
     @Override
     public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-              rec ->  new ArrayList<>(rec.getValue())));
+              rec ->  new ArrayList<>(rec.getValue().values())));
     }
 
     @Override
@@ -91,7 +93,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
    */
   private static class RecordEvaluationResultCollectorConcurrent implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, LongAdder> issueCounter;
-    private final Map<EvaluationType, Collection<ValidationResultDetails>> issueSampling;
+    private final Map<EvaluationType,  Map<String, ValidationResultDetails>> issueSampling;
 
     RecordEvaluationResultCollectorConcurrent() {
       issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
@@ -101,12 +103,12 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     @Override
     public void countAndPrepare(EvaluationType type) {
       issueCounter.computeIfAbsent(type, k -> new LongAdder()).increment();
-      issueSampling.putIfAbsent(type, new ConcurrentLinkedQueue<>());
+      issueSampling.putIfAbsent(type, new ConcurrentHashMap<>());
     }
 
     @Override
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Collection<ValidationResultDetails>,
-            Collection<ValidationResultDetails>> samplingFunction) {
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String,ValidationResultDetails>,
+            Map<String,ValidationResultDetails>> samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
@@ -126,7 +128,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     @Override
     public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-              rec ->  new ArrayList<>(rec.getValue())));
+              rec ->  new ArrayList<>(rec.getValue().values())));
     }
   }
 
@@ -137,13 +139,28 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
         innerImpl.countAndPrepare(detail.getEvaluationType());
         innerImpl.computeSampling(detail.getEvaluationType(), (type, queue) -> {
           if (queue.size() < maxNumberOfSample) {
-            queue.add(new ValidationResultDetails(result.getLineNumber(), result.getRecordId(), detail.getExpected(),
-                    detail.getFound(), detail.getRelatedData()));
+            String key = computeRelatedDataKey(detail);
+            if(!queue.containsKey(key)) {
+              queue.put(key, new ValidationResultDetails(result.getLineNumber(),
+                      result.getRecordId(), detail.getExpected(), detail.getFound(), detail.getRelatedData()));
+            }
           }
           return queue;
         });
       });
     }
+  }
+
+  private static String computeRelatedDataKey(RecordEvaluationResultDetails rerd) {
+    StringBuilder st = new StringBuilder();
+    st.append(StringUtils.defaultString(rerd.getFound(), ""))
+            .append("-")
+            .append(rerd.getRelatedData() == null ? "" :
+                    rerd.getRelatedData().entrySet().stream()
+                            .sorted()
+                            .map(me -> StringUtils.defaultString(me.getValue(), "null"))
+                            .collect(Collectors.joining("-")));
+    return st.toString();
   }
 
 
