@@ -66,11 +66,12 @@ public class ValidationResource {
   }
 
   @Inject
-  public ValidationResource(ValidationWsConfiguration configuration, JobServer<ValidationResult> jobServer)
+  public ValidationResource(ValidationWsConfiguration configuration, JobServer<ValidationResult> jobServer,
+                            UploadedFileManager fileTransferManager)
     throws IOException {
     this.jobServer = jobServer;
     this.configuration = configuration;
-    fileTransferManager = new UploadedFileManager(configuration.getWorkingDir());
+    this.fileTransferManager = fileTransferManager;
   }
 
   @POST

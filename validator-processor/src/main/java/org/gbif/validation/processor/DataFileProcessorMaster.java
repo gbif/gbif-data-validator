@@ -183,7 +183,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       try {
         List<TabularDataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
         numOfWorkers.add(splitDataFile.size());
-        evaluationChainBuilder.evaluateRecords(df.getRowTypeKey().getRowType(), columns,
+        evaluationChainBuilder.evaluateRecords(df.getRowTypeKey(), columns,
                 df.getDefaultValues().orElse(null), splitDataFile);
       } catch (IOException ioEx) {
         log().error("Failed to split data", ioEx);
@@ -242,9 +242,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     };
     evaluationChain.runRowTypeEvaluation(runner);
 
-    RecordEvaluatorRunner recordEvaluatorRunner = (dataFiles, rowType, recordEvaluator) -> {
+    RecordEvaluatorRunner recordEvaluatorRunner = (dataFiles, rowTypeKey, recordEvaluator) -> {
       ActorRef workerRouter = createWorkerRoutes(Math.min(dataFiles.size(), MAX_WORKER),
-              rowType, recordEvaluator);
+              rowTypeKey, recordEvaluator);
       dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
     };
     evaluationChain.runRecordEvaluation(recordEvaluatorRunner);
@@ -253,12 +253,12 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Creates the worker router using the calculated number of workers.
    */
-  private ActorRef createWorkerRoutes(int poolSize, Term rowType, RecordEvaluator recordEvaluator) {
-    log().info("Created routes for " + rowType);
+  private ActorRef createWorkerRoutes(int poolSize, RowTypeKey rowTypeKey, RecordEvaluator recordEvaluator) {
+    log().info("Created routes for " + rowTypeKey);
     String actorName = "dataFileRouter_" + UUID.randomUUID();
     return getContext().actorOf(
             new RoundRobinPool(poolSize).props(Props.create(DataFileRecordsActor.class,
-                    recordEvaluator, rowTypeCollectorProviders.get(rowType))),
+                    recordEvaluator, rowTypeCollectorProviders.get(rowTypeKey))),
             actorName);
   }
 
@@ -291,6 +291,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
               EvaluationType.UNREADABLE_SECTION_ERROR, ""));
     }
 
+    log().info("->" + result.getRowTypeKey());
     if(result.getRowTypeKey() == null) {
       log().error("RowTypeKey shall never be null: " +  result + ", " + result.getFileName()
       + ", " + result.getCollectors());
@@ -301,6 +302,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   private void processMetadataBasedResults(MetadataWorkResult result) {
+    log().info("Got MetadataWorkResult worker response(s)");
     if(DataWorkResult.Result.SUCCESS == result.getResult()) {
       result.getValidationResultElements().ifPresent(validationResultElements::addAll);
     }
@@ -334,10 +336,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private ValidationResult buildResult() {
     List<ValidationResultElement> resultElements = new ArrayList<>();
-    rowTypeCollectors.forEach((rowType, collectorList) -> resultElements.add(
+    rowTypeCollectors.forEach((rowTypeKey, collectorList) -> resultElements.add(
                                                             CollectorGroup.mergeAndGetResult(
-                                                            rowTypeDataFile.get(rowType),
-                                                            rowTypeDataFile.get(rowType).getSourceFileName(),
+                                                            rowTypeDataFile.get(rowTypeKey),
+                                                            rowTypeDataFile.get(rowTypeKey).getSourceFileName(),
                                                             collectorList)
     ));
 

@@ -115,4 +115,9 @@ public class RowTypeKey {
   public int hashCode() {
     return java.util.Objects.hash(dwcFileType, rowType);
   }
+
+  @Override
+  public String toString() {
+    return name();
+  }
 }

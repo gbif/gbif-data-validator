@@ -1,7 +1,7 @@
 package org.gbif.validation.evaluator.runner;
 
-import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.RecordEvaluator;
+import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 
 import java.util.List;
@@ -11,5 +11,5 @@ import java.util.List;
  */
 @FunctionalInterface
 public interface RecordEvaluatorRunner {
-  void run(List<TabularDataFile> dataFiles, Term rowType, RecordEvaluator recordEvaluator);
+  void run(List<TabularDataFile> dataFiles, RowTypeKey rowTypeKey, RecordEvaluator recordEvaluator);
 }

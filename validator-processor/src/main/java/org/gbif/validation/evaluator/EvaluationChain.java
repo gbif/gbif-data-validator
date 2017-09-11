@@ -33,12 +33,12 @@ public class EvaluationChain {
    */
   private static class RecordEvaluationUnit {
     private final List<TabularDataFile> dataFiles;
-    private final Term rowType;
+    private final RowTypeKey rowTypeKey;
     private final RecordEvaluator recordEvaluator;
 
-    RecordEvaluationUnit(List<TabularDataFile> dataFiles, Term rowType, RecordEvaluator recordEvaluator) {
+    RecordEvaluationUnit(List<TabularDataFile> dataFiles, RowTypeKey rowTypeKey, RecordEvaluator recordEvaluator) {
       this.dataFiles = dataFiles;
-      this.rowType = rowType;
+      this.rowTypeKey = rowTypeKey;
       this.recordEvaluator = recordEvaluator;
     }
 
@@ -46,8 +46,8 @@ public class EvaluationChain {
       return recordEvaluator;
     }
 
-    public Term getRowType() {
-      return rowType;
+    public RowTypeKey getRowTypeKey() {
+      return rowTypeKey;
     }
 
     public List<TabularDataFile> getDataFiles() {
@@ -58,7 +58,7 @@ public class EvaluationChain {
     public String toString() {
       return MoreObjects.toStringHelper(this)
               .add("dataFiles", dataFiles)
-              .add("rowType", rowType)
+              .add("rowTypeKey", rowTypeKey)
               .add("recordEvaluator", recordEvaluator)
               .toString();
     }
@@ -164,10 +164,10 @@ public class EvaluationChain {
      * @param dataFile all the same rowType
      * @return
      */
-    public Builder evaluateRecords(Term rowType, List<Term> columns, Map<Term, String> defaultValues,
+    public Builder evaluateRecords(RowTypeKey rowTypeKey, List<Term> columns, Map<Term, String> defaultValues,
                                    List<TabularDataFile> dataFile) {
-      recordEvaluationUnits.add(new RecordEvaluationUnit(dataFile, rowType,
-              factory.create(rowType, columns, defaultValues)));
+      recordEvaluationUnits.add(new RecordEvaluationUnit(dataFile, rowTypeKey,
+              factory.create(rowTypeKey.getRowType(), columns, defaultValues)));
       return this;
     }
 
@@ -274,7 +274,7 @@ public class EvaluationChain {
   public void runRecordEvaluation(RecordEvaluatorRunner runner) {
     Objects.requireNonNull(runner, "RecordEvaluatorRunner shall be provided");
     recordEvaluationUnits.forEach(unit -> runner.run(unit.getDataFiles(),
-            unit.getRowType(), unit.getRecordEvaluator()));
+            unit.getRowTypeKey(), unit.getRecordEvaluator()));
   }
 
   public int getNumberOfDwcDataFileEvaluationUnits() {

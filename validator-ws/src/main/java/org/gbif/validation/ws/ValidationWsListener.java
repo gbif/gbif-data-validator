@@ -13,6 +13,7 @@ import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
 import org.gbif.validation.jobserver.impl.FileJobStorage;
 import org.gbif.validation.ws.conf.ConfKeys;
 import org.gbif.validation.ws.conf.ValidationWsConfiguration;
+import org.gbif.validation.ws.file.UploadedFileManager;
 import org.gbif.ws.app.ConfUtils;
 import org.gbif.ws.mixin.Mixins;
 import org.gbif.ws.server.guice.GbifServletListener;
@@ -118,6 +119,14 @@ public class ValidationWsListener extends GbifServletListener {
     protected void configureService() {
       //get configuration settings
       ValidationWsConfiguration configuration = getConfFromProperties(getProperties());
+
+      try {
+        UploadedFileManager uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+        bind(UploadedFileManager.class).toInstance(uploadedFileManager);
+      } catch (IOException e) {
+        LOG.error("Can't instantiate uploadedFileManager", e);
+        return;
+      }
 
       //create required directories
       createWorkingDirs(configuration);
