@@ -151,6 +151,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
   }
 
+  /**
+   * Given a {@link RecordEvaluationResultDetails}, compute a key representing the input values that generated
+   * the provided {@link RecordEvaluationResultDetails}.
+   * Useful to get the different input values that generated the same EvaluationType results.
+   * @param rerd
+   * @return String representing the input data, since all fields are optional the empty value is defined by "-";
+   */
   private static String computeRelatedDataKey(RecordEvaluationResultDetails rerd) {
     StringBuilder st = new StringBuilder();
     st.append(StringUtils.defaultString(rerd.getFound(), ""))
