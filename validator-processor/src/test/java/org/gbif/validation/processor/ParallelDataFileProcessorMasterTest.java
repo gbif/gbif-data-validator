@@ -1,15 +1,32 @@
 package org.gbif.validation.processor;
 
 import org.gbif.dwc.terms.DwcTerm;
-import org.gbif.validation.api.vocabulary.DwcFileType;
+import org.gbif.validation.TestUtils;
+import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.api.vocabulary.DwcFileType;
+import org.gbif.validation.api.vocabulary.FileFormat;
+import org.gbif.validation.conf.ValidatorConfiguration;
+import org.gbif.validation.jobserver.JobMonitor;
+import org.gbif.validation.jobserver.JobStorage;
+import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
+import org.gbif.validation.jobserver.impl.InMemoryJobStorage;
+import org.gbif.validation.jobserver.messages.DataJob;
+import org.gbif.validation.source.DataFileFactory;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
 import com.google.common.collect.Lists;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,21 +46,6 @@ public class ParallelDataFileProcessorMasterTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
- // private final ActorSystem system = ActorSystem.create("ParallelDataFileProcessorMasterTestSystem");
-
-//  @Test
-//  public void test(){
-
-//    EvaluatorFactory EVALUATOR_FACTORY = new EvaluatorFactory(UAT_API);
-
-//    Props props =  Props.create(DataFileProcessorMaster.class, evaluatorFactory, fileSplitSize,
-//            workingDir, checklistValidator);
-//
-//    //creates a actor that is responsible to handle a this jobData
-//    ActorRef jobMaster = system.actorOf(propsSupplier.get(),
-//            String.valueOf(dataJob.getJobId())); //the jobId used as Actor's name
-//    jobMaster.tell(dataJob, self());
- // }
 
   @Test
   public void testMergeIssuesOnFilename() {
@@ -51,15 +53,15 @@ public class ParallelDataFileProcessorMasterTest {
     List<ValidationResultElement> mergeInto = new ArrayList<>();
 
     source.add(ValidationResultElement.forMetadata("test.txt", Collections.singletonList(
-            ValidationIssues.withEvaluationTypeOnly(EvaluationType.LICENSE_MISSING_OR_UNKNOWN))));
+            ValidationIssues.withEvaluationTypeOnly(EvaluationType.LICENSE_MISSING_OR_UNKNOWN)), null));
 
     mergeInto.add(new ValidationResultElement("test.txt", 18L, DwcFileType.CORE, DwcTerm.Occurrence,
-            Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
-                    Collections.emptyList()))));
+            DwcTerm.occurrenceID, Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
+                    Collections.emptyList())), null));
 
     mergeInto.add(new ValidationResultElement("test2.txt", 18L, DwcFileType.CORE, DwcTerm.Occurrence,
-            Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
-                    Collections.emptyList()))));
+            DwcTerm.occurrenceID, Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
+                    Collections.emptyList())), null));
 
     DataFileProcessorMaster.mergeIssuesOnFilename(source, mergeInto);
 

@@ -4,6 +4,7 @@ import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.RecordMetricsCollector;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
@@ -107,8 +108,9 @@ public class CollectorGroup {
 
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines().longValue(),
-            dataFile.getRowTypeKey().getDwcFileType(),
+            dataFile.getDwcFileType(),
             dataFile.getRowTypeKey().getRowType(),
+            dataFile.getRecordIdentifier().map(TermIndex::getTerm).orElse(null),
             mergedAggregatedCounts, resampledMergedSamples,
             mergedTermFrequency,
             mergedInterpretedTermsCount);
