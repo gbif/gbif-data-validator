@@ -69,11 +69,12 @@ public class ValidationResultElement implements Serializable {
    * Get a new {@link ValidationResultElement} for {@link DwcFileType#META_DESCRIPTOR}.
    *
    * @param fileName
+   * @param rowType
    * @param issues
    * @return
    */
-  public static ValidationResultElement forMetaDescriptor(String fileName, List<ValidationIssue> issues){
-    return new ValidationResultElement(fileName, null, DwcFileType.META_DESCRIPTOR, null, null, issues, null);
+  public static ValidationResultElement forMetaDescriptor(String fileName, Term rowType, List<ValidationIssue> issues){
+    return new ValidationResultElement(fileName, null, DwcFileType.META_DESCRIPTOR, null, rowType, issues, null);
   }
 
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
