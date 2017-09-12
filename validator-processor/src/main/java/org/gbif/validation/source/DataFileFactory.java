@@ -227,7 +227,8 @@ public class DataFileFactory {
     Term[] headers = archiveFile.getHeader();
     Map<Term, String> defaultValues = archiveFile.getDefaultValues().orElse(null);
     TermIndex recordIdentifier = archiveFile.getId() == null ? null :
-            new TermIndex(archiveFile.getId().getIndex(), archiveFile.getId().getTerm());
+            new TermIndex(archiveFile.getId().getIndex(),
+                    archiveFile.getId().getTerm() == null ? ArchiveFile.DEFAULT_ID_TERM : archiveFile.getId().getTerm());
 
     //if TermIndex is null we need to report an error
 

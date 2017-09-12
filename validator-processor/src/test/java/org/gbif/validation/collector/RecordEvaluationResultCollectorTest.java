@@ -18,7 +18,7 @@ public class RecordEvaluationResultCollectorTest {
   public void testCollector() {
     RecordEvaluationResultCollector collector = new RecordEvaluationResultCollector(10, false);
 
-    RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1l);
+    RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1L);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, "2", "3");
     collector.collect(bldr.build());
     assertEquals(1L, collector.getAggregatedCounts().get(EvaluationType.COLUMN_MISMATCH).longValue());
