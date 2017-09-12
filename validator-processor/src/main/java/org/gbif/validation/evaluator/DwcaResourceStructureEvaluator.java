@@ -8,7 +8,6 @@ import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
-import org.gbif.validation.api.vocabulary.DwcFileType;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
@@ -103,13 +102,11 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
               EvaluationType.UNKNOWN_ROWTYPE, archiveFile.getRowType().toString()));
     }
     return validationIssues.isEmpty() ? Optional.empty() :
-            Optional.of(new ValidationResultElement(archiveFile.getLocationFile().getName(), null, DwcFileType.METADATA,
-                    archiveFile.getRowType(), validationIssues));
+            Optional.of(ValidationResultElement.forMetadata(Archive.META_FN, validationIssues));
   }
 
   private Validator getMetaXMLValidator() {
     return xmlSchemaValidatorProvider.getXmlValidator(XMLSchemaValidatorProvider.DWC_META_XML);
   }
-
 
 }
