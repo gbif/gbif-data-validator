@@ -16,8 +16,9 @@ import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.RowTypeKey;
-import org.gbif.validation.api.vocabulary.FileFormat;
+import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.api.model.RecordEvaluatorChain;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.evaluator.record.OccurrenceInterpretationEvaluator;
 import org.gbif.validation.evaluator.record.RecordStructureEvaluator;
@@ -166,12 +167,12 @@ public class EvaluatorFactory {
   }
 
   /**
-   * Create an OccurrenceLineProcessor.
+   * Create an {@link RecordEvaluator} for records.
    *
    * @return new instance
    */
-  public RecordEvaluator create(Term rowType, List<Term> columns,
-                                Map<Term, String> defaultValues) {
+  public RecordEvaluator createRecordEvaluator(Term rowType, TermIndex recordIdentifier, List<Term> columns,
+                                               Map<Term, String> defaultValues) {
     Objects.requireNonNull(columns, "columns shall be provided");
     Objects.requireNonNull(rowType, "rowType shall be provided");
 
@@ -180,7 +181,7 @@ public class EvaluatorFactory {
 
     if (DwcTerm.Occurrence == rowType) {
       evaluators.add(new OccurrenceInterpretationEvaluator(buildOccurrenceInterpreter(),
-              columns.toArray(new Term[columns.size()]), defaultValues));
+              columns.toArray(new Term[columns.size()]), defaultValues, recordIdentifier));
     }
     return new RecordEvaluatorChain(evaluators);
   }

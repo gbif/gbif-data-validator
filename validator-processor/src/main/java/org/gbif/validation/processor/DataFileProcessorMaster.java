@@ -183,7 +183,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       try {
         List<TabularDataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
         numOfWorkers.add(splitDataFile.size());
-        evaluationChainBuilder.evaluateRecords(df.getRowTypeKey(), columns,
+        evaluationChainBuilder.evaluateRecords(df.getRowTypeKey(), df.getRecordIdentifier().orElse(null), columns,
                 df.getDefaultValues().orElse(null), splitDataFile);
       } catch (IOException ioEx) {
         log().error("Failed to split data", ioEx);

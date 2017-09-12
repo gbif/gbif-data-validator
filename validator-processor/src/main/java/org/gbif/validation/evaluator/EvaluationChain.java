@@ -9,6 +9,7 @@ import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
@@ -160,14 +161,13 @@ public class EvaluationChain {
     }
 
     /**
-     * FIXME we can take the columns and defaultValues from the dataFiles variable.
      * @param dataFile all the same rowType
      * @return
      */
-    public Builder evaluateRecords(RowTypeKey rowTypeKey, List<Term> columns, Map<Term, String> defaultValues,
-                                   List<TabularDataFile> dataFile) {
+    public Builder evaluateRecords(RowTypeKey rowTypeKey, TermIndex recordIdentifier, List<Term> columns,
+                                   Map<Term, String> defaultValues, List<TabularDataFile> dataFile) {
       recordEvaluationUnits.add(new RecordEvaluationUnit(dataFile, rowTypeKey,
-              factory.create(rowTypeKey.getRowType(), columns, defaultValues)));
+              factory.createRecordEvaluator(rowTypeKey.getRowType(), recordIdentifier, columns, defaultValues)));
       return this;
     }
 
