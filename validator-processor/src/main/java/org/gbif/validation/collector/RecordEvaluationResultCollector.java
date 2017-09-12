@@ -8,11 +8,13 @@ import org.gbif.validation.api.result.ValidationResultDetails;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -47,6 +49,9 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     void countAndPrepare(EvaluationType type);
     void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String, ValidationResultDetails>,
             Map<String, ValidationResultDetails>> samplingFunction);
+    void putNonDistinct(EvaluationType type, ValidationResultDetails validationResultDetails);
+
+    Map<EvaluationType, Collection<ValidationResultDetails>> getNonDistinct();
     Map<EvaluationType, Long> getAggregatedCounts();
     Map<EvaluationType, List<ValidationResultDetails>> getSamples();
   }
@@ -56,11 +61,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
    */
   private static class RecordEvaluationResultCollectorSingleThread implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, Long> issueCounter;
-    private final Map<EvaluationType,  Map<String,ValidationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Map<String, ValidationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Collection<ValidationResultDetails>> nonDistinctSample;
 
     RecordEvaluationResultCollectorSingleThread() {
       issueCounter = new EnumMap<>(EvaluationType.class);
       issueSampling = new EnumMap<>(EvaluationType.class);
+      nonDistinctSample = new EnumMap<>(EvaluationType.class);
     }
 
     @Override
@@ -76,6 +83,20 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
 
     @Override
+    public void putNonDistinct(EvaluationType type, ValidationResultDetails validationResultDetails) {
+      nonDistinctSample.putIfAbsent(type, new ArrayList<>());
+      nonDistinctSample.compute(type, (k, l) -> {
+        l.add(validationResultDetails);
+        return l;
+      });
+    }
+
+    @Override
+    public Map<EvaluationType, Collection<ValidationResultDetails>> getNonDistinct() {
+      return nonDistinctSample;
+    }
+
+    @Override
     public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
               rec ->  new ArrayList<>(rec.getValue().values())));
@@ -86,6 +107,7 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
               Map.Entry::getValue));
     }
+
   }
 
   /**
@@ -93,11 +115,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
    */
   private static class RecordEvaluationResultCollectorConcurrent implements InnerRecordEvaluationResultCollector {
     private final Map<EvaluationType, LongAdder> issueCounter;
-    private final Map<EvaluationType,  Map<String, ValidationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Map<String, ValidationResultDetails>> issueSampling;
+    private final Map<EvaluationType, Collection<ValidationResultDetails>> nonDistinctSample;
 
     RecordEvaluationResultCollectorConcurrent() {
       issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
       issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
+      nonDistinctSample = new ConcurrentHashMap<>(EvaluationType.values().length);
     }
 
     @Override
@@ -112,12 +136,27 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       issueSampling.compute(type, samplingFunction);
     }
 
+    @Override
+    public void putNonDistinct(EvaluationType type, ValidationResultDetails validationResultDetails) {
+      nonDistinctSample.putIfAbsent(type, new ConcurrentLinkedQueue<>());
+      nonDistinctSample.compute(type, (k, l) -> {
+        l.add(validationResultDetails);
+        return l;
+      });
+    }
+
+    @Override
+    public Map<EvaluationType, Collection<ValidationResultDetails>> getNonDistinct() {
+      return nonDistinctSample;
+    }
+
     /**
      * @return a copy of the inter aggregated counts.
      */
     @Override
     public Map<EvaluationType, Long> getAggregatedCounts() {
-      return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+      return issueCounter.entrySet().stream()
+              .collect(Collectors.toMap(Map.Entry::getKey,
               rec -> rec.getValue().longValue()));
     }
 
@@ -141,14 +180,22 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
           if (queue.size() < maxNumberOfSample) {
             String key = computeRelatedDataKey(detail);
             if(!queue.containsKey(key)) {
-              queue.put(key, new ValidationResultDetails(result.getLineNumber(),
-                      result.getRecordId(), detail.getExpected(), detail.getFound(), detail.getRelatedData()));
+              queue.put(key, toValidationResultDetails(result, detail));
+            }
+            else{
+              innerImpl.putNonDistinct(detail.getEvaluationType(), toValidationResultDetails(result, detail));
             }
           }
           return queue;
         });
       });
     }
+  }
+
+
+  private static ValidationResultDetails toValidationResultDetails(RecordEvaluationResult result, RecordEvaluationResultDetails detail) {
+    return new ValidationResultDetails(result.getLineNumber(),
+            result.getRecordId(), detail.getExpected(), detail.getFound(), detail.getRelatedData());
   }
 
   /**
@@ -173,7 +220,19 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
 
 
   public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
-    return innerImpl.getSamples();
+    Map<EvaluationType, List<ValidationResultDetails>> samplesCopy = innerImpl.getSamples();
+    Map<EvaluationType, Collection<ValidationResultDetails>> nonDistinctSample = innerImpl.getNonDistinct();
+    samplesCopy.forEach( (et, sample) -> {
+      if(sample.size() < maxNumberOfSample && nonDistinctSample.get(et) != null){
+        for(ValidationResultDetails nonDistinctElement : nonDistinctSample.get(et)){
+          sample.add(nonDistinctElement);
+          if(maxNumberOfSample - sample.size() == 0){
+            break;
+          }
+        }
+      }
+    });
+    return samplesCopy;
   }
 
   public Map<EvaluationType, Long> getAggregatedCounts() {
