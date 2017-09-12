@@ -8,6 +8,7 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.DwcDataFileEvaluator;
 import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
@@ -45,12 +46,12 @@ class BasicMetadataEvaluator implements DwcDataFileEvaluator {
 
     List<ValidationResultElement> validationResultElements = new ArrayList<>();
     List<ValidationIssue> validationIssues = new ArrayList<>();
+    List<ValidationDataOutput> dataOutput = new ArrayList<>();
 
     dwcDataFile.getMetadataFilePath().ifPresent(metadataFilePath -> {
               try {
                 InputStream is = FileUtils.getInputStream(metadataFilePath.toFile());
                 Dataset dataset = DatasetParser.build(is);
-
                 List<Function<Dataset, Optional<ValidationIssue>>> datasetEvalChain = Arrays.asList(
                         BasicMetadataEvaluator::evaluateTitle,
                         BasicMetadataEvaluator::evaluateLicense,
@@ -58,6 +59,7 @@ class BasicMetadataEvaluator implements DwcDataFileEvaluator {
                         BasicMetadataEvaluator::evaluateContact);
 
                 datasetEvalChain.forEach(eval -> eval.apply(dataset).ifPresent(validationIssues::add));
+                dataOutput.add(new ValidationDataOutput(ValidationDataOutput.Type.DATASET_OBJECT, dataset));
               } catch (IOException ex) {
                 LOG.warn("IOException from BasicMetadataEvaluator is unexpected.", ex);
                 validationIssues.add(ValidationIssues.withException(EvaluationType.UNHANDLED_ERROR, ex.getMessage()));
@@ -67,7 +69,8 @@ class BasicMetadataEvaluator implements DwcDataFileEvaluator {
 
     if(!validationIssues.isEmpty()) {
       validationResultElements.add(ValidationResultElement.forMetadata(
-              dwcDataFile.getMetadataFilePath().map( p -> p.getFileName().toString()).orElse(""), validationIssues));
+              dwcDataFile.getMetadataFilePath().map( p -> p.getFileName().toString()).orElse(""),
+              validationIssues, dataOutput));
     }
 
     return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);

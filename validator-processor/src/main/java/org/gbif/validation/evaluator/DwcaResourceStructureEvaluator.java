@@ -102,7 +102,7 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
               EvaluationType.UNKNOWN_ROWTYPE, archiveFile.getRowType().toString()));
     }
     return validationIssues.isEmpty() ? Optional.empty() :
-            Optional.of(ValidationResultElement.forMetadata(Archive.META_FN, validationIssues));
+            Optional.of(ValidationResultElement.forMetaDescriptor(Archive.META_FN, validationIssues));
   }
 
   private Validator getMetaXMLValidator() {

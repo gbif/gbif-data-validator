@@ -1,9 +1,9 @@
 package org.gbif.validation.api.result;
 
 import org.gbif.dwc.terms.Term;
-import org.gbif.validation.api.vocabulary.DwcFileType;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.vocabulary.DwcFileType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.google.common.base.MoreObjects;
+import org.codehaus.jackson.annotate.JsonIgnore;
 
 /**
  * A {@link ValidationResultElement} represents an element in the resource in validation.
@@ -25,12 +26,16 @@ public class ValidationResultElement implements Serializable {
   private final List<ValidationIssue> issues;
 
   private final Long numberOfLines;
+
+  //TODO replace by RowTypeKey
   private final DwcFileType fileType;
   //From Dwc "class of data represented by each row"
   private final Term rowType;
+  private final Term idTerm;
 
   private final Map<Term, Long> termsFrequency;
   private final Map<Term, Long> interpretedValueCounts;
+  private final List<ValidationDataOutput> dataOutput;
 
   /**
    * Get a new {@link ValidationResultElement} that represents an exception linked to a {@link EvaluationType}.
@@ -45,7 +50,7 @@ public class ValidationResultElement implements Serializable {
     //EvaluationType evaluationType
     List<ValidationIssue> issues = new ArrayList<>();
     issues.add(ValidationIssues.withException(evaluationType, exception));
-    return new ValidationResultElement(fileName, null, null, null, issues);
+    return new ValidationResultElement(fileName, null, null, null, null, issues, null);
   }
 
   /**
@@ -55,13 +60,25 @@ public class ValidationResultElement implements Serializable {
    * @param issues
    * @return
    */
-  public static ValidationResultElement forMetadata(String fileName, List<ValidationIssue> issues){
-    return new ValidationResultElement(fileName, null, DwcFileType.METADATA, null, issues);
+  public static ValidationResultElement forMetadata(String fileName, List<ValidationIssue> issues,
+                                                    List<ValidationDataOutput> dataOutput){
+    return new ValidationResultElement(fileName, null, DwcFileType.METADATA, null, null, issues, dataOutput);
+  }
+
+  /**
+   * Get a new {@link ValidationResultElement} for {@link DwcFileType#META_DESCRIPTOR}.
+   *
+   * @param fileName
+   * @param issues
+   * @return
+   */
+  public static ValidationResultElement forMetaDescriptor(String fileName, List<ValidationIssue> issues){
+    return new ValidationResultElement(fileName, null, DwcFileType.META_DESCRIPTOR, null, null, issues, null);
   }
 
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
-                                 List<ValidationIssue> issues){
-    this(fileName, numberOfLines, fileType, rowType, issues, null, null);
+                                 Term idTerm, List<ValidationIssue> issues, List<ValidationDataOutput> dataOutput){
+    this(fileName, numberOfLines, fileType, rowType, idTerm, issues, null, null, dataOutput);
   }
 
   /**
@@ -75,14 +92,14 @@ public class ValidationResultElement implements Serializable {
    * @param termsFrequency
    * @param interpretedValueCounts
    */
-  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
-                          Map<EvaluationType, Long> issueCounter,
-                          Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
-                          Map<Term, Long> termsFrequency,
-                          Map<Term, Long> interpretedValueCounts) {
-    this(fileName, numberOfLines, fileType, rowType, new ArrayList<>(), termsFrequency, interpretedValueCounts);
+  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType, Term idTerm,
+                                 Map<EvaluationType, Long> issueCounter,
+                                 Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
+                                 Map<Term, Long> termsFrequency,
+                                 Map<Term, Long> interpretedValueCounts) {
+    this(fileName, numberOfLines, fileType, rowType, idTerm, new ArrayList<>(), termsFrequency, interpretedValueCounts, null);
 
-    if(issueCounter != null && issueSampling != null) {
+    if (issueCounter != null && issueSampling != null) {
       issueCounter.forEach(
               (k, v) ->
                       issues.add(ValidationIssues.withSample(k, v, issueSampling.get(k))));
@@ -100,17 +117,20 @@ public class ValidationResultElement implements Serializable {
    * @param termsFrequency
    * @param interpretedValueCounts
    */
-  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,
+  public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType, Term idTerm,
                                  List<ValidationIssue> issues,
                                  Map<Term, Long> termsFrequency,
-                                 Map<Term, Long> interpretedValueCounts) {
+                                 Map<Term, Long> interpretedValueCounts,
+                                 List<ValidationDataOutput> dataOutput) {
     this.fileName = fileName;
     this.numberOfLines = numberOfLines;
     this.fileType = fileType;
     this.rowType = rowType;
+    this.idTerm = idTerm;
     this.issues = issues;
     this.termsFrequency = termsFrequency;
     this.interpretedValueCounts = interpretedValueCounts;
+    this.dataOutput = dataOutput;
   }
 
 
@@ -142,6 +162,14 @@ public class ValidationResultElement implements Serializable {
     return interpretedValueCounts;
   }
 
+  public Term getIdTerm() {
+    return idTerm;
+  }
+
+  @JsonIgnore
+  public List<ValidationDataOutput> getDataOutput() {
+    return dataOutput;
+  }
 
   /**
    * Check if the list of issue contains at least one issue of the provided {@link EvaluationCategory}.

@@ -1,10 +1,11 @@
 package org.gbif.validation.api.vocabulary;
 
 /**
- * File type in the context of DarwinCore
+ * File type in the context of DarwinCore.
  */
 public enum DwcFileType {
-  METADATA(false),
+  META_DESCRIPTOR(false), // meta.xml
+  METADATA(false), //eml.xml
   CORE(true),
   EXTENSION(true);
 
