@@ -118,7 +118,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
   protected RecordEvaluationResult toEvaluationResult(Long lineNumber, OccurrenceInterpretationResult result) {
     LOG.debug("Interpretation result original {} result {}", result.getOriginal(), result.getUpdated());
     RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(OCC_ROW_TYPE, lineNumber,
-            recordIdentifier == null ? null : result.getOriginal().getVerbatimField(recordIdentifier.getTerm()));
+            recordIdentifier == null ? null : result.getUpdated().getVerbatimField(recordIdentifier.getTerm()));
 
     Map<Term, String> verbatimFields = result.getUpdated().getVerbatimFields();
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
