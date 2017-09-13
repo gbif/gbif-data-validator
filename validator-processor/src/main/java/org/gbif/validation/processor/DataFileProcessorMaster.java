@@ -215,11 +215,12 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
                         dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElementList.get())));
         return StructuralEvaluationResult.createStopEvaluation();
       }
-      validationResultElements.addAll(validationResultElementList.get());
+      mergeIssuesOnFilename(validationResultElementList.get(), validationResultElements);
 
       context().parent().tell(new JobStatusResponse<>(JobStatus.RUNNING, dataJob.getJobId(),
               new ValidationResult(null, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                      dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElementList.get())), self());
+                      dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE,
+                      new ArrayList<>(validationResultElements))), self());
     }
 
     return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
@@ -303,8 +304,9 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   private void processMetadataBasedResults(MetadataWorkResult result) {
     log().info("Got MetadataWorkResult worker response(s)");
-    if(DataWorkResult.Result.SUCCESS == result.getResult()) {
-      result.getValidationResultElements().ifPresent(validationResultElements::addAll);
+    if (DataWorkResult.Result.SUCCESS == result.getResult()) {
+      result.getValidationResultElements().ifPresent(ver ->
+              mergeIssuesOnFilename(ver, validationResultElements));
     }
     incrementWorkerCompleted();
   }
@@ -353,7 +355,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   /**
    * Given 2 collections of {@link ValidationResultElement}, for each element of source merge the issues into
    * the mergeInto collection if it contains a {@link ValidationResultElement} with the same filename. Otherwise,
-   * the {@link ValidationResultElement} is added to the mergeInto collection.x
+   * the {@link ValidationResultElement} is added to the mergeInto collection.
    *
    * @param source
    * @param mergeInto
