@@ -2,6 +2,7 @@ package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.result.ValidationDataOutput;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -20,13 +21,13 @@ public interface JobStorage {
    * Get data output for a specific jobId and type of output.
    *
    * @param jobId
-   * @param Type
+   * @param type
    *
    * @return the JobDataOutput found or Optional.empty if not
    *
    * @throws IOException
    */
-  Optional<JobDataOutput> getDataOutput(long jobId, JobDataOutput.Type Type) throws IOException;
+  Optional<JobDataOutput> getDataOutput(long jobId, ValidationDataOutput.Type type) throws IOException;
 
   /**
    * Stores/overwrites the data of a jobId.

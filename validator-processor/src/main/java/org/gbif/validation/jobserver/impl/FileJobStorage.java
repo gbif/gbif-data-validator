@@ -2,6 +2,7 @@ package org.gbif.validation.jobserver.impl;
 
 import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.jobserver.JobStorage;
 
 import java.io.File;
@@ -26,9 +27,11 @@ public class FileJobStorage implements JobStorage {
     OBJECT_MAPPER.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
   }
 
-  private static final ObjectReader OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);
-  private static final ObjectWriter OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobStatusResponse.class);
+  private static final ObjectReader STATUS_OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);
+  private static final ObjectWriter STATUS_OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobStatusResponse.class);
 
+  private static final ObjectReader DATA_OUTPUT_OBJECT_READER = OBJECT_MAPPER.reader(JobDataOutput.class);
+  private static final ObjectWriter DATA_OUTPUT_OBJECT_WRITER = OBJECT_MAPPER.writerWithType(JobDataOutput.class);
 
   //Directory where the JSON files are stored.
   private final Path storePath;
@@ -60,8 +63,8 @@ public class FileJobStorage implements JobStorage {
     return storePath.resolve(Long.toString(jobId) + ".json").toFile();
   }
 
-  private File getJobOutputDataFile(JobDataOutput data) {
-    return storePath.resolve(Long.toString(data.getJobId())).resolve(data.getType().name().toLowerCase() + ".json").toFile();
+  private File getJobOutputDataFile(long jobId, ValidationDataOutput.Type type) {
+    return storePath.resolve(Long.toString(jobId)).resolve(type.name().toLowerCase() + ".json").toFile();
   }
 
   /**
@@ -72,14 +75,18 @@ public class FileJobStorage implements JobStorage {
   public Optional<JobStatusResponse<?>> getStatus(long jobId) throws IOException {
     File jobFile = getJobResultFile(jobId);
     if (jobFile.exists()) {
-      return Optional.ofNullable(OBJECT_READER.readValue(jobFile));
+      return Optional.ofNullable(STATUS_OBJECT_READER.readValue(jobFile));
     }
     return Optional.empty();
   }
 
   @Override
-  public Optional<JobDataOutput> getDataOutput(long jobId, JobDataOutput.Type Type) throws IOException {
-    return null;
+  public Optional<JobDataOutput> getDataOutput(long jobId, ValidationDataOutput.Type type) throws IOException {
+    File jobFile = getJobOutputDataFile(jobId, type);
+    if (jobFile.exists()) {
+      return Optional.ofNullable(DATA_OUTPUT_OBJECT_READER.readValue(jobFile));
+    }
+    return Optional.empty();
   }
 
   /**
@@ -88,7 +95,7 @@ public class FileJobStorage implements JobStorage {
   @Override
   public void put(JobStatusResponse<?> response) {
     try {
-      OBJECT_WRITER.writeValue(getJobResultFile(response.getJobId()), response);
+      STATUS_OBJECT_WRITER.writeValue(getJobResultFile(response.getJobId()), response);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }
@@ -100,7 +107,7 @@ public class FileJobStorage implements JobStorage {
   @Override
   public void put(JobDataOutput data) {
     try {
-      OBJECT_WRITER.writeValue(getJobOutputDataFile(data), data);
+      DATA_OUTPUT_OBJECT_WRITER.writeValue(getJobOutputDataFile(data.getJobId(), data.getType()), data);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

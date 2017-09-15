@@ -10,9 +10,11 @@ import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.api.model.ValidationErrorCode;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.collector.CollectorGroup;
@@ -41,6 +43,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
@@ -323,6 +326,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     log().info("Got {} worker response(s)", numberOfWorkersCompleted);
 
     if (numberOfWorkersCompleted == numOfWorkers) {
+      emitDataOutput(buildJobDataOutput());
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(), buildResult()));
     }
   }
@@ -358,6 +362,18 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
+   * Build a list of all {@link JobDataOutput} from {@link ValidationDataOutput}
+   * @return
+   */
+  private List<JobDataOutput> buildJobDataOutput() {
+    return validationResultElements.stream()
+            .map(ValidationResultElement::getDataOutput)
+            .flatMap(List::stream)
+            .map( vo -> new JobDataOutput(dataJob.getJobId(), vo))
+            .collect(Collectors.toList());
+  }
+
+  /**
    * Given 2 collections of {@link ValidationResultElement}, for each element of source merge the issues into
    * the mergeInto collection if it contains a {@link ValidationResultElement} with the same filename. Otherwise,
    * the {@link ValidationResultElement} is added to the mergeInto collection.
@@ -380,7 +396,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     );
   }
 
-
   /**
    * Emit the provided response to the parent Actor and stop this Actor.
    */
@@ -388,6 +403,14 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     context().parent().tell(response, self());
     cleanup();
     getContext().stop(self());
+  }
+
+  /**
+   *
+   * @param dataOutputList
+   */
+  private void emitDataOutput(List<JobDataOutput> dataOutputList) {
+    dataOutputList.forEach( dataOutput -> context().parent().tell(dataOutput, self()));
   }
 
   private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, String errorMessage) {

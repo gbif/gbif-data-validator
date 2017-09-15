@@ -2,7 +2,9 @@ package org.gbif.validation.ws.resources;
 
 import org.gbif.exception.UnsupportedMediaTypeException;
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.jobserver.JobServer;
 import org.gbif.validation.ws.conf.ValidationWsConfiguration;
@@ -42,6 +44,7 @@ public class ValidationResource {
 
   private static final Logger LOG = LoggerFactory.getLogger(ValidationResource.class);
   private static final String STATUS_PATH = "/status/";
+  private static final String OUTPUT_PATH = "/output/";
 
   private final UploadedFileManager fileTransferManager;
   private final JobServer<?> jobServer;
@@ -63,6 +66,13 @@ public class ValidationResource {
     } else {
       return Response.ok(jobResponse).build();
     }
+  }
+
+  private Response buildResponseFromDataOutput(JobDataOutput jdo) {
+    if (jdo == null) {
+      return Response.status(Response.Status.NOT_FOUND).build();
+    }
+    return Response.ok(jdo).build();
   }
 
   @Inject
@@ -112,6 +122,19 @@ public class ValidationResource {
   @Path(STATUS_PATH + "{jobid}")
   public Response status(@PathParam("jobid") String jobid) {
     return buildResponseFromStatus(jobServer.status(Long.valueOf(jobid)));
+  }
+
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path(OUTPUT_PATH + "{jobid}/{type}")
+  public Response outputData(@PathParam("jobid") String jobId, @PathParam("type") String type) {
+    Optional<ValidationDataOutput.Type> dataOutputType = ValidationDataOutput.Type.fromString(type);
+
+    if(dataOutputType.isPresent()) {
+      return buildResponseFromDataOutput(jobServer.getDataOutput(Long.valueOf(jobId),
+              dataOutputType.get()).orElse(null));
+    }
+    return Response.status(Response.Status.BAD_REQUEST).build();
   }
 
   @GET

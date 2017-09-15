@@ -1,26 +1,31 @@
 package org.gbif.validation.api.model;
 
+import org.gbif.validation.api.result.ValidationDataOutput;
+
+import java.util.Objects;
+
 /**
  * Structure to hold data output of a validation job.
  * Since the output data can be a lot of things we only keep it as Object.
  */
 public class JobDataOutput {
 
-  /**
-   * Enumerates the possible statuses of Job.
-   */
-  public enum Type {
-    DATASET_OBJECT;
-  }
-
   private long jobId;
-  private Type type;
+  private ValidationDataOutput.Type type;
   private Object content;
 
-  public JobDataOutput(long jobId, Type type, Object content) {
+  public JobDataOutput(long jobId, ValidationDataOutput.Type type, Object content) {
     this.jobId = jobId;
     this.type = type;
     this.content = content;
+  }
+
+  public JobDataOutput(long jobId, ValidationDataOutput validationDataOutput) {
+    Objects.requireNonNull(validationDataOutput, "validationDataOutput shall be provided");
+
+    this.jobId = jobId;
+    this.type = validationDataOutput.getType();
+    this.content = validationDataOutput.getContent();
   }
 
   /**
@@ -30,7 +35,7 @@ public class JobDataOutput {
     return jobId;
   }
 
-  public Type getType() {
+  public ValidationDataOutput.Type getType() {
     return type;
   }
 

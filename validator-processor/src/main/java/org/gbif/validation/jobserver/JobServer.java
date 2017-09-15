@@ -4,6 +4,7 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.jobserver.messages.DataJob;
 
 import java.io.IOException;
@@ -85,7 +86,7 @@ public class JobServer<T> {
     return getJobStatus(jobId);
   }
 
-  public Optional<JobDataOutput> getDataOutput(long jobId, JobDataOutput.Type type) {
+  public Optional<JobDataOutput> getDataOutput(long jobId, ValidationDataOutput.Type type) {
     Objects.requireNonNull(type, "JobDataOutput.Type shall be provided");
     Optional<JobDataOutput> outputData = Optional.empty();
     try {

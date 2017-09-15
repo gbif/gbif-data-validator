@@ -2,6 +2,7 @@ package org.gbif.validation.jobserver.impl;
 
 import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.jobserver.JobStorage;
 
 import java.io.IOException;
@@ -23,7 +24,7 @@ public class InMemoryJobStorage implements JobStorage {
   }
 
   @Override
-  public Optional<JobDataOutput> getDataOutput(long jobId, JobDataOutput.Type Type) throws IOException {
+  public Optional<JobDataOutput> getDataOutput(long jobId, ValidationDataOutput.Type Type) throws IOException {
     return null;
   }
 

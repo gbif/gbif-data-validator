@@ -1,5 +1,6 @@
 package org.gbif.validation.jobserver;
 
+import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.messages.DataJob;
 
@@ -28,9 +29,8 @@ public class JobMonitor extends AbstractLoggingActor {
                                                      String.valueOf(dataJob.getJobId())); //the jobId used as Actor's name
           jobMaster.tell(dataJob, self());
         }).
-        match(JobStatusResponse.class, dataJobResult -> {
-          jobStorage.put(dataJobResult);   //stores a job result
-        })
+        match(JobStatusResponse.class, jobStorage::put).
+        match(JobDataOutput.class, jobStorage::put)
         .matchAny(this::unhandled)
         .build()
     );

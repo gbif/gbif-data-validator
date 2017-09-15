@@ -1,5 +1,8 @@
 package org.gbif.validation.api.result;
 
+
+import java.util.Optional;
+
 /**
  *
  */
@@ -10,6 +13,15 @@ public class ValidationDataOutput {
    */
   public enum Type {
     DATASET_OBJECT;
+
+    public static Optional<Type> fromString(String str) {
+      for(Type t : values()) {
+        if(t.name().equalsIgnoreCase(str)){
+          return Optional.of(t);
+        }
+      }
+      return Optional.empty();
+    }
   }
 
   private Type type;
@@ -27,4 +39,5 @@ public class ValidationDataOutput {
   public Object getContent() {
     return content;
   }
+
 }
