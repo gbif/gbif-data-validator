@@ -5,6 +5,8 @@ import org.gbif.validation.api.model.ValidationErrorCode;
 import org.gbif.validation.api.model.ValidationProfile;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -17,6 +19,7 @@ public class ValidationResult implements Serializable {
 
   //private final Status status;
   private final Boolean indexeable;
+  private final long timestamp;
 
   private final String fileName;
   private final String receivedMediaType;
@@ -43,7 +46,8 @@ public class ValidationResult implements Serializable {
   public static ValidationResult onError(String fileName, @Nullable FileFormat fileFormat,
                                          @Nullable String receivedMediaType,
                                          ValidationErrorCode errorCode, @Nullable String errorMessage) {
-    return new ValidationResult(false, fileName, fileFormat, receivedMediaType, null, null, errorCode, errorMessage);
+    return new ValidationResult(false, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
+            fileName, fileFormat, receivedMediaType, null, null, errorCode, errorMessage);
   }
 
   /**
@@ -55,15 +59,16 @@ public class ValidationResult implements Serializable {
    * @param validationProfile
    * @param results
    */
-  public ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, String receivedMediaType,
+  public ValidationResult(Boolean indexeable, long timestamp, String fileName, FileFormat fileFormat, String receivedMediaType,
                           ValidationProfile validationProfile, List<ValidationResultElement> results) {
-    this(indexeable, fileName, fileFormat, receivedMediaType, validationProfile, results, null, null);
+    this(indexeable, timestamp, fileName, fileFormat, receivedMediaType, validationProfile, results, null, null);
   }
 
-  private ValidationResult(Boolean indexeable, String fileName, FileFormat fileFormat, String receivedMediaType,
+  private ValidationResult(Boolean indexeable, long timestamp, String fileName, FileFormat fileFormat, String receivedMediaType,
                            ValidationProfile validationProfile, List<ValidationResultElement> results,
                            ValidationErrorCode errorCode, String errorMessage) {
     this.indexeable = indexeable;
+    this.timestamp = timestamp;
     this.fileName = fileName;
     this.fileFormat = fileFormat;
     this.receivedMediaType = receivedMediaType;
@@ -103,5 +108,9 @@ public class ValidationResult implements Serializable {
 
   public String getReceivedMediaType() {
     return receivedMediaType;
+  }
+
+  public long getTimestamp() {
+    return timestamp;
   }
 }

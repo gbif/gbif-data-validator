@@ -29,6 +29,8 @@ import org.gbif.validation.source.DataFileFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -211,16 +213,17 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       //check if we have an issue that requires to stop the evaluation process
       if (evaluationChain.evaluationStopped()) {
         emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-                new ValidationResult(false, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                new ValidationResult(false, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
+                        dataFile.getSourceFileName(), dataFile.getFileFormat(),
                         dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElementList.get())));
         return StructuralEvaluationResult.createStopEvaluation();
       }
       mergeIssuesOnFilename(validationResultElementList.get(), validationResultElements);
 
       context().parent().tell(new JobStatusResponse<>(JobStatus.RUNNING, dataJob.getJobId(),
-              new ValidationResult(null, dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                      dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE,
-                      new ArrayList<>(validationResultElements))), self());
+              new ValidationResult(null, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
+                      dataFile.getSourceFileName(), dataFile.getFileFormat(), dataFile.getReceivedAsMediaType(),
+                      GBIF_INDEXING_PROFILE, new ArrayList<>(validationResultElements))), self());
     }
 
     return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
@@ -228,6 +231,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   /**
    * Triggers processing of all metadataEvaluator and rowTypeEvaluation from the chain.
+   *
    * @param evaluationChain
    */
   private void startAllActors(EvaluationChain evaluationChain) {
@@ -253,6 +257,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   /**
    * Creates the worker router using the calculated number of workers.
+   *
    */
   private ActorRef createWorkerRoutes(int poolSize, RowTypeKey rowTypeKey, RecordEvaluator recordEvaluator) {
     log().info("Created routes for " + rowTypeKey);
@@ -292,7 +297,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
               EvaluationType.UNREADABLE_SECTION_ERROR, ""));
     }
 
-    log().info("->" + result.getRowTypeKey());
     if(result.getRowTypeKey() == null) {
       log().error("RowTypeKey shall never be null: " +  result + ", " + result.getFileName()
       + ", " + result.getCollectors());
@@ -348,7 +352,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     //merge all ValidationResultElement into those collected by rowType
     mergeIssuesOnFilename(validationResultElements, resultElements);
 
-    return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
+    return new ValidationResult(true, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
+            dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
             dataJob.getJobData().getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, resultElements);
   }
 

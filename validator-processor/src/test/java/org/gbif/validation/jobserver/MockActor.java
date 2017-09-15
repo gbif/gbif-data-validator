@@ -6,6 +6,9 @@ import org.gbif.validation.api.model.ValidationProfile;
 import org.gbif.validation.api.result.ValidationResult;
 import org.gbif.validation.jobserver.messages.DataJob;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 import akka.actor.AbstractLoggingActor;
 
 import static akka.japi.pf.ReceiveBuilder.match;
@@ -24,7 +27,8 @@ public class MockActor extends AbstractLoggingActor {
         Thread.sleep(waitBeforeDie);
         JobStatusResponse<ValidationResult>
           result = new JobStatusResponse<>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
-                new ValidationResult(true, "mockFile", FileFormat.TABULAR, "", ValidationProfile.GBIF_INDEXING_PROFILE,
+                new ValidationResult(true, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
+                        "mockFile", FileFormat.TABULAR, "", ValidationProfile.GBIF_INDEXING_PROFILE,
                         null));
         sender().tell(result, self());
       }).matchAny(this::unhandled)

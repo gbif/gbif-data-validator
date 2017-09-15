@@ -1,5 +1,6 @@
 package org.gbif.validation.jobserver.impl;
 
+import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.JobStorage;
 
@@ -59,12 +60,16 @@ public class FileJobStorage implements JobStorage {
     return storePath.resolve(Long.toString(jobId) + ".json").toFile();
   }
 
+  private File getJobOutputDataFile(JobDataOutput data) {
+    return storePath.resolve(Long.toString(data.getJobId())).resolve(data.getType().name().toLowerCase() + ".json").toFile();
+  }
+
   /**
    * Tries to get the Json file of a JobId.
    * Return and Optional.empty() is the file is not found.
    */
   @Override
-  public Optional<JobStatusResponse<?>> get(long jobId) throws IOException {
+  public Optional<JobStatusResponse<?>> getStatus(long jobId) throws IOException {
     File jobFile = getJobResultFile(jobId);
     if (jobFile.exists()) {
       return Optional.ofNullable(OBJECT_READER.readValue(jobFile));
@@ -72,13 +77,30 @@ public class FileJobStorage implements JobStorage {
     return Optional.empty();
   }
 
+  @Override
+  public Optional<JobDataOutput> getDataOutput(long jobId, JobDataOutput.Type Type) throws IOException {
+    return null;
+  }
+
   /**
    * Stores the data as Json file in a 'storePath/jobId.json' file.
    */
   @Override
-  public void put(JobStatusResponse<?> data) {
+  public void put(JobStatusResponse<?> response) {
     try {
-      OBJECT_WRITER.writeValue(getJobResultFile(data.getJobId()), data);
+      OBJECT_WRITER.writeValue(getJobResultFile(response.getJobId()), response);
+    } catch (IOException ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  /**
+   * Stores the data as Json file in a 'storePath/jobId/dataOutputType.json' file.
+   */
+  @Override
+  public void put(JobDataOutput data) {
+    try {
+      OBJECT_WRITER.writeValue(getJobOutputDataFile(data), data);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
     }

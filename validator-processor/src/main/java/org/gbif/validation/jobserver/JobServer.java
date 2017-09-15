@@ -1,6 +1,7 @@
 package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.DataFile;
+import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
 import org.gbif.validation.jobserver.messages.DataJob;
@@ -8,6 +9,7 @@ import org.gbif.validation.jobserver.messages.DataJob;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
@@ -70,7 +72,7 @@ public class JobServer<T> {
     //the job storage is checked first
     Optional<JobStatusResponse<?>> result = Optional.empty();
     try {
-      result = jobStorage.get(jobId);
+      result = jobStorage.getStatus(jobId);
     } catch (IOException ioEx) {
       // log and continue as if it was not found
       LOG.warn("Exception while getting job from the jobStorage " + jobId, ioEx);
@@ -81,6 +83,18 @@ public class JobServer<T> {
     }
     //if the job data is not in the storage it might be still running
     return getJobStatus(jobId);
+  }
+
+  public Optional<JobDataOutput> getDataOutput(long jobId, JobDataOutput.Type type) {
+    Objects.requireNonNull(type, "JobDataOutput.Type shall be provided");
+    Optional<JobDataOutput> outputData = Optional.empty();
+    try {
+      outputData = jobStorage.getDataOutput(jobId, type);
+    } catch (IOException ioEx) {
+      // log and continue as if it was not found
+      LOG.warn("Exception while getting job output data from the jobStorage " + jobId, ioEx);
+    }
+    return outputData;
   }
 
   /**
