@@ -8,6 +8,7 @@ import org.gbif.ws.server.interceptor.NullToNotFound;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +20,9 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import com.google.common.collect.Maps;
 import com.google.inject.Singleton;
+import sun.security.x509.AVA;
 
 /**
  * A resource that provides a JSON serialization of validation related Enumerations.
@@ -28,19 +31,12 @@ import com.google.inject.Singleton;
 @Produces(MediaType.APPLICATION_JSON)
 @Singleton
 public class EnumerationResource {
-
-  private static final List<Class<? extends Enum<?>>> AVAILABLE_ENUMS = Collections.unmodifiableList(
-    Arrays.asList(EvaluationCategory.class, EvaluationType.class, ValidationErrorCode.class, FileFormat.class));
-
-  private static final Map<String, Enum<?>[]> PATH_MAPPING = initEnumerations();
-
-  /**
-   * Initialize enumeration elements based on Enumeration defined in AVAILABLE_ENUMS.
-   *
-   * @return
-   */
-  private static Map<String, Enum<?>[]> initEnumerations() {
-    return AVAILABLE_ENUMS.stream().collect(Collectors.toMap(Class::getSimpleName, Class::getEnumConstants));
+  private static final Map<String, Enum<?>[]> PATH_MAPPING = new HashMap<String, Enum<?>[]>();
+  static {
+    PATH_MAPPING.put(EvaluationCategory.class.getSimpleName(), EvaluationCategory.class.getEnumConstants());
+    PATH_MAPPING.put(EvaluationType.class.getSimpleName(), EvaluationType.class.getEnumConstants());
+    PATH_MAPPING.put(ValidationErrorCode.class.getSimpleName(), ValidationErrorCode.class.getEnumConstants());
+    PATH_MAPPING.put(FileFormat.class.getSimpleName(), FileFormat.class.getEnumConstants());
   }
 
   /**
