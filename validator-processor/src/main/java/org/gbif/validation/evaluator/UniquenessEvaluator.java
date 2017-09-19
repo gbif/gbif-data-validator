@@ -69,7 +69,7 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
     resultDetails.add(new RecordEvaluationResultDetails(EvaluationType.RECORD_NOT_UNIQUELY_IDENTIFIED,
             null, null));
 
-    return new RecordEvaluationResult(rowTypeKey.getRowType(), null,  nonUniqueId, resultDetails, null);
+    return new RecordEvaluationResult(rowTypeKey.getRowType(), null,  nonUniqueId, resultDetails, null, null);
   }
 
 }

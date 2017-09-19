@@ -74,7 +74,7 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
     resultDetails.add(new RecordEvaluationResultDetails(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION,
             null, null));
 
-    return new RecordEvaluationResult(rowType, null,  unlinkedId, resultDetails,null);
+    return new RecordEvaluationResult(rowType, null,  unlinkedId, resultDetails, null, null);
   }
 
 }

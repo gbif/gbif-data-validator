@@ -22,6 +22,7 @@ public class RecordEvaluationResult implements Serializable {
   private final String recordId;
 
   private final Map<Term, Object> interpretedData;
+  private final Map<Term, Object> verbatimData;
   private final List<RecordEvaluationResultDetails> details;
 
   /**
@@ -31,12 +32,14 @@ public class RecordEvaluationResult implements Serializable {
    * @param details
    * @param interpretedData
    */
-  public RecordEvaluationResult(Term rowType, Long lineNumber, String recordId, List<RecordEvaluationResultDetails> details, Map<Term, Object> interpretedData) {
+  public RecordEvaluationResult(Term rowType, Long lineNumber, String recordId, List<RecordEvaluationResultDetails> details, Map<Term, Object> interpretedData,
+                                Map<Term, Object> verbatimData) {
     this.lineNumber = lineNumber;
     this.recordId = recordId;
     this.rowType = rowType;
     this.details = details;
     this.interpretedData = interpretedData;
+    this.verbatimData = verbatimData;
   }
 
   public Long getLineNumber() {
@@ -56,18 +59,25 @@ public class RecordEvaluationResult implements Serializable {
   }
 
   /**
-   *
    * @return interpretedData or null
    */
   public Map<Term, Object> getInterpretedData() {
     return interpretedData;
   }
 
+  /**
+   * @return verbatimData or null
+   */
+  public Map<Term, Object> getVerbatimData() {
+    return verbatimData;
+  }
+
   @Override
   public String toString() {
     return "recordId: " + recordId + ", lineNumber: " + lineNumber +
             ", details: " + details +
-            ", interpretedData " + interpretedData;
+            ", interpretedData " + interpretedData +
+            ", verbatimData " + verbatimData;
   }
 
   /**
@@ -78,6 +88,7 @@ public class RecordEvaluationResult implements Serializable {
     private Long lineNumber;
     private String recordId;
     private Map<Term, Object> interpretedData;
+    private Map<Term, Object> verbatimData;
     private List<RecordEvaluationResultDetails> details;
 
     public static Builder of(Term rowType, Long lineNumber, String recordId){
@@ -131,11 +142,17 @@ public class RecordEvaluationResult implements Serializable {
               .fromExisting(rer1)
               .addDetails(rer2.getDetails())
               .putAllInterpretedData(rer2.getInterpretedData())
+              .putAllVerbatimData(rer2.getVerbatimData())
               .build();
     }
 
     public Builder withInterpretedData(Map<Term, Object> interpretedData) {
       this.interpretedData = interpretedData;
+      return this;
+    }
+
+    public Builder withVerbatimData(Map<Term, Object> verbatimData) {
+      this.verbatimData = verbatimData;
       return this;
     }
 
@@ -149,6 +166,9 @@ public class RecordEvaluationResult implements Serializable {
         details = new ArrayList<>(recordEvaluationResult.getDetails());
       }
       if(recordEvaluationResult.getInterpretedData() != null) {
+        interpretedData = new HashMap<>(recordEvaluationResult.getInterpretedData());
+      }
+      if(recordEvaluationResult.getVerbatimData() != null) {
         interpretedData = new HashMap<>(recordEvaluationResult.getInterpretedData());
       }
       return this;
@@ -189,6 +209,23 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
+    /**
+     * Internal operation to copy verbatimData.
+     *
+     * @param verbatimData
+     * @return
+     */
+    private Builder putAllVerbatimData(Map<Term, Object> verbatimData) {
+      if(verbatimData == null){
+        return this;
+      }
+      if(this.verbatimData == null){
+        this.verbatimData = new HashMap<>();
+      }
+      this.verbatimData.putAll(verbatimData);
+      return this;
+    }
+
     public Builder addInterpretationDetail(EvaluationType issueFlag, Map<Term, String> relatedData) {
       if(details == null){
         details = new ArrayList<>();
@@ -215,9 +252,7 @@ public class RecordEvaluationResult implements Serializable {
 
     public RecordEvaluationResult build(){
       return new RecordEvaluationResult(rowType, lineNumber, recordId,
-              details == null ? new ArrayList<>() : details, interpretedData);
+              details == null ? new ArrayList<>() : details, interpretedData, verbatimData);
     }
   }
-
-
 }
