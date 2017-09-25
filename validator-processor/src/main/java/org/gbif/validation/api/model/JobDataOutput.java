@@ -4,6 +4,9 @@ import org.gbif.validation.api.result.ValidationDataOutput;
 
 import java.util.Objects;
 
+import org.codehaus.jackson.annotate.JsonCreator;
+import org.codehaus.jackson.annotate.JsonProperty;
+
 /**
  * Structure to hold data output of a validation job.
  * Since the output data can be a lot of things we only keep it as Object.
@@ -13,8 +16,11 @@ public class JobDataOutput {
   private long jobId;
   private ValidationDataOutput.Type type;
   private Object content;
-
-  public JobDataOutput(long jobId, ValidationDataOutput.Type type, Object content) {
+  
+  @JsonCreator
+  public JobDataOutput(@JsonProperty("jobId") long jobId,
+                       @JsonProperty("type") ValidationDataOutput.Type type,
+                       @JsonProperty("content") Object content) {
     this.jobId = jobId;
     this.type = type;
     this.content = content;
