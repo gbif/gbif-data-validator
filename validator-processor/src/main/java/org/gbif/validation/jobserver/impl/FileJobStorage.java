@@ -77,7 +77,7 @@ public class FileJobStorage implements JobStorage {
    * @param type
    * @return
    */
-  private Path getJobOutputDataFile(long jobId, ValidationDataOutput.Type type) {
+  private Path getJobOutputDataPath(long jobId, ValidationDataOutput.Type type) {
     return storePath.resolve(Long.toString(jobId)).resolve(type.name().toLowerCase() + JSON_EXT);
   }
 
@@ -96,7 +96,7 @@ public class FileJobStorage implements JobStorage {
 
   @Override
   public Optional<JobDataOutput> getDataOutput(long jobId, ValidationDataOutput.Type type) throws IOException {
-    File jobFile = getJobOutputDataFile(jobId, type).toFile();
+    File jobFile = getJobOutputDataPath(jobId, type).toFile();
     if (jobFile.exists()) {
       return Optional.ofNullable(DATA_OUTPUT_OBJECT_READER.readValue(jobFile));
     }
@@ -120,9 +120,9 @@ public class FileJobStorage implements JobStorage {
    */
   @Override
   public void put(JobDataOutput data) {
-    Path outputDataFile = getJobOutputDataFile(data.getJobId(), data.getType());
+    Path outputDataFile = getJobOutputDataPath(data.getJobId(), data.getType());
     try {
-      Files.createDirectory(outputDataFile);
+      Files.createDirectory(outputDataFile.getParent());
       DATA_OUTPUT_OBJECT_WRITER.writeValue(outputDataFile.toFile(), data);
     } catch (IOException ex) {
       throw new RuntimeException(ex);
