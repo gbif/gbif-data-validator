@@ -260,7 +260,7 @@ public class EvaluationChain {
    *
    * @param runner
    */
-  public void runRowTypeEvaluation(RecordCollectionEvaluatorRunner runner) {
+  public void runRecordCollectionEvaluation(RecordCollectionEvaluatorRunner runner) {
     Objects.requireNonNull(runner, "RecordCollectionEvaluatorRunner shall be provided");
     rowTypeEvaluationUnits.forEach(unit -> runner.run(unit.getDataFile(),
             unit.getRowTypeKey(), unit.getRecordCollectionEvaluator()));
