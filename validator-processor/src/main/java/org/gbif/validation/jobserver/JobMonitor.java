@@ -4,6 +4,7 @@ import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.messages.DataJob;
 
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import akka.actor.AbstractLoggingActor;
@@ -21,7 +22,7 @@ public class JobMonitor extends AbstractLoggingActor {
   /**
    * Creates an MockActor instance that will wait 'waitBeforeDie' before die.
    */
-  public JobMonitor(Supplier<Props> propsSupplier, JobStorage jobStorage) {
+  public JobMonitor(Supplier<Props> propsSupplier, JobStorage jobStorage, Consumer<Long> completionCallback) {
     receive(
         match(DataJob.class, dataJob -> {
           //creates a actor that is responsible to handle a this jobData
@@ -34,6 +35,14 @@ public class JobMonitor extends AbstractLoggingActor {
         .matchAny(this::unhandled)
         .build()
     );
+  }
+
+  private static void handleJobStatusResponse(JobStatusResponse statusResponse, JobStorage jobStorage,
+                                              Consumer<Long> completionCallback) {
+    jobStorage.put(statusResponse);
+    if(statusResponse.getStatus().isFinal()){
+      completionCallback.accept(statusResponse.getJobId());
+    }
   }
 
 }

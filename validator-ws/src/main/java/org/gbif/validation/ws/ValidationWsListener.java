@@ -110,18 +110,19 @@ public class ValidationWsListener extends GbifServletListener {
     /**
      * Creates an instance of a JobServer using  the provided configuration.
      */
-    private static JobServer<ValidationResult> getJobServerInstance(ValidationWsConfiguration configuration) {
+    private static JobServer<ValidationResult> getJobServerInstance(ValidationWsConfiguration configuration,
+                                                                    UploadedFileManager uploadedFileManager) {
       return new JobServer<>(new FileJobStorage(Paths.get(configuration.getJobResultStorageDir())),
-                             buildActorPropsMapping(configuration));
+                             buildActorPropsMapping(configuration), uploadedFileManager::cleanByKey);
     }
 
     @Override
     protected void configureService() {
       //get configuration settings
       ValidationWsConfiguration configuration = getConfFromProperties(getProperties());
-
+      UploadedFileManager uploadedFileManager;
       try {
-        UploadedFileManager uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+        uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
         bind(UploadedFileManager.class).toInstance(uploadedFileManager);
       } catch (IOException e) {
         LOG.error("Can't instantiate uploadedFileManager", e);
@@ -136,7 +137,7 @@ public class ValidationWsListener extends GbifServletListener {
                                                                        HTTP_CLIENT_THREADS_PER_ROUTE));
 
       bind(HttpUtil.class).toInstance(httpUtil);
-      bind(JOB_SERVER_TYPE_LITERAL).toInstance(getJobServerInstance(configuration));
+      bind(JOB_SERVER_TYPE_LITERAL).toInstance(getJobServerInstance(configuration, uploadedFileManager));
       bind(ValidationWsConfiguration.class).toInstance(configuration);
 
       expose(JOB_SERVER_TYPE_LITERAL);

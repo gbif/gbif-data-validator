@@ -8,12 +8,11 @@ import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.jobserver.messages.DataJob;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -41,16 +40,17 @@ public class JobServer<T> {
   private final JobStorage jobStorage;
   private final ActorRef jobMonitor;
 
-  private final ConcurrentHashMap<Path, Long> preSubmittedJob = new ConcurrentHashMap<>();
-
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
+   * @param jobStorage
+   * @param propsSupplier
+   * @param completionCallback callback function to call on completion (doesn't imply success, only completion)
    */
-  public JobServer(JobStorage jobStorage, Supplier<Props> propsSupplier) {
+  public JobServer(JobStorage jobStorage, Supplier<Props> propsSupplier, Consumer<Long> completionCallback) {
     system = ActorSystem.create("JobServerSystem");
     jobIdSeed = new AtomicLong(new Date().getTime());
     this.jobStorage = jobStorage;
-    jobMonitor = system.actorOf(Props.create(JobMonitor.class, propsSupplier, jobStorage), "JobMonitor");
+    jobMonitor = system.actorOf(Props.create(JobMonitor.class, propsSupplier, jobStorage, completionCallback), "JobMonitor");
     LOG.info("New jobServer instance created");
   }
 

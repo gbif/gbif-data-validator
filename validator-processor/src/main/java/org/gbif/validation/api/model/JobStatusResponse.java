@@ -14,7 +14,23 @@ public class JobStatusResponse<T> {
    * Enumerates the possible statuses of Job.
    */
   public enum JobStatus {
-    ACCEPTED, RUNNING, FAILED, FINISHED, NOT_FOUND, KILLED;
+    ACCEPTED(false), RUNNING(false),
+    FAILED(true), FINISHED(true), NOT_FOUND(true), KILLED(true);
+
+    private boolean _final;
+
+    JobStatus(boolean _final) {
+      this._final = _final;
+    }
+
+    /**
+     * Indicates if the state is expected to change or is the result is final.
+     *
+     * @return
+     */
+    public boolean isFinal() {
+      return _final;
+    }
   }
 
   //Static object that represents an error processing a job
@@ -24,8 +40,10 @@ public class JobStatusResponse<T> {
 
   @JsonProperty
   private JobStatus status;
+
   @JsonProperty
   private long jobId;
+
   @JsonProperty
   private T result;
 

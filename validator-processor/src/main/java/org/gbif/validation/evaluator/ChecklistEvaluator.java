@@ -40,7 +40,7 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
  * Currently, no nub matching is done.
  * Not Thread-Safe.
  */
-public class ChecklistEvaluator implements RecordCollectionEvaluator {
+class ChecklistEvaluator implements RecordCollectionEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChecklistEvaluator.class);
   private static final Predicate<InterpretationRemark> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
