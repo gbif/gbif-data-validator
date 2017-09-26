@@ -11,7 +11,9 @@ import org.gbif.validation.api.model.RecordEvaluationResultDetails;
 import org.gbif.validation.api.result.ValidationResultDetails;
 import org.gbif.validation.api.result.ValidationResultElement;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -106,13 +108,18 @@ public class CollectorGroup {
             .collect(Collectors.toMap(Map.Entry::getKey,
                     e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
 
+    // transform the term frequency into an ordered list of key/value pairs
+    List<Map.Entry<Term, Integer>> termFrequency = Arrays.stream(dataFile.getColumns())
+            .map( t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.get(t).intValue()))
+            .collect(Collectors.toList());
+
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines().longValue(),
             dataFile.getDwcFileType(),
             dataFile.getRowTypeKey().getRowType(),
             dataFile.getRecordIdentifier().map(TermIndex::getTerm).orElse(null),
             mergedAggregatedCounts, resampledMergedSamples,
-            mergedTermFrequency,
+            termFrequency,
             mergedInterpretedTermsCount);
   }
 

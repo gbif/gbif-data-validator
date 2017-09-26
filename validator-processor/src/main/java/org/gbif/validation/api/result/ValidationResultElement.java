@@ -1,5 +1,6 @@
 package org.gbif.validation.api.result;
 
+import org.gbif.api.jackson.MapEntrySerde;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
@@ -12,6 +13,8 @@ import java.util.Map;
 
 import com.google.common.base.MoreObjects;
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 /**
  * A {@link ValidationResultElement} represents an element in the resource in validation.
@@ -33,7 +36,7 @@ public class ValidationResultElement implements Serializable {
   private final Term rowType;
   private final Term idTerm;
 
-  private final Map<Term, Long> termsFrequency;
+  private final List<Map.Entry<Term, Integer>> termsFrequency;
   private final Map<Term, Long> interpretedValueCounts;
   private final List<ValidationDataOutput> dataOutput;
 
@@ -90,13 +93,13 @@ public class ValidationResultElement implements Serializable {
    * @param rowType
    * @param issueCounter
    * @param issueSampling
-   * @param termsFrequency
+   * @param termsFrequency ordered list of key/value pairs
    * @param interpretedValueCounts
    */
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType, Term idTerm,
                                  Map<EvaluationType, Long> issueCounter,
                                  Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
-                                 Map<Term, Long> termsFrequency,
+                                 List<Map.Entry<Term, Integer>> termsFrequency,
                                  Map<Term, Long> interpretedValueCounts) {
     this(fileName, numberOfLines, fileType, rowType, idTerm, new ArrayList<>(), termsFrequency, interpretedValueCounts, null);
 
@@ -120,7 +123,7 @@ public class ValidationResultElement implements Serializable {
    */
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType, Term idTerm,
                                  List<ValidationIssue> issues,
-                                 Map<Term, Long> termsFrequency,
+                                 List<Map.Entry<Term, Integer>> termsFrequency,
                                  Map<Term, Long> interpretedValueCounts,
                                  List<ValidationDataOutput> dataOutput) {
     this.fileName = fileName;
@@ -155,7 +158,9 @@ public class ValidationResultElement implements Serializable {
     return issues;
   }
 
-  public Map<Term, Long> getTermsFrequency() {
+  @JsonSerialize(contentUsing = MapEntrySerde.MapEntryJsonSerializer.class)
+  @JsonDeserialize(contentUsing = MapEntrySerde.MapEntryJsonDeserializer.class)
+  public List<Map.Entry<Term, Integer>> getTermsFrequency() {
     return termsFrequency;
   }
 
