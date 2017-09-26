@@ -120,8 +120,8 @@ public class ValidationResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path(STATUS_PATH + "{jobid}")
-  public Response status(@PathParam("jobid") String jobid) {
-    return buildResponseFromStatus(jobServer.status(Long.valueOf(jobid)));
+  public Response status(@PathParam("jobid") String jobId) {
+    return buildResponseFromStatus(jobServer.status(Long.valueOf(jobId)));
   }
 
   @GET
@@ -140,8 +140,8 @@ public class ValidationResource {
   @GET
   @Produces(MediaType.APPLICATION_JSON)
   @Path(STATUS_PATH + "{jobid}/kill")
-  public Response kill(@PathParam("jobid") String jobid) {
-    return buildResponseFromStatus(jobServer.kill(Long.valueOf(jobid)));
+  public Response kill(@PathParam("jobid") String jobId) {
+    return buildResponseFromStatus(jobServer.kill(Long.valueOf(jobId)));
   }
 
 }

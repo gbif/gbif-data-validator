@@ -41,7 +41,7 @@ public class EvaluationChainTest {
               TestUtils.getEvaluatorFactory(), testFolder);
 
       evaluationChainBuilder.evaluateReferentialIntegrity();
-      evaluationChainBuilder.build().runRowTypeEvaluation((dataFile, rowType, recordCollectionEvaluator) -> {
+      evaluationChainBuilder.build().runRecordCollectionEvaluation((dataFile, rowType, recordCollectionEvaluator) -> {
         try {
           List<RecordEvaluationResult> results = new ArrayList<>();
           recordCollectionEvaluator.evaluate(dataFile, results::add);

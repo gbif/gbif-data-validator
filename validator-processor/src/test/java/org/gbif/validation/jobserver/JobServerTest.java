@@ -1,8 +1,8 @@
 package org.gbif.validation.jobserver;
 
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.model.JobStatusResponse;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.jobserver.impl.InMemoryJobStorage;
 
 import java.nio.file.Paths;
@@ -34,13 +34,15 @@ public class JobServerTest {
     }
   }
 
+  private static void silentCallback(Long jobId){}
+
 
   /**
    * Tests that a Job can be submitted.
    */
   @Test
   public void submitTestIT() {
-    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L), JobServerTest::silentCallback);
     JobStatusResponse<?> jobResponse = jobServer.submit(createNewDataFile());
     Assert.assertEquals(JobStatusResponse.JobStatus.ACCEPTED, jobResponse.getStatus());
     Assert.assertNotEquals(0L, jobResponse.getJobId());
@@ -51,7 +53,7 @@ public class JobServerTest {
    */
   @Test
   public void submitAndGetTestIT() {
-    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L), JobServerTest::silentCallback);
     JobStatusResponse<?> initialJobResponse = jobServer.submit(createNewDataFile());
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());
     Assert.assertEquals(JobStatusResponse.JobStatus.RUNNING, jobResponse.getStatus());
@@ -61,14 +63,14 @@ public class JobServerTest {
 
   @Test
   public void notFoundTestIT() {
-    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 0L), JobServerTest::silentCallback);
     JobStatusResponse<?> jobResponse = jobServer.status(100l);
     Assert.assertEquals(JobStatusResponse.JobStatus.NOT_FOUND, jobResponse.getStatus());
   }
 
   @Test
   public void killTestIT() throws InterruptedException {
-    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L));
+    jobServer = new JobServer<>(jobStorage, () -> Props.create(MockActor.class, 2000L), JobServerTest::silentCallback);
     JobStatusResponse<?> initialJobResponse = jobServer.submit(createNewDataFile());
     Thread.sleep(5); //sleep before getting the status of a running actor
     JobStatusResponse<?> jobResponse = jobServer.status(initialJobResponse.getJobId());

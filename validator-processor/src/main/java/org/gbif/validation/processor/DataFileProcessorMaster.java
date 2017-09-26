@@ -249,7 +249,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       ActorRef actor = createSingleActor(rowTypeKey, recordCollectionEvaluator);
       actor.tell(dwcDataFile, self());
     };
-    evaluationChain.runRowTypeEvaluation(runner);
+    evaluationChain.runRecordCollectionEvaluation(runner);
 
     RecordEvaluatorRunner recordEvaluatorRunner = (dataFiles, rowTypeKey, recordEvaluator) -> {
       ActorRef workerRouter = createWorkerRoutes(Math.min(dataFiles.size(), MAX_WORKER),

@@ -48,7 +48,7 @@ public class CollectorUtils {
   public static Map<Term, Long> getZeroTermFrequency(Stream<Term> terms, int size, boolean useConcurrentMap) {
     Map<Term, Long> termFrequencyCounter = useConcurrentMap ? new ConcurrentHashMap<>(size) :
             new LinkedHashMap<>(size);
-    terms.filter(t-> t != null).forEach(term -> termFrequencyCounter.put(term, 0l));
+    terms.filter(t-> t != null).forEach(term -> termFrequencyCounter.put(term, 0L));
     return termFrequencyCounter;
   }
 

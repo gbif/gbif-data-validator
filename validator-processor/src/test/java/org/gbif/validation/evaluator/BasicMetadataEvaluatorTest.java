@@ -4,9 +4,10 @@ import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.vocabulary.FileFormat;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
 
@@ -30,6 +31,7 @@ import static org.junit.Assert.assertTrue;
 public class BasicMetadataEvaluatorTest {
 
   private static final File DWC_ARCHIVE = FileUtils.getClasspathFile("dwca/dwca-eml-content-issue");
+  private static final File DWC_ARCHIVE_NO_ISSUE = FileUtils.getClasspathFile("dwca/dwca-occurrence");
 
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
@@ -59,5 +61,22 @@ public class BasicMetadataEvaluatorTest {
     assertTrue(issueTypes.contains(EvaluationType.TITLE_MISSING_OR_TOO_SHORT));
     assertTrue(issueTypes.contains(EvaluationType.DESCRIPTION_MISSING_OR_TOO_SHORT));
     assertTrue(issueTypes.contains(EvaluationType.RESOURCE_CONTACTS_MISSING_OR_INCOMPLETE));
+  }
+
+  /**
+   * BasicMetadataEvaluator
+   */
+  @Test
+  public void testBasicMetadataEvaluatorNoIssue() throws IOException, UnsupportedDataFileException {
+
+    BasicMetadataEvaluator basicMetadataEvaluator = new BasicMetadataEvaluator();
+    DataFile df = new DataFile(DWC_ARCHIVE_NO_ISSUE.toPath(), "dwca-occurrence", FileFormat.DWCA, "", "");
+    DwcDataFile dwcDf = DataFileFactory.prepareDataFile(df, folder.newFolder().toPath());
+
+    Optional<List<ValidationResultElement>> result = basicMetadataEvaluator.evaluate(dwcDf);
+    assertTrue(result.isPresent());
+
+    assertEquals(1, result.get().get(0).getDataOutput().size());
+    assertEquals(ValidationDataOutput.Type.DATASET_OBJECT, result.get().get(0).getDataOutput().get(0).getType());
   }
 }

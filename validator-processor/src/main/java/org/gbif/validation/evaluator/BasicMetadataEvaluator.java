@@ -49,8 +49,7 @@ class BasicMetadataEvaluator implements DwcDataFileEvaluator {
     List<ValidationDataOutput> dataOutput = new ArrayList<>();
 
     dwcDataFile.getMetadataFilePath().ifPresent(metadataFilePath -> {
-              try {
-                InputStream is = FileUtils.getInputStream(metadataFilePath.toFile());
+              try (InputStream is = FileUtils.getInputStream(metadataFilePath.toFile())) {
                 Dataset dataset = DatasetParser.build(is);
                 List<Function<Dataset, Optional<ValidationIssue>>> datasetEvalChain = Arrays.asList(
                         BasicMetadataEvaluator::evaluateTitle,
@@ -67,13 +66,14 @@ class BasicMetadataEvaluator implements DwcDataFileEvaluator {
             }
     );
 
-    if(!validationIssues.isEmpty()) {
+    if (dwcDataFile.getMetadataFilePath().isPresent()) {
       validationResultElements.add(ValidationResultElement.forMetadata(
-              dwcDataFile.getMetadataFilePath().map( p -> p.getFileName().toString()).orElse(""),
+              dwcDataFile.getMetadataFilePath().map(p -> p.getFileName().toString()).orElse(""),
               validationIssues, dataOutput));
+      return Optional.of(validationResultElements);
     }
 
-    return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);
+    return Optional.empty();
   }
 
 

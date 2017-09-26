@@ -63,7 +63,7 @@ import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
  * This class will unzip the file is required.
  *
  */
-public class UploadedFileManager implements Cleanable {
+public class UploadedFileManager implements Cleanable<Long> {
 
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
@@ -346,6 +346,17 @@ public class UploadedFileManager implements Cleanable {
    */
   private Path generateRandomFolderPath() {
     return workingDirectory.resolve(UUID.randomUUID().toString());
+  }
+
+  @Override
+  public void cleanByKey(Long key) {
+    Objects.requireNonNull(key, "key shall be provided");
+    Path targetPath = workingDirectory.resolve(key.toString());
+    try {
+      FileUtils.deleteDirectory(targetPath.toFile());
+    } catch (IOException ioEx) {
+      LOG.warn("Failed to clean directory " + targetPath, ioEx);
+    }
   }
 
   @Override
