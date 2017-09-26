@@ -8,9 +8,13 @@ import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.jobserver.messages.DataJob;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -21,6 +25,8 @@ import akka.actor.ActorSystem;
 import akka.actor.Kill;
 import akka.actor.Props;
 import com.google.common.base.Preconditions;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +46,19 @@ public class JobServer<T> {
   private final JobStorage jobStorage;
   private final ActorRef jobMonitor;
 
+  // only used to keep track of the dataFile key while the job is running
+  private final Cache<Long, UUID> jobIdToDataFileKey = CacheBuilder.newBuilder()
+          .maximumSize(1000)
+          .expireAfterAccess(1, TimeUnit.DAYS)
+          .build();
+
   /**
    * Creates a JobServer instance that will use the jobStore instance to store and retrieve job's data.
    * @param jobStorage
    * @param propsSupplier
    * @param completionCallback callback function to call on completion (doesn't imply success, only completion)
    */
-  public JobServer(JobStorage jobStorage, Supplier<Props> propsSupplier, Consumer<Long> completionCallback) {
+  public JobServer(JobStorage jobStorage, Supplier<Props> propsSupplier, Consumer<UUID> completionCallback) {
     system = ActorSystem.create("JobServerSystem");
     jobIdSeed = new AtomicLong(new Date().getTime());
     this.jobStorage = jobStorage;
@@ -60,10 +72,12 @@ public class JobServer<T> {
    */
   public JobStatusResponse<?> submit(DataFile dataFile) {
     long newJobId = jobIdSeed.getAndIncrement();
+    long startTimestamp = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli();
 
     LOG.info("Running actors:" + getJobServerChildren(system).stream().collect(Collectors.joining(",")));
-    jobMonitor.tell(new DataJob<>(newJobId, dataFile), jobMonitor);
-    return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId);
+    jobIdToDataFileKey.put(newJobId, dataFile.getKey());
+    jobMonitor.tell(new DataJob<>(newJobId, startTimestamp, dataFile), jobMonitor);
+    return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId, dataFile.getKey());
   }
 
   /**
@@ -104,14 +118,14 @@ public class JobServer<T> {
   public JobStatusResponse<?> kill(long jobId) {
     Optional<ActorRef> actorOpt = getRunningActor(jobId, system);
     if (actorOpt.isPresent()) {
-      JobStatusResponse<?> response = new JobStatusResponse(JobStatus.KILLED, jobId);
+      JobStatusResponse<?> response = new JobStatusResponse(JobStatus.KILLED, jobId, jobIdToDataFileKey.getIfPresent(jobId));
       ActorRef actorRef = actorOpt.get();
       actorRef.tell(Kill.getInstance(), jobMonitor);
       system.stop(actorRef);
       jobStorage.put(response);   //stores a job result
       return response;
     }
-    return new JobStatusResponse(JobStatus.NOT_FOUND, jobId);
+    return JobStatusResponse.onNotFound(jobId);
   }
 
   /**
@@ -139,11 +153,16 @@ public class JobServer<T> {
     try {
       //there's a running actor with that jobId name?
       return new JobStatusResponse(getRunningActor(jobId, system).isPresent() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
-                                   jobId);
+                                   jobId, jobIdToDataFileKey.getIfPresent(jobId));
     } catch (Exception ex) {
       LOG.error("Error  retrieving JobId {} data", jobId, ex);
     }
-    return JobStatusResponse.NOT_FOUND_RESPONSE;
+    return JobStatusResponse.onNotFound(jobId);
+  }
+
+  private static class JobContext {
+    long startTimstamp;
+    UUID datafileKey;
   }
 
 }
