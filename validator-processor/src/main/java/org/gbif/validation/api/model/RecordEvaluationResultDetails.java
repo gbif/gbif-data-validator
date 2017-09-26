@@ -4,6 +4,9 @@ import org.gbif.dwc.terms.Term;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * For each different type of evaluation result, this represents the "contract" of the details of the result.
@@ -59,6 +62,24 @@ public class RecordEvaluationResultDetails implements Serializable {
   @Override
   public String toString() {
     return "evaluationType: " + evaluationType;
+  }
+
+  /**
+   * Compute a key representing the input values that generated this {@link RecordEvaluationResultDetails}.
+   * Useful to get the different input values that generated the same EvaluationType results.
+   * @return String representing the input data, since all fields are optional the empty value is defined by "-";
+   */
+  public String computeInputValuesKey() {
+    StringBuilder st = new StringBuilder();
+    st.append(StringUtils.defaultString(found, ""))
+            .append("-")
+            .append(relatedData == null ? "" :
+                    relatedData.entrySet().stream()
+                            //sort by simpleName, we simply want a fix ordering
+                            .sorted((o1, o2) -> o1.getKey().simpleName().compareTo(o2.getKey().simpleName()))
+                            .map(me -> StringUtils.defaultString(me.getValue(), "null"))
+                            .collect(Collectors.joining("-")));
+    return st.toString();
   }
 
 }

@@ -19,8 +19,6 @@ import java.util.concurrent.atomic.LongAdder;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-
 /**
  * Basic implementation of a {@link ResultsCollector}.
  */
@@ -173,16 +171,15 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
 
   @Override
   public void collect(RecordEvaluationResult result) {
-    if (result !=null && result.getDetails() != null) {
+    if (result != null && result.getDetails() != null) {
       result.getDetails().forEach(detail -> {
         innerImpl.countAndPrepare(detail.getEvaluationType());
         innerImpl.computeSampling(detail.getEvaluationType(), (type, queue) -> {
           if (queue.size() < maxNumberOfSample) {
-            String key = computeRelatedDataKey(detail);
-            if(!queue.containsKey(key)) {
+            String key = detail.computeInputValuesKey();
+            if (!queue.containsKey(key)) {
               queue.put(key, toValidationResultDetails(result, detail));
-            }
-            else{
+            } else {
               innerImpl.putNonDistinct(detail.getEvaluationType(), toValidationResultDetails(result, detail));
             }
           }
@@ -192,32 +189,10 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
   }
 
-
   private static ValidationResultDetails toValidationResultDetails(RecordEvaluationResult result, RecordEvaluationResultDetails detail) {
     return new ValidationResultDetails(result.getLineNumber(),
             result.getRecordId(), detail.getExpected(), detail.getFound(), detail.getRelatedData());
   }
-
-  /**
-   * Given a {@link RecordEvaluationResultDetails}, compute a key representing the input values that generated
-   * the provided {@link RecordEvaluationResultDetails}.
-   * Useful to get the different input values that generated the same EvaluationType results.
-   * @param rerd
-   * @return String representing the input data, since all fields are optional the empty value is defined by "-";
-   */
-  private static String computeRelatedDataKey(RecordEvaluationResultDetails rerd) {
-    StringBuilder st = new StringBuilder();
-    st.append(StringUtils.defaultString(rerd.getFound(), ""))
-            .append("-")
-            .append(rerd.getRelatedData() == null ? "" :
-                    rerd.getRelatedData().entrySet().stream()
-                            //sort by simpleName, we simply want a fix ordering
-                            .sorted((o1, o2) -> o1.getKey().simpleName().compareTo(o2.getKey().simpleName()))
-                            .map(me -> StringUtils.defaultString(me.getValue(), "null"))
-                            .collect(Collectors.joining("-")));
-    return st.toString();
-  }
-
 
   public Map<EvaluationType, List<ValidationResultDetails>> getSamples() {
     Map<EvaluationType, List<ValidationResultDetails>> samplesCopy = innerImpl.getSamples();

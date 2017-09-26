@@ -158,18 +158,20 @@ public class RecordEvaluationResult implements Serializable {
 
     /**
      * Internal operation to copy the inner data structures from an existing {@link RecordEvaluationResult}
+     *
      * @param recordEvaluationResult
+     *
      * @return
      */
-    private Builder fromExisting(RecordEvaluationResult recordEvaluationResult){
-      if(recordEvaluationResult.getDetails() != null){
+    private Builder fromExisting(RecordEvaluationResult recordEvaluationResult) {
+      if (recordEvaluationResult.getDetails() != null) {
         details = new ArrayList<>(recordEvaluationResult.getDetails());
       }
-      if(recordEvaluationResult.getInterpretedData() != null) {
+      if (recordEvaluationResult.getInterpretedData() != null) {
         interpretedData = new HashMap<>(recordEvaluationResult.getInterpretedData());
       }
-      if(recordEvaluationResult.getVerbatimData() != null) {
-        interpretedData = new HashMap<>(recordEvaluationResult.getInterpretedData());
+      if (recordEvaluationResult.getVerbatimData() != null) {
+        verbatimData = new HashMap<>(recordEvaluationResult.getVerbatimData());
       }
       return this;
     }
