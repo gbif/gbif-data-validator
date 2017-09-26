@@ -17,9 +17,10 @@ Specifications of the GBIF Data Validator API response.
       "numberOfLines": 18,
       "fileType": "CORE",
       "rowType": "http://rs.tdwg.org/dwc/terms/Occurrence",
-      "termsFrequency": {
-        "dwc:occurrenceID": 11
-      },
+      "idTerm": "http://unknown.org/ARCHIVE_RECORD_ID",
+      "termsFrequency": [
+        {"dwc:occurrenceID": 11}, {"dwc:country": 9}
+      ],
       "interpretedValueCounts": {
         "gbif:taxonKey": 0
       },
@@ -42,7 +43,8 @@ Specifications of the GBIF Data Validator API response.
 - `"numberOfLines"` : Number of lines in the file
 - `"fileType"` : Type of file : CORE, EXTENSION or METADATA
 - `"rowType"` : rowType based on DarwinCore term
-- `"termsFrequency"` : Contains frequency of all terms in the provided resource
+- `"idTerm"` : Term identified as the "id" within the resource.
+- `"termsFrequency"` : Contains frequency of all terms in the provided resource as ordered list of key/value.
 - `"interpretedValueCounts"` : Contains counts of a preselected interpreted values
 - `"issues"` : List of all issues found in the provided resource
 
