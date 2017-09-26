@@ -1,6 +1,7 @@
 package org.gbif.validation.source;
 
 import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.TestUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.vocabulary.FileFormat;
@@ -9,6 +10,7 @@ import org.gbif.ws.util.ExtraMediaTypes;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Rule;
@@ -37,9 +39,7 @@ public class DataFileFactoryTest {
 
   @Test
   public void testPrepareDataFile() throws IOException, UnsupportedDataFileException {
-
-    File testFile = FileUtils.getClasspathFile(TEST_DWC_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-taxon", FileFormat.DWCA, "", "");
+    DataFile dataFile = TestUtils.getDwcaDataFile(TEST_DWC_FILE_LOCATION, "dwca-taxon");
 
     DwcDataFile preparedDwcDataFile = prepareDataFile(dataFile, folder.newFolder().toPath());
     //the test Dwc folder contains 1 core + 2 extensions
@@ -56,15 +56,14 @@ public class DataFileFactoryTest {
    */
   @Test (expected = FileNotFoundException.class)
   public void testPrepareDataFileBrokenMeta() throws IOException, UnsupportedDataFileException {
-    File testFile = FileUtils.getClasspathFile(TEST_BROKEN_META_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "dwca-broken-meta", FileFormat.DWCA, "", "");
+    DataFile dataFile = TestUtils.getDwcaDataFile(TEST_BROKEN_META_FILE_LOCATION, "dwca-broken-meta");
     DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
   }
 
   @Test
   public void testXLSXFile() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_OCC_XLSX_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "my-xlsx-file.xlsx", FileFormat.SPREADSHEET,
+    DataFile dataFile = new DataFile(UUID.randomUUID(), testFile.toPath(), "my-xlsx-file.xlsx", FileFormat.SPREADSHEET,
             ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET, ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET);
     DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
     //ensure we got a tabularDataFile
@@ -96,7 +95,7 @@ public class DataFileFactoryTest {
   @Test( expected = UnsupportedDataFileException.class)
   public void testEmptySpreadsheet() throws IOException, UnsupportedDataFileException {
     File testFile = FileUtils.getClasspathFile(TEST_EMPTY_XLSX_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "empty-xlsx", FileFormat.SPREADSHEET,
+    DataFile dataFile = new DataFile(UUID.randomUUID(), testFile.toPath(), "empty-xlsx", FileFormat.SPREADSHEET,
             ExtraMediaTypes.APPLICATION_EXCEL, ExtraMediaTypes.APPLICATION_EXCEL);
     prepareDataFile(dataFile, folder.newFolder().toPath());
   }

@@ -4,6 +4,7 @@ import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.jobserver.messages.DataJob;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -22,7 +23,7 @@ public class JobMonitor extends AbstractLoggingActor {
   /**
    * Creates an MockActor instance that will wait 'waitBeforeDie' before die.
    */
-  public JobMonitor(final Supplier<Props> propsSupplier, final JobStorage jobStorage, final Consumer<Long> completionCallback) {
+  public JobMonitor(final Supplier<Props> propsSupplier, final JobStorage jobStorage, final Consumer<UUID> completionCallback) {
     receive(
             match(DataJob.class, dataJob -> {
               //creates a actor that is responsible to handle a this jobData
@@ -38,10 +39,10 @@ public class JobMonitor extends AbstractLoggingActor {
   }
 
   private static void handleJobStatusResponse(JobStatusResponse statusResponse, JobStorage jobStorage,
-                                              Consumer<Long> completionCallback) {
+                                              Consumer<UUID> completionCallback) {
     jobStorage.put(statusResponse);
     if (statusResponse.getStatus().isFinal()) {
-      completionCallback.accept(statusResponse.getJobId());
+      completionCallback.accept(statusResponse.getDataFileKey());
     }
   }
 

@@ -8,14 +8,16 @@ package org.gbif.validation.jobserver.messages;
 public class DataJob<T> {
 
   private final long jobId;
+  private final long startTimeStamp;
 
   private final T jobData;
 
   /**
    * Full constructor.
    */
-  public DataJob(long jobId, T jobData) {
+  public DataJob(long jobId, long startTimeStamp, T jobData) {
     this.jobId = jobId;
+    this.startTimeStamp = startTimeStamp;
     this.jobData = jobData;
   }
 
@@ -24,6 +26,14 @@ public class DataJob<T> {
    */
   public long getJobId() {
     return jobId;
+  }
+
+  /**
+   * Timestamp of when this job was started (accepted)
+   * @return
+   */
+  public long getStartTimeStamp() {
+    return startTimeStamp;
   }
 
   /**

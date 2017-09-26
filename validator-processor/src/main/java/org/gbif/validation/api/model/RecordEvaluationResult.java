@@ -32,7 +32,8 @@ public class RecordEvaluationResult implements Serializable {
    * @param details
    * @param interpretedData
    */
-  public RecordEvaluationResult(Term rowType, Long lineNumber, String recordId, List<RecordEvaluationResultDetails> details, Map<Term, Object> interpretedData,
+  public RecordEvaluationResult(Term rowType, Long lineNumber, String recordId,
+                                List<RecordEvaluationResultDetails> details, Map<Term, Object> interpretedData,
                                 Map<Term, Object> verbatimData) {
     this.lineNumber = lineNumber;
     this.recordId = recordId;

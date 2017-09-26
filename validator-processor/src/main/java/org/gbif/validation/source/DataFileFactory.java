@@ -75,6 +75,7 @@ public class DataFileFactory {
 
   /**
    * Creates a new {@link DataFile} with the minimum information required.
+   * A random key will be assigned to the {@link DataFile} returned.
    *
    * @param filePath
    * @param sourceFileName
@@ -85,7 +86,22 @@ public class DataFileFactory {
    */
   public static DataFile newDataFile(Path filePath, String sourceFileName, FileFormat fileFormat,
                                      String receivedAsMediaType, String mediaType) {
-    return new DataFile(filePath, sourceFileName, fileFormat, receivedAsMediaType, mediaType);
+    return newDataFile(UUID.randomUUID(), filePath, sourceFileName, fileFormat, receivedAsMediaType, mediaType);
+  }
+
+  /**
+   * Creates a new {@link DataFile} with a specific key.
+   * @param key
+   * @param filePath
+   * @param sourceFileName
+   * @param fileFormat
+   * @param receivedAsMediaType
+   * @param mediaType
+   * @return
+   */
+  public static DataFile newDataFile(UUID key, Path filePath, String sourceFileName, FileFormat fileFormat,
+                                     String receivedAsMediaType, String mediaType) {
+    return new DataFile(key, filePath, sourceFileName, fileFormat, receivedAsMediaType, mediaType);
   }
 
   /**
@@ -231,7 +247,6 @@ public class DataFileFactory {
                     archiveFile.getId().getTerm() == null ? ArchiveFile.DEFAULT_ID_TERM : archiveFile.getId().getTerm());
 
     //if TermIndex is null we need to report an error
-
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             sourceFileName, RowTypeKey.get(archiveFile.getRowType(), type),
             headers, recordIdentifier, defaultValues,

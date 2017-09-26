@@ -31,8 +31,6 @@ import org.gbif.validation.source.DataFileFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -216,18 +214,13 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     if (validationResultElementList.isPresent()) {
       //check if we have an issue that requires to stop the evaluation process
       if (evaluationChain.evaluationStopped()) {
-        emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-                new ValidationResult(false, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
-                        dataFile.getSourceFileName(), dataFile.getFileFormat(),
-                        dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElementList.get())));
+        emitResponseAndStop(buildJobStatusResponse(false, JobStatus.FINISHED, dataFile, validationResultElementList.get()));
         return StructuralEvaluationResult.createStopEvaluation();
       }
       mergeIssuesOnFilename(validationResultElementList.get(), validationResultElements);
 
-      context().parent().tell(new JobStatusResponse<>(JobStatus.RUNNING, dataJob.getJobId(),
-              new ValidationResult(null, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
-                      dataFile.getSourceFileName(), dataFile.getFileFormat(), dataFile.getReceivedAsMediaType(),
-                      GBIF_INDEXING_PROFILE, new ArrayList<>(validationResultElements))), self());
+      context().parent()
+              .tell(buildJobStatusResponse(null, JobStatus.RUNNING, dataFile, new ArrayList<>(validationResultElements)), self());
     }
 
     return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
@@ -328,7 +321,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
     if (numberOfWorkersCompleted == numOfWorkers) {
       emitDataOutput(buildJobDataOutput());
-      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(), buildResult()));
+      emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
+              dataJob.getJobData().getKey(), buildResult()));
     }
   }
 
@@ -357,9 +351,15 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     //merge all ValidationResultElement into those collected by rowType
     mergeIssuesOnFilename(validationResultElements, resultElements);
 
-    return new ValidationResult(true, LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli(),
-            dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
+    return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
             dataJob.getJobData().getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, resultElements);
+  }
+
+  private JobStatusResponse<?> buildJobStatusResponse(Boolean indexable, JobStatus status, DataFile dataFile,
+                                                      List<ValidationResultElement> validationResultElement) {
+    return new JobStatusResponse<>(status, dataJob.getJobId(), dataFile.getKey(),
+            new ValidationResult(indexable, dataFile.getSourceFileName(), dataFile.getFileFormat(),
+                    dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElement));
   }
 
   /**
@@ -416,7 +416,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, String errorMessage) {
-    JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED, dataJob.getJobId(),
+    JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED,
+            dataJob.getJobId(), dataFile.getKey(),
             ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(),
                     dataFile.getReceivedAsMediaType(), errorCode, errorMessage));
     context().parent().tell(response, self());

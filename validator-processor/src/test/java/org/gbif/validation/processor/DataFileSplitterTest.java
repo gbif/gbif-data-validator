@@ -1,6 +1,6 @@
 package org.gbif.validation.processor;
 
-import org.gbif.utils.file.FileUtils;
+import org.gbif.validation.TestUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.TabularDataFile;
@@ -8,7 +8,6 @@ import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
@@ -30,11 +29,11 @@ public class DataFileSplitterTest {
   private static final int SPLIT_SIZE = 2;
   private static final int EXPECTED_NUMBER_OF_SPLIT = 3;
   private static final int EXPECTED_NUMBER_OF_LINES = 5;
-  private File testFile = FileUtils.getClasspathFile("splitter/original_file.csv");
+  private static final String TEST_FILE_LOCATION = "splitter/original_file.csv";
 
   @Test
   public void testFileSplit() throws IOException, UnsupportedDataFileException {
-    DataFile dataFile = new DataFile(testFile.toPath(), "original_file.csv", FileFormat.TABULAR, "", "");
+    DataFile dataFile = TestUtils.getDataFile(TEST_FILE_LOCATION, "original_file.csv", FileFormat.TABULAR);
     DwcDataFile dwcDataFile = DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
     try {

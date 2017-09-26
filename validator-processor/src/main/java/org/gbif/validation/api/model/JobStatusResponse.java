@@ -1,5 +1,7 @@
 package org.gbif.validation.api.model;
 
+import java.util.UUID;
+
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -34,15 +36,20 @@ public class JobStatusResponse<T> {
   }
 
   //Static object that represents an error processing a job
-  public static final JobStatusResponse<?> FAILED_RESPONSE = new JobStatusResponse(JobStatus.FAILED, -1L);
-  //Static object to be used when a requested job id is not found in the job storage
-  public static final JobStatusResponse<?> NOT_FOUND_RESPONSE = new JobStatusResponse(JobStatus.NOT_FOUND, -1L);
+  public static final JobStatusResponse<?> FAILED_RESPONSE = new JobStatusResponse(JobStatus.FAILED, -1L, null);
+
+//  @JsonProperty
+//  private Long startTimestamp;
+  //private final long endTimestamp;
 
   @JsonProperty
   private JobStatus status;
 
   @JsonProperty
   private long jobId;
+
+  @JsonProperty
+  private UUID dataFileKey;
 
   @JsonProperty
   private T result;
@@ -57,18 +64,27 @@ public class JobStatusResponse<T> {
   /**
    * Full constructor.
    */
-  public JobStatusResponse(JobStatus status, long jobId, T result) {
+  public JobStatusResponse(JobStatus status, long jobId, UUID dataFileKey, T result) {
     this.status = status;
     this.jobId = jobId;
+    this.dataFileKey = dataFileKey;
     this.result = result;
   }
 
   /**
    * Constructor to build partial responses, i.e.: without results.
    */
-  public JobStatusResponse(JobStatus status, long jobId) {
-    this.status = status;
-    this.jobId = jobId;
+  public JobStatusResponse(JobStatus status, long jobId, UUID dataFileKey) {
+    this(status, jobId, dataFileKey, null);
+  }
+
+  /**
+   * Create a {@link JobStatusResponse} representing a jobId not found.
+   * @param jobIdNotFound
+   * @return
+   */
+  public static JobStatusResponse onNotFound(long jobIdNotFound) {
+    return new JobStatusResponse(JobStatus.NOT_FOUND, jobIdNotFound, null);
   }
 
   /**
@@ -83,6 +99,11 @@ public class JobStatusResponse<T> {
    */
   public long getJobId() {
     return jobId;
+  }
+
+
+  public UUID getDataFileKey() {
+    return dataFileKey;
   }
 
   /**

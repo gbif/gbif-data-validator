@@ -63,7 +63,7 @@ import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
  * This class will unzip the file is required.
  *
  */
-public class UploadedFileManager implements Cleanable<Long> {
+public class UploadedFileManager implements Cleanable<UUID> {
 
   private static final Logger LOG = LoggerFactory.getLogger(UploadedFileManager.class);
 
@@ -255,7 +255,8 @@ public class UploadedFileManager implements Cleanable<Long> {
     // "mark" needs to be supported in order to detect the media type by reading the first byte(s).
     InputStream inputStreamWithMarkSupport = inputStream.markSupported() ? inputStream : new BufferedInputStream(inputStream);
 
-    final Path destinationFolder = Files.createDirectory(generateRandomFolderPath());
+    UUID key = UUID.randomUUID();
+    final Path destinationFolder = Files.createDirectory(getDestinationPath(key));
     final String detectedMediaType = detectMediaType(inputStreamWithMarkSupport);
 
     Path dataFilePath;
@@ -278,16 +279,12 @@ public class UploadedFileManager implements Cleanable<Long> {
       Optional<MediaTypeAndFormatDetector.MediaTypeAndFormat> mediaTypeAndFormat =
               MediaTypeAndFormatDetector.evaluateMediaTypeAndFormat(dataFilePath, detectedMediaType);
 
-      LOG.info("mediaTypeAndFormat:" + mediaTypeAndFormat.get().getMediaType());
-      LOG.info("mediaTypeAndFormat:" + mediaTypeAndFormat.get().getFileFormat());
-      LOG.info("dataFilePath:" + dataFilePath);
-
       if (!mediaTypeAndFormat.isPresent()) {
         throw new UnsupportedMediaTypeException("Unsupported file type: " + detectedMediaType);
       }
 
       return mediaTypeAndFormat
-              .map(mtf -> DataFileFactory.newDataFile(dataFilePath, filename, mtf.getFileFormat(),
+              .map(mtf -> DataFileFactory.newDataFile(key, dataFilePath, filename, mtf.getFileFormat(),
                       detectedMediaType, mtf.getMediaType()));
     } catch (IOException ioEx) {
       LOG.warn("Deleting temporary content of {} after IOException.", filename);
@@ -344,14 +341,15 @@ public class UploadedFileManager implements Cleanable<Long> {
   /**
    * Creates a new random path to be used when copying files.
    */
-  private Path generateRandomFolderPath() {
-    return workingDirectory.resolve(UUID.randomUUID().toString());
+  private Path getDestinationPath(UUID key) {
+    return workingDirectory.resolve(key.toString());
   }
 
   @Override
-  public void cleanByKey(Long key) {
+  public void cleanByKey(UUID key) {
     Objects.requireNonNull(key, "key shall be provided");
     Path targetPath = workingDirectory.resolve(key.toString());
+    LOG.info("Trying to delete " + targetPath);
     try {
       FileUtils.deleteDirectory(targetPath.toFile());
     } catch (IOException ioEx) {

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -83,7 +84,7 @@ public class TestUtils {
    */
   public static DataFile getDwcaDataFile(String resourcePath, String sourceFileName) {
     File dwcaFolder = FileUtils.getClasspathFile(resourcePath);
-    return new DataFile(dwcaFolder.toPath(), sourceFileName, FileFormat.DWCA, "", "");
+    return new DataFile(UUID.randomUUID(), dwcaFolder.toPath(), sourceFileName, FileFormat.DWCA, "", "");
   }
 
   /**
@@ -94,7 +95,7 @@ public class TestUtils {
    */
   public static DataFile getDataFile(String resourcePath, String sourceFileName, FileFormat fileFormat) {
     File dwcaFolder = FileUtils.getClasspathFile(resourcePath);
-    return new DataFile(dwcaFolder.toPath(), sourceFileName, fileFormat, "", "");
+    return new DataFile(UUID.randomUUID(), dwcaFolder.toPath(), sourceFileName, fileFormat, "", "");
   }
 
   /**

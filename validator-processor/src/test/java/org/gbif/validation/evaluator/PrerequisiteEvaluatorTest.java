@@ -1,14 +1,12 @@
 package org.gbif.validation.evaluator;
 
-import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.source.UnsupportedDataFileException;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -41,8 +39,9 @@ public class PrerequisiteEvaluatorTest {
    */
   @Test
   public void testCSVWithoutRecordId() throws IOException, UnsupportedDataFileException {
-    File testFile = FileUtils.getClasspathFile(TEST_NO_ID_CSV_FILE_LOCATION);
-    DataFile dataFile = new DataFile(testFile.toPath(), "no-id", FileFormat.TABULAR, "", "");
+    DataFile dataFile = org.gbif.validation.TestUtils.getDataFile(TEST_NO_ID_CSV_FILE_LOCATION, "no-id",
+            FileFormat.TABULAR);
+
     DwcDataFile dwcFile = prepareDataFile(dataFile, folder.newFolder().toPath());
     Optional<List<ValidationResultElement>> result = prerequisiteEvaluator.evaluate(dwcFile);
 

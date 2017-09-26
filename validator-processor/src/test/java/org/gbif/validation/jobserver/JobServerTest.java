@@ -6,6 +6,7 @@ import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.jobserver.impl.InMemoryJobStorage;
 
 import java.nio.file.Paths;
+import java.util.UUID;
 
 import akka.actor.Props;
 import org.junit.After;
@@ -34,7 +35,7 @@ public class JobServerTest {
     }
   }
 
-  private static void silentCallback(Long jobId){}
+  private static void silentCallback(UUID key){}
 
 
   /**
@@ -82,7 +83,7 @@ public class JobServerTest {
   }
 
   private static DataFile createNewDataFile(){
-    return new DataFile(Paths.get(""), "", FileFormat.TABULAR, "", "");
+    return new DataFile(UUID.randomUUID(), Paths.get(""), "", FileFormat.TABULAR, "", "");
   }
 
 }
