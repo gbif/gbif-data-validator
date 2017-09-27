@@ -1,5 +1,6 @@
 package org.gbif.validation.api.result;
 
+import org.gbif.validation.api.TermWithinRowType;
 import org.gbif.validation.api.model.EvaluationCategory;
 import org.gbif.validation.api.model.EvaluationType;
 
@@ -53,7 +54,7 @@ public class ValidationIssues {
    * @param relatedData data related to the issue triggered at the rowType scope
    * @return
    */
-  public static ValidationIssue withRelatedData(EvaluationType evaluationType, String relatedData){
+  public static ValidationIssue withRelatedData(EvaluationType evaluationType, TermWithinRowType relatedData){
     Preconditions.checkState(RESOURCE_STRUCTURE == evaluationType.getCategory() || METADATA_CONTENT == evaluationType.getCategory(),
             "withRelatedData can only be used with EvaluationCategory %s, %s", RESOURCE_STRUCTURE, METADATA_CONTENT);
     return new ValidationIssueWithRelatedData(evaluationType, relatedData);
@@ -136,14 +137,14 @@ public class ValidationIssues {
   }
 
   private static class ValidationIssueWithRelatedData extends ValidationIssueBase {
-    private final String relatedData;
+    private final TermWithinRowType relatedData;
 
-    ValidationIssueWithRelatedData(EvaluationType issue, String relatedData) {
+    ValidationIssueWithRelatedData(EvaluationType issue, TermWithinRowType relatedData) {
       super(issue);
       this.relatedData = relatedData;
     }
 
-    public String getRelatedData() {
+    public TermWithinRowType getRelatedData() {
       return relatedData;
     }
 

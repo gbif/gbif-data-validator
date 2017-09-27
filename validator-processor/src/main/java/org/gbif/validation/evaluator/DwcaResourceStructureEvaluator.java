@@ -8,6 +8,7 @@ import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
+import org.gbif.validation.api.TermWithinRowType;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationIssues;
@@ -90,19 +91,19 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
       ext.getProperties().stream()
               .filter(ep -> ep.isRequired() && !archiveFile.hasTerm(ep.getQualname()))
               .forEach(ep -> validationIssues.add(ValidationIssues.withRelatedData(
-                      EvaluationType.REQUIRED_TERM_MISSING, ep.getQualname())));
+                      EvaluationType.REQUIRED_TERM_MISSING, TermWithinRowType.of(ext.getRowType(), ep))));
 
       //check for possible unknown terms inside a known Extension
       archiveFile.getFields().keySet().stream()
               .filter(t -> !ext.hasProperty(t))
               .forEach(t -> validationIssues.add(ValidationIssues.withRelatedData(
-                      EvaluationType.UNKNOWN_TERM, t.qualifiedName())));
+                      EvaluationType.UNKNOWN_TERM, TermWithinRowType.of(ext.getRowType(), t))));
     } else {
       validationIssues.add(ValidationIssues.withRelatedData(
-              EvaluationType.UNKNOWN_ROWTYPE, archiveFile.getRowType().toString()));
+              EvaluationType.UNKNOWN_ROWTYPE, TermWithinRowType.ofRowType(archiveFile.getRowType())));
     }
     return validationIssues.isEmpty() ? Optional.empty() :
-            Optional.of(ValidationResultElement.forMetaDescriptor(Archive.META_FN, archiveFile.getRowType(), validationIssues));
+            Optional.of(ValidationResultElement.forMetaDescriptor(Archive.META_FN, validationIssues));
   }
 
   private Validator getMetaXMLValidator() {
