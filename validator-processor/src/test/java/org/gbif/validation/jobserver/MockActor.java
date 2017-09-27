@@ -26,7 +26,7 @@ public class MockActor extends AbstractLoggingActor {
         Thread.sleep(waitBeforeDie);
         JobStatusResponse<ValidationResult>
           result = new JobStatusResponse<>(JobStatusResponse.JobStatus.FINISHED, dataJob.getJobId(),
-                UUID.randomUUID(),
+                dataJob.getStartTimeStamp(), UUID.randomUUID(),
                 new ValidationResult(true, "mockFile", FileFormat.TABULAR, "", ValidationProfile.GBIF_INDEXING_PROFILE,
                         null));
         sender().tell(result, self());

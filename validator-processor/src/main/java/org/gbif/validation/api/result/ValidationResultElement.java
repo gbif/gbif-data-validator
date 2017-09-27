@@ -160,7 +160,7 @@ public class ValidationResultElement implements Serializable {
 
   @JsonSerialize(contentUsing = MapEntrySerde.MapEntryJsonSerializer.class)
   @JsonDeserialize(contentUsing = MapEntrySerde.MapEntryJsonDeserializer.class)
-  public List<Map.Entry<Term, Integer>> getTermFrequency() {
+  public List<Map.Entry<Term, Integer>> getTermsFrequency() {
     return termsFrequency;
   }
 

@@ -36,10 +36,10 @@ public class JobStatusResponse<T> {
   }
 
   //Static object that represents an error processing a job
-  public static final JobStatusResponse<?> FAILED_RESPONSE = new JobStatusResponse(JobStatus.FAILED, -1L, null);
+  public static final JobStatusResponse<?> FAILED_RESPONSE = new JobStatusResponse(JobStatus.FAILED, -1L, null, null);
 
-//  @JsonProperty
-//  private Long startTimestamp;
+  @JsonProperty
+  private Long startTimestamp;
   //private final long endTimestamp;
 
   @JsonProperty
@@ -54,6 +54,39 @@ public class JobStatusResponse<T> {
   @JsonProperty
   private T result;
 
+
+  /**
+   * Create a {@link JobStatusResponse} representing a jobId not found.
+   * @param jobIdNotFound
+   * @return
+   */
+  public static JobStatusResponse ofNotFound(long jobIdNotFound) {
+    return new JobStatusResponse(JobStatus.NOT_FOUND, jobIdNotFound, null, null);
+  }
+
+  public static JobStatusResponse ofAccepted(long jobId, long startTimestamp, UUID dataFileKey) {
+    return new JobStatusResponse(JobStatus.ACCEPTED, jobId, startTimestamp, dataFileKey);
+  }
+
+  /**
+   * Create a {@link JobStatusResponse} representing a running job.
+   * @param jobId
+   * @return
+   */
+  public static JobStatusResponse ofRunning(long jobId, long startTimestamp, UUID dataFileKey) {
+    return new JobStatusResponse(JobStatus.RUNNING, jobId, startTimestamp, dataFileKey);
+  }
+
+  /**
+   * Create a {@link JobStatusResponse} representing a killed job.
+   * @param jobId
+   * @param dataFileKey
+   * @return
+   */
+  public static JobStatusResponse ofKilled(long jobId, long startTimestamp, UUID dataFileKey) {
+    return new JobStatusResponse(JobStatus.KILLED, jobId, startTimestamp, dataFileKey);
+  }
+
   /**
    * Empty constructor required for serialization.
    */
@@ -64,9 +97,10 @@ public class JobStatusResponse<T> {
   /**
    * Full constructor.
    */
-  public JobStatusResponse(JobStatus status, long jobId, UUID dataFileKey, T result) {
+  public JobStatusResponse(JobStatus status, long jobId, Long startTimestamp, UUID dataFileKey, T result) {
     this.status = status;
     this.jobId = jobId;
+    this.startTimestamp = startTimestamp;
     this.dataFileKey = dataFileKey;
     this.result = result;
   }
@@ -74,17 +108,8 @@ public class JobStatusResponse<T> {
   /**
    * Constructor to build partial responses, i.e.: without results.
    */
-  public JobStatusResponse(JobStatus status, long jobId, UUID dataFileKey) {
-    this(status, jobId, dataFileKey, null);
-  }
-
-  /**
-   * Create a {@link JobStatusResponse} representing a jobId not found.
-   * @param jobIdNotFound
-   * @return
-   */
-  public static JobStatusResponse onNotFound(long jobIdNotFound) {
-    return new JobStatusResponse(JobStatus.NOT_FOUND, jobIdNotFound, null);
+  public JobStatusResponse(JobStatus status, long jobId, Long startTimestamp, UUID dataFileKey) {
+    this(status, jobId, startTimestamp, dataFileKey, null);
   }
 
   /**
@@ -101,6 +126,9 @@ public class JobStatusResponse<T> {
     return jobId;
   }
 
+  public Long getStartTimestamp() {
+    return startTimestamp;
+  }
 
   public UUID getDataFileKey() {
     return dataFileKey;

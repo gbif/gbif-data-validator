@@ -46,8 +46,8 @@ public class JobServer<T> {
   private final JobStorage jobStorage;
   private final ActorRef jobMonitor;
 
-  // only used to keep track of the dataFile key while the job is running
-  private final Cache<Long, UUID> jobIdToDataFileKey = CacheBuilder.newBuilder()
+  // only used to keep track of the DataJob while the job is running
+  private final Cache<Long, DataJob<DataFile>> jobIdToDataJob = CacheBuilder.newBuilder()
           .maximumSize(1000)
           .expireAfterAccess(1, TimeUnit.DAYS)
           .build();
@@ -75,9 +75,10 @@ public class JobServer<T> {
     long startTimestamp = LocalDateTime.now().toInstant(ZoneOffset.UTC).toEpochMilli();
 
     LOG.info("Running actors:" + getJobServerChildren(system).stream().collect(Collectors.joining(",")));
-    jobIdToDataFileKey.put(newJobId, dataFile.getKey());
-    jobMonitor.tell(new DataJob<>(newJobId, startTimestamp, dataFile), jobMonitor);
-    return new JobStatusResponse(JobStatusResponse.JobStatus.ACCEPTED, newJobId, dataFile.getKey());
+    DataJob<DataFile> dataJob = new DataJob<>(newJobId, startTimestamp, dataFile);
+    jobIdToDataJob.put(newJobId, dataJob);
+    jobMonitor.tell(dataJob, jobMonitor);
+    return JobStatusResponse.ofAccepted(newJobId, startTimestamp, dataFile.getKey());
   }
 
   /**
@@ -118,14 +119,18 @@ public class JobServer<T> {
   public JobStatusResponse<?> kill(long jobId) {
     Optional<ActorRef> actorOpt = getRunningActor(jobId, system);
     if (actorOpt.isPresent()) {
-      JobStatusResponse<?> response = new JobStatusResponse(JobStatus.KILLED, jobId, jobIdToDataFileKey.getIfPresent(jobId));
+      Optional<DataJob<DataFile>> possibleDataJob = Optional.ofNullable(jobIdToDataJob.getIfPresent(jobId));
+
+      JobStatusResponse<?> response = JobStatusResponse.ofKilled(jobId,
+              possibleDataJob.map(DataJob::getStartTimeStamp).orElse(null),
+              possibleDataJob.map(DataJob::getJobData).map(DataFile::getKey).orElse(null));
       ActorRef actorRef = actorOpt.get();
       actorRef.tell(Kill.getInstance(), jobMonitor);
       system.stop(actorRef);
       jobStorage.put(response);   //stores a job result
       return response;
     }
-    return JobStatusResponse.onNotFound(jobId);
+    return JobStatusResponse.ofNotFound(jobId);
   }
 
   /**
@@ -150,19 +155,19 @@ public class JobServer<T> {
    * Tries to gets the status from the running instances.
    */
   private JobStatusResponse<?> getJobStatus(long jobId) {
+
     try {
       //there's a running actor with that jobId name?
-      return new JobStatusResponse(getRunningActor(jobId, system).isPresent() ? JobStatus.RUNNING : JobStatus.NOT_FOUND,
-                                   jobId, jobIdToDataFileKey.getIfPresent(jobId));
+      if (getRunningActor(jobId, system).isPresent()) {
+        Optional<DataJob<DataFile>> possibleDataJob = Optional.ofNullable(jobIdToDataJob.getIfPresent(jobId));
+        return JobStatusResponse.ofRunning(jobId,
+                possibleDataJob.map(DataJob::getStartTimeStamp).orElse(null),
+                possibleDataJob.map(DataJob::getJobData).map(DataFile::getKey).orElse(null));
+      }
     } catch (Exception ex) {
       LOG.error("Error  retrieving JobId {} data", jobId, ex);
     }
-    return JobStatusResponse.onNotFound(jobId);
-  }
-
-  private static class JobContext {
-    long startTimstamp;
-    UUID datafileKey;
+    return JobStatusResponse.ofNotFound(jobId);
   }
 
 }

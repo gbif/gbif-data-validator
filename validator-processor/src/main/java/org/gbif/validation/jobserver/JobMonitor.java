@@ -20,9 +20,6 @@ import static akka.japi.pf.ReceiveBuilder.match;
  */
 public class JobMonitor extends AbstractLoggingActor {
 
-  /**
-   * Creates an MockActor instance that will wait 'waitBeforeDie' before die.
-   */
   public JobMonitor(final Supplier<Props> propsSupplier, final JobStorage jobStorage, final Consumer<UUID> completionCallback) {
     receive(
             match(DataJob.class, dataJob -> {

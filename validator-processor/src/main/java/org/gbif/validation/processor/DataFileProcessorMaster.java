@@ -322,7 +322,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     if (numberOfWorkersCompleted == numOfWorkers) {
       emitDataOutput(buildJobDataOutput());
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-              dataJob.getJobData().getKey(), buildResult()));
+              dataJob.getStartTimeStamp(), dataJob.getJobData().getKey(), buildResult()));
     }
   }
 
@@ -355,9 +355,17 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
             dataJob.getJobData().getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, resultElements);
   }
 
+  /**
+   * Build a new {@link JobStatusResponse} based on the provided data.
+   * @param indexable
+   * @param status
+   * @param dataFile
+   * @param validationResultElement
+   * @return
+   */
   private JobStatusResponse<?> buildJobStatusResponse(Boolean indexable, JobStatus status, DataFile dataFile,
                                                       List<ValidationResultElement> validationResultElement) {
-    return new JobStatusResponse<>(status, dataJob.getJobId(), dataFile.getKey(),
+    return new JobStatusResponse<>(status, dataJob.getJobId(), dataJob.getStartTimeStamp(), dataFile.getKey(),
             new ValidationResult(indexable, dataFile.getSourceFileName(), dataFile.getFileFormat(),
                     dataFile.getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, validationResultElement));
   }
@@ -417,7 +425,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   private void emitErrorAndStop(DataFile dataFile, ValidationErrorCode errorCode, String errorMessage) {
     JobStatusResponse<?> response = new JobStatusResponse<>(JobStatus.FAILED,
-            dataJob.getJobId(), dataFile.getKey(),
+            dataJob.getJobId(), dataJob.getStartTimeStamp(), dataFile.getKey(),
             ValidationResult.onError(dataFile.getSourceFileName(), dataFile.getFileFormat(),
                     dataFile.getReceivedAsMediaType(), errorCode, errorMessage));
     context().parent().tell(response, self());
