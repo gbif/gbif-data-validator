@@ -8,15 +8,18 @@ import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.model.RecordEvaluationResultDetails;
+import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.api.result.ValidationResultDetails;
 import org.gbif.validation.api.result.ValidationResultElement;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -110,8 +113,13 @@ public class CollectorGroup {
 
     // transform the term frequency into an ordered list of key/value pairs
     List<Map.Entry<Term, Integer>> termFrequency = Arrays.stream(dataFile.getColumns())
-            .map( t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.get(t).intValue()))
+            .map(t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.get(t).intValue()))
             .collect(Collectors.toList());
+
+    //
+    Map<Long, List<String>> verbatimRecordSample = getFullVerbatimRecordSample(dataFile.getColumns(), collectors);
+    List<ValidationDataOutput> dataOutput =
+            Collections.singletonList(new ValidationDataOutput(ValidationDataOutput.Type.VERBATIM_RECORD_SAMPLE, verbatimRecordSample));
 
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines().longValue(),
@@ -120,7 +128,33 @@ public class CollectorGroup {
             dataFile.getRecordIdentifier().map(TermIndex::getTerm).orElse(null),
             mergedAggregatedCounts, resampledMergedSamples,
             termFrequency,
-            mergedInterpretedTermsCount);
+            mergedInterpretedTermsCount, dataOutput);
+  }
+
+
+  /**
+   * Get a {@link Map} of verbatim record by record number with the list of verbatim values in the same order
+   * as the provided headers.
+   *
+   * @param headers
+   * @param collectors
+   *
+   * @return
+   */
+  public static Map<Long, List<String>> getFullVerbatimRecordSample(final Term[] headers, List<CollectorGroup> collectors) {
+    Map<Long, List<String>> orderedVerbatimRecords = new TreeMap<>();
+    collectors.stream().forEach(coll -> {
+      coll.resultsCollector.getFullRecordSamples().entrySet()
+              .forEach(es -> orderedVerbatimRecords.put(es.getKey(), toOrderedVerbatimValues(headers, es.getValue())));
+    });
+    return orderedVerbatimRecords;
+  }
+
+  private static List<String> toOrderedVerbatimValues(Term[] headers, Map<Term, String> verbatimData) {
+    List<String> orderedValues = new ArrayList<>(headers.length);
+    Arrays.stream(headers)
+            .forEach(t -> orderedValues.add(verbatimData.get(t)));
+    return orderedValues;
   }
 
 

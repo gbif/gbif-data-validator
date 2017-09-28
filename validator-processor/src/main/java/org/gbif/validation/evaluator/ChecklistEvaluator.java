@@ -124,9 +124,9 @@ class ChecklistEvaluator implements RecordCollectionEvaluator {
    * @return
    */
   protected RecordEvaluationResult toEvaluationResult(NameUsage nameUsage, VerbatimNameUsage verbatimNameUsage) {
-
     RecordEvaluationResult.Builder builder = RecordEvaluationResult.Builder.of(DwcTerm.Taxon, nameUsage.getTaxonID());
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(nameUsage));
+    builder.withVerbatimData(verbatimNameUsage.getFields());
     nameUsage.getIssues().stream().filter(IS_MAPPED).
             forEach(issue -> {
               Map<Term, String> relatedData = issue.getRelatedTerms()

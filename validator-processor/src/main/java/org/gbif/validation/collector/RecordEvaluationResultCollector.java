@@ -1,5 +1,6 @@
 package org.gbif.validation.collector;
 
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.ResultsCollector;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
@@ -40,6 +41,29 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
             new RecordEvaluationResultCollectorSingleThread();
   }
 
+  @Override
+  public void collect(RecordEvaluationResult result) {
+    if (result != null && result.getDetails() != null) {
+      result.getDetails().forEach(detail -> {
+        innerImpl.countAndPrepare(detail.getEvaluationType());
+        innerImpl.computeSampling(detail.getEvaluationType(), (type, currSample) -> {
+          if (currSample.size() < maxNumberOfSample) {
+            String key = detail.computeInputValuesKey();
+            if (!currSample.containsKey(key)) {
+              currSample.put(key, toValidationResultDetails(result, detail));
+              if(result.getLineNumber() != null && result.getVerbatimData() != null) {
+                innerImpl.putVerbatimRecord(result.getLineNumber(), result.getVerbatimData());
+              }
+            } else {
+              innerImpl.putNonDistinct(detail.getEvaluationType(), toValidationResultDetails(result, detail));
+            }
+          }
+          return currSample;
+        });
+      });
+    }
+  }
+
   /**
    * Internal interface that defined the behavior of an internal RecordEvaluationResultCollector.
    */
@@ -48,10 +72,12 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String, ValidationResultDetails>,
             Map<String, ValidationResultDetails>> samplingFunction);
     void putNonDistinct(EvaluationType type, ValidationResultDetails validationResultDetails);
+    void putVerbatimRecord(Long recordNumber, Map<Term, String> verbatimRecord);
 
     Map<EvaluationType, Collection<ValidationResultDetails>> getNonDistinct();
     Map<EvaluationType, Long> getAggregatedCounts();
     Map<EvaluationType, List<ValidationResultDetails>> getSamples();
+    Map<Long, Map<Term, String>> getFullRecordSample();
   }
 
   /**
@@ -61,11 +87,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     private final Map<EvaluationType, Long> issueCounter;
     private final Map<EvaluationType, Map<String, ValidationResultDetails>> issueSampling;
     private final Map<EvaluationType, Collection<ValidationResultDetails>> nonDistinctSample;
+    private final Map<Long, Map<Term, String>> fullRecordSample;
 
     RecordEvaluationResultCollectorSingleThread() {
       issueCounter = new EnumMap<>(EvaluationType.class);
       issueSampling = new EnumMap<>(EvaluationType.class);
       nonDistinctSample = new EnumMap<>(EvaluationType.class);
+      fullRecordSample = new HashMap<>();
     }
 
     @Override
@@ -75,8 +103,8 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
 
     @Override
-    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String,ValidationResultDetails>,
-            Map<String,ValidationResultDetails>> samplingFunction) {
+    public void computeSampling(EvaluationType type, BiFunction<EvaluationType, Map<String, ValidationResultDetails>,
+            Map<String, ValidationResultDetails>> samplingFunction) {
       issueSampling.compute(type, samplingFunction);
     }
 
@@ -101,11 +129,24 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     }
 
     @Override
+    public Map<Long, Map<Term, String>> getFullRecordSample() {
+      return fullRecordSample;
+    }
+
+    @Override
     public Map<EvaluationType, Long> getAggregatedCounts() {
       return issueCounter.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
               Map.Entry::getValue));
     }
 
+    /**
+     *
+     * @param recordNumber
+     * @param verbatimRecord
+     */
+    public void putVerbatimRecord(Long recordNumber, Map<Term, String> verbatimRecord) {
+      fullRecordSample.put(recordNumber, verbatimRecord);
+    }
   }
 
   /**
@@ -115,11 +156,13 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
     private final Map<EvaluationType, LongAdder> issueCounter;
     private final Map<EvaluationType, Map<String, ValidationResultDetails>> issueSampling;
     private final Map<EvaluationType, Collection<ValidationResultDetails>> nonDistinctSample;
+    private final Map<Long, Map<Term, String>> fullRecordSample;
 
     RecordEvaluationResultCollectorConcurrent() {
       issueCounter = new ConcurrentHashMap<>(EvaluationType.values().length);
       issueSampling = new ConcurrentHashMap<>(EvaluationType.values().length);
       nonDistinctSample = new ConcurrentHashMap<>(EvaluationType.values().length);
+      fullRecordSample = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -141,6 +184,11 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
         l.add(validationResultDetails);
         return l;
       });
+    }
+
+    @Override
+    public void putVerbatimRecord(Long recordNumber, Map<Term, String> verbatimRecord) {
+      fullRecordSample.put(recordNumber, verbatimRecord);
     }
 
     @Override
@@ -167,25 +215,10 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       return issueSampling.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
               rec ->  new ArrayList<>(rec.getValue().values())));
     }
-  }
 
-  @Override
-  public void collect(RecordEvaluationResult result) {
-    if (result != null && result.getDetails() != null) {
-      result.getDetails().forEach(detail -> {
-        innerImpl.countAndPrepare(detail.getEvaluationType());
-        innerImpl.computeSampling(detail.getEvaluationType(), (type, queue) -> {
-          if (queue.size() < maxNumberOfSample) {
-            String key = detail.computeInputValuesKey();
-            if (!queue.containsKey(key)) {
-              queue.put(key, toValidationResultDetails(result, detail));
-            } else {
-              innerImpl.putNonDistinct(detail.getEvaluationType(), toValidationResultDetails(result, detail));
-            }
-          }
-          return queue;
-        });
-      });
+    @Override
+    public Map<Long, Map<Term, String>> getFullRecordSample() {
+      return fullRecordSample;
     }
   }
 
@@ -208,6 +241,10 @@ public class RecordEvaluationResultCollector implements ResultsCollector, Serial
       }
     });
     return samplesCopy;
+  }
+
+  public Map<Long, Map<Term, String>> getFullRecordSamples(){
+    return innerImpl.getFullRecordSample();
   }
 
   public Map<EvaluationType, Long> getAggregatedCounts() {

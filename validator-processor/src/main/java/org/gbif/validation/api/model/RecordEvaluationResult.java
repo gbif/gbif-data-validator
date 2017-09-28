@@ -22,7 +22,7 @@ public class RecordEvaluationResult implements Serializable {
   private final String recordId;
 
   private final Map<Term, Object> interpretedData;
-  private final Map<Term, Object> verbatimData;
+  private final Map<Term, String> verbatimData;
   private final List<RecordEvaluationResultDetails> details;
 
   /**
@@ -33,8 +33,8 @@ public class RecordEvaluationResult implements Serializable {
    * @param interpretedData
    */
   public RecordEvaluationResult(Term rowType, Long lineNumber, String recordId,
-                                List<RecordEvaluationResultDetails> details, Map<Term, Object> interpretedData,
-                                Map<Term, Object> verbatimData) {
+                                List<RecordEvaluationResultDetails> details,
+                                Map<Term, String> verbatimData, Map<Term, Object> interpretedData) {
     this.lineNumber = lineNumber;
     this.recordId = recordId;
     this.rowType = rowType;
@@ -69,7 +69,7 @@ public class RecordEvaluationResult implements Serializable {
   /**
    * @return verbatimData or null
    */
-  public Map<Term, Object> getVerbatimData() {
+  public Map<Term, String> getVerbatimData() {
     return verbatimData;
   }
 
@@ -89,7 +89,7 @@ public class RecordEvaluationResult implements Serializable {
     private Long lineNumber;
     private String recordId;
     private Map<Term, Object> interpretedData;
-    private Map<Term, Object> verbatimData;
+    private Map<Term, String> verbatimData;
     private List<RecordEvaluationResultDetails> details;
 
     public static Builder of(Term rowType, Long lineNumber, String recordId){
@@ -152,7 +152,7 @@ public class RecordEvaluationResult implements Serializable {
       return this;
     }
 
-    public Builder withVerbatimData(Map<Term, Object> verbatimData) {
+    public Builder withVerbatimData(Map<Term, String> verbatimData) {
       this.verbatimData = verbatimData;
       return this;
     }
@@ -218,7 +218,7 @@ public class RecordEvaluationResult implements Serializable {
      * @param verbatimData
      * @return
      */
-    private Builder putAllVerbatimData(Map<Term, Object> verbatimData) {
+    private Builder putAllVerbatimData(Map<Term, String> verbatimData) {
       if(verbatimData == null){
         return this;
       }
@@ -255,7 +255,7 @@ public class RecordEvaluationResult implements Serializable {
 
     public RecordEvaluationResult build(){
       return new RecordEvaluationResult(rowType, lineNumber, recordId,
-              details == null ? new ArrayList<>() : details, interpretedData, verbatimData);
+              details == null ? new ArrayList<>() : details, verbatimData, interpretedData);
     }
   }
 }

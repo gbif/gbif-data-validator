@@ -121,6 +121,7 @@ public class OccurrenceInterpretationEvaluator implements RecordEvaluator {
             recordIdentifier == null ? null : result.getUpdated().getVerbatimField(recordIdentifier.getTerm()));
 
     Map<Term, String> verbatimFields = result.getUpdated().getVerbatimFields();
+    builder.withVerbatimData(verbatimFields);
     builder.withInterpretedData(OccurrenceToTermsHelper.getTermsMap(result.getUpdated()));
 
     result.getUpdated().getIssues().stream()

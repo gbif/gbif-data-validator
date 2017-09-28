@@ -1,9 +1,13 @@
 package org.gbif.validation.collector;
 
 import org.gbif.dwc.terms.DwcTerm;
+import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.api.result.ValidationResultDetails;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -17,11 +21,17 @@ public class RecordEvaluationResultCollectorTest {
   @Test
   public void testCollector() {
     RecordEvaluationResultCollector collector = new RecordEvaluationResultCollector(10, false);
-
     RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, 1L);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, "2", "3");
     collector.collect(bldr.build());
     assertEquals(1L, collector.getAggregatedCounts().get(EvaluationType.COLUMN_MISMATCH).longValue());
+  }
+
+  @Test
+  public void testCollectorFillRecordSampling() {
+    RecordEvaluationResultCollector collector = new RecordEvaluationResultCollector(10, false);
+    collector.collect(buildRecordEvaluationInterpretationResult(18));
+    assertEquals("CA", collector.getFullRecordSamples().get(18L).get(DwcTerm.countryCode));
   }
 
   @Test
@@ -46,6 +56,20 @@ public class RecordEvaluationResultCollectorTest {
   public static RecordEvaluationResult buildRecordEvaluationResult(long id, String expected, String found) {
     RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, id);
     bldr.addBaseDetail(EvaluationType.COLUMN_MISMATCH, expected, found);
+    return bldr.build();
+  }
+
+  public static RecordEvaluationResult buildRecordEvaluationInterpretationResult(long id) {
+    RecordEvaluationResult.Builder bldr = RecordEvaluationResult.Builder.of(DwcTerm.Occurrence, id);
+    Map<Term, String> verbatimRecord = new HashMap<>();
+    verbatimRecord.put(DwcTerm.countryCode, "CA");
+    verbatimRecord.put(DwcTerm.year, "20017");
+
+    Map<Term, String> relatedFields = new HashMap<>();
+    relatedFields.put(DwcTerm.year, "20017");
+
+    bldr.withVerbatimData(verbatimRecord);
+    bldr.addInterpretationDetail(EvaluationType.RECORDED_DATE_INVALID, relatedFields);
     return bldr.build();
   }
 

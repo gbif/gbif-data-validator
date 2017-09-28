@@ -12,7 +12,7 @@ public class ValidationDataOutput {
    * Enumerates the possible data output of Job.
    */
   public enum Type {
-    DATASET_OBJECT;
+    DATASET_OBJECT, VERBATIM_RECORD_SAMPLE;
 
     public static Optional<Type> fromString(String str) {
       for(Type t : values()) {

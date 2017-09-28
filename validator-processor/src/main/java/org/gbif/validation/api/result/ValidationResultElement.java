@@ -99,8 +99,8 @@ public class ValidationResultElement implements Serializable {
                                  Map<EvaluationType, Long> issueCounter,
                                  Map<EvaluationType, List<ValidationResultDetails>> issueSampling,
                                  List<Map.Entry<Term, Integer>> termsFrequency,
-                                 Map<Term, Long> interpretedValueCounts) {
-    this(fileName, numberOfLines, fileType, rowType, idTerm, new ArrayList<>(), termsFrequency, interpretedValueCounts, null);
+                                 Map<Term, Long> interpretedValueCounts, List<ValidationDataOutput> dataOutput) {
+    this(fileName, numberOfLines, fileType, rowType, idTerm, new ArrayList<>(), termsFrequency, interpretedValueCounts, dataOutput);
 
     if (issueCounter != null && issueSampling != null) {
       issueCounter.forEach(

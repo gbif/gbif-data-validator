@@ -320,9 +320,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     log().info("Got {} worker response(s)", numberOfWorkersCompleted);
 
     if (numberOfWorkersCompleted == numOfWorkers) {
-      emitDataOutput(buildJobDataOutput());
+      ValidationResult validationResult = buildResult();
+      emitDataOutput(buildJobDataOutput(validationResult));
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
-              dataJob.getStartTimeStamp(), dataJob.getJobData().getKey(), buildResult()));
+              dataJob.getStartTimeStamp(), dataJob.getJobData().getKey(),validationResult));
     }
   }
 
@@ -374,8 +375,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * Build a list of all {@link JobDataOutput} from {@link ValidationDataOutput}
    * @return
    */
-  private List<JobDataOutput> buildJobDataOutput() {
-    return validationResultElements.stream()
+  private List<JobDataOutput> buildJobDataOutput(ValidationResult validationResult) {
+    return validationResult.getResults().stream()
             .map(ValidationResultElement::getDataOutput)
             .filter( Objects::nonNull )
             .flatMap(List::stream)
