@@ -122,7 +122,7 @@ public class FileJobStorage implements JobStorage {
   public void put(JobDataOutput data) {
     Path outputDataFile = getJobOutputDataPath(data.getJobId(), data.getType());
     try {
-      Files.createDirectory(outputDataFile.getParent());
+      Files.createDirectories(outputDataFile.getParent());
       DATA_OUTPUT_OBJECT_WRITER.writeValue(outputDataFile.toFile(), data);
     } catch (IOException ex) {
       throw new RuntimeException(ex);

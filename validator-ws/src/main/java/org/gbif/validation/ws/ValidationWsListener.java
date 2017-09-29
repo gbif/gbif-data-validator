@@ -38,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Server listener. Contains
+ * Server listener.
  */
 public class ValidationWsListener extends GbifServletListener {
 
@@ -75,9 +75,11 @@ public class ValidationWsListener extends GbifServletListener {
       configuration.setApiUrl(properties.getProperty(ConfKeys.API_URL_CONF_KEY));
       configuration.setWorkingDir(properties.getProperty(ConfKeys.WORKING_DIR_CONF_KEY));
       configuration.setFileSplitSize(NumberUtils.toInt(properties.getProperty(ConfKeys.FILE_SPLIT_SIZE),
-                                                       DEFAULT_SPLIT_SIZE));
+              DEFAULT_SPLIT_SIZE));
       configuration.setApiDataValidationPath(properties.getProperty(ConfKeys.VALIDATION_API_PATH_CONF_KEY));
       configuration.setJobResultStorageDir(properties.getProperty(ConfKeys.RESULT_STORAGE_DIR_CONF_KEY));
+      configuration.setMaxFileTransferSizeInBytes(NumberUtils.toLong(
+              properties.getProperty(ConfKeys.MAX_FILE_TRANSFER_SIZE_IN_BYTES), ValidationWsConfiguration.DEFAULT_MAX_FILE_TRANSFER_SIZE));
 
       try {
         configuration.setExtensionDiscoveryUrl(new URL(properties.getProperty(ConfKeys.EXTENSION_DISCOVERY_URL_KEY)));

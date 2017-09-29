@@ -22,6 +22,12 @@ import java.util.stream.Collectors;
 
 /**
  * Basic implementation of a {@link ResultsCollector}.
+ * It collects a count of all issues, a sample of data with issues and a sample of
+ * verbatim records with issues.
+ *
+ * The sampling is based on the key defined by {@link RecordEvaluationResultDetails#computeInputValuesKey()}.
+ * We also keep a list of non-distinct sample in case we can not find enough distinct entries to match
+ * the wanted size of the sample.
  */
 public class RecordEvaluationResultCollector implements ResultsCollector, Serializable {
 

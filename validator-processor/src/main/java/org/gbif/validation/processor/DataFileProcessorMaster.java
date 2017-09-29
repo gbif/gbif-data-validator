@@ -303,6 +303,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     incrementWorkerCompleted();
   }
 
+  /**
+   *
+   * @param result
+   */
   private void processMetadataBasedResults(MetadataWorkResult result) {
     log().info("Got MetadataWorkResult worker response(s)");
     if (DataWorkResult.Result.SUCCESS == result.getResult()) {
@@ -372,7 +376,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Build a list of all {@link JobDataOutput} from {@link ValidationDataOutput}
+   * Build a list of {@link JobDataOutput} from {@link ValidationResult}'s {@link ValidationDataOutput}
    * @return
    */
   private List<JobDataOutput> buildJobDataOutput(ValidationResult validationResult) {
@@ -417,7 +421,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   *
+   * For all {@link JobDataOutput} provided, emit a message.
    * @param dataOutputList
    */
   private void emitDataOutput(List<JobDataOutput> dataOutputList) {

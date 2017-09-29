@@ -78,9 +78,9 @@ public class UploadedFileManager implements Cleanable<UUID> {
   private static final int FILE_DOWNLOAD_TIMEOUT_MS = 10000;
   private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
-  private static final long MAX_UPLOAD_SIZE_IN_BYTES = 1024*1024*100; //100 MB
 
   private final Path workingDirectory;
+  private final long maxFileTransferSizeInBytes;
   private final ServletFileUpload servletBasedFileUpload;
 
   /**
@@ -190,8 +190,9 @@ public class UploadedFileManager implements Cleanable<UUID> {
    * @param workingDirectory
    * @throws IOException
    */
-  public UploadedFileManager(String workingDirectory) throws IOException {
-    this.workingDirectory =  Paths.get(workingDirectory, FILEUPLOAD_TMP_FOLDER);
+  public UploadedFileManager(String workingDirectory, long maxFileTransferSizeInBytes) throws IOException {
+    this.workingDirectory = Paths.get(workingDirectory, FILEUPLOAD_TMP_FOLDER);
+    this.maxFileTransferSizeInBytes = maxFileTransferSizeInBytes;
 
     File workingDirectoryFile = this.workingDirectory.toFile();
     if(!workingDirectoryFile.exists()) {
@@ -201,7 +202,7 @@ public class UploadedFileManager implements Cleanable<UUID> {
     DiskFileItemFactory diskFileItemFactory = new DiskFileItemFactory(MAX_SIZE_BEFORE_DISK_IN_BYTES,
                                                                       workingDirectoryFile);
     servletBasedFileUpload = new ServletFileUpload(diskFileItemFactory);
-    servletBasedFileUpload.setFileSizeMax(MAX_UPLOAD_SIZE_IN_BYTES);
+    servletBasedFileUpload.setFileSizeMax(maxFileTransferSizeInBytes);
   }
 
   /**
@@ -309,7 +310,7 @@ public class UploadedFileManager implements Cleanable<UUID> {
                                             @Nullable String providedContentType,
                                             URL fileToDownload) throws IOException, UnsupportedMediaTypeException {
 
-    try (InputStream in = new FileDownloadLimitedInputStream(fileToDownload.openStream(), MAX_UPLOAD_SIZE_IN_BYTES)) {
+    try (InputStream in = new FileDownloadLimitedInputStream(fileToDownload.openStream(), maxFileTransferSizeInBytes)) {
       URLConnection urlConnection = fileToDownload.openConnection();
       urlConnection.setConnectTimeout(FILE_DOWNLOAD_TIMEOUT_MS);
       urlConnection.setReadTimeout(FILE_DOWNLOAD_TIMEOUT_MS);

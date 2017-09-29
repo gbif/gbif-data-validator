@@ -14,6 +14,8 @@ public final class ConfKeys {
 
   public static final String PRESERVE_TEMPORARY_FILES = "preserveTemporaryFiles";
 
+  public static final String MAX_FILE_TRANSFER_SIZE_IN_BYTES = "maxFileTransferSizeInBytes";
+
   public static final String GANGLIA_HOST = "gangliaHost";
   public static final String GANGLIA_PORT = "gangliaPort";
 

@@ -10,6 +10,7 @@ public class ValidationWsConfiguration {
 
   //name of the parameter used when POSTing a file
   public static final String FILE_POST_PARAM_NAME = "file";
+  public static final long DEFAULT_MAX_FILE_TRANSFER_SIZE  = 1024*1024*100; //100 MB
 
   /**
    * Url to the GBIF Rest API.
@@ -17,6 +18,8 @@ public class ValidationWsConfiguration {
   private String apiUrl;
   private URL extensionDiscoveryUrl;
   private boolean preserveTemporaryFiles;
+
+  private long maxFileTransferSizeInBytes = DEFAULT_MAX_FILE_TRANSFER_SIZE;
 
   private String gangliaHost;
   private Integer gangliaPort;
@@ -95,6 +98,19 @@ public class ValidationWsConfiguration {
 
   public void setPreserveTemporaryFiles(boolean preserveTemporaryFiles) {
     this.preserveTemporaryFiles = preserveTemporaryFiles;
+  }
+
+  /**
+   * Maximum file size, in bytes, that is allowed for file upload/download.
+   *
+   * @return
+   */
+  public long getMaxFileTransferSizeInBytes() {
+    return maxFileTransferSizeInBytes;
+  }
+
+  public void setMaxFileTransferSizeInBytes(long maxFileTransferSizeInBytes) {
+    this.maxFileTransferSizeInBytes = maxFileTransferSizeInBytes;
   }
 
   public Optional<String> getGangliaHost() {
