@@ -8,8 +8,10 @@ import org.gbif.validation.api.vocabulary.DwcFileType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
 import org.codehaus.jackson.annotate.JsonIgnore;
@@ -38,6 +40,10 @@ public class ValidationResultElement implements Serializable {
 
   private final List<Map.Entry<Term, Integer>> termsFrequency;
   private final Map<Term, Long> interpretedValueCounts;
+
+  private final List<ValidationDataOutput.Type> availableDataOutput;
+
+  //this field is not serialized
   private final List<ValidationDataOutput> dataOutput;
 
   /**
@@ -134,6 +140,11 @@ public class ValidationResultElement implements Serializable {
     this.termsFrequency = termsFrequency;
     this.interpretedValueCounts = interpretedValueCounts;
     this.dataOutput = dataOutput;
+
+    this.availableDataOutput = dataOutput == null ? Collections.emptyList() :
+            dataOutput.stream()
+                    .map(ValidationDataOutput::getType)
+                    .collect(Collectors.toList());
   }
 
 
@@ -171,6 +182,10 @@ public class ValidationResultElement implements Serializable {
     return idTerm;
   }
 
+  public List<ValidationDataOutput.Type> getAvailableDataOutput() {
+    return availableDataOutput;
+  }
+
   @JsonIgnore
   public List<ValidationDataOutput> getDataOutput() {
     return dataOutput;
@@ -200,6 +215,7 @@ public class ValidationResultElement implements Serializable {
             .add("numberOfLines", numberOfLines)
             .add("termsFrequency", termsFrequency)
             .add("interpretedValueCounts", interpretedValueCounts)
+            .add("availableDataOutput", availableDataOutput)
             .toString();
   }
 

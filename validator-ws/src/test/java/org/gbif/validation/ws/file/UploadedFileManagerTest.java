@@ -29,13 +29,13 @@ public class UploadedFileManagerTest {
   public TemporaryFolder folder = new TemporaryFolder();
 
   @Test
-  public void testTandleFileTransfer() throws IOException, UnsupportedMediaTypeException {
+  public void testHandleFileTransfer() throws IOException, UnsupportedMediaTypeException {
     File testFolder = folder.newFolder("subfolder");
     File f = FileUtils.getClasspathFile("dwca/Archive.zip");
 
-    //we use an non-buffered InputStream by purpose
+    //we use an non-buffered InputStream by purpose (to test the markSupported in handleFileTransfer)
     InputStream fis = new FileInputStream(f);
-    UploadedFileManager a = new UploadedFileManager(testFolder.getAbsolutePath());
+    UploadedFileManager a = new UploadedFileManager(testFolder.getAbsolutePath(), 1024L);
     Optional<DataFile> df = a.handleFileTransfer("Archive.zip", "application/zip", fis);
     assertEquals(3, df.get().getFilePath().toFile().listFiles().length);
   }
