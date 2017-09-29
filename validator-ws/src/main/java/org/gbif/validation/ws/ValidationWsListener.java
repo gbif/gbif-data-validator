@@ -124,7 +124,8 @@ public class ValidationWsListener extends GbifServletListener {
       ValidationWsConfiguration configuration = getConfFromProperties(getProperties());
       UploadedFileManager uploadedFileManager;
       try {
-        uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir());
+        uploadedFileManager = new UploadedFileManager(configuration.getWorkingDir(),
+                configuration.getMaxFileTransferSizeInBytes());
         bind(UploadedFileManager.class).toInstance(uploadedFileManager);
       } catch (IOException e) {
         LOG.error("Can't instantiate uploadedFileManager", e);
