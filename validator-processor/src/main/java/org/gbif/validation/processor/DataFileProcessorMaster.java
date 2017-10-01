@@ -9,7 +9,6 @@ import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.model.JobStatusResponse.JobStatus;
@@ -287,13 +286,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * This can represent en entire file or a part of a file
    */
   private void processRecordBasedResults(DataWorkResult result) {
-    if(DataWorkResult.Result.FAILED == result.getResult()) {
-      log().error("DataWorkResult = FAILED: {}", result);
-      validationResultElements.add(ValidationResultElement.onException(
-              result.getFileName(),
-              EvaluationType.UNREADABLE_SECTION_ERROR, ""));
-    }
-
     if(result.getRowTypeKey() == null) {
       log().error("RowTypeKey shall never be null: " +  result + ", " + result.getFileName()
       + ", " + result.getCollectors());

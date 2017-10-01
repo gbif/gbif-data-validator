@@ -4,6 +4,8 @@ import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.api.model.EvaluationType;
+import org.gbif.validation.api.model.RecordEvaluationResult;
 import org.gbif.validation.collector.CollectorGroup;
 import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.source.RecordSourceFactory;
@@ -68,8 +70,12 @@ class DataFileRecordsActor extends AbstractLoggingActor {
       }
       log().info("Done reading: " + dataFile.getFilePath() + " finished at line " + lineNumber + " (including offset)");
       return new DataWorkResult(dataFile.getRowTypeKey(), dataFile.getSourceFileName(), DataWorkResult.Result.SUCCESS, collectors);
+
+      //TODO
     } catch (Exception ex) {
-      log().error("Error while evaluating line {} of {}: {}", lineNumber, dataFile.getFilePath(), ex.getMessage());
+      log().error("Error while evaluating line {} of {}: {} : {}", lineNumber, dataFile.getFilePath(), ex.getClass(), ex.getMessage());
+      collectors.collectResult(RecordEvaluationResult.Builder.of(dataFile.getRowTypeKey().getRowType(), lineNumber)
+              .addBaseDetail(EvaluationType.UNREADABLE_SECTION_ERROR, "", "").build());
       return new DataWorkResult(dataFile.getRowTypeKey(), dataFile.getSourceFileName(), DataWorkResult.Result.FAILED, collectors);
     }
   }
