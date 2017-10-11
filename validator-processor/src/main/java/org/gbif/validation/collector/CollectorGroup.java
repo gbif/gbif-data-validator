@@ -106,7 +106,7 @@ public class CollectorGroup {
             }
     );
 
-    //Fix sample size after merging
+    // Fix sample size after merging
     Map<EvaluationType, List<ValidationResultDetails>> resampledMergedSamples = mergedSamples.entrySet().stream()
             .collect(Collectors.toMap(Map.Entry::getKey,
                     e -> resample(e.getValue(), RecordEvaluationResultCollector.DEFAULT_MAX_NUMBER_OF_SAMPLE)));
@@ -119,7 +119,8 @@ public class CollectorGroup {
     //
     Map<Long, List<String>> verbatimRecordSample = getFullVerbatimRecordSample(dataFile.getColumns(), collectors);
     List<ValidationDataOutput> dataOutput =
-            Collections.singletonList(new ValidationDataOutput(ValidationDataOutput.Type.VERBATIM_RECORD_SAMPLE, verbatimRecordSample));
+            Collections.singletonList(ValidationDataOutput.verbatimRecordSample(dataFile.getColumns(),
+                    verbatimRecordSample));
 
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines().longValue(),
