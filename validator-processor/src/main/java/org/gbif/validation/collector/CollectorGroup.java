@@ -113,7 +113,7 @@ public class CollectorGroup {
 
     // transform the term frequency into an ordered list of key/value pairs
     List<Map.Entry<Term, Integer>> termFrequency = Arrays.stream(dataFile.getColumns())
-            .map(t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.get(t).intValue()))
+            .map(t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.getOrDefault(t, -1L).intValue()))
             .collect(Collectors.toList());
 
     //
