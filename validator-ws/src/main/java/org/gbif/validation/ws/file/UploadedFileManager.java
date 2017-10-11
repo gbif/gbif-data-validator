@@ -87,6 +87,8 @@ public class UploadedFileManager implements Cleanable<UUID> {
    * Warning, this will close the zippedInputStream {@link InputStream}.
    * VISIBLE-FOR-TESTING
    *
+   * Very similar to CompressionUtil.decompressFile
+   *
    * @param zippedInputStream
    * @param destinationFile
    *
@@ -101,11 +103,14 @@ public class UploadedFileManager implements Cleanable<UUID> {
       while (entry.isPresent()) {
         String entryName = entry.get().getName();
         if (!FOLDER_EXCLUSION_LIST.contains(StringUtils.substringBefore(entryName, "/"))) {
+          Path entryDestinationPath = destinationFile.resolve(entryName);
           if (entry.get().isDirectory()) {
-            Files.createDirectory(destinationFile.resolve(entryName));
+            Files.createDirectory(entryDestinationPath);
           } else {
             if (!FILE_EXCLUSION_LIST.contains(StringUtils.substringAfterLast(entryName, "/"))) {
-              Files.copy(ais, destinationFile.resolve(entryName));
+              // ensure the folder structure exists otherwise create it.
+              Files.createDirectories(entryDestinationPath.getParent());
+              Files.copy(ais, entryDestinationPath);
             }
           }
         }
