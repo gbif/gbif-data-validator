@@ -21,6 +21,7 @@ import org.gbif.validation.collector.CollectorGroupProvider;
 import org.gbif.validation.evaluator.DwcDataFileSupplier;
 import org.gbif.validation.evaluator.EvaluationChain;
 import org.gbif.validation.evaluator.EvaluatorFactory;
+import org.gbif.validation.evaluator.IndexableRules;
 import org.gbif.validation.evaluator.ResourceConstitutionEvaluationChain;
 import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
@@ -348,7 +349,8 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     //merge all ValidationResultElement into those collected by rowType
     mergeIssuesOnFilename(validationResultElements, resultElements);
 
-    return new ValidationResult(true, dataJob.getJobData().getSourceFileName(), dataJob.getJobData().getFileFormat(),
+    return new ValidationResult(IndexableRules.isIndexable(resultElements), dataJob.getJobData().getSourceFileName(),
+            dataJob.getJobData().getFileFormat(),
             dataJob.getJobData().getReceivedAsMediaType(), GBIF_INDEXING_PROFILE, resultElements);
   }
 

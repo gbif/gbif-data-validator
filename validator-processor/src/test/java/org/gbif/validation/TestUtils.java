@@ -8,6 +8,7 @@ import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
+import org.gbif.validation.api.result.ValidationIssues;
 import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.conf.ValidatorConfiguration;
@@ -17,6 +18,8 @@ import org.gbif.validation.evaluator.EvaluatorFactory;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -111,6 +114,14 @@ public class TestUtils {
     return validationResultElementList.get(0).getIssues().get(0);
   }
 
+  public static List<ValidationResultElement> mockMetadataValidationResultElementList(EvaluationType type) {
+    List<ValidationResultElement> validationResultElements = new ArrayList<>();
+    validationResultElements.add(ValidationResultElement.forMetadata("myfile",
+            Collections.singletonList(ValidationIssues.withEvaluationTypeOnly(type))
+            , null));
+    return validationResultElements;
+  }
+
   /**
    * Get the first {@link ValidationResultElement} from the provided list where at least one issues is matching
    * the provided {@link EvaluationType}.
@@ -122,7 +133,7 @@ public class TestUtils {
    */
   public static ValidationResultElement getFirstValidationResultElement(EvaluationType type, List<ValidationResultElement> validationResultElementList) {
     return validationResultElementList.stream()
-            .filter(vre -> vre.getIssues().stream().filter(i -> i.getIssue() == type).findFirst().isPresent())
+            .filter(vre -> vre.contains(type))
             .findFirst().orElse(null);
   }
 

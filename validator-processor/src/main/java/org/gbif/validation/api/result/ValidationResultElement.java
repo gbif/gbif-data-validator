@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
@@ -197,9 +199,31 @@ public class ValidationResultElement implements Serializable {
    * @return
    */
   public boolean contains(EvaluationCategory evaluationCategory) {
-    if(issues != null) {
+    return contains(vi -> evaluationCategory.equals(vi.getIssue().getCategory()));
+  }
+
+  /**
+   * Check if the list of issue contains at least one issue of the provided {@link EvaluationType}.
+   * @param evaluationType
+   * @return
+   */
+  public boolean contains(EvaluationType evaluationType) {
+    return contains(vi -> evaluationType.equals(vi.getIssue()));
+  }
+
+  /**
+   * Check if the list of issue contains at least one issue of the provided {@link Set} of {@link EvaluationType}.
+   * @param evaluationTypes
+   * @return
+   */
+  public boolean containsAny(Set<EvaluationType> evaluationTypes) {
+    return contains(vi -> evaluationTypes.contains(vi.getIssue()));
+  }
+
+  private boolean contains(Predicate<ValidationIssue> predicate) {
+    if (issues != null) {
       return issues.stream()
-              .filter( vi -> evaluationCategory.equals(vi.getIssue().getCategory()))
+              .filter(predicate)
               .findAny().isPresent();
     }
     return false;

@@ -4,6 +4,7 @@ import org.gbif.validation.api.model.JobDataOutput;
 import org.gbif.validation.api.model.JobStatusResponse;
 import org.gbif.validation.api.result.ValidationDataOutput;
 import org.gbif.validation.jobserver.JobStorage;
+import org.gbif.ws.mixin.Mixins;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,6 +32,8 @@ public class FileJobStorage implements JobStorage {
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
   static {
     OBJECT_MAPPER.setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+    OBJECT_MAPPER.getSerializationConfig().setMixInAnnotations(Mixins.getPredefinedMixins());
+    OBJECT_MAPPER.getDeserializationConfig().setMixInAnnotations(Mixins.getPredefinedMixins());
   }
 
   private static final ObjectReader STATUS_OBJECT_READER = OBJECT_MAPPER.reader(JobStatusResponse.class);

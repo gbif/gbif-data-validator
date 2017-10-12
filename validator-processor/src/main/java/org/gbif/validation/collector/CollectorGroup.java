@@ -122,7 +122,7 @@ public class CollectorGroup {
             .filter(Objects::nonNull)
             .map(t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.getOrDefault(t, -1L).intValue()))
             .collect(Collectors.toList());
-    LOG.warn("dataFile.getColumns() ->" + dataFile.getColumns());
+    LOG.warn("dataFile.getColumns() ->" + Arrays.toString(dataFile.getColumns()));
 
     //
     Map<Long, List<String>> verbatimRecordSample = getFullVerbatimRecordSample(dataFile.getColumns(), collectors);
