@@ -16,6 +16,7 @@ import static org.gbif.validation.TestUtils.getFirstValidationIssue;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -36,9 +37,8 @@ public class DwcaResourceStructureEvaluatorTest {
     Optional<List<ValidationResultElement>> result =
             DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-invalid-ext", "test"));
     assertTrue(result.isPresent());
-    assertTrue(result.get().get(0).getIssues().stream()
-            .filter(vi -> EvaluationType.REQUIRED_TERM_MISSING.equals(vi.getIssue()))
-            .findFirst().isPresent());
+    assertNotNull(TestUtils.getFirstValidationResultElement(EvaluationType.REQUIRED_TERM_MISSING, result.get()));
+    assertNotNull(TestUtils.getFirstValidationResultElement(EvaluationType.DUPLICATED_TERM, result.get()));
   }
 
   @Test

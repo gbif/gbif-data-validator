@@ -6,9 +6,10 @@ import org.gbif.utils.HttpUtil;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.utils.file.properties.PropertiesUtil;
 import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.vocabulary.FileFormat;
+import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.result.ValidationIssue;
 import org.gbif.validation.api.result.ValidationResultElement;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.dwc.extensions.ExtensionManagerFactoryTestAdapter;
 import org.gbif.validation.evaluator.EvaluatorFactory;
@@ -101,11 +102,28 @@ public class TestUtils {
   /**
    * Utility method to get the first {@link ValidationIssue} from a list of {@link ValidationResultElement}.
    * This method doesn't check if it exits first.
+   *
    * @param validationResultElementList
+   *
    * @return
    */
   public static ValidationIssue getFirstValidationIssue(List<ValidationResultElement> validationResultElementList) {
     return validationResultElementList.get(0).getIssues().get(0);
+  }
+
+  /**
+   * Get the first {@link ValidationResultElement} from the provided list where at least one issues is matching
+   * the provided {@link EvaluationType}.
+   *
+   * @param type
+   * @param validationResultElementList
+   *
+   * @return
+   */
+  public static ValidationResultElement getFirstValidationResultElement(EvaluationType type, List<ValidationResultElement> validationResultElementList) {
+    return validationResultElementList.stream()
+            .filter(vre -> vre.getIssues().stream().filter(i -> i.getIssue() == type).findFirst().isPresent())
+            .findFirst().orElse(null);
   }
 
 }

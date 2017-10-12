@@ -2,8 +2,10 @@ package org.gbif.validation.evaluator;
 
 import org.gbif.dwc.extensions.Extension;
 import org.gbif.dwc.extensions.ExtensionManager;
+import org.gbif.dwc.terms.Term;
 import org.gbif.dwca.io.Archive;
 import org.gbif.dwca.io.ArchiveFactory;
+import org.gbif.dwca.io.ArchiveField;
 import org.gbif.dwca.io.ArchiveFile;
 import org.gbif.dwca.io.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
@@ -18,9 +20,11 @@ import org.gbif.validation.xml.XMLSchemaValidatorProvider;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import javax.validation.constraints.NotNull;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Validator;
@@ -87,6 +91,14 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
     // registered extension?
     Extension ext = extensionManager.get(archiveFile.getRowType());
     if (ext != null) {
+
+      // Check for duplicated terms
+      if (archiveFile.getHeader().length != archiveFile.getRawArchiveFields().size()) {
+        getDuplicatedTerm(archiveFile).forEach(
+                t -> validationIssues.add(ValidationIssues.withRelatedData(
+                        EvaluationType.DUPLICATED_TERM, TermWithinRowType.of(ext.getRowType(), t))));
+      }
+
       //check for required fields
       ext.getProperties().stream()
               .filter(ep -> ep.isRequired() && !archiveFile.hasTerm(ep.getQualname()))
@@ -104,6 +116,23 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
     }
     return validationIssues.isEmpty() ? Optional.empty() :
             Optional.of(ValidationResultElement.forMetaDescriptor(Archive.META_FN, validationIssues));
+  }
+
+  /**
+   * Get a {@link Set} of all {@link Term} that are not used uniquely.
+   *
+   * @param archiveFile
+   * @return {@link Set} of all {@link Term} that are used more than once or empty {@link Set} if none.
+   */
+  private Set<Term> getDuplicatedTerm(ArchiveFile archiveFile) {
+    Set<Term> uniqueTerms = new HashSet<>();
+    Set<Term> nonUniqueTerms = new HashSet<>();
+    for(ArchiveField headerTerm : archiveFile.getRawArchiveFields()) {
+      if(!uniqueTerms.add(headerTerm.getTerm())) {
+        nonUniqueTerms.add(headerTerm.getTerm());
+      }
+    }
+    return nonUniqueTerms;
   }
 
   private Validator getMetaXMLValidator() {
