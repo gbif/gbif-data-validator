@@ -65,5 +65,6 @@
     <field index="7" term="http://rs.tdwg.org/dwc/terms/genus"/>
     <field index="8" term="http://rs.tdwg.org/dwc/terms/specificEpithet"/>
     <field index="9" term="http://rs.tdwg.org/dwc/terms/scientificNameAuthorship"/>
+    <field index="10" term="http://rs.tdwg.org/dwc/terms/identifiedBy"/>
   </extension>
 </archive>

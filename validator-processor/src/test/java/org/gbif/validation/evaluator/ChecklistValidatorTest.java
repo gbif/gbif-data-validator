@@ -21,7 +21,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.fail;
 
 /**
- *
+ * Unit tests related to {@link ChecklistEvaluator}.
  */
 public class ChecklistValidatorTest {
 

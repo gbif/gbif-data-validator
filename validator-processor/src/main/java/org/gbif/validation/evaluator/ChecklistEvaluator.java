@@ -13,6 +13,7 @@ import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.TabularDataFile;
 import org.gbif.validation.api.model.RecordEvaluationResult;
+import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.util.OccurrenceToTermsHelper;
 
 import java.io.IOException;
@@ -43,7 +44,7 @@ import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMa
 class ChecklistEvaluator implements RecordCollectionEvaluator {
 
   private static final Logger LOG = LoggerFactory.getLogger(ChecklistEvaluator.class);
-  private static final Predicate<InterpretationRemark> IS_MAPPED = issue -> INTERPRETATION_REMARK_MAPPING.containsKey(issue);
+  private static final Predicate<InterpretationRemark> IS_MAPPED = INTERPRETATION_REMARK_MAPPING::containsKey;
 
   private final NormalizerConfiguration configuration;
 
@@ -80,11 +81,25 @@ class ChecklistEvaluator implements RecordCollectionEvaluator {
     //The generated a random dataset key, we only need it as a key
     UUID datasetKey = UUID.randomUUID();
     try (UsageDao dao = UsageDao.temporaryDao(configuration.neo.mappedMemory)) {
-      Normalizer normalizer = Normalizer.create(datasetKey, dao, taxonFile.get(0).getFilePath().toFile(),
+      Normalizer normalizer = Normalizer.create(datasetKey, dao, determinePathToUse(dwcDataFile).toFile(),
               new IdLookupPassThru(), configuration.neo.batchSize);
       normalizer.run(false);
       collectUsagesData(dao, resultConsumer);
     }
+  }
+
+  /**
+   * If we are dealing with a Dwc-A the {@link Normalizer} expects the path to the archive folder, if we have a single
+   * file, it expects the path ot this file.
+   *
+   * @param dwcDataFile
+   *
+   * @return
+   */
+  private Path determinePathToUse(DwcDataFile dwcDataFile) {
+    return dwcDataFile.getDataFile().getFileFormat() == FileFormat.DWCA ?
+            dwcDataFile.getDataFile().getFilePath() :
+            dwcDataFile.getByRowType(DwcTerm.Taxon).get(0).getFilePath();
   }
 
   /**
