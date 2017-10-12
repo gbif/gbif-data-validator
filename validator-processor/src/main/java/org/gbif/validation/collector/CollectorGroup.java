@@ -18,15 +18,21 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@link CollectorGroup} is used to simplify passing all the collectors around as different entities since they
  * are always used together.
  */
 public class CollectorGroup {
+
+  private static final Logger LOG = LoggerFactory.getLogger(CollectorGroup.class);
 
   private final RecordMetricsCollector metricsCollector;
   private final RecordEvaluationResultCollector resultsCollector;
@@ -113,8 +119,10 @@ public class CollectorGroup {
 
     // transform the term frequency into an ordered list of key/value pairs
     List<Map.Entry<Term, Integer>> termFrequency = Arrays.stream(dataFile.getColumns())
+            .filter(Objects::nonNull)
             .map(t -> new AbstractMap.SimpleImmutableEntry<>(t, mergedTermFrequency.getOrDefault(t, -1L).intValue()))
             .collect(Collectors.toList());
+    LOG.warn("dataFile.getColumns() ->" + dataFile.getColumns());
 
     //
     Map<Long, List<String>> verbatimRecordSample = getFullVerbatimRecordSample(dataFile.getColumns(), collectors);
