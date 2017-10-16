@@ -105,7 +105,8 @@ public class DataFileFactory {
   }
 
   /**
-   *
+   * Used to create a new {@link TabularDataFile} representing a portion of a larger {@link TabularDataFile}
+   * after a split.
    * @param tabDatafile
    * @param splitFilePath
    * @param lineOffset
@@ -114,13 +115,14 @@ public class DataFileFactory {
    * @return
    */
   public static TabularDataFile newTabularDataFileSplit(TabularDataFile tabDatafile, Path splitFilePath,
-                                                        Integer lineOffset, Integer numberOfLines, boolean withHeader) {
+                                                        Integer lineOffset, Integer numberOfLines,
+                                                        Integer numberOfLinesWithData, boolean withHeader) {
     return new TabularDataFile(splitFilePath,
             tabDatafile.getSourceFileName(),
             tabDatafile.getRowTypeKey(), tabDatafile.getColumns(),
             tabDatafile.getRecordIdentifier().orElse(null), tabDatafile.getDefaultValues().orElse(null),
             lineOffset, withHeader, tabDatafile.getCharacterEncoding(), tabDatafile.getDelimiterChar(),
-            tabDatafile.getQuoteChar(), numberOfLines);
+            tabDatafile.getQuoteChar(), numberOfLines, numberOfLinesWithData);
   }
 
   /**
@@ -246,16 +248,16 @@ public class DataFileFactory {
             new TermIndex(archiveFile.getId().getIndex(),
                     archiveFile.getId().getTerm() == null ? ArchiveFile.DEFAULT_ID_TERM : archiveFile.getId().getTerm());
 
+    int ignoreHeaderLines = archiveFile.getIgnoreHeaderLines()!= null ? archiveFile.getIgnoreHeaderLines() : 0;
     //if TermIndex is null we need to report an error
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             sourceFileName, RowTypeKey.get(archiveFile.getRowType(), type),
             headers, recordIdentifier, defaultValues,
             null, //no line offset
-            archiveFile.getIgnoreHeaderLines()!= null
-            && archiveFile.getIgnoreHeaderLines() > 0,
+            ignoreHeaderLines > 0,
             Charset.forName(archiveFile.getEncoding()),
             archiveFile.getFieldsTerminatedBy().charAt(0),
-            archiveFile.getFieldsEnclosedBy(), numberOfLines);
+            archiveFile.getFieldsEnclosedBy(), numberOfLines, numberOfLines - ignoreHeaderLines);
   }
 
   /**

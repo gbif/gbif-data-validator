@@ -42,6 +42,7 @@ public class TabularDataFile {
   private final Character delimiterChar;
   private final Character quoteChar;
   private final Integer numOfLines;
+  private final Integer numOfLinesWithData;
 
   /**
    * Complete constructor of {@link TabularDataFile}
@@ -58,6 +59,7 @@ public class TabularDataFile {
    * @param delimiterChar character used to delimit each value (cell) in the file
    * @param quoteChar
    * @param numOfLines
+   * @param numOfLinesWithData
    */
   public TabularDataFile(Path filePath, String sourceFileName,
                          RowTypeKey rowTypeKey, Term[] columns,
@@ -65,7 +67,7 @@ public class TabularDataFile {
                          @Nullable Map<Term, String> defaultValues,
                          @Nullable Integer fileLineOffset, boolean hasHeaders,
                          Charset characterEncoding,
-                         Character delimiterChar, Character quoteChar, Integer numOfLines) {
+                         Character delimiterChar, Character quoteChar, Integer numOfLines, Integer numOfLinesWithData) {
     Objects.requireNonNull(rowTypeKey, "rowTypeKey shall be provided");
 
     this.filePath = filePath;
@@ -80,6 +82,7 @@ public class TabularDataFile {
     this.delimiterChar = delimiterChar;
     this.quoteChar = quoteChar;
     this.numOfLines = numOfLines;
+    this.numOfLinesWithData = numOfLinesWithData;
   }
 
   /**
@@ -158,6 +161,10 @@ public class TabularDataFile {
     return Optional.ofNullable(defaultValues);
   }
 
+  public Integer getNumOfLinesWithData() {
+    return numOfLinesWithData;
+  }
+
   /**
    * Get the index of a {@link Term} or OptionalInt.empty if the Term can not be found.
    *
@@ -190,6 +197,7 @@ public class TabularDataFile {
             Objects.equals(filePath, dataFile.filePath) &&
             Objects.equals(sourceFileName, dataFile.sourceFileName) &&
             Objects.equals(numOfLines, dataFile.numOfLines) &&
+            Objects.equals(numOfLinesWithData, dataFile.numOfLinesWithData) &&
             Objects.equals(fileLineOffset, dataFile.fileLineOffset);
   }
 
@@ -206,6 +214,7 @@ public class TabularDataFile {
             delimiterChar,
             quoteChar,
             numOfLines,
+            numOfLinesWithData,
             fileLineOffset,
             hasHeaders);
   }

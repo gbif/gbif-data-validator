@@ -28,11 +28,11 @@ public class ValidationResultElementTest {
     source.add(ValidationResultElement.forMetadata("test.txt", Collections.singletonList(
             ValidationIssues.withEvaluationTypeOnly(EvaluationType.LICENSE_MISSING_OR_UNKNOWN)), null));
 
-    mergeInto.add(new ValidationResultElement("test.txt", 18L, DwcFileType.CORE, DwcTerm.Occurrence,
+    mergeInto.add(new ValidationResultElement("test.txt", 18L, 18L, DwcFileType.CORE, DwcTerm.Occurrence,
             DwcTerm.occurrenceID, Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
             Collections.emptyList())), null));
 
-    mergeInto.add(new ValidationResultElement("test2.txt", 18L, DwcFileType.CORE, DwcTerm.Occurrence,
+    mergeInto.add(new ValidationResultElement("test2.txt", 18L, 18L, DwcFileType.CORE, DwcTerm.Occurrence,
             DwcTerm.occurrenceID, Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
             Collections.emptyList())), null));
 

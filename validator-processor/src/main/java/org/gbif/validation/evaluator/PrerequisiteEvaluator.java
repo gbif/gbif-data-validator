@@ -51,7 +51,7 @@ class PrerequisiteEvaluator implements DwcDataFileEvaluator {
     validationIssues.add(ValidationIssues.withEvaluationTypeOnly(evaluationType));
     validationResultElements.add(
             new ValidationResultElement(
-                    filename, null, DwcFileType.CORE, null, null, validationIssues, null));
+                    filename, null, null, DwcFileType.CORE, null, null, validationIssues, null));
     return validationResultElements;
   }
 }

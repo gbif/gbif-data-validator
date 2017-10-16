@@ -74,6 +74,6 @@ class DataFileSplitter {
     splitFile.deleteOnExit();
 
     return DataFileFactory.newTabularDataFileSplit(dataFile, Paths.get(splitFile.getAbsolutePath()),
-            offset, numberOfLines, withHeader);
+            offset, numberOfLines, numberOfLines - (withHeader ? 1 : 0) , withHeader);
   }
 }

@@ -131,6 +131,7 @@ public class CollectorGroup {
 
     return new ValidationResultElement(resultingFileName,
             dataFile.getNumOfLines().longValue(),
+            dataFile.getNumOfLinesWithData().longValue(),
             dataFile.getDwcFileType(),
             dataFile.getRowTypeKey().getRowType(),
             dataFile.getRecordIdentifier().map(TermIndex::getTerm).orElse(null),
