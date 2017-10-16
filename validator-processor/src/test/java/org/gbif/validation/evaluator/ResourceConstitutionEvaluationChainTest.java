@@ -4,13 +4,11 @@ import org.gbif.validation.TestUtils;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.model.EvaluationType;
 import org.gbif.validation.api.vocabulary.FileFormat;
-import org.gbif.validation.api.result.ValidationResultElement;
 import org.gbif.validation.source.DataFileFactory;
 import org.gbif.validation.source.UnsupportedDataFileException;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.Collections;
 
 import org.junit.Rule;
 import org.junit.Test;
@@ -34,19 +32,16 @@ public class ResourceConstitutionEvaluationChainTest {
   @Test
   public void testResourceConstitutionEvaluationChain() throws IOException, UnsupportedDataFileException {
     DataFile dataFile = TestUtils.getDataFile(TEST_NO_ID_CSV_FILE_LOCATION, "no-id", FileFormat.TABULAR);
-    DwcDataFileSupplier transformer = () -> DataFileFactory.prepareDataFile(dataFile,folder.newFolder().toPath());
+    DwcDataFileSupplier transformer = () -> DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());
 
-    ResourceConstitutionEvaluationChain evaluationChain =
-      ResourceConstitutionEvaluationChain.Builder.using(dataFile, TestUtils.getEvaluatorFactory())
-              .transformedBy(transformer)
-              .evaluateDwcDataFile(TestUtils.getEvaluatorFactory().createPrerequisiteEvaluator())
-            .build();
+    ResourceConstitutionEvaluationChain evaluationChain = new ResourceConstitutionEvaluationChain(dataFile,
+            Collections.singletonList(TestUtils.getEvaluatorFactory().createResourceStructureEvaluator(dataFile.getFileFormat())),
+            transformer, Collections.singletonList(TestUtils.getEvaluatorFactory().createPrerequisiteEvaluator()));
 
-    Optional<List<ValidationResultElement>> result = evaluationChain.run();
+    ResourceConstitutionEvaluationChain.ResourceConstitutionResult result = evaluationChain.run();
 
-    assertTrue(evaluationChain.evaluationStopped());
-    assertTrue(result.isPresent());
-    assertEquals(EvaluationType.CORE_ROWTYPE_UNDETERMINED, getFirstValidationIssue(result.get()).getIssue());
+    assertTrue(result.isEvaluationStopped());
+    assertEquals(EvaluationType.CORE_ROWTYPE_UNDETERMINED, getFirstValidationIssue(result.getResults()).getIssue());
   }
 
 }

@@ -37,10 +37,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -48,7 +48,6 @@ import akka.actor.AbstractLoggingActor;
 import akka.actor.ActorRef;
 import akka.actor.Props;
 import akka.routing.RoundRobinPool;
-import org.apache.commons.lang3.mutable.MutableInt;
 
 import static org.gbif.validation.api.model.ValidationProfile.GBIF_INDEXING_PROFILE;
 
@@ -67,9 +66,10 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   private final Map<RowTypeKey, List<CollectorGroup>> rowTypeCollectors;
   private final Collection<ValidationResultElement> validationResultElements;
   private final boolean preserveTemporaryFiles;
-  private final AtomicInteger workerCompleted;
 
-  private int numOfWorkers;
+  private final AtomicInteger numOfWorkers;
+  private final AtomicInteger workerCompleted;
+  private final AtomicBoolean initCompleted;
 
   private DataJob<DataFile> dataJob;
 
@@ -86,19 +86,22 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     rowTypeCollectorProviders = new ConcurrentHashMap<>();
     rowTypeCollectors = new ConcurrentHashMap<>();
     workerCompleted = new AtomicInteger(0);
+    numOfWorkers = new AtomicInteger(0);
+    initCompleted = new AtomicBoolean(false);
     validationResultElements = new ConcurrentLinkedQueue<>();
     this.preserveTemporaryFiles = preserveTemporaryFiles;
 
     receive(
             //this should only be called once
             match(DataJob.class, dataJobMessage -> {
-              dataJob = (DataJob<DataFile>)dataJobMessage;
+              dataJob = (DataJob<DataFile>) dataJobMessage;
               workingDir = new File(baseWorkingDir, UUID.randomUUID().toString());
               workingDir.mkdir();
               processDataFile(factory, fileSplitSize);
             })
-              .match(DataWorkResult.class, this::processRecordBasedResults)
-              .match(MetadataWorkResult.class, this::processMetadataBasedResults).build()
+                    .match(DataWorkResult.class, this::processRecordBasedResults)
+                    .match(MetadataWorkResult.class, this::processMetadataBasedResults)
+                    .match(FinishedInit.class, this::onInitCompleted).build()
     );
   }
 
@@ -124,35 +127,45 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    */
   private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
     DataFile dataFile = dataJob.getJobData();
+    DwcDataFileSupplier transformer = () -> DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
 
-    StructuralEvaluationResult structuralEvaluationResult = evaluateResourceIntegrityAndStructure(dataFile, factory);
-    if(structuralEvaluationResult.canContinueEvaluation()){
-      DwcDataFile dwcDataFile = structuralEvaluationResult.dwcDataFile;
+   // final MutableInt numOfWorkers = new MutableInt(0);
+    EvaluationChain.Builder evaluationChainBuilder =
+            EvaluationChain.Builder.using(dataFile, transformer, factory, workingDir.toPath())
+                    .evaluateMetadataContent()
+                    .evaluateCoreUniqueness()
+                    .evaluateReferentialIntegrity()
+                    .evaluateRecords(df -> handleSplit(df, fileSplitSize))
+                    .evaluateChecklist();
+    EvaluationChain evaluationChain = evaluationChainBuilder.build();
 
-      init(dwcDataFile.getTabularDataFiles());
+    ResourceConstitutionEvaluationChain.ResourceConstitutionResult resourceConstitutionResults = evaluationChain.runResourceConstitutionEvaluation();
+    ValidationResultElement.mergeOnFilename(resourceConstitutionResults.getResults(), validationResultElements);
 
-      //numOfWorkers is used to know how many responses we are expecting
-      final MutableInt numOfWorkers = new MutableInt(0);
-      EvaluationChain.Builder evaluationChainBuilder =
-              EvaluationChain.Builder.using(dwcDataFile, factory, workingDir.toPath())
-                      .evaluateMetadataContent()
-                      .evaluateCoreUniqueness()
-                      .evaluateReferentialIntegrity()
-                      .evaluateRecords(df -> handleSplit(df, fileSplitSize, numOfWorkers))
-                      .evaluateChecklist();
-
-      EvaluationChain evaluationChain = evaluationChainBuilder.build();
-      numOfWorkers.add(evaluationChain.getNumberOfRowTypeEvaluationUnits());
-      numOfWorkers.add(evaluationChain.getNumberOfDwcDataFileEvaluationUnits());
-
-      this.numOfWorkers = numOfWorkers.intValue();
-
-      log().info("Expected {} worker response(s)", numOfWorkers);
-      log().info(evaluationChain.toString());
-
-      //now trigger everything
-      startAllActors(evaluationChain);
+    if(resourceConstitutionResults.isEvaluationStopped()) {
+      emitResponseAndStop(buildJobStatusResponse(false, JobStatus.FINISHED, dataFile, new ArrayList<>(validationResultElements)));
+      return;
     }
+
+    //notify the parent with partial results
+    context().parent()
+            .tell(buildJobStatusResponse(null, JobStatus.RUNNING, dataFile, new ArrayList<>(validationResultElements)), self());
+    DwcDataFile dwcDataFile = resourceConstitutionResults.getTransformedDataFile();
+
+    init(dwcDataFile.getTabularDataFiles());
+
+    //numOfWorkers.add(evaluationChain.getNumberOfRowTypeEvaluationUnits());
+    //numOfWorkers.add(evaluationChain.getNumberOfDwcDataFileEvaluationUnits());
+
+   // this.numOfWorkers = numOfWorkers.intValue();
+
+    //log().info("Expected {} worker response(s)", numOfWorkers);
+   // log().info(evaluationChain.toString());
+
+    //now trigger everything
+    startAllActors(evaluationChain, numOfWorkers);
+
+    //this.numOfWorkers = numOfWorkers.intValue();
   }
 
   /**
@@ -173,16 +186,13 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    *
    * @param tabularDataFile
    * @param fileSplitSize
-   * @param numOfWorkers
    *
    * @return
    */
-  private List<TabularDataFile> handleSplit(final TabularDataFile tabularDataFile, final Integer fileSplitSize,
-                                            final MutableInt numOfWorkers) throws IOException {
+  private List<TabularDataFile> handleSplit(final TabularDataFile tabularDataFile, final Integer fileSplitSize) throws IOException {
     List<TabularDataFile> splitDataFile;
     try {
       splitDataFile = DataFileSplitter.splitDataFile(tabularDataFile, fileSplitSize, workingDir.toPath());
-      numOfWorkers.add(splitDataFile.size());
     } catch (IOException ioEx) {
       log().error("Failed to split data", ioEx);
       throw ioEx;
@@ -191,60 +201,40 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Evaluate the structure of the resource represented by the provided {@link DataFile}.
-   * If a RESOURCE_INTEGRITY issue is found, the JobStatusResponse will be emitted and this actor will be stopped.
-   * @param dataFile
-   * @return is the resource integrity allows to continue the evaluation or not
-   */
-  private StructuralEvaluationResult evaluateResourceIntegrityAndStructure(DataFile dataFile, EvaluatorFactory factory) {
-
-    DwcDataFileSupplier transformer = () -> DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
-    ResourceConstitutionEvaluationChain evaluationChain =
-            ResourceConstitutionEvaluationChain.Builder.using(dataFile, factory)
-                    .transformedBy(transformer)
-                    .evaluateDwcDataFile(factory.createPrerequisiteEvaluator())
-                    .build();
-
-    Optional<List<ValidationResultElement>> validationResultElementList = evaluationChain.run();
-    if (validationResultElementList.isPresent()) {
-      //check if we have an issue that requires to stop the evaluation process
-      if (evaluationChain.evaluationStopped()) {
-        emitResponseAndStop(buildJobStatusResponse(false, JobStatus.FINISHED, dataFile, validationResultElementList.get()));
-        return StructuralEvaluationResult.createStopEvaluation();
-      }
-      ValidationResultElement.mergeOnFilename(validationResultElementList.get(), validationResultElements);
-
-      context().parent()
-              .tell(buildJobStatusResponse(null, JobStatus.RUNNING, dataFile, new ArrayList<>(validationResultElements)), self());
-    }
-
-    return new StructuralEvaluationResult(false, evaluationChain.getTransformedDataFile());
-  }
-
-  /**
    * Triggers processing of all dwcDataFileEvaluator, recordCollectionEvaluator and RecordEvaluator from the chain.
    *
    * @param evaluationChain
    */
-  private void startAllActors(final EvaluationChain evaluationChain) {
+  private void startAllActors(final EvaluationChain evaluationChain, final AtomicInteger numOfWorkers) {
     DwcDataFileEvaluatorRunner dwcDataFileEvaluatorRunner = (dwcDataFile, dwcDataFileEvaluator) -> {
+      numOfWorkers.incrementAndGet();
       ActorRef actor = createSingleActor(dwcDataFileEvaluator);
       actor.tell(dwcDataFile, self());
     };
     evaluationChain.runDwcDataFileEvaluation(dwcDataFileEvaluatorRunner);
 
     RecordCollectionEvaluatorRunner runner = (dwcDataFile, rowTypeKey, recordCollectionEvaluator) -> {
+      numOfWorkers.incrementAndGet();
       ActorRef actor = createSingleActor(rowTypeKey, recordCollectionEvaluator);
       actor.tell(dwcDataFile, self());
     };
     evaluationChain.runRecordCollectionEvaluation(runner);
 
     RecordEvaluatorRunner recordEvaluatorRunner = (dataFiles, rowTypeKey, recordEvaluator) -> {
+      numOfWorkers.addAndGet(dataFiles.size());
       ActorRef workerRouter = createWorkerRoutes(Math.min(dataFiles.size(), MAX_WORKER),
               rowTypeKey, recordEvaluator);
       dataFiles.forEach(dataFile -> workerRouter.tell(dataFile, self()));
     };
-    evaluationChain.runRecordEvaluation(recordEvaluatorRunner);
+
+    try {
+      evaluationChain.runRecordEvaluation(recordEvaluatorRunner);
+    } catch (IOException ioEx) {
+      emitErrorAndStop(evaluationChain.getDataFile(), ValidationErrorCode.IO_ERROR, ioEx.getMessage());
+      return;
+    }
+
+    this.self().tell(FinishedInit.INSTANCE, self());
   }
 
   /**
@@ -261,7 +251,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Creates an Actor for the provided {@link Term} and {@link RecordCollectionEvaluator}.
+   * Creates an Actor for the provided {@link DwcDataFileEvaluator}.
    */
   private ActorRef createSingleActor(DwcDataFileEvaluator metadataEvaluator) {
     String actorName =  "MetadataEvaluatorActor_" + UUID.randomUUID();
@@ -269,7 +259,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Creates an Actor for the provided {@link EvaluationChain.RowTypeEvaluationUnit}.
+   * Creates an Actor for the provided {@link RowTypeKey} and {@link RecordCollectionEvaluator}.
    */
   private ActorRef createSingleActor(RowTypeKey rowTypeKey, RecordCollectionEvaluator recordCollectionEvaluator) {
     String actorName =  "RowTypeEvaluationUnitActor_" + UUID.randomUUID();
@@ -306,12 +296,27 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
   /**
    * Once a response is received, increment counter and check for completion.
+   * In theory, this method is only called by actors so thread safety should be included
    */
   private void incrementWorkerCompleted() {
     int numberOfWorkersCompleted = workerCompleted.incrementAndGet();
     log().info("Got {} worker response(s)", numberOfWorkersCompleted);
 
-    if (numberOfWorkersCompleted == numOfWorkers) {
+
+    checkCompleteness(numberOfWorkersCompleted);
+  }
+
+  /**
+   * In theory, this method is only called by actors so thread safety should be included
+   */
+  private void onInitCompleted(FinishedInit ignore) {
+    initCompleted.set(true);
+    checkCompleteness(workerCompleted.get());
+  }
+
+  private void checkCompleteness(int numberOfWorkersCompleted) {
+    // in theory, this method is only called by actors so thread safety should be included
+    if (numberOfWorkersCompleted == numOfWorkers.get() && initCompleted.get()) {
       ValidationResult validationResult = buildResult();
       emitDataOutput(buildJobDataOutput(validationResult));
       emitResponseAndStop(new JobStatusResponse<>(JobStatus.FINISHED, dataJob.getJobId(),
@@ -413,21 +418,4 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     }
   }
 
-  private static class StructuralEvaluationResult {
-    private boolean stopEvaluation;
-    private DwcDataFile dwcDataFile;
-
-    static StructuralEvaluationResult createStopEvaluation(){
-      return new StructuralEvaluationResult(true, null);
-    }
-
-    StructuralEvaluationResult(boolean stopEvaluation, DwcDataFile dwcDataFile){
-      this.stopEvaluation = stopEvaluation;
-      this.dwcDataFile = dwcDataFile;
-    }
-
-    public boolean canContinueEvaluation(){
-      return !stopEvaluation;
-    }
-  }
 }

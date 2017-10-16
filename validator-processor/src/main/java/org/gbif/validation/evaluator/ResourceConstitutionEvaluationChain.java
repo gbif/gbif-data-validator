@@ -12,10 +12,8 @@ import org.gbif.validation.source.UnsupportedDataFileException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import javax.annotation.concurrent.NotThreadSafe;
 
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,17 +35,15 @@ public class ResourceConstitutionEvaluationChain {
   private final DwcDataFileSupplier dwcDataFileSupplier;
   private final List<DwcDataFileEvaluator> dwcDataFileEvaluators;
 
-  private DwcDataFile transformedDataFile;
-  private boolean evaluationStopped = false;
-
   /**
-   * Use {@link Builder}.
+   *
+   *
    * @param dataFile
    * @param resourceStructureEvaluators
    * @param dwcDataFileSupplier
    * @param dwcDataFileEvaluators
    */
-  private ResourceConstitutionEvaluationChain(DataFile dataFile, List<ResourceStructureEvaluator> resourceStructureEvaluators,
+  ResourceConstitutionEvaluationChain(DataFile dataFile, List<ResourceStructureEvaluator> resourceStructureEvaluators,
                                               DwcDataFileSupplier dwcDataFileSupplier, List<DwcDataFileEvaluator> dwcDataFileEvaluators) {
     this.dataFile = dataFile;
     this.resourceStructureEvaluators = resourceStructureEvaluators;
@@ -56,56 +52,16 @@ public class ResourceConstitutionEvaluationChain {
   }
 
   /**
-   * Builder class allowing to build an instance of {@link ResourceConstitutionEvaluationChain}.
-   */
-  public static class Builder {
-    private final DataFile dataFile;
-    private final List<ResourceStructureEvaluator> resourceStructureEvaluators = new ArrayList<>();
-    private final List<DwcDataFileEvaluator> dwcDataFileEvaluators = new ArrayList<>();
-
-    private DwcDataFileSupplier dwcDataFileSupplier;
-
-    /**
-     *
-     * @param dataFile dataFile received for validation
-     * @param factory
-     * @return
-     */
-    public static Builder using(DataFile dataFile, EvaluatorFactory factory) {
-      return new Builder(dataFile, factory);
-    }
-
-    private Builder(DataFile dataFile, EvaluatorFactory factory) {
-      this.dataFile = dataFile;
-      resourceStructureEvaluators.add(factory.createResourceStructureEvaluator(dataFile.getFileFormat()));
-    }
-
-    public Builder transformedBy(DwcDataFileSupplier dwcDataFileSupplier) {
-      this.dwcDataFileSupplier = dwcDataFileSupplier;
-      return this;
-    }
-
-    public Builder evaluateDwcDataFile(DwcDataFileEvaluator dwcDataFileEvaluator) {
-      Preconditions.checkState(dwcDataFileSupplier != null, "DwcDataFileEvaluator usage requires a dwcDataFileSupplier");
-      dwcDataFileEvaluators.add(dwcDataFileEvaluator);
-      return this;
-    }
-
-    public ResourceConstitutionEvaluationChain build() {
-      return new ResourceConstitutionEvaluationChain(dataFile, resourceStructureEvaluators, dwcDataFileSupplier,
-              dwcDataFileEvaluators);
-    }
-  }
-
-  /**
    * Runs all {@link ResourceStructureEvaluator} in the evaluation chain.
    * Breaks (stop the evaluation) if a RESOURCE_INTEGRITY result is received.
    */
-  public Optional<List<ValidationResultElement>> run() {
+  public ResourceConstitutionResult run() {
     List<ValidationResultElement> validationResultElements = new ArrayList<>();
+    DwcDataFile transformedDataFile = null;
+    boolean evaluationStopped = false;
 
-    for(ResourceStructureEvaluator rsEvaluator: resourceStructureEvaluators) {
-      if(!accumulateAndContinue(rsEvaluator.evaluate(dataFile).orElse(null), validationResultElements)) {
+    for (ResourceStructureEvaluator rsEvaluator : resourceStructureEvaluators) {
+      if (!accumulateAndContinue(rsEvaluator.evaluate(dataFile).orElse(null), validationResultElements)) {
         evaluationStopped = true;
         break;
       }
@@ -132,7 +88,7 @@ public class ResourceConstitutionEvaluationChain {
         evaluationStopped = true;
       }
     }
-    return validationResultElements.isEmpty() ? Optional.empty() : Optional.of(validationResultElements);
+    return new ResourceConstitutionResult(evaluationStopped, transformedDataFile, validationResultElements);
   }
 
   /**
@@ -164,20 +120,31 @@ public class ResourceConstitutionEvaluationChain {
             .findAny().isPresent();
   }
 
-  /**
-   * Checks if the evaluation chain reached the end or it was stopped before.
-   * @return
-   */
-  public boolean evaluationStopped() {
-    return evaluationStopped;
-  }
 
   /**
-   * Returns the {@link DwcDataFile} transformed by the previously registered {@link DwcDataFileSupplier} (if any).
-   *
-   * @return {@link DwcDataFile} or null if no transformation was applied or an error occurred.
+   * Object holder to represent ResourceConstitution validation results.
    */
-  public DwcDataFile getTransformedDataFile() {
-    return transformedDataFile;
+  public static class ResourceConstitutionResult {
+    private final boolean evaluationStopped;
+    private final DwcDataFile transformedDataFile;
+    private final List<ValidationResultElement> results;
+
+    private ResourceConstitutionResult(boolean evaluationStopped, DwcDataFile transformedDataFile, List<ValidationResultElement> results) {
+      this.evaluationStopped = evaluationStopped;
+      this.transformedDataFile = transformedDataFile;
+      this.results = results;
+    }
+
+    public boolean isEvaluationStopped() {
+      return evaluationStopped;
+    }
+
+    public DwcDataFile getTransformedDataFile() {
+      return transformedDataFile;
+    }
+
+    public List<ValidationResultElement> getResults() {
+      return results;
+    }
   }
 }
