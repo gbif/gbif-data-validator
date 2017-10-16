@@ -190,6 +190,10 @@ public class ValidationResultElement implements Serializable {
     return numberOfLines;
   }
 
+  public Long getNumberOfLinesWithData() {
+    return numberOfLinesWithData;
+  }
+
   public DwcFileType getFileType() {
     return fileType;
   }
