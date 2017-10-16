@@ -1,39 +1,22 @@
 package org.gbif.validation.processor;
 
-import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.validation.TestUtils;
-import org.gbif.validation.api.DataFile;
-import org.gbif.validation.api.model.EvaluationType;
-import org.gbif.validation.api.model.JobStatusResponse;
-import org.gbif.validation.api.result.ValidationIssues;
-import org.gbif.validation.api.result.ValidationResultElement;
-import org.gbif.validation.api.vocabulary.DwcFileType;
-import org.gbif.validation.api.vocabulary.FileFormat;
 import org.gbif.validation.conf.ValidatorConfiguration;
 import org.gbif.validation.jobserver.JobMonitor;
 import org.gbif.validation.jobserver.JobStorage;
 import org.gbif.validation.jobserver.impl.ActorPropsSupplier;
 import org.gbif.validation.jobserver.impl.InMemoryJobStorage;
-import org.gbif.validation.jobserver.messages.DataJob;
-import org.gbif.validation.source.DataFileFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.function.Consumer;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import com.google.common.collect.Lists;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-
-import static junit.framework.TestCase.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 /**
  * WIP, C.G.
@@ -46,34 +29,41 @@ public class ParallelDataFileProcessorMasterTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
+  private final ActorSystem system = ActorSystem.create("ParallelDataFileProcessorMasterTestSystem");
 
   @Test
-  public void testMergeIssuesOnFilename() {
-    List<ValidationResultElement> source = new ArrayList<>();
-    List<ValidationResultElement> mergeInto = new ArrayList<>();
+  public void test() throws IOException {
 
-    source.add(ValidationResultElement.forMetadata("test.txt", Collections.singletonList(
-            ValidationIssues.withEvaluationTypeOnly(EvaluationType.LICENSE_MISSING_OR_UNKNOWN)), null));
+   // EvaluatorFactory EVALUATOR_FACTORY = new EvaluatorFactory(UAT_API);
 
-    mergeInto.add(new ValidationResultElement("test.txt", 18L, DwcFileType.CORE, DwcTerm.Occurrence,
-            DwcTerm.occurrenceID, Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
-                    Collections.emptyList())), null));
+    Path workingFolder = folder.newFolder().toPath();
+    JobStorage js = new InMemoryJobStorage();
 
-    mergeInto.add(new ValidationResultElement("test2.txt", 18L, DwcFileType.CORE, DwcTerm.Occurrence,
-            DwcTerm.occurrenceID, Lists.newArrayList(ValidationIssues.withSample(EvaluationType.INDIVIDUAL_COUNT_INVALID, 1,
-                    Collections.emptyList())), null));
+    ValidatorConfiguration validatorConfiguration = TestUtils.getValidatorConfiguration();
+    ActorPropsSupplier aps =  new ActorPropsSupplier(TestUtils.getEvaluatorFactory(),
+            5000, workingFolder.toString(), false);
 
-    DataFileProcessorMaster.mergeIssuesOnFilename(source, mergeInto);
+    Consumer<Long> completionCallback = ParallelDataFileProcessorMasterTest::onCompletion;
+    ActorRef jobMonitor = system.actorOf(Props.create(JobMonitor.class, aps, js, completionCallback), "JobMonitor");
 
-    assertEquals(2, mergeInto.size());
-    ValidationResultElement testTxtElement = mergeInto.get(0);
-    assertEquals("test.txt", testTxtElement.getFileName());
-    assertEquals(2, testTxtElement.getIssues().size());
-    //assert that the LICENSE_MISSING_OR_UNKNOWN is now attached to "test.txt" in the mergeInto collection
-    assertTrue(testTxtElement.getIssues().stream()
-            .filter( issue -> EvaluationType.LICENSE_MISSING_OR_UNKNOWN == issue.getIssue())
-            .findFirst()
-            .isPresent());
+
+//    DataFile df = DataFileFactory.newDataFile(Paths.get("dwcarchive-1"),
+//            "dwcarchive-1.zip", FileFormat.DWCA , "application/zip", "application/zip");
+//
+//    //creates a actor that is responsible to handle a this jobData
+//    //jobMonitor.tell(new DataJob<>(1, df), jobMonitor);
+//
+//    while(!js.getStatus(1).isPresent() || js.getStatus(1).get().getStatus() != JobStatusResponse.JobStatus.FINISHED) {
+//      try {
+//        Thread.sleep(15);
+//      } catch (InterruptedException e) {
+//        e.printStackTrace();
+//      }
+//    }
+  }
+  
+  private static void onCompletion(Long jobId) {
+
   }
 
 }
