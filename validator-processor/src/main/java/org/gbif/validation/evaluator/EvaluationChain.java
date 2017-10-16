@@ -9,19 +9,22 @@ import org.gbif.validation.api.RecordCollectionEvaluator;
 import org.gbif.validation.api.RecordEvaluator;
 import org.gbif.validation.api.RowTypeKey;
 import org.gbif.validation.api.TabularDataFile;
-import org.gbif.validation.api.TermIndex;
 import org.gbif.validation.evaluator.runner.DwcDataFileEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordCollectionEvaluatorRunner;
 import org.gbif.validation.evaluator.runner.RecordEvaluatorRunner;
+import org.gbif.validation.util.IOFunction;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Preconditions;
 
 /**
  * The {@link EvaluationChain} is used to build and store the sequence of evaluation that will be performed.
@@ -43,15 +46,15 @@ public class EvaluationChain {
       this.recordEvaluator = recordEvaluator;
     }
 
-    public RecordEvaluator getRecordEvaluator() {
+    RecordEvaluator getRecordEvaluator() {
       return recordEvaluator;
     }
 
-    public RowTypeKey getRowTypeKey() {
+    RowTypeKey getRowTypeKey() {
       return rowTypeKey;
     }
 
-    public List<TabularDataFile> getDataFiles() {
+    List<TabularDataFile> getDataFiles() {
       return dataFiles;
     }
 
@@ -145,14 +148,20 @@ public class EvaluationChain {
     private final EvaluatorFactory factory;
 
     /**
-     *
-     * @param dwcDataFile dataFile received for validation
+     * Get a new {@link Builder} instance
+     * @param dwcDataFile dataFile to use for validation
      * @param factory
+     * @param workingFolder
      * @return new instance of {@link Builder}
      */
     public static Builder using(DwcDataFile dwcDataFile, EvaluatorFactory factory, Path workingFolder) {
       return new Builder(dwcDataFile, factory, workingFolder);
     }
+
+//    public static Builder using(DataFile dataFile, DwcDataFileSupplier dwcDataFileSupplier,
+//                                EvaluatorFactory factory, Path workingFolder) {
+//      return new Builder(dwcDataFile, factory, workingFolder);
+//    }
 
     private Builder(DwcDataFile dwcDataFile, EvaluatorFactory factory, Path workingFolder) {
       this.dwcDataFile = dwcDataFile;
@@ -161,13 +170,36 @@ public class EvaluationChain {
     }
 
     /**
-     * @param dataFile all the same rowType
-     * @return
+     * Add records evaluation as defined by the {@link EvaluatorFactory}.
+     *
+     * @return the builder
      */
-    public Builder evaluateRecords(RowTypeKey rowTypeKey, TermIndex recordIdentifier, List<Term> columns,
-                                   Map<Term, String> defaultValues, List<TabularDataFile> dataFile) {
-      recordEvaluationUnits.add(new RecordEvaluationUnit(dataFile, rowTypeKey,
-              factory.createRecordEvaluator(rowTypeKey.getRowType(), recordIdentifier, columns, defaultValues)));
+    public Builder evaluateRecords() {
+      Preconditions.checkState(recordEvaluationUnits.isEmpty(), "evaluateRecords shall only be called once");
+      try {
+        return evaluateRecords(Collections::singletonList);
+      } catch (IOException ignore) {
+        //safe to ignore, singletonList does not throw IOException
+      }
+      return null;
+    }
+
+    /**
+     * Same as {@link #evaluateRecords()} but using a transform function to turn a single {@link TabularDataFile}
+     * into a list of {@link TabularDataFile} (e.g. splitting a file into multiple smaller files)
+     * @param transform
+     * @return the builder
+     */
+    public Builder evaluateRecords(IOFunction<TabularDataFile, List<TabularDataFile>> transform) throws IOException {
+      Preconditions.checkState(recordEvaluationUnits.isEmpty(), "evaluateRecords shall only be called once");
+
+      for (TabularDataFile df : dwcDataFile.getTabularDataFiles()) {
+        List<Term> columns = Arrays.asList(df.getColumns());
+        recordEvaluationUnits.add(new RecordEvaluationUnit(transform.apply(df),
+                df.getRowTypeKey(),
+                factory.createRecordEvaluator(df.getRowTypeKey().getRowType(),
+                        df.getRecordIdentifier().orElse(null), columns, df.getDefaultValues().orElse(null))));
+      }
       return this;
     }
 
@@ -222,10 +254,11 @@ public class EvaluationChain {
     }
 
     public EvaluationChain build() {
-      return new EvaluationChain(dwcDataFileEvaluationUnits, rowTypeEvaluationUnits, recordEvaluationUnits);
+      return new EvaluationChain(dwcDataFile, dwcDataFileEvaluationUnits, rowTypeEvaluationUnits, recordEvaluationUnits);
     }
   }
 
+  private final DwcDataFile dwcDataFile;
   private final List<RowTypeEvaluationUnit> rowTypeEvaluationUnits;
   private final List<RecordEvaluationUnit> recordEvaluationUnits;
   private final List<DwcDataFileEvaluationUnit> dwcDataFileEvaluationUnits;
@@ -237,13 +270,22 @@ public class EvaluationChain {
    * @param rowTypeEvaluationUnits
    * @param recordEvaluationUnits
    */
-  private EvaluationChain(List<DwcDataFileEvaluationUnit> dwcDataFileEvaluationUnits,
+  private EvaluationChain(DwcDataFile dwcDataFile, List<DwcDataFileEvaluationUnit> dwcDataFileEvaluationUnits,
                           List<RowTypeEvaluationUnit> rowTypeEvaluationUnits,
                           List<RecordEvaluationUnit> recordEvaluationUnits) {
+    this.dwcDataFile = dwcDataFile;
     this.dwcDataFileEvaluationUnits = dwcDataFileEvaluationUnits;
     this.rowTypeEvaluationUnits = rowTypeEvaluationUnits;
     this.recordEvaluationUnits = recordEvaluationUnits;
   }
+
+  /**
+   *
+   * @return should the evaluation chain continue or stop
+   */
+//  public boolean runResourceConstitutionEvaluation() {
+//
+//  }
 
   /**
    * Run all the {@link DwcDataFileEvaluator} using the provided {@link DwcDataFileEvaluatorRunner}.
@@ -287,6 +329,10 @@ public class EvaluationChain {
 
   public int getNumberOfRecordEvaluationUnits() {
     return recordEvaluationUnits.size();
+  }
+
+  public DwcDataFile getDwcDataFile() {
+    return dwcDataFile;
   }
 
   @Override

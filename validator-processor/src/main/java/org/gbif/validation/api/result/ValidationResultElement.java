@@ -8,9 +8,11 @@ import org.gbif.validation.api.vocabulary.DwcFileType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -85,6 +87,32 @@ public class ValidationResultElement implements Serializable {
    */
   public static ValidationResultElement forMetaDescriptor(String fileName, List<ValidationIssue> issues){
     return new ValidationResultElement(fileName, null, DwcFileType.META_DESCRIPTOR, null, null, issues, null);
+  }
+
+  /**
+   * Given 2 collections of {@link ValidationResultElement}, for each element of source merge the issues into
+   * the mergeInto collection if it contains a {@link ValidationResultElement} with the same filename. Otherwise,
+   * the {@link ValidationResultElement} is added to the mergeInto collection.
+   *
+   * FIXME availableDataOutput will not be updated after merge. We should probably return a new Collection
+   *
+   * @param source
+   * @param mergeInto
+   */
+  public static void mergeOnFilename(final Collection<ValidationResultElement> source, final Collection<ValidationResultElement> mergeInto) {
+    source.forEach(
+            vre -> {
+              Optional<ValidationResultElement> currentElement = mergeInto.stream()
+                      .filter(re -> vre.getFileName().equals(re.getFileName()))
+                      .findFirst();
+              if (currentElement.isPresent()) {
+                currentElement.get().getIssues().addAll(vre.getIssues());
+                currentElement.get().getAvailableDataOutput().addAll(vre.getAvailableDataOutput());
+              } else {
+                mergeInto.add(vre);
+              }
+            }
+    );
   }
 
   public ValidationResultElement(String fileName, Long numberOfLines, DwcFileType fileType, Term rowType,

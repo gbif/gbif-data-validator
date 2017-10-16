@@ -131,16 +131,15 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
 
       init(dwcDataFile.getTabularDataFiles());
 
+      //numOfWorkers is used to know how many responses we are expecting
+      final MutableInt numOfWorkers = new MutableInt(0);
       EvaluationChain.Builder evaluationChainBuilder =
               EvaluationChain.Builder.using(dwcDataFile, factory, workingDir.toPath())
                       .evaluateMetadataContent()
                       .evaluateCoreUniqueness()
                       .evaluateReferentialIntegrity()
+                      .evaluateRecords(df -> handleSplit(df, fileSplitSize, numOfWorkers))
                       .evaluateChecklist();
-
-      //numOfWorkers is used to know how many responses we are expecting
-      final MutableInt numOfWorkers = new MutableInt(0);
-      prepareRecordBasedEvaluations(dwcDataFile, fileSplitSize, evaluationChainBuilder, numOfWorkers);
 
       EvaluationChain evaluationChain = evaluationChainBuilder.build();
       numOfWorkers.add(evaluationChain.getNumberOfRowTypeEvaluationUnits());
@@ -170,29 +169,25 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Calculates the required splits to process all the {@link DataFile}.
-   * This method expect {@link #init(Iterable)} to be already called.
+   * Handle splits to process all the {@link DataFile} (if required).
    *
-   * @param dwcDataFile     all files to evaluate. For DarwinCore it also includes all extensions.
+   * @param tabularDataFile
    * @param fileSplitSize
-   * @param evaluationChainBuilder current EvaluationChain.Builder
    * @param numOfWorkers
    *
    * @return
    */
-  private void prepareRecordBasedEvaluations(final DwcDataFile dwcDataFile, final Integer fileSplitSize,
-                                             final EvaluationChain.Builder evaluationChainBuilder, final MutableInt numOfWorkers) {
-    dwcDataFile.getTabularDataFiles().forEach(df -> {
-      List<Term> columns = Arrays.asList(df.getColumns());
-      try {
-        List<TabularDataFile> splitDataFile = DataFileSplitter.splitDataFile(df, fileSplitSize, workingDir.toPath());
-        numOfWorkers.add(splitDataFile.size());
-        evaluationChainBuilder.evaluateRecords(df.getRowTypeKey(), df.getRecordIdentifier().orElse(null), columns,
-                df.getDefaultValues().orElse(null), splitDataFile);
-      } catch (IOException ioEx) {
-        log().error("Failed to split data", ioEx);
-      }
-    });
+  private List<TabularDataFile> handleSplit(final TabularDataFile tabularDataFile, final Integer fileSplitSize,
+                                            final MutableInt numOfWorkers) throws IOException {
+    List<TabularDataFile> splitDataFile;
+    try {
+      splitDataFile = DataFileSplitter.splitDataFile(tabularDataFile, fileSplitSize, workingDir.toPath());
+      numOfWorkers.add(splitDataFile.size());
+    } catch (IOException ioEx) {
+      log().error("Failed to split data", ioEx);
+      throw ioEx;
+    }
+    return splitDataFile;
   }
 
   /**
@@ -217,7 +212,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
         emitResponseAndStop(buildJobStatusResponse(false, JobStatus.FINISHED, dataFile, validationResultElementList.get()));
         return StructuralEvaluationResult.createStopEvaluation();
       }
-      mergeIssuesOnFilename(validationResultElementList.get(), validationResultElements);
+      ValidationResultElement.mergeOnFilename(validationResultElementList.get(), validationResultElements);
 
       context().parent()
               .tell(buildJobStatusResponse(null, JobStatus.RUNNING, dataFile, new ArrayList<>(validationResultElements)), self());
@@ -227,11 +222,11 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
   }
 
   /**
-   * Triggers processing of all metadataEvaluator and rowTypeEvaluation from the chain.
+   * Triggers processing of all dwcDataFileEvaluator, recordCollectionEvaluator and RecordEvaluator from the chain.
    *
    * @param evaluationChain
    */
-  private void startAllActors(EvaluationChain evaluationChain) {
+  private void startAllActors(final EvaluationChain evaluationChain) {
     DwcDataFileEvaluatorRunner dwcDataFileEvaluatorRunner = (dwcDataFile, dwcDataFileEvaluator) -> {
       ActorRef actor = createSingleActor(dwcDataFileEvaluator);
       actor.tell(dwcDataFile, self());
@@ -304,7 +299,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     log().info("Got MetadataWorkResult worker response(s)");
     if (DataWorkResult.Result.SUCCESS == result.getResult()) {
       result.getValidationResultElements().ifPresent(ver ->
-              mergeIssuesOnFilename(ver, validationResultElements));
+              ValidationResultElement.mergeOnFilename(ver, validationResultElements));
     }
     incrementWorkerCompleted();
   }
@@ -347,7 +342,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     ));
 
     //merge all ValidationResultElement into those collected by rowType
-    mergeIssuesOnFilename(validationResultElements, resultElements);
+    ValidationResultElement.mergeOnFilename(validationResultElements, resultElements);
 
     return new ValidationResult(IndexableRules.isIndexable(resultElements), dataJob.getJobData().getSourceFileName(),
             dataJob.getJobData().getFileFormat(),
@@ -380,29 +375,6 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
             .flatMap(List::stream)
             .map( vo -> new JobDataOutput(dataJob.getJobId(), vo))
             .collect(Collectors.toList());
-  }
-
-  /**
-   * Given 2 collections of {@link ValidationResultElement}, for each element of source merge the issues into
-   * the mergeInto collection if it contains a {@link ValidationResultElement} with the same filename. Otherwise,
-   * the {@link ValidationResultElement} is added to the mergeInto collection.
-   *
-   * @param source
-   * @param mergeInto
-   */
-  static void mergeIssuesOnFilename(final Collection<ValidationResultElement> source, final Collection<ValidationResultElement> mergeInto) {
-    source.forEach(
-            vre -> {
-              Optional<ValidationResultElement> currentElement = mergeInto.stream()
-                      .filter(re -> vre.getFileName().equals(re.getFileName()))
-                      .findFirst();
-              if (currentElement.isPresent()) {
-                currentElement.get().getIssues().addAll(vre.getIssues());
-              } else {
-                mergeInto.add(vre);
-              }
-            }
-    );
   }
 
   /**

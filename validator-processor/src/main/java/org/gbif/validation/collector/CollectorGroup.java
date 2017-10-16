@@ -85,7 +85,6 @@ public class CollectorGroup {
     }
 
     CollectorGroup baseCollector = collectors.get(0);
-
     Map<Term, Long> mergedTermFrequency = CollectorUtils.newHashMapInit(
             baseCollector.metricsCollector.getTermFrequency());
     Map<EvaluationType, Long> mergedAggregatedCounts = CollectorUtils.
@@ -150,7 +149,7 @@ public class CollectorGroup {
    *
    * @return
    */
-  public static Map<Long, List<String>> getFullVerbatimRecordSample(final Term[] headers, List<CollectorGroup> collectors) {
+  private static Map<Long, List<String>> getFullVerbatimRecordSample(final Term[] headers, List<CollectorGroup> collectors) {
     Map<Long, List<String>> orderedVerbatimRecords = new TreeMap<>();
     collectors.stream().forEach(coll -> {
       coll.resultsCollector.getFullRecordSamples().entrySet()
