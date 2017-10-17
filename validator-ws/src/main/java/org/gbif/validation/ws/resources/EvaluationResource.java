@@ -12,7 +12,7 @@ import javax.ws.rs.core.MediaType;
 import com.google.inject.Singleton;
 
 /**
- *
+ * Expose different "objects" related to the specification of the evaluation process in general.
  */
 @Path("evaluation")
 @Produces(MediaType.APPLICATION_JSON)
@@ -20,13 +20,11 @@ import com.google.inject.Singleton;
 public class EvaluationResource {
 
   /**
-   * An inventory of the enumerations supported.
-   *
-   * @return The supported validation related enumerations.
+   * @see IndexableRules#getNonIndexableEvaluationType
    */
   @GET
   @Path("nonindexable")
-  public Set<EvaluationType> inventory() {
+  public Set<EvaluationType> nonIndexableEvaluationType() {
     return IndexableRules.getNonIndexableEvaluationType();
   }
 }

@@ -116,6 +116,7 @@ public class EvaluationChain {
                           df.getRecordIdentifier().orElse(null), Arrays.asList(df.getColumns()),
                               df.getDefaultValues().orElse(null))))
                 .collect(Collectors.toList()));
+
       return this;
     }
 
@@ -128,11 +129,15 @@ public class EvaluationChain {
     }
 
     public Builder evaluateReferentialIntegrity() {
-      recordCollectionEvaluatorFct.add((dwcDataFile) ->
-              dwcDataFile.getExtensions().get().stream()
-                      .map(df -> new TargetedRecordCollectionEvaluator(df.getRowTypeKey(),
-                              EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowTypeKey().getRowType())))
-                      .collect(Collectors.toList()));
+      recordCollectionEvaluatorFct.add((dwcDataFile) -> {
+        if (dwcDataFile.getExtensions().isPresent()) {
+          return dwcDataFile.getExtensions().get().stream()
+                  .map(df -> new TargetedRecordCollectionEvaluator(df.getRowTypeKey(),
+                          EvaluatorFactory.createReferentialIntegrityEvaluator(df.getRowTypeKey().getRowType())))
+                  .collect(Collectors.toList());
+        }
+        return Collections.emptyList();
+      });
       return this;
     }
 

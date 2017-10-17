@@ -8,6 +8,8 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
+import static org.gbif.validation.api.model.EvaluationType.*;
+
 /**
  * Class defining the "rule" to determine if a resource can be indexed or not.
  * TODO when (if?) needed, add the mapping between the ValidationProfile and the rule
@@ -18,9 +20,15 @@ public class IndexableRules {
    * {@link EvaluationType} that makes the resource non-indexable.
    */
   private static final Set<EvaluationType> NON_INDEXABLE_EVALUATION_TYPE = ImmutableSet.of(
-          EvaluationType.RECORD_NOT_UNIQUELY_IDENTIFIED,
-          EvaluationType.DUPLICATED_TERM,
-          EvaluationType.LICENSE_MISSING_OR_UNKNOWN);
+          DWCA_UNREADABLE,
+          DWCA_META_XML_NOT_FOUND,
+          DWCA_META_XML_SCHEMA,
+          UNREADABLE_SECTION_ERROR,
+          CORE_ROWTYPE_UNDETERMINED,
+          RECORD_IDENTIFIER_NOT_FOUND,
+          RECORD_NOT_UNIQUELY_IDENTIFIED,
+          DUPLICATED_TERM,
+          LICENSE_MISSING_OR_UNKNOWN);
 
   /**
    * Static utility class
