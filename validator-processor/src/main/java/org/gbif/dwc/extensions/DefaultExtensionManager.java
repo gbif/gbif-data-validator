@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -44,7 +45,7 @@ class DefaultExtensionManager implements ExtensionManager {
   private static final TermFactory TF = TermFactory.instance();
   private static final int AUTO_UPDATE_FREQUENCY_MS = 60 * 60 * 1000; //1 hour
 
-  private final List<URL> extensionUrl;
+  private final Supplier<List<URL>> extensionsUrlsSupplier;
   private final ExtensionFactory factory;
   private final HttpClient httpClient;
 
@@ -58,11 +59,18 @@ class DefaultExtensionManager implements ExtensionManager {
 
   private final Timer timer = new Timer();
 
-  public DefaultExtensionManager(ExtensionFactory factory, HttpClient httpClient, List<URL> extensionUrl,
-                          boolean autoUpdate) {
+  /**
+   * {@link DefaultExtensionManager} main constructor.
+   * @param factory
+   * @param httpClient
+   * @param extensionUrlSupplier {@Link Supplier} to get a fresh copy of the extension URLs to load
+   * @param autoUpdate
+   */
+  public DefaultExtensionManager(ExtensionFactory factory, HttpClient httpClient, Supplier<List<URL>> extensionUrlSupplier,
+                                 boolean autoUpdate) {
     this.factory = factory;
     this.httpClient = httpClient;
-    this.extensionUrl = extensionUrl;
+    this.extensionsUrlsSupplier = extensionUrlSupplier;
 
     if(autoUpdate) {
       // scheduled for every hour
@@ -148,7 +156,6 @@ class DefaultExtensionManager implements ExtensionManager {
     return list;
   }
 
-
   @Override
   public Map<Term, Extension> map() {
     return extensionsByRowtype;
@@ -157,13 +164,12 @@ class DefaultExtensionManager implements ExtensionManager {
   @Override
   public List<Extension> search(String keyword) {
     List<Extension> list = new ArrayList<>();
-    keyword = keyword.toLowerCase();
-    //FIXME risk of race condition when update runs
-    for (Extension e : extensionsByRowtype.values()) {
-      if (StringUtils.containsIgnoreCase(e.getSubject(), keyword)) {
-        list.add(e);
+    String finalKeyword = keyword.toLowerCase();
+    extensionsByRowtype.forEach((k, v) -> {
+      if (StringUtils.containsIgnoreCase(v.getSubject(), finalKeyword)) {
+        list.add(v);
       }
-    }
+    });
     return list;
   }
 
@@ -171,7 +177,9 @@ class DefaultExtensionManager implements ExtensionManager {
     int counter = 0;
     registryUpdate = new Date();
 
-    for (URL url : extensionUrl) {
+    // get a fresh copy each time
+    List<URL> extensionUrls = extensionsUrlsSupplier.get();
+    for (URL url : extensionUrls) {
       LOG.info("Loading #{} extension {} ...", counter + 1, url);
       install(url);
       counter++;

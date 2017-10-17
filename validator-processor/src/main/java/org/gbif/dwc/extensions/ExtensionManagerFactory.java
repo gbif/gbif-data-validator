@@ -11,17 +11,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.client.HttpClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Factory responsible for building {@link ExtensionManager} instance.
+ * Loads extensions definition from a discovery URL or a list of static URLs.
  */
 public class ExtensionManagerFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(ExtensionManagerFactory.class);
+  private static final String REGISTRY_EXT_PROPERTY = "extensions";
+  private static final String REGISTRY_EXT_URL_PROPERTY = "url";
+  private static final String REGISTRY_EXT_IS_LATEST_PROPERTY = "isLatest";
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   /**
@@ -39,7 +45,7 @@ public class ExtensionManagerFactory {
     Objects.requireNonNull(extensionDiscoveryURL, "extensionDiscoveryURL shall be provided");
 
     return new DefaultExtensionManager(buildExtensionFactory(httpClient), httpClient,
-            discoverExtensions(extensionDiscoveryURL), autoUpdate);
+            () -> discoverExtensions(extensionDiscoveryURL), autoUpdate);
   }
 
   /**
@@ -70,7 +76,7 @@ public class ExtensionManagerFactory {
     Objects.requireNonNull(extensionFactory, "extensionFactory shall be provided");
     Objects.requireNonNull(httpClient, "httpClient shall be provided");
     Objects.requireNonNull(extensionListURL, "extensionListURL shall be provided");
-    return new DefaultExtensionManager(extensionFactory, httpClient, extensionListURL, autoUpdate);
+    return new DefaultExtensionManager(extensionFactory, httpClient, () -> extensionListURL, autoUpdate);
   }
 
   /**
@@ -87,7 +93,8 @@ public class ExtensionManagerFactory {
   }
 
   /**
-   * Retrieve a list of Extensions URL from an endpoint
+   * Retrieve a list of Extensions URL from an endpoint.
+   * This method will only keep the latest version ({@link #REGISTRY_EXT_IS_LATEST_PROPERTY} property).
    * @param extensionDiscoveryURL
    * @return
    */
@@ -96,11 +103,13 @@ public class ExtensionManagerFactory {
     try {
       // get json
       LOG.info("Retrieving extensions from " + extensionDiscoveryURL);
-      Map<String, Object> registryResponse = MAPPER.readValue(extensionDiscoveryURL, Map.class);
-      List<Map<String, Object>> jsonExtensions = (List<Map<String, Object>>) registryResponse.get("extensions");
+      Map<String, Object> registryResponse = MAPPER.readValue(extensionDiscoveryURL, new TypeReference<Map<String, Object>>(){});
+      List<Map<String, Object>> jsonExtensions = (List<Map<String, Object>>) registryResponse.get(REGISTRY_EXT_PROPERTY);
       for (Map<String, Object> ext : jsonExtensions) {
         try {
-          extensions.add(new URL((String) ext.get("url")));
+          if(BooleanUtils.toBoolean(ext.getOrDefault(REGISTRY_EXT_IS_LATEST_PROPERTY, "false").toString())) {
+            extensions.add(new URL((String) ext.get(REGISTRY_EXT_URL_PROPERTY)));
+          }
         } catch (Exception e) {
           LOG.error("Exception when listing extensions", e);
         }
@@ -113,4 +122,5 @@ public class ExtensionManagerFactory {
     }
     return extensions;
   }
+
 }
