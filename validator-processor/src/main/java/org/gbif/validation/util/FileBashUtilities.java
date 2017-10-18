@@ -69,6 +69,10 @@ public class FileBashUtilities {
 
   /**
    * Split a text file into pieces of size 'splitSize'.
+   * Limitation: this method doesn't look for quoted values so, when used for splitting tabular files (e.g. csv), it is
+   * possible for a record to be splitted over 2 files.
+   * Example of limitation : 1,2,"3\n4",5\n will be counted as 2 lines.
+   *
    * @return paths of all files produced by the command sorted by natural order of {@link String} to get
    * file.txtaa before file.txtbb.
    * Never null.
@@ -93,15 +97,6 @@ public class FileBashUtilities {
 
     return outputContent;
   }
-
-  /**
-   * Applies the command 'awk -v column=column -v value='value' -F'\t' '$column == value {print FNR}' fileName'.
-   * It returns the lines number where the pattern occurs.
-   */
-//  public static Integer[] findInFile(String fileName, String value, int column, String separator) throws IOException {
-//    String[] lines = executeSimpleCmd(String.format(FIND_FILE_CMD, column, value, separator, fileName));
-//    return Arrays.stream(lines).map(Integer::parseInt).toArray(Integer[]::new);
-//  }
 
   /**
    * Find duplicated values of a column from a file already sorted on that column.

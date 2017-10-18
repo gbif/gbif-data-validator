@@ -77,6 +77,8 @@ public class FileNormalizer {
    * This function "walks" inside the folder recursively.
    * See {@link #normalizeFile(Path, Path, Charset)}
    *
+   * TODO this function doesn't handle quoted cells which means the numberOfLines may not be equals to the number of records.
+   *
    * @param sourceTargetPath
    * @param destinationFolderPath
    * @param sourceTargetCharset   path should be relative to sourceTargetPath

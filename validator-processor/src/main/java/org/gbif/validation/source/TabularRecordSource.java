@@ -5,14 +5,17 @@ import org.gbif.utils.file.tabular.TabularDataFileReader;
 import org.gbif.utils.file.tabular.TabularFiles;
 import org.gbif.validation.api.RecordSource;
 import org.gbif.validation.api.TabularDataFile;
+import org.gbif.validation.util.FileNormalizer;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
  * TabularRecordSource allows to expose the content of a {@link TabularDataFile} as {@link RecordSource}.
+ * Warning: this class assumes {@link FileNormalizer#END_LINE} is used as end of line character.
  * Internally it wraps {@link TabularDataFileReader} to ensure compatibility with GBIF crawling.
  */
 class TabularRecordSource implements RecordSource {
@@ -21,10 +24,13 @@ class TabularRecordSource implements RecordSource {
   private final TabularDataFileReader<List<String>> tabularReader;
 
   TabularRecordSource(TabularDataFile tabularDataFile) throws IOException {
+    Objects.requireNonNull(tabularDataFile, "tabularDataFile shall be provided");
     this.tabularDataFile = tabularDataFile;
     tabularReader = TabularFiles.newTabularFileReader(
-            Files.newBufferedReader(tabularDataFile.getFilePath(),
-                    tabularDataFile.getCharacterEncoding()), tabularDataFile.getDelimiterChar(),
+            Files.newBufferedReader(tabularDataFile.getFilePath(), tabularDataFile.getCharacterEncoding()),
+            tabularDataFile.getDelimiterChar(),
+            FileNormalizer.END_LINE,
+            tabularDataFile.getQuoteChar(),
             tabularDataFile.isHasHeaders());
   }
 

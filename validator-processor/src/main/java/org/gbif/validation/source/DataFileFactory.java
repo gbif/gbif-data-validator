@@ -107,7 +107,7 @@ public class DataFileFactory {
   /**
    * Used to create a new {@link TabularDataFile} representing a portion of a larger {@link TabularDataFile}
    * after a split.
-   * @param tabDatafile
+   * @param tabDatafile normalized {@link TabularDataFile}
    * @param splitFilePath
    * @param lineOffset
    * @param numberOfLines
@@ -377,7 +377,7 @@ public class DataFileFactory {
             extractCharset(ext.getEncoding()).ifPresent(cs -> charsetsByPath.put(Paths.get(safeGetCoreLocation(archive)), cs));
           }
         } catch (UnkownDelimitersException ignore) {
-          //ignore, it is not the goal of this function
+          //ignore, it is not the purpose of this function
         }
       }
 
