@@ -221,6 +221,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
     evaluationChain.runRecordCollectionEvaluation(runner);
 
     RecordEvaluatorRunner recordEvaluatorRunner = (dataFiles, rowTypeKey, recordEvaluator) -> {
+      log().info("RecordEvaluatorRunner got {} dataFiles", dataFiles.size());
       numOfWorkers.addAndGet(dataFiles.size());
       ActorRef workerRouter = createWorkerRoutes(Math.min(dataFiles.size(), MAX_WORKER),
               rowTypeKey, recordEvaluator);
@@ -233,7 +234,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
       emitErrorAndStop(evaluationChain.getDataFile(), ValidationErrorCode.IO_ERROR, ioEx.getMessage());
       return;
     }
-
+    log().info("Expected {} worker response(s)", numOfWorkers.get());
     this.self().tell(FinishedInit.INSTANCE, self());
   }
 
