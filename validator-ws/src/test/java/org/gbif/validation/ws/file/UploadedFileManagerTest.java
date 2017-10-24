@@ -36,7 +36,7 @@ public class UploadedFileManagerTest {
     //we use an non-buffered InputStream by purpose (to test the markSupported in handleFileTransfer)
     InputStream fis = new FileInputStream(f);
     UploadedFileManager a = new UploadedFileManager(testFolder.getAbsolutePath(), 1024L);
-    Optional<DataFile> df = a.handleFileTransfer("Archive.zip", "application/zip", fis);
+    Optional<DataFile> df = a.handleFileTransfer("Archive.zip", fis);
     assertEquals(3, df.get().getFilePath().toFile().listFiles().length);
   }
 
