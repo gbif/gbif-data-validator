@@ -11,11 +11,12 @@ import org.gbif.validation.ws.conf.ValidationWsConfiguration;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,11 +46,10 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.LimitedInputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.AgeFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.ParseException;
-import org.apache.http.entity.ContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +77,7 @@ public class UploadedFileManager implements Cleanable<UUID> {
 
   private static final int FILE_DOWNLOAD_TIMEOUT_MS = 10000;
   private static final int MAX_SIZE_BEFORE_DISK_IN_BYTES = DiskFileItemFactory.DEFAULT_SIZE_THRESHOLD;
+  private static final String DOWNLOAD_TMP_EXT = ".bin";
   private static final String FILEUPLOAD_TMP_FOLDER = "fileupload";
 
   private final Path workingDirectory;
@@ -178,19 +179,6 @@ public class UploadedFileManager implements Cleanable<UUID> {
   }
 
   /**
-   * If the providedContentType is null, the urlConnection is analyzed to get its content type.
-   */
-  private static String getContentType(String providedContentType, URLConnection urlConnection) {
-    String contentType = StringUtils.trimToNull(providedContentType);
-    if (StringUtils.isEmpty(contentType)) {
-      try {
-        return ContentType.parse(urlConnection.getContentType()).getMimeType();
-      } catch (ParseException|UnsupportedCharsetException ignore){}
-    }
-    return contentType;
-  }
-
-  /**
    *
    * @param workingDirectory
    * @throws IOException
@@ -243,19 +231,18 @@ public class UploadedFileManager implements Cleanable<UUID> {
    * @throws IOException
    */
   public Optional<DataFile> downloadDataFile(URL fileToDownload) throws IOException, UnsupportedMediaTypeException {
-    return downloadDataFile(null, null, fileToDownload);
+    return downloadDataFile(null, fileToDownload);
   }
 
   /**
    * Warning, the inputStream will be closed after copy.
    *
    * @param filename
-   * @param contentType
    * @param inputStream
    * @return a {@link DataFile} instance that represents the file that was transferred.
    * @throws IOException
    */
-  protected Optional<DataFile> handleFileTransfer(String filename, String contentType, InputStream inputStream)
+  protected Optional<DataFile> handleFileTransfer(String filename, InputStream inputStream)
     throws IOException, UnsupportedMediaTypeException {
 
     // "mark" needs to be supported in order to detect the media type by reading the first byte(s).
@@ -304,23 +291,38 @@ public class UploadedFileManager implements Cleanable<UUID> {
    * Handles the file transfer from a FileItem.
    */
   private Optional<DataFile> handleFileTransfer(FileItem fileItem) throws IOException, UnsupportedMediaTypeException {
-    return handleFileTransfer(fileItem.getName(), fileItem.getContentType(), fileItem.getInputStream());
+    return handleFileTransfer(fileItem.getName(), fileItem.getInputStream());
   }
 
   /**
-   * Uploads a file using two optional parameters for file name and content type.
-   * If any of those parameters are null, the fileToDownload url is analyzed to extract them.
+   * Download a file from a URL. If providedFilename is null, the fileToDownload url is analyzed to extract them from
+   * the headers.
+   * The file will be completely downloaded into a temporary file before calling {@link #handleFileTransfer} to ensure
+   * we have read the entire file.
+   *
    */
   private Optional<DataFile> downloadDataFile(@Nullable String providedFilename,
-                                            @Nullable String providedContentType,
-                                            URL fileToDownload) throws IOException, UnsupportedMediaTypeException {
+                                              URL fileToDownload) throws IOException, UnsupportedMediaTypeException {
+    UUID key = UUID.randomUUID();
+    final Path destinationFile = workingDirectory.resolve(key.toString() + DOWNLOAD_TMP_EXT);
+    try (InputStream in = new FileDownloadLimitedInputStream(fileToDownload.openStream(), maxFileTransferSizeInBytes);
+         FileOutputStream out = new FileOutputStream(destinationFile.toFile());
+    ) {
 
-    try (InputStream in = new FileDownloadLimitedInputStream(fileToDownload.openStream(), maxFileTransferSizeInBytes)) {
-      URLConnection urlConnection = fileToDownload.openConnection();
-      urlConnection.setConnectTimeout(FILE_DOWNLOAD_TIMEOUT_MS);
-      urlConnection.setReadTimeout(FILE_DOWNLOAD_TIMEOUT_MS);
-      return handleFileTransfer(getFilename(providedFilename, urlConnection),
-                                getContentType(providedContentType,urlConnection), in);
+      // download the file entirely
+      IOUtils.copy(in, out);
+
+      Optional<DataFile> dataFile;
+      try (FileInputStream downloadedInputStream = new FileInputStream(destinationFile.toFile())) {
+        URLConnection urlConnection = fileToDownload.openConnection();
+        urlConnection.setConnectTimeout(FILE_DOWNLOAD_TIMEOUT_MS);
+        urlConnection.setReadTimeout(FILE_DOWNLOAD_TIMEOUT_MS);
+        dataFile = handleFileTransfer(getFilename(providedFilename, urlConnection), downloadedInputStream);
+      }
+
+      Files.deleteIfExists(destinationFile);
+
+      return dataFile;
     }
   }
 
