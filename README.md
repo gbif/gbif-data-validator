@@ -1,5 +1,7 @@
 # gbif-data-validator
 
+Deployed in early release version https://www.gbif.org/tools/data-validator
+
 ## Vision
 
 The GBIF Data Validator is a service to provide a report on the syntactical correctness and the validity of content contained in a dataset. It allows for anybody to quickly determine issues in data without registering the dataset in GBIF. It provides the ability to easily do a *pre-publication* review of data. It supports various data formats in use within GBIF including:
