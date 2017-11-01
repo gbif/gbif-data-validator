@@ -97,14 +97,18 @@ public class UploadedFileManager implements Cleanable<UUID> {
    * @throws IOException
    */
   protected static void unzip(InputStream zippedInputStream, Path destinationFile) throws ArchiveException, IOException {
-
     try (ArchiveInputStream ais = new ArchiveStreamFactory().createArchiveInputStream(ArchiveStreamFactory.ZIP,
             zippedInputStream)) {
       Optional<ZipArchiveEntry> entry = Optional.ofNullable((ZipArchiveEntry) ais.getNextEntry());
       while (entry.isPresent()) {
         String entryName = entry.get().getName();
         if (!FOLDER_EXCLUSION_LIST.contains(StringUtils.substringBefore(entryName, "/"))) {
-          Path entryDestinationPath = destinationFile.resolve(entryName);
+          Path entryDestinationPath = new File(destinationFile.toFile(), entryName).toPath();
+
+          if(!entryDestinationPath.startsWith(destinationFile)) {
+            throw new ArchiveException("Unsupported entry. Entry is pointing to a path higher than allowed.");
+          }
+
           if (entry.get().isDirectory()) {
             Files.createDirectory(entryDestinationPath);
           } else {

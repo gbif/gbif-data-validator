@@ -90,6 +90,21 @@ public class UploadedFileManagerTest {
     assertEquals("file_B.txt", unzippedFolder[0].listFiles()[0].getName());
   }
 
+  /**
+   * Ensure we can handle ZipEntry like /occurrence.txt
+   * @throws IOException
+   * @throws ArchiveException
+   */
+  @Test
+  public void testHandleZippedAtRoot() throws IOException, ArchiveException {
+    File extractFolder = folder.newFolder("subfolder");
+    FileInputStream fis = new FileInputStream(FileUtils.getClasspathFile("zip/zip-test-root.zip"));
+    UploadedFileManager.unzip(fis, extractFolder.toPath());
+
+    File[] unzippedFiles = extractFolder.listFiles(pathname -> !pathname.isDirectory());
+    assertEquals(1, unzippedFiles.length);
+  }
+
   @Test
   public void testParseContentDisposition() {
     assertEquals("validator_test_file_all_issues.tsv",
