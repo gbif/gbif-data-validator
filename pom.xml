@@ -68,7 +68,7 @@
     <guice.version>4.0</guice.version>
     <jsr305.version>3.0.1</jsr305.version>
     <geotools.version>12.1</geotools.version>
-    <apache-tika.version>1.16</apache-tika.version>
+    <apache-tika.version>1.17</apache-tika.version>
 
     <scala-library.version>2.11.7</scala-library.version>
     <commons-lang3.version>3.4</commons-lang3.version>
@@ -216,7 +216,6 @@
         <artifactId>tika-core</artifactId>
         <version>${apache-tika.version}</version>
       </dependency>
-
 
       <!-- we need all of these -->
       <dependency>
