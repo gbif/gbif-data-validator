@@ -31,6 +31,16 @@ public class MediaTypeAndFormatDetectorTest {
             FileUtils.getClasspathFile("workbooks/occurrence-workbook.csv").toPath()));
   }
 
+  @Test
+  public void testDetectMediaTypeByStream() throws IOException {
+     // without hint from the filename that's the best we can get
+    assertEquals("application/x-tika-ooxml", MediaTypeAndFormatDetector.detectMediaType(
+            FileUtils.classpathStream("workbooks/occurrence-workbook.xlsx"), null));
+    // if we give the filename (including the extension) Tika use it to "improve the detail of the detection"
+    assertEquals(ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET, MediaTypeAndFormatDetector.detectMediaType(
+            FileUtils.classpathStream("workbooks/occurrence-workbook.xlsx"), "occurrence-workbook.xlsx"));
+  }
+
   /**
    * The following tests consider the folder as if it was the result of a zip extraction.
    * @throws IOException

@@ -8,7 +8,7 @@ import javax.ws.rs.core.MediaType;
 import com.google.common.collect.ImmutableList;
 
 /**
- * Contains MediaType supprted by the validator.
+ * Contains MediaType supported by the validator.
  */
 public class SupportedMediaTypes {
 

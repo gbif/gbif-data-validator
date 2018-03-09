@@ -254,7 +254,7 @@ public class UploadedFileManager implements Cleanable<UUID> {
 
     UUID key = UUID.randomUUID();
     final Path destinationFolder = Files.createDirectory(getDestinationPath(key));
-    final String detectedMediaType = detectMediaType(inputStreamWithMarkSupport);
+    final String detectedMediaType = detectMediaType(inputStreamWithMarkSupport, filename);
 
     Path dataFilePath;
     try {

@@ -11,6 +11,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.annotation.Nullable;
+
 import org.apache.tika.Tika;
 
 import static org.gbif.validation.conf.SupportedMediaTypes.SPREADSHEET_CONTENT_TYPES;
@@ -39,14 +41,21 @@ public class MediaTypeAndFormatDetector {
   }
 
   /**
-   * detected media type
-   * @see org.apache.tika.detect.Detector
+   * Detected media type from the an {@link InputStream} and a filename.
+   * "Firstly, magic based detection is used on the start of the file ...
+   * if available, the filename is then used to improve the detail of the detection"
+   * Source: https://tika.apache.org/1.1/detection.html
+   *
    * @param is
+   * @param filename filename including the extension. Optional but used to improve the detail of the detection.
+   *
    * @return
+   *
    * @throws IOException
+   * @see org.apache.tika.detect.Detector
    */
-  public static String detectMediaType(InputStream is) throws IOException {
-    return TIKA.detect(is);
+  public static String detectMediaType(InputStream is, @Nullable String filename) throws IOException {
+    return TIKA.detect(is, filename);
   }
 
 
