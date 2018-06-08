@@ -1,8 +1,5 @@
 package org.gbif.dwc.extensions;
 
-import org.gbif.digester.ThesaurusHandlingRule;
-import org.gbif.xml.SAXUtils;
-
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -15,6 +12,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.http.client.HttpClient;
+import org.gbif.dwc.digester.ThesaurusHandlingRule;
+import org.gbif.dwc.xml.SAXUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -43,25 +43,26 @@
     <!-- VERSIONS -->
 
     <!-- GBIF VERSIONS -->
-    <dwc-api.version>1.17</dwc-api.version>
-    <dwca-io.version>1.32</dwca-io.version>
-    <gbif-api.version>0.57</gbif-api.version>
-    <gbif-common.version>0.37</gbif-common.version>
-    <gbif-common-ws.version>0.41</gbif-common-ws.version>
-    <gbif-occurrence.version>0.73</gbif-occurrence.version>
-    <gbif-checklistbank.version>2.61</gbif-checklistbank.version>
-    <gbif-registry.version>2.64</gbif-registry.version>
+    <dwc-api.version>1.18</dwc-api.version>
+    <dwca-io.version>2.0-SNAPSHOT</dwca-io.version>
+    <gbif-api.version>0.67</gbif-api.version>
+    <gbif-common.version>0.41-SNAPSHOT</gbif-common.version>
+    <gbif-common-ws.version>0.42</gbif-common-ws.version>
+    <gbif-name-parser.version>3.1.5</gbif-name-parser.version>
+    <gbif-occurrence.version>0.82</gbif-occurrence.version>
+    <gbif-checklistbank.version>2.69</gbif-checklistbank.version>
+    <gbif-registry.version>2.85</gbif-registry.version>
 
     <!-- GBIF libraries -->
     <gbif-microservice.version>0.7</gbif-microservice.version>
-    <gbif-parsers.version>0.31</gbif-parsers.version>
+    <gbif-parsers.version>0.34</gbif-parsers.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
 
     <!-- lucene version required by neo4j -->
     <lucene-neo4j.version>5.5.0</lucene-neo4j.version>
-    <neo4j.version>3.2.3</neo4j.version>
+    <neo4j.version>3.3.5</neo4j.version>
 
-    <jersey.version>1.19.3</jersey.version>
+    <jersey.version>1.19.4</jersey.version>
     <jackson.version>1.9.12</jackson.version>
     <validation-api.version>1.1.0.Final</validation-api.version>
     <guava.version>18.0</guava.version>
@@ -75,7 +76,7 @@
 
     <slf4j.version>1.7.16</slf4j.version>
     <logback.version>1.1.5</logback.version>
-    <logstash-encoder.version>4.11</logstash-encoder.version>
+    <logstash-encoder.version>4.10</logstash-encoder.version>
 
     <mockito.version>2.2.0</mockito.version>
     <junit.version>4.12</junit.version>
@@ -140,6 +141,11 @@
         <groupId>org.gbif.occurrence</groupId>
         <artifactId>occurrence-common</artifactId>
         <version>${gbif-occurrence.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.gbif</groupId>
+        <artifactId>name-parser</artifactId>
+        <version>${gbif-name-parser.version}</version>
       </dependency>
       <dependency>
         <groupId>org.gbif.checklistbank</groupId>

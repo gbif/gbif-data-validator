@@ -2,10 +2,10 @@ package org.gbif.validation.source;
 
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFile;
-import org.gbif.dwca.io.UnsupportedArchiveException;
-import org.gbif.utils.file.csv.UnkownDelimitersException;
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.ArchiveFile;
+import org.gbif.dwc.UnsupportedArchiveException;
+import org.gbif.utils.file.csv.UnknownDelimitersException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
 import org.gbif.validation.api.RowTypeKey;
@@ -49,22 +49,6 @@ public class DataFileFactory {
   private static final Logger LOG = LoggerFactory.getLogger(DataFileFactory.class);
 
   private static final String CSV_EXT = ".csv";
-
-  /**
-   * Recognized sheet names in Excel workbook when the workbook contains more than 1 sheet.
-   * Mostly name of sheets used in GBIF provided templates.
-   */
-  private static final List<String> KNOWN_EXCEL_SHEET_NAMES = Collections.unmodifiableList(
-          Arrays.asList("sampling events", "classification", "occurrences"));
-
-  /**
-   * Function to select an Excel sheet within multiple sheets.
-   * This will select the first known sheet starting from the left.
-   */
-  private static final Function<List<String>, Optional<String>> SELECT_EXCEL_SHEET =
-          sheetsList -> sheetsList.stream()
-                  .filter(name -> KNOWN_EXCEL_SHEET_NAMES.contains(name.toLowerCase()))
-                  .findFirst();
 
   /**
    * Private constructor.
@@ -216,7 +200,7 @@ public class DataFileFactory {
                 ext.getLocationFile().getName(), DwcFileType.EXTENSION,
                 pathAndLines.get(Paths.get(ext.getLocation()))));
       }
-    } catch (UnkownDelimitersException | UnsupportedArchiveException ex) {
+    } catch (UnknownDelimitersException | UnsupportedArchiveException ex) {
       //re-throw the exception as UnsupportedDataFileException
       throw new UnsupportedDataFileException(ex.getMessage());
     }
@@ -242,7 +226,13 @@ public class DataFileFactory {
       throw new FileNotFoundException(archiveFile.getLocation());
     }
 
-    Term[] headers = archiveFile.getHeader();
+    List<Term> headers = new ArrayList<>();
+    for (List<Term> terms : archiveFile.getHeader()) {
+      if (terms.isEmpty()) {
+        throw new UnsupportedArchiveException("A column has no header");
+      }
+      headers.add(terms.get(0));
+    }
     Map<Term, String> defaultValues = archiveFile.getDefaultValues().orElse(null);
     TermIndex recordIdentifier = archiveFile.getId() == null ? null :
             new TermIndex(archiveFile.getId().getIndex(),
@@ -252,7 +242,7 @@ public class DataFileFactory {
     //if TermIndex is null we need to report an error
     return new TabularDataFile(archiveFile.getLocationFile().toPath(),
             sourceFileName, RowTypeKey.get(archiveFile.getRowType(), type),
-            headers, recordIdentifier, defaultValues,
+            headers.toArray(new Term[0]), recordIdentifier, defaultValues,
             null, //no line offset
             ignoreHeaderLines > 0,
             Charset.forName(archiveFile.getEncoding()),
@@ -286,9 +276,10 @@ public class DataFileFactory {
 
     Path csvFile = destinationFolder.resolve(UUID.randomUUID() + CSV_EXT);
     SpreadsheetConversionResult conversionResult;
-    if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(mediaType) ||
-            ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(mediaType)) {
-      conversionResult = SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile, SELECT_EXCEL_SHEET);
+    if (ExtraMediaTypes.APPLICATION_OFFICE_SPREADSHEET.equalsIgnoreCase(mediaType)) {
+      conversionResult = SpreadsheetConverters.convertExcelXmlToCSV(spreadsheetFile, csvFile);
+    } else if (ExtraMediaTypes.APPLICATION_EXCEL.equalsIgnoreCase(mediaType)) {
+      conversionResult = SpreadsheetConverters.convertExcelToCSV(spreadsheetFile, csvFile);
     } else if (ExtraMediaTypes.APPLICATION_OPEN_DOC_SPREADSHEET.equalsIgnoreCase(mediaType)) {
       conversionResult = SpreadsheetConverters.convertOdsToCSV(spreadsheetFile, csvFile);
     } else {
@@ -376,7 +367,7 @@ public class DataFileFactory {
           for (ArchiveFile ext : archive.getExtensions()) {
             extractCharset(ext.getEncoding()).ifPresent(cs -> charsetsByPath.put(Paths.get(safeGetCoreLocation(archive)), cs));
           }
-        } catch (UnkownDelimitersException ignore) {
+        } catch (UnknownDelimitersException ignore) {
           //ignore, it is not the purpose of this function
         }
       }

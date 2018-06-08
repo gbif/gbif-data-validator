@@ -162,7 +162,7 @@ public class EvaluationChain {
     }
 
     public EvaluationChain build() {
-      List< ResourceStructureEvaluator > resourceStructureEvaluators =
+      List<ResourceStructureEvaluator> resourceStructureEvaluators =
               Collections.singletonList(factory.createResourceStructureEvaluator(dataFile.getFileFormat()));
       List<DwcDataFileEvaluator> preRequisiteEvaluator = Collections.singletonList(factory.createPrerequisiteEvaluator());
 

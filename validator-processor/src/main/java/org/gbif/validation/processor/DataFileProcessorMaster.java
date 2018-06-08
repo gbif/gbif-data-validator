@@ -125,7 +125,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
    * @param fileSplitSize
    * @throws IOException
    */
-  private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws IOException {
+  private void processDataFile(EvaluatorFactory factory, Integer fileSplitSize) throws Exception {
     DataFile dataFile = dataJob.getJobData();
     DwcDataFileSupplier transformer = () -> DataFileFactory.prepareDataFile(dataFile, workingDir.toPath());
 

@@ -9,6 +9,7 @@ import org.gbif.validation.util.FileNormalizer;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -43,7 +44,11 @@ class TabularRecordSource implements RecordSource {
   @Nullable
   @Override
   public List<String> read() throws IOException {
-    return tabularReader.read();
+    try {
+      return tabularReader.read();
+    } catch (ParseException e) {
+      throw new IOException("Error reading tabular data", e);
+    }
   }
 
   @Override

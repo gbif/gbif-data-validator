@@ -1,12 +1,12 @@
 package org.gbif.validation.dwc.extensions;
 
-import org.gbif.digester.ThesaurusHandlingRule;
+import org.gbif.dwc.digester.ThesaurusHandlingRule;
 import org.gbif.dwc.extensions.ExtensionFactory;
 import org.gbif.dwc.extensions.ExtensionManager;
 import org.gbif.dwc.extensions.ExtensionManagerFactory;
 import org.gbif.dwc.extensions.VocabulariesManager;
 import org.gbif.dwc.extensions.Vocabulary;
-import org.gbif.xml.SAXUtils;
+import org.gbif.dwc.xml.SAXUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;

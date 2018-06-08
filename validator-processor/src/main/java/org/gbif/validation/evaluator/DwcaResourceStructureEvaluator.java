@@ -1,13 +1,13 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.extensions.Extension;
 import org.gbif.dwc.extensions.ExtensionManager;
 import org.gbif.dwc.terms.Term;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.ArchiveFactory;
-import org.gbif.dwca.io.ArchiveField;
-import org.gbif.dwca.io.ArchiveFile;
-import org.gbif.dwca.io.UnsupportedArchiveException;
+import org.gbif.dwc.Archive;
+import org.gbif.dwc.ArchiveField;
+import org.gbif.dwc.ArchiveFile;
+import org.gbif.dwc.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.TermWithinRowType;
@@ -57,7 +57,7 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
 
     List<ValidationResultElement> validationResultElements = new ArrayList<>();
     try {
-      Archive archive = ArchiveFactory.openArchive(dataFile.getFilePath().toFile());
+      Archive archive = DwcFiles.fromLocationSkipValidation(dataFile.getFilePath());
       File metaXmlFile = new File(dataFile.getFilePath().toFile(), Archive.META_FN);
       if (metaXmlFile.exists()) {
         try {
@@ -93,7 +93,8 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
     if (ext != null) {
 
       // Check for duplicated terms
-      if (archiveFile.getHeader().length != archiveFile.getRawArchiveFields().size()) {
+      // +1 on RHS is because that method doesn't include the id field.
+      if (archiveFile.getHeader().stream().mapToInt(l -> l.size()).sum() != archiveFile.getRawArchiveFields().size() + 1) {
         getDuplicatedTerm(archiveFile).forEach(
                 t -> validationIssues.add(ValidationIssues.withRelatedData(
                         EvaluationType.DUPLICATED_TERM, TermWithinRowType.of(ext.getRowType(), t))));

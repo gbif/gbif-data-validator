@@ -28,6 +28,7 @@ public class InterpretationRemarkEvaluationTypeMapping {
   }
 
   //we do not support deprecated OccurrenceIssue
+  @SuppressWarnings("deprecation")
   public static final List<InterpretationRemark> UNSUPPORTED_ISSUES = Collections.unmodifiableList(Arrays.asList(
           OccurrenceIssue.COORDINATE_ACCURACY_INVALID,
           OccurrenceIssue.COORDINATE_PRECISION_UNCERTAINTY_MISMATCH,

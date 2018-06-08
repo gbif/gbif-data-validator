@@ -1,5 +1,6 @@
 package org.gbif.validation.source;
 
+import org.gbif.dwc.UnsupportedArchiveException;
 import org.gbif.utils.file.FileUtils;
 import org.gbif.validation.TestUtils;
 import org.gbif.validation.api.DataFile;
@@ -54,7 +55,7 @@ public class DataFileFactoryTest {
    * @throws IOException
    * @throws UnsupportedDataFileException
    */
-  @Test (expected = FileNotFoundException.class)
+  @Test (expected = UnsupportedArchiveException.class)
   public void testPrepareDataFileBrokenMeta() throws IOException, UnsupportedDataFileException {
     DataFile dataFile = TestUtils.getDwcaDataFile(TEST_BROKEN_META_FILE_LOCATION, "dwca-broken-meta");
     DataFileFactory.prepareDataFile(dataFile, folder.newFolder().toPath());

@@ -1,8 +1,8 @@
 package org.gbif.validation.evaluator;
 
+import org.gbif.dwc.Archive;
 import org.gbif.dwc.DwcFiles;
-import org.gbif.dwca.io.Archive;
-import org.gbif.dwca.io.UnsupportedArchiveException;
+import org.gbif.dwc.UnsupportedArchiveException;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.ResourceStructureEvaluator;
 import org.gbif.validation.api.model.EvaluationType;
