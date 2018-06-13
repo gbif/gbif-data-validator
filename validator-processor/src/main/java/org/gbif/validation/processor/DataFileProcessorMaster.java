@@ -139,10 +139,16 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
                     .evaluateChecklist();
     EvaluationChain evaluationChain = evaluationChainBuilder.build();
 
-    ResourceConstitutionEvaluationChain.ResourceConstitutionResult resourceConstitutionResults = evaluationChain.runResourceConstitutionEvaluation();
+    ResourceConstitutionEvaluationChain.ResourceConstitutionResult resourceConstitutionResults;
+    try {
+      resourceConstitutionResults = evaluationChain.runResourceConstitutionEvaluation();
+    } catch (Exception e) {
+      emitErrorAndStop(evaluationChain.getDataFile(), ValidationErrorCode.UNSUPPORTED_FILE_FORMAT, e.getMessage());
+      return;
+    }
     ValidationResultElement.mergeOnFilename(resourceConstitutionResults.getResults(), validationResultElements);
 
-    if(resourceConstitutionResults.isEvaluationStopped()) {
+    if (resourceConstitutionResults.isEvaluationStopped()) {
       emitResponseAndStop(buildJobStatusResponse(false, JobStatus.FINISHED, dataFile, new ArrayList<>(validationResultElements)));
       return;
     }
