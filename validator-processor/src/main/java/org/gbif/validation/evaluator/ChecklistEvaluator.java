@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import static org.gbif.validation.evaluator.InterpretationRemarkEvaluationTypeMapping.INTERPRETATION_REMARK_MAPPING;
 
-
 /**
  * {@link RecordCollectionEvaluator} implementation to evaluate Checklist using ChecklistBank Normalizer.
  * Currently, no nub matching is done.
@@ -80,7 +79,8 @@ class ChecklistEvaluator implements RecordCollectionEvaluator {
 
     //The generated a random dataset key, we only need it as a key
     UUID datasetKey = UUID.randomUUID();
-    try (UsageDao dao = UsageDao.temporaryDao(configuration.neo.mappedMemory)) {
+
+    try (UsageDao dao = UsageDao.create(configuration.neo, datasetKey)) {
       Normalizer normalizer = Normalizer.create(datasetKey, dao, determinePathToUse(dwcDataFile).toFile(),
               new IdLookupPassThru(), configuration.neo.batchSize);
       normalizer.run(false);
