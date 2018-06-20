@@ -201,6 +201,38 @@
     <groupId>org.gbif</groupId>
     <artifactId>gbif-microservice</artifactId>
     <version>${gbif-microservice.version}</version>
+    <!-- Excluded because this is shaded into occurrence-processor (!) -->
+    <exclusions>
+      <exclusion>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-client</artifactId>
+      </exclusion>
+      <exclusion>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-framework</artifactId>
+      </exclusion>
+      <exclusion>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-recipes</artifactId>
+      </exclusion>
+      <exclusion>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-x-discovery</artifactId>
+      </exclusion>
+    </exclusions>
+  </dependency>
+  <!-- Included because this is not shaded into occurrence-processor -->
+  <dependency>
+    <groupId>org.apache.curator</groupId>
+    <artifactId>curator-x-discovery</artifactId>
+    <version>4.0.1</version>
+    <exclusions>
+      <!-- Excluded because this is shaded into occurrence-processor (!) -->
+      <exclusion>
+        <groupId>org.apache.curator</groupId>
+        <artifactId>curator-recipes</artifactId>
+      </exclusion>
+    </exclusions>
   </dependency>
   <dependency>
     <groupId>org.gbif</groupId>
