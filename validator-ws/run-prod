@@ -1,0 +1,32 @@
+#!/bin/bash
+#
+# Convenience script for running against production validator-ws, during development.
+#
+
+file=$1
+
+webservice=https://api.gbif.org/v1/validator/jobserver
+
+echo "Submitting $file to $webservice"
+
+submit_response=$(curl -Ss -X POST -F "file=@$file;type=text/csv" $webservice/submit)
+
+echo "Received response:"
+echo $submit_response | jq .
+
+job_id=$(echo $submit_response | jq -r .jobId)
+echo "JobId is $job_id"
+
+sleep 3
+
+while sleep 1; do
+    status_response=$(curl -Ss $webservice/status/$job_id)
+    status=$(echo $status_response | jq -r .status)
+    echo "Job status: $status"
+
+    if [[ $status != "RUNNING" ]]; then
+        echo "Job completed with status $status"
+        echo $status_response | jq .
+        break;
+    fi
+done
