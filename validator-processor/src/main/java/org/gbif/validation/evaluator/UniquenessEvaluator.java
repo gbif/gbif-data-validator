@@ -22,7 +22,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
 /**
- * {@link RecordCollectionEvaluator} implementation to evaluate the uniqueness of the records identifier
+ * {@link RecordCollectionEvaluator} implementation to evaluate the uniqueness of the record identifiers
  * in a {@link TabularDataFile}
  */
 class UniquenessEvaluator implements RecordCollectionEvaluator {
@@ -30,16 +30,17 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
   private org.gbif.utils.file.FileUtils GBIF_FILE_UTILS = new org.gbif.utils.file.FileUtils();
 
   private final RowTypeKey rowTypeKey;
-  private final boolean caseSensitive;
+  private final boolean ignoreCase = false;
   private final Path workingFolder;
 
   /**
    *
    * @param rowTypeKey Term used as identifier for the dataFile (start at 1)
    */
-  public UniquenessEvaluator(RowTypeKey rowTypeKey, boolean caseSensitive, Path workingFolder) {
+  public UniquenessEvaluator(RowTypeKey rowTypeKey, boolean ignoreCase, Path workingFolder) {
+    Preconditions.checkArgument(!ignoreCase, "Case-insensitive check isn't yet supported.");
+
     this.rowTypeKey = rowTypeKey;
-    this.caseSensitive = caseSensitive;
     this.workingFolder = workingFolder;
   }
 
@@ -55,13 +56,13 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
     File sortedFile = workingFolder.resolve(sourceFile.getName() + "_sorted").toFile();
 
     GBIF_FILE_UTILS.sort(sourceFile, sortedFile, Charsets.UTF_8.toString(), idColumnIndex,
-            dataFile.getDelimiterChar().toString(), null, "\n", dataFile.isHasHeaders() ? 1 : 0, null, caseSensitive);
+            dataFile.getDelimiterChar().toString(), null, "\n", dataFile.isHasHeaders() ? 1 : 0, null, ignoreCase);
 
     //FIXME doesn't support case sensitive for now
-    String[] result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex + 1,
+    List<String[]> result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex + 1, idColumnIndex + 1,
             dataFile.getDelimiterChar().toString());
 
-    Arrays.stream(result).forEach(rec -> resultConsumer.accept(buildResult(rowTypeKey, rec)));
+    result.stream().forEach(rec -> resultConsumer.accept(buildResult(rowTypeKey, rec[0])));
   }
 
   private static RecordEvaluationResult buildResult(RowTypeKey rowTypeKey, String nonUniqueId){

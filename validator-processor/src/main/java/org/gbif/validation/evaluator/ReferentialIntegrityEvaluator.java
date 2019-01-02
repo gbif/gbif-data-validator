@@ -1,5 +1,7 @@
 package org.gbif.validation.evaluator;
 
+import com.google.common.collect.ImmutableMap;
+import org.gbif.dwc.ArchiveFile;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.DataFile;
 import org.gbif.validation.api.DwcDataFile;
@@ -26,7 +28,8 @@ import org.slf4j.LoggerFactory;
 /**
  * {@link RecordCollectionEvaluator} implementation to evaluate the referential integrity of one Darwin Core
  * extension.
- *
+ * <br>
+ * This checks for correct coreId and id fields between core and extension, and also that no coreId or id field is empty.
  */
 class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
 
@@ -58,7 +61,7 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
     Preconditions.checkState(extDf != null && extDf.getRecordIdentifier().isPresent(),
             "DwcDataFile extension shall have a record identifier");
 
-    String[] result = FileBashUtilities.diffOnColumns(
+    String[] matchResult = FileBashUtilities.diffOnColumns(
             coreDf.getFilePath().toString(),
             extDf.getFilePath().toString(),
             coreDf.getRecordIdentifier().get().getIndex() + 1,
@@ -66,7 +69,21 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
             coreDf.getDelimiterChar().toString(),
             coreDf.isHasHeaders());
 
-    Arrays.stream(result).forEach(rec -> resultConsumer.accept(buildResult(extensionRowType, rec)));
+    Arrays.stream(matchResult).forEach(rec -> resultConsumer.accept(buildResult(extensionRowType, rec)));
+
+    List<String[]> notEmptyCoreResult = FileBashUtilities.findEmpty(
+      coreDf.getFilePath().toString(),
+      coreDf.getRecordIdentifier().get().getIndex()+1,
+      coreDf.getDelimiterChar().toString());
+
+    notEmptyCoreResult.stream().forEach(rec -> resultConsumer.accept(buildResult2(ArchiveFile.DEFAULT_ID_TERM, rec)));
+
+    List<String[]> notEmptyExtensionResult = FileBashUtilities.findEmpty(
+      extDf.getFilePath().toString(),
+      extDf.getRecordIdentifier().get().getIndex()+1,
+      extDf.getDelimiterChar().toString());
+
+    notEmptyExtensionResult.stream().forEach(rec -> resultConsumer.accept(buildResult2(extensionRowType, rec)));
   }
 
   private static RecordEvaluationResult buildResult(Term rowType, String unlinkedId){
@@ -77,4 +94,11 @@ class ReferentialIntegrityEvaluator implements RecordCollectionEvaluator {
     return new RecordEvaluationResult(rowType, null,  unlinkedId, resultDetails, null, null);
   }
 
+  private static RecordEvaluationResult buildResult2(Term rowType, String[] emptyId) {
+    List<RecordEvaluationResultDetails> resultDetails = new ArrayList<>(1);
+    resultDetails.add(new RecordEvaluationResultDetails(EvaluationType.RECORD_REFERENTIAL_INTEGRITY_VIOLATION,
+      ImmutableMap.of(rowType, emptyId[1])));
+
+    return new RecordEvaluationResult(null, Long.valueOf(emptyId[0]), null, resultDetails, null, null);
+  }
 }

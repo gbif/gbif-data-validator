@@ -134,6 +134,7 @@ public class DataFileProcessorMaster extends AbstractLoggingActor {
             EvaluationChain.Builder.using(dataFile, transformer, factory, workingDir.toPath())
                     .evaluateMetadataContent()
                     .evaluateCoreUniqueness()
+                    .evaluateDataUniqueness()
                     .evaluateReferentialIntegrity()
                     .evaluateRecords(df -> handleSplit(df, fileSplitSize))
                     .evaluateChecklist();

@@ -106,12 +106,24 @@ public class EvaluatorFactory {
    * Creates a {@link RecordCollectionEvaluator} that validates the uniqueness of the value on a specific column index.
    *
    * @param rowTypeKey rowTypeKey targeted by this uniqueness validation
-   * @param caseSensitive
-   * @param workingFolder folder specific to the rsource to evaluate where temporary files will be created
+   * @param ignoreCase
+   * @param workingFolder folder specific to the resource to evaluate where temporary files will be created
    * @return
    */
-  public static RecordCollectionEvaluator createUniquenessEvaluator(RowTypeKey rowTypeKey, boolean caseSensitive, Path workingFolder) {
-    return new UniquenessEvaluator(rowTypeKey, caseSensitive, workingFolder);
+  public static RecordCollectionEvaluator createUniquenessEvaluator(RowTypeKey rowTypeKey, boolean ignoreCase, Path workingFolder) {
+    return new UniquenessEvaluator(rowTypeKey, ignoreCase, workingFolder);
+  }
+
+  /**
+   * Creates a {@link RecordCollectionEvaluator} that validates the uniqueness of identifier values.
+   *
+   * @param rowTypeKey rowTypeKey targeted by this uniqueness validation
+   * @param ignoreCase
+   * @param workingFolder folder specific to the resource to evaluate where temporary files will be created
+   * @return
+   */
+  public static RecordCollectionEvaluator createDataUniquenessEvaluator(RowTypeKey rowTypeKey, boolean ignoreCase, Path workingFolder) {
+    return new DataUniquenessEvaluator(ignoreCase, workingFolder);
   }
 
   /**

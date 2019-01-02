@@ -52,7 +52,7 @@ public class UniquenessEvaluatorTest {
       RecordEvaluationResult recordEvaluationResult = results.get(0);
       RecordEvaluationResultDetails recordEvaluationResultDetails = recordEvaluationResult.getDetails().get(0);
       assertEquals(EvaluationType.RECORD_NOT_UNIQUELY_IDENTIFIED, recordEvaluationResultDetails.getEvaluationType());
-      assertEquals("19", recordEvaluationResult.getRecordId());
+      assertEquals("i19", recordEvaluationResult.getRecordId());
 
     } catch (IOException e) {
       fail(e.getMessage());

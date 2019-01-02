@@ -20,7 +20,14 @@ public class FileBashUtilities {
 
   //command to find content in a specific column of a file
   //private static final String FIND_FILE_CMD = "awk -v column=%d -v value='%s' -F'%s' '$column == value {print FNR}' %s";
-  private static final String FIND_DUPLICATE_CMD = "awk -F'%s' '{cur = $%d} prev == cur { print $%d} {prev = cur}' %s";
+
+  // Find duplicate values in a column.
+  // ASCII 31 is the record separator character, which is unlikely to be part of an identifier or value.
+  private static final String US = String.valueOf((char)31);
+  private static final String FIND_DUPLICATE_CMD = "awk -F'%s' 'BEGIN{OFS=\"\\037\";} {cur = $%d} prev == cur { print $%d, $%d } {prev = cur}' %s";
+
+  // Find empty values in a column.
+  private static final String FIND_NULL_VALUE_CMD = "awk -F'%s' 'BEGIN{OFS=\"\\037\";} $%d == \"\" { print NR, $0 }' %s";
 
   /**
    * This command can does a diff between 2 files on a specific column.
@@ -102,16 +109,43 @@ public class FileBashUtilities {
    * Find duplicated values of a column from a file already sorted on that column.
    *
    * @param filePath path to the file sorted on the column
-   * @param column index of the column to find duplicate, starting at 1
+   * @param keyColumn index of the column to report, e.g. line ids
+   * @param valueColumn index of the column to find duplicate, starting at 1
    * @param separator
    * @return
    * @throws IOException
    */
-  public static String[] findDuplicates(String filePath, int column, String separator) throws IOException {
-    checkArgument(column > 0, "Indices are starting at 1");
-    return executeSimpleCmd(String.format(FIND_DUPLICATE_CMD, separator, column, column, filePath));
+  public static List<String[]> findDuplicates(String filePath, int keyColumn, int valueColumn, String separator) throws IOException {
+    checkArgument(keyColumn > 0, "Indices are starting at 1");
+    checkArgument(valueColumn > 0, "Indices are starting at 1");
+    return executeFieldCmd(String.format(FIND_DUPLICATE_CMD, separator, valueColumn, keyColumn, valueColumn, filePath));
   }
 
+  /**
+   * Find empty values in column.
+   *
+   * @param filePath path to the file
+   * @param valueColumn index of the column to find empty values, starting at 1
+   * @param separator
+   * @return
+   * @throws IOException
+   */
+  public static List<String[]> findEmpty(String filePath, int valueColumn, String separator) throws IOException {
+    checkArgument(valueColumn > 0, "Indices are starting at 1");
+    return executeFieldCmd(String.format(FIND_NULL_VALUE_CMD, separator, valueColumn, filePath));
+  }
+
+  /**
+   * TODO javadoc
+   * @param refFilePath
+   * @param inputFilePath
+   * @param columnNumberReferenceFile
+   * @param columnNumberInputFile
+   * @param sep
+   * @param skipHeaderLine
+   * @return
+   * @throws IOException
+   */
   public static String[] diffOnColumns(String refFilePath, String inputFilePath,
                                        int columnNumberReferenceFile, int columnNumberInputFile, String sep,
                                        boolean skipHeaderLine) throws IOException {
@@ -132,7 +166,7 @@ public class FileBashUtilities {
 
   /**
    * Executes a bash command and collect its result in a string array.
-   * FIXME limit the number of result return
+   * FIXME limit the number of result returned
    */
   private static String[] executeSimpleCmd(String bashCmd) throws IOException {
     String[] cmd = {"/bin/sh", "-c", bashCmd};
@@ -145,6 +179,30 @@ public class FileBashUtilities {
       }
       process.waitFor();
       return out.toArray(new String[out.size()]);
+    } catch (InterruptedException ex) {
+      throw new RuntimeException(ex);
+    } finally {
+      if (process.isAlive()) {
+        process.destroy();
+      }
+    }
+  }
+
+  /**
+   * Executes a bash command and collect its result in a string array.
+   * FIXME limit the number of result returned
+   */
+  private static List<String[]> executeFieldCmd(String bashCmd) throws IOException {
+    List<String[]> output = new ArrayList<>();
+    String[] cmd = {"/bin/sh", "-c", bashCmd};
+    Process process = Runtime.getRuntime().exec(cmd);
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+      String line;
+      while ((line = in.readLine()) != null) {
+        output.add(line.split(US));
+      }
+      process.waitFor();
+      return output;
     } catch (InterruptedException ex) {
       throw new RuntimeException(ex);
     } finally {

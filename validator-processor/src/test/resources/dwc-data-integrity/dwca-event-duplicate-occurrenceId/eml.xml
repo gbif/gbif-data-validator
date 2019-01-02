@@ -1,0 +1,951 @@
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.1"
+         xmlns:dc="http://purl.org/dc/terms/"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 http://rs.gbif.org/schema/eml-gbif-profile/1.1/eml.xsd"
+         packageId="4b04f487-712e-4ade-80fb-14e45f32e5f4/v1.1" system="http://gbif.org" scope="system"
+         xml:lang="spa">
+
+<dataset>
+  <alternateIdentifier>doi:10.15472/2200ee</alternateIdentifier>
+  <alternateIdentifier>4b04f487-712e-4ade-80fb-14e45f32e5f4</alternateIdentifier>
+  <alternateIdentifier>http://ipt.biodiversidad.co/sib/resource?r=sda-av</alternateIdentifier>
+  <title xml:lang="spa">Aves de los Parques Ecológicos Distritales Humedales Bogotá, D.C.</title>
+      <creator>
+    <individualName>
+        <givenName>Luisa Fernanda</givenName>
+      <surName>Lagos Martínez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>luisa.lagos@ambientebogota.gov.co</electronicMailAddress>
+      </creator>
+      <creator>
+    <individualName>
+        <givenName>Julio Cesar</givenName>
+      <surName>Martínez Ortega</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Contratista</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>julcemo13@gmail.com</electronicMailAddress>
+      </creator>
+      <creator>
+    <individualName>
+        <givenName>Yeny Rocio</givenName>
+      <surName>López Perilla</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Contratista</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>yrocio.lopez@gmail.com</electronicMailAddress>
+      </creator>
+      <creator>
+    <individualName>
+        <givenName>Raul Alberto</givenName>
+      <surName>Molina Jímenez </surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Contratista</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>raulm64@gmail.com</electronicMailAddress>
+      </creator>
+      <creator>
+    <individualName>
+        <givenName>Cesar Alberto</givenName>
+      <surName>Ortíz Andrade</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Contratista</positionName>
+    <address>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>cealoran@gmail.com</electronicMailAddress>
+      </creator>
+      <metadataProvider>
+    <individualName>
+        <givenName>Yeny Rocio</givenName>
+      <surName>López Perilla</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Contratista</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>yrocio.lopez@gmail.com</electronicMailAddress>
+      </metadataProvider>
+      <metadataProvider>
+    <individualName>
+        <givenName>Luisa Fernanda</givenName>
+      <surName>Lagos Martínez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Contratista</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>luisa.lagos@ambientebogota.gov.co</electronicMailAddress>
+      </metadataProvider>
+      <associatedParty>
+    <individualName>
+        <givenName>Luisa Fernanda</givenName>
+      <surName>Lagos Martínez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>luisa.lagos@ambientebogota.gov.co</electronicMailAddress>
+    <role>principalInvestigator</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Julio Cesar</givenName>
+      <surName>Martínez Ortega</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>julcemo13@gmail.com</electronicMailAddress>
+    <role>principalInvestigator</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Cesar Alberto</givenName>
+      <surName>Ortíz Andrade</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>principalInvestigator</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Raul Alberto</givenName>
+      <surName>Molina Jímenez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>raulm64@gmail.com</electronicMailAddress>
+    <role>principalInvestigator</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Fabián Camilo</givenName>
+      <surName>Prada Achiardi</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>fcpradaa@unal.edu.co</electronicMailAddress>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Nelson Fábian</givenName>
+      <surName>Galvis</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Coordinador de monitoreo biológico y biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Juan Camilo</givenName>
+      <surName>Bueno Castellanos</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>jucabuca2@gmail.com</electronicMailAddress>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Gloria Johana</givenName>
+      <surName>González</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>July Andrea</givenName>
+      <surName>Ramírez Caviedes</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Carlos Andrés</givenName>
+      <surName>Páez Jácome</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Oriana</givenName>
+      <surName>Ortega</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Paola Andrea</givenName>
+      <surName>Delgado Páez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Victoria Eugenia</givenName>
+      <surName>Cetina Montes</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Oscar Yandy</givenName>
+      <surName>Romero Goyeneche</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>oyromerog@gmail.com</electronicMailAddress>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>William Alberto</givenName>
+      <surName>Rodríguez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Andrés Felipe</givenName>
+      <surName>Bohórquez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Julián Lamilla</givenName>
+      <surName>Monje</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>julianlamillamonje@gmail.com</electronicMailAddress>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Wendy Francy</givenName>
+      <surName>López Meneses</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Coordinadora de Monitoreo de Biodiversidad. SER</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>wendyfrancy@gmail.com</electronicMailAddress>
+    <role>processor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Sandy</givenName>
+      <surName>Arroyo</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Coordinadora de Monitoreo de Biodiversidad. SER</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>sandy.arroyo@ambientebogota.gov.co</electronicMailAddress>
+    <role>pointOfContact</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Jimmy</givenName>
+      <surName>García Beltrán</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Subdirector de Ecosistema y Ruralidad SER</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>jimmy.beltran@ambientebogota.gov.co</electronicMailAddress>
+    <role>editor</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Adriana Lucia</givenName>
+      <surName>Santa Méndez</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Directora de Gestión Ambiental DGA</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>adriana.santa@ambientebogota.gov.co</electronicMailAddress>
+    <role>custodianSteward</role>
+      </associatedParty>
+      <associatedParty>
+    <individualName>
+        <givenName>Yeny Rocio</givenName>
+      <surName>López Perilla</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Monitor en biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>yrocio.lopez@gmail.com</electronicMailAddress>
+    <role>publisher</role>
+      </associatedParty>
+  <pubDate>
+      2018-04-05
+  </pubDate>
+  <language>spa</language>
+  <abstract>
+    <para>En este recurso, el grupo de monitoreo en biodiversidad de la Secretaría Distrital de Ambiente –SDA, adscrito a la Subdirección de Ecosistemas y Ruralidad, presenta un consolidado de los registros biológicos de aves, producto del monitoreo de biodiversidad realizado a los Parques Ecológicos Distritales de Humedal (PEDH) durante el período de tiempo comprendido entre el 2 de julio de 2015 hasta el 19 de octubre de 2017. En este se incluye información del grupo biológico, localizados en los 15 Parques Ecológicos Distritales de Humedales (PEDH) declarados en el Distrito Capital. Dentro de los resultados obtenidos se tiene para el grupo de aves un total de 15.205 registros, para 119 especies en todos los PEDH del Distrito.</para>
+  </abstract>
+      <keywordSet>
+            <keyword>PEDH Salitre</keyword>
+            <keyword>PEDH Torca-Guaymaral</keyword>
+            <keyword>PEDH Córdoba</keyword>
+            <keyword>PEDH La Conejera</keyword>
+            <keyword>PEDH Juan Amarillo</keyword>
+            <keyword>PEDH Santa María del Lago</keyword>
+            <keyword>PEDH Capellanía</keyword>
+            <keyword>PEDH Techo</keyword>
+            <keyword>PEDH El Burro</keyword>
+            <keyword>PEDH La Vaca</keyword>
+            <keyword>PEDH Jaboque</keyword>
+            <keyword>PEDH La Isla</keyword>
+            <keyword>PEDH Meandro del Say</keyword>
+            <keyword>PEDH Tibanica</keyword>
+            <keyword>PEDH Tunjo</keyword>
+            <keyword>Aves</keyword>
+            <keyword>Distrito Capital</keyword>
+            <keyword>monitoreo</keyword>
+            <keyword>biodiversidad.</keyword>
+        <keywordThesaurus>GBIF Dataset Type Vocabulary: http://rs.gbif.org/vocabulary/gbif/dataset_type.xml</keywordThesaurus>
+      </keywordSet>
+  <intellectualRights>
+    <para>This work is licensed under a <ulink url="http://creativecommons.org/licenses/by-nc/4.0/legalcode"><citetitle>Creative Commons Attribution Non Commercial (CC-BY-NC) 4.0 License</citetitle></ulink>.</para>
+  </intellectualRights>
+  <coverage>
+      <geographicCoverage>
+          <geographicDescription>Parques Ecológicos Distritales Humedales – Conejera, Juan Amarillo, Córdoba, Torca y Guaymaral, Jaboque, Capellanía, Techo, Vaca, Burro, Santa María del Lago, Salitre, Meandro del Say, La Isla, Tunjo.</geographicDescription>
+        <boundingCoordinates>
+          <westBoundingCoordinate>-74.225</westBoundingCoordinate>
+          <eastBoundingCoordinate>-74.015</eastBoundingCoordinate>
+          <northBoundingCoordinate>4.782</northBoundingCoordinate>
+          <southBoundingCoordinate>4.481</southBoundingCoordinate>
+        </boundingCoordinates>
+      </geographicCoverage>
+          <temporalCoverage>
+              <rangeOfDates>
+                  <beginDate>
+                    <calendarDate>2015-07-02</calendarDate>
+                  </beginDate>
+                <endDate>
+                  <calendarDate>2017-10-19</calendarDate>
+                </endDate>
+              </rangeOfDates>
+          </temporalCoverage>
+          <taxonomicCoverage>
+              <generalTaxonomicCoverage>Todas las aves fueron identificadas a ordenes</generalTaxonomicCoverage>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Accipitriformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Anseriformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Apodiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Caprimulgiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Charadriiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Columbiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Cuculiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Falconiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Gruiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Passeriformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Pelecaniformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Piciformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Podicipediformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Psittaciformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Strigiformes</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>order</taxonRankName>
+                <taxonRankValue>Suliformes</taxonRankValue>
+              </taxonomicClassification>
+          </taxonomicCoverage>
+          <taxonomicCoverage>
+              <generalTaxonomicCoverage>Todas las aves fueron identificadas a familia</generalTaxonomicCoverage>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Accipitridae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Anatidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Ardeidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Caprimulgidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Cardinalidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Cathartidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Charadriidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Columbidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Cuculidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Emberizidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Falconidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Fringillidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Furnariidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Hirundinidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Icteridae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Laridae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Mimidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Pandionidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Parulidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Phalacrocoracidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Picidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Podicipedidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Psittacidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Rallidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Ramphastidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Scolopacidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Strigidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Thraupidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Threskiornithidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Trochilidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Troglodytidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Turdidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Tyrannidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Tytonidae</taxonRankValue>
+              </taxonomicClassification>
+              <taxonomicClassification>
+                  <taxonRankName>family</taxonRankName>
+                <taxonRankValue>Vireonidae</taxonRankValue>
+              </taxonomicClassification>
+          </taxonomicCoverage>
+  </coverage>
+  <maintenance>
+    <description>
+      <para></para>
+    </description>
+    <maintenanceUpdateFrequency>asNeeded</maintenanceUpdateFrequency>
+  </maintenance>
+
+      <contact>
+    <individualName>
+        <givenName>Sandy</givenName>
+      <surName>Arroyo</surName>
+    </individualName>
+    <organizationName>Secretaria Distrital de Ambiente</organizationName>
+    <positionName>Coordinadora de Monitoreo en Biodiversidad</positionName>
+    <address>
+        <deliveryPoint>Av. Caracas No 54-38</deliveryPoint>
+        <city>Bogotá D.C.</city>
+        <country>CO</country>
+    </address>
+    <electronicMailAddress>sandy.arroyo@ambientebogota.gov.co</electronicMailAddress>
+      </contact>
+  <methods>
+        <methodStep>
+          <description>
+            <para>En cada punto se realiza el registro de todas las especies de aves observadas durante 5 minutos, dentro de un radio fijo de aproximadamente 50m. La distancia mínima entre los puntos de conteo debe ser de 200 m para garantizar independencia de muestreo y evitar reconteos. 
+Entre la distancia de los puntos de radio fijo se establecieron transectos de muestreo. Durante el recorrido realizado, generalmente a 0.8km/h, se realiza el registro de todas las especies de aves observadas a una distancia aproximada de 10 a 15 metros.</para>
+          </description>
+        </methodStep>
+      <sampling>
+        <studyExtent>
+          <description>
+            <para>Los PEDH cubren un total de 725,01 ha de la estructura ecológica principal (EEP) de Bogotá D.C. Los humedales monitoreados, cuentan cada uno con la siguiente área legal declarada: 
+1. PEDH Tibaníca: (28.8 ha) 
+2. PEDH La Vaca: (7.98 ha)
+3. PEDH El Burro: (18.84 ha)                               
+4. PEDH Techo: (11.67 ha)
+5. PEDH Capellanía: (27 ha)	
+6. PEDH Meandro del Say: (26 ha)
+7. PEDH Santa María del Lago: (10.86 ha)
+8. PEDH Córdoba: (40.51 ha)
+9. PEDH Jaboque: (148 ha)
+10. PEDH Juan Amarillo: (222.76 ha)
+11. PEDH La Conejera: (58.89 ha)
+12. PEDH Torca-Guaymaral: (79.93 ha)
+13. PEDH El Salitre: (2.8 ha)
+14. PEDH Tunjo: (33.2 ha)
+15. PEDH Isla: (7.77 ha)</para>
+          </description>
+        </studyExtent>
+        <samplingDescription>
+          <para>El Grupo de Monitoreo en Biodiversidad adscrito a la Secretaria Distrital de Ambiente fijó puntos y transectos de muestreo sistemáticamente en los 15 humedales del Distrito, teniendo en cuenta el área de cada uno de ellos, así como las condiciones topográficas y coberturas vegetales presentes. La jornada de avistamiento inicia a las 6:00 am y finaliza a las 11:00 am. Para el muestreo de aves se utilizaron dos metodologías: puntos de radio fijo y transectos de muestreo. El muestreo por medio de puntos de radio fijo, es uno de los métodos más populares para estudiar la abundancia, riqueza, densidad, composición y distribución de las aves. Los puntos de conteo son distribuidos en lugares representativos de las áreas de monitoreo.</para>
+        </samplingDescription>
+      </sampling>
+      <qualityControl>
+        <description>
+          <para>La calidad de la información se garantiza por parte de los especialistas de fauna: Luisa Fernanda Lagos Martínez, Julio Cesar Martínez Ortega, Cesar Alberto Ortiz Andrade, Raul Alberto Molina Jímenez</para>
+        </description>
+      </qualityControl>
+  </methods>
+  <project >
+    <title>Registros Biológicos en el marco del Proyecto de Inversión: “Implementar cuatro programas de monitoreo en áreas de la Estructura Ecológica Principal del Distrito Capital” Secretaría Distrital de Ambiente</title>
+      <personnel>
+        <individualName>
+            <givenName>Luisa Fernanda</givenName>
+          <surName>Lagos Martínez</surName>
+        </individualName>
+        <role>principalInvestigator</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Julio Cesar</givenName>
+          <surName>Martínez Ortega</surName>
+        </individualName>
+        <role>principalInvestigator</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Cesar Alberto</givenName>
+          <surName>Ortíz Andrade</surName>
+        </individualName>
+        <role>principalInvestigator</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Raul Alberto</givenName>
+          <surName>Molina Jímenez</surName>
+        </individualName>
+        <role>principalInvestigator</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Yeny Rocio</givenName>
+          <surName>López Perilla</surName>
+        </individualName>
+        <role>publisher</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Fabián Camilo</givenName>
+          <surName>Prada Achiardi</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Nelson Fabian</givenName>
+          <surName>Galvis</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Juan Camilo</givenName>
+          <surName>Bueno Castellanos</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Gloria Johana</givenName>
+          <surName>González</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>July Andrea</givenName>
+          <surName>Ramírez Caviedes</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Carlos Andrés</givenName>
+          <surName>Páez Jácome</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Oriana</givenName>
+          <surName>Ortega</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Paola Andrea</givenName>
+          <surName>Delgado Páez</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Victoria Eugenia</givenName>
+          <surName>Cetina Montes</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Oscar Yandy</givenName>
+          <surName>Romero Goyeneche</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>William Alberto</givenName>
+          <surName>Rodríguez</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Andrés Felipe</givenName>
+          <surName>Bohórquez</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Julián Lamilla</givenName>
+          <surName>Monje</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Wendy Francy</givenName>
+          <surName>López Meneses</surName>
+        </individualName>
+        <role>processor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Sandy</givenName>
+          <surName>Arroyo Sánchez</surName>
+        </individualName>
+        <role>pointOfContact</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Jimmy</givenName>
+          <surName>García Beltrán</surName>
+        </individualName>
+        <role>editor</role>
+      </personnel>
+      <personnel>
+        <individualName>
+            <givenName>Adriana Lucia</givenName>
+          <surName>Santa Méndez</surName>
+        </individualName>
+        <role>custodianSteward</role>
+      </personnel>
+      <abstract>
+        <para>En este recurso, el grupo de monitoreo en biodiversidad de la Secretaría Distrital de Ambiente –SDA, adscrito a la Subdirección de Ecosistemas y Ruralidad, presenta un consolidado de los registros biológicos de aves, producto del monitoreo de biodiversidad realizado a los Parques Ecológicos Distritales de Humedal (PEDH) durante el período de tiempo comprendido entre el 2 de julio de 2015 hasta el 19 de octubre de 2017. En este se incluye información del grupo biológico, localizados en los 15 Parques Ecológicos Distritales de Humedal (PEDH) declarados en el Distrito Capital. Dentro de los resultados obtenidos se tiene para el grupo de aves un total de 15.205 registros, para 119 especies en todos los PEDH del Distrito.</para>
+      </abstract>
+      <studyAreaDescription>
+        <descriptor name="generic"
+                    citableClassificationSystem="false">
+          <descriptorValue>La Sabana de Bogotá constituye un territorio de gran importancia para la sostenibilidad del distrito dada su oferta de bienes y de servicios ambientales. Es una zona relevante para la restauración, conservación, protección y mantenimiento de la Estructura Ecológica Principal (Estupiñanet al., 2008). De acuerdo a Van Der Hammen (1998) y Rangel (2003), dicha planicie corresponde al fondo de un antiguo lago con un suelo andosólico que se formó sobre ella durante los últimos 30000 años. El proceso de pérdida del espejo de agua fue un evento natural que se inició hace 30000 años, y que se aceleró en los últimos mil años sobre zonas que aún poseían un espejo de agua, especialmente por la influencia marcada por el hombre (Estupiñanet al., 2008). 
+Los humedales son ecosistemas de gran valor natural y cultural, constituidos por un cuerpo de agua permanente o estacional de escasa profundidad, una franja a su alrededor que puede cubrirse por inundaciones periódicas (Ronda Hidráulica) y una franja de terreno no inundable, llamada Zona de Manejo y Preservación Ambiental (DAMA, 2006). Estos ecosistemas están asociados a las cubetas y planos de desborde de los ríos, razón por la cual su biota, los flujos de nutrientes, materia y energía están adaptados a las fluctuaciones y comportamientos de sus sistemas hídricos asociados (DAMA, 2006).
+Los humedales han formado parte de la Sabana de Bogotá, y se calcula que de las 150000 ha que cubrían los humedales en la Sabana hasta el año 1940, hoy sólo quedan aproximadamente 1500 ha (Moreno et al., 2002). Estos ecosistemas sufren graves alteraciones, principalmente antropológicas, entre las que se destacan la urbanización, la actividad agrícola de alto impacto como la floricultura, la siembra de papa, el establecimiento de ganadería y las actividades industriales (Moreno et al., 2002). Con la transformación de los humedales de Bogotá se han reducido e incluso perdido algunos hábitats, por lo cual estos ecosistemas se han tornado altamente vulnerables a invasión. 
+En la actualidad, el Distrito Capital de Bogotá, cuenta con 15 humedales urbanos, los cuales hacen parte integral de la Estructura Ecológica Principal e interactúan con la ciudad a través de las subcuencas desde los cerros orientales hasta el río Bogotá.</descriptorValue>
+        </descriptor>
+      </studyAreaDescription>
+  </project>
+</dataset>
+  <additionalMetadata>
+    <metadata>
+      <gbif>
+          <dateStamp>2018-01-09T04:32:25.985+00:00</dateStamp>
+          <hierarchyLevel>dataset</hierarchyLevel>
+            <citation identifier="http://doi.org/10.15472/2200ee">Secretaria Distrital de Ambiente SDA. 2017. Registros de aves de los Parques Ecológicos Distritales de Humedales de Bogotá, D.C.</citation>
+          <bibliography>
+                <citation>Asociación Bogotana de Ornitología, ABO. (2000). Aves de la sabana de Bogotá: guía de campo, Bogotá: AUDICON América Latina, CAR. Bogotá, D.C., Colombia.</citation>
+                <citation>Hamel, P. B., Smith, W. P. Twedt, D. J., Woehr, J.R., Morris, E., Hamilton, R.B., Cooper, R.J. (1996). A land manager’s guide to point counts of birds in the Southeast. Gen. Tech. Rep. SO-120. New Orleans, LA: U.S. Department of Agriculture, Forest Service, Southern Research Station. 39 p.</citation>
+                <citation>Hilty, S.L. &amp; Brown, W.L. (1986). A guide to the birds of Colombia. Pincenton, NJ.LPrincenton Univ. Press.</citation>
+                <citation>Ochoa, D., Contreras, S., Camargo, P., Chaparro, S. &amp; Betancourt, A. (2013).  Caracterización de las poblaciones de aves residentes y migratorias en un corredor de 68 kilómetros de la Cuenca Media del Río Bogotá. Informe Final. Corporación Autónoma Regional de Cundinamarca y Asociación Bogotana de Ornitología. Bogotá D.C.</citation>
+                <citation>Ralph, J., Droege, S., Sauer, J. R. (1995). Managing and monitoring birds using point counts: Standards and applications. En: Monitoring Bird Populations by Point Counts. Gen. Tech. Rep. PSW-GTR-149. Albany, CA: Pacific Southwest Research Station, Forest Service, US. Department of Agriculture; 161-175.
+Ralph, C. J., Geupel, G. R., Pyle, P., Martin, T. E., DeSante, D. F., Milá, B. (1996). Manual de métodos de campo para el monitoreo de aves terrestres. Gen. Tech. Rep. PSW-GTR159. Albany,CA: Pacific Southwest Research Station, Forest Service, U.S. Department of Agriculture, 46 p.</citation>
+                <citation>Rosselli, L. (2011). Factores ambientales relacionados con la presencia y abundancia de las aves de los humedales de la Sabana de Bogotá, Tesis doctoral. Facultad de Ciencias.  Universidad Nacional de Colombia. Bogotá).</citation>
+                <citation>Rosselli, L., &amp; Stiles, F. G. (2012). Wetland habitats of the Sabana de Bogotá Andean Highland Plateau and their birds. Aquatic Conservation: Marine and Freshwater Ecosystems, 22(3), 303–317. http://doi.org/10.1002/aqc.2234</citation>
+                <citation>Secretaría Distrital de Ambiente, SDA. (2008). Aves rapaces de Bogotá, Diversidad en medio de la urbe.  Alcaldía Mayor de Bogotá, primeraedición. 107 p.</citation>
+                <citation identifier="http://aplicacionesbiblioteca.udea.edu.co:2117/stable/23641270">Stiles, F., &amp; Rosselli, L. (1998). Inventario de las aves de un bosque altoandino: comparación de dos métodos. Caldasia,20(1), 29-43. Recuperado de: http://aplicacionesbiblioteca.udea.edu.co:2117/stable/23641270</citation>
+                <citation>Villarreal, H., Álvarez, M., Córdoba, S., Escobar, F., Fagua, G., Gast, F., Mendoza, H., Ospina, M., Umaña, A.M. (2006). Manual de métodos para el desarrollo de inventarios de biodiversidad. Programa de Inventarios de Biodiversidad. Instituto de Investigaciónde Recursos Biológicos Alexander von Humboldt. Bogotá, Colombia. Segunda edición.236 p.</citation>
+                <citation>DAMA. 2006. Política de Humedales del Distrito Capital. Primera Edición. Bogotá D.C. – Colombia.</citation>
+                <citation>Estupiñan, L. &amp; Cabrera, L. 2008 Los alrededores: Todo un ambiente en en la U.D.C.A. Revista U.D.C.A Actualidad &amp; Divulgación Científica 11 (2). Pg: 3-9.</citation>
+                <citation>Moreno, V., García, J., Villalba, J. 2002. Descripción General de los Humedales de Bogotá. Sociedad Geográfica de Colombia – Academia de Ciencias Geográficas. Bogotá. Pg: 28.</citation>
+                <citation>Rangel, O. 2003. El Antiguo Lago de la Sabana de Bogotá, su vegetación y flora en el tiempo. En: Empresa Acueducto y Alcantarillado de Bogotá &amp; Conservación Internacional Colombia (Eds.) Los Humedales de Bogotá y la Sabana. Acueducto de Bogotá. Bogotá, D.C. Pg: 53-70.</citation>
+                <citation identifier="Van der Hammen, T. 2003. Los humedales de la sabana: Origen, evolución, degradación y restauración. En: GUARNIZO A. y B. CALVACHI. Los humedales de Bogotá y la sabana. Acueducto de Bogotá y Conservación Internacional. Colombia.">Van der Hammen, T. 1998. Plan Ambiental de la Cuenca Alta del Río Bogotá, Análisis y Orientaciones para el Ordenamiento Territorial. Corporación Autónoma Regional de Cundinamarca, CAR. Bogotá, D.C. Pg: 142.</citation>
+          </bibliography>
+          <resourceLogoUrl>https://s3.amazonaws.com/sib-resources/images/logos-socios/portal-sib/Logo-s-ambiente.png</resourceLogoUrl>
+          <dc:replaces>4b04f487-712e-4ade-80fb-14e45f32e5f4/v1.1.xml</dc:replaces>
+      </gbif>
+    </metadata>
+  </additionalMetadata>
+</eml:eml>

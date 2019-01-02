@@ -124,7 +124,15 @@ public class EvaluationChain {
       recordCollectionEvaluatorFct.add((dwcDataFile) ->
               Collections.singletonList(
                       new TargetedRecordCollectionEvaluator(dwcDataFile.getCore().getRowTypeKey(),
-                      EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowTypeKey(), true, workingFolder))));
+                      EvaluatorFactory.createUniquenessEvaluator(dwcDataFile.getCore().getRowTypeKey(), false, workingFolder))));
+      return this;
+    }
+
+    public Builder evaluateDataUniqueness() {
+      recordCollectionEvaluatorFct.add((dwcDataFile) ->
+        Collections.singletonList(
+          new TargetedRecordCollectionEvaluator(dwcDataFile.getCore().getRowTypeKey(),
+            EvaluatorFactory.createDataUniquenessEvaluator(dwcDataFile.getCore().getRowTypeKey(), false, workingFolder))));
       return this;
     }
 

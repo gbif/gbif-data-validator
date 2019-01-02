@@ -1,0 +1,4 @@
+id	type	language	occurrenceID	scientificName
+i1	Physical Object	en	o-1	Megachile chomskyi Sheffield, 2013
+	Physical Object	en	o-2	Megachile chomskyi Sheffield, 2013
+i3	Physical Object	en	o-3	Megachile chomskyi Sheffield, 2013
