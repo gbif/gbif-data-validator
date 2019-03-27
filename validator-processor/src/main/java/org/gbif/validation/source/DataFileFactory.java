@@ -224,6 +224,7 @@ public class DataFileFactory {
     }
 
     List<Term> headers = new ArrayList<>();
+    LOG.info("Creating DWC based tabular datafile from {}", archiveFile);
     for (List<Term> terms : archiveFile.getHeader()) {
       if (terms.isEmpty()) {
         throw new UnsupportedArchiveException("A column has no header");

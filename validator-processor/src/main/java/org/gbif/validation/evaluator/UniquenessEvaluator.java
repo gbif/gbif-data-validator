@@ -30,7 +30,6 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
   private org.gbif.utils.file.FileUtils GBIF_FILE_UTILS = new org.gbif.utils.file.FileUtils();
 
   private final RowTypeKey rowTypeKey;
-  private final boolean ignoreCase = false;
   private final Path workingFolder;
 
   /**
@@ -56,11 +55,11 @@ class UniquenessEvaluator implements RecordCollectionEvaluator {
     File sortedFile = workingFolder.resolve(sourceFile.getName() + "_sorted").toFile();
 
     GBIF_FILE_UTILS.sort(sourceFile, sortedFile, Charsets.UTF_8.toString(), idColumnIndex,
-            dataFile.getDelimiterChar().toString(), null, "\n", dataFile.isHasHeaders() ? 1 : 0, null, ignoreCase);
+            dataFile.getDelimiterChar().toString(), dataFile.getQuoteChar(), "\n", dataFile.isHasHeaders() ? 1 : 0);
 
-    //FIXME doesn't support case sensitive for now
-    List<String[]> result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex + 1, idColumnIndex + 1,
-            dataFile.getDelimiterChar().toString());
+    //FIXME doesn't support case insensitive for now
+    List<String[]> result = FileBashUtilities.findDuplicates(sortedFile.getAbsolutePath(), idColumnIndex + 1,
+      idColumnIndex + 1, dataFile.getDelimiterChar().toString(), dataFile.getQuoteChar(), dataFile.getCharacterEncoding());
 
     result.stream().forEach(rec -> resultConsumer.accept(buildResult(rowTypeKey, rec[0])));
   }

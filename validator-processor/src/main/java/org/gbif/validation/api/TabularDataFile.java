@@ -1,5 +1,6 @@
 package org.gbif.validation.api;
 
+import com.google.common.base.MoreObjects;
 import org.gbif.dwc.terms.Term;
 import org.gbif.validation.api.vocabulary.DwcFileType;
 
@@ -219,4 +220,22 @@ public class TabularDataFile {
             hasHeaders);
   }
 
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+      .add("rowTypeKey", rowTypeKey)
+      .add("path", filePath)
+      .add("sourceFileName", sourceFileName)
+      .add("columns", columns)
+      .add("recordIdentifier", recordIdentifier)
+      .add("defaultValues",  defaultValues)
+      .add("fileLineOffset", fileLineOffset)
+      .add("hasHeaders", hasHeaders)
+      .add("characterEncoding", characterEncoding)
+      .add("delimiterChar", delimiterChar)
+      .add("quoteChar", quoteChar)
+      .add("numOfLines", numOfLines)
+      .add("numOfLinesWithData", numOfLinesWithData)
+      .toString();
+  }
 }

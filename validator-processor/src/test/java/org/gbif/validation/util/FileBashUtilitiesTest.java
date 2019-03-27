@@ -4,6 +4,7 @@ import org.gbif.utils.file.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -142,4 +143,13 @@ public class FileBashUtilitiesTest {
 //    assertEquals(expectedNumberOfSplitFile, splitFiles.size());
 //  }
 
+  @Test
+  public void testFindDuplicates() throws IOException {
+    //won't work on Windows
+    assumeTrue(SystemUtils.IS_OS_LINUX || SystemUtils.IS_OS_MAC);
+
+    File t1 = FileUtils.getClasspathFile("quoted-delimeters.csv");
+
+    assertEquals(1, FileBashUtilities.findDuplicates(t1.getPath(), 1, 3, ",", '"', StandardCharsets.UTF_8).size());
+  }
 }

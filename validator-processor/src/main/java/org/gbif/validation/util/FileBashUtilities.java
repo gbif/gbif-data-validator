@@ -1,9 +1,14 @@
 package org.gbif.validation.util;
 
+import org.apache.commons.lang3.text.StrTokenizer;
+import org.gbif.utils.text.LineComparator;
+
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -108,6 +113,8 @@ public class FileBashUtilities {
   /**
    * Find duplicated values of a column from a file already sorted on that column.
    *
+   * With quoted delimiters, this can't work (there could even be quoted line separators), so we revert to Java.
+   *
    * @param filePath path to the file sorted on the column
    * @param keyColumn index of the column to report, e.g. line ids
    * @param valueColumn index of the column to find duplicate, starting at 1
@@ -115,10 +122,41 @@ public class FileBashUtilities {
    * @return
    * @throws IOException
    */
-  public static List<String[]> findDuplicates(String filePath, int keyColumn, int valueColumn, String separator) throws IOException {
+  public static List<String[]> findDuplicates(String filePath, int keyColumn, int valueColumn,
+                                              String separator, Character quote, Charset encoding) throws IOException {
     checkArgument(keyColumn > 0, "Indices are starting at 1");
     checkArgument(valueColumn > 0, "Indices are starting at 1");
-    return executeFieldCmd(String.format(FIND_DUPLICATE_CMD, separator, valueColumn, keyColumn, valueColumn, filePath));
+    if (quote == null || valueColumn == 1) {
+      return executeFieldCmd(String.format(FIND_DUPLICATE_CMD, separator, valueColumn, keyColumn, valueColumn, filePath));
+    } else {
+      // Can't use a simple GNU command if fields may be quoted.
+      LineComparator lineComparator = new LineComparator(valueColumn-1, separator, quote);
+
+      StrTokenizer tokenizer = new StrTokenizer();
+      tokenizer.setEmptyTokenAsNull(true);
+      tokenizer.setIgnoreEmptyTokens(false);
+      if (quote != null) {
+        tokenizer.setQuoteChar(quote);
+      }
+      tokenizer.setDelimiterString(separator);
+
+      String previous = null;
+      List<String[]> duplicates = new ArrayList<>();
+
+      try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath), encoding))) {
+        String line = br.readLine();
+        while (line != null) {
+          if (lineComparator.compare(previous, line) == 0) {
+            tokenizer.reset(line);
+            String[] parts = tokenizer.getTokenArray();
+            duplicates.add(new String[]{parts[keyColumn-1], parts[valueColumn-1]});
+          }
+          previous = line;
+          line = br.readLine();
+        }
+      }
+      return duplicates;
+    }
   }
 
   /**

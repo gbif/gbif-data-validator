@@ -31,7 +31,6 @@ public class DataUniquenessEvaluatorTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-
   /**
    * occurrence.txt contains two records with a dwc:occurrenceId of o-19.
    */

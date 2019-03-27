@@ -33,17 +33,15 @@ public class UniquenessEvaluatorTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-  private static final File DWC_ARCHIVE = FileUtils.getClasspathFile("dwc-data-integrity/dwca");
-
   @Test
   public void testUniqueness() throws UnsupportedDataFileException {
 
-    DataFile df = DataFileFactory.newDataFile(DWC_ARCHIVE.toPath(), "dwc-data-integrity-dwca",
-            FileFormat.DWCA, "", "");
+    DataFile df = DataFileFactory.newDataFile(FileUtils.getClasspathFile("dwc-data-integrity/dwca").toPath(),
+      "dwc-data-integrity-dwca", FileFormat.DWCA, "", "");
 
     try {
       Path testFolder = folder.newFolder().toPath();
-      DwcDataFile dwcaContent = DataFileFactory.prepareDataFile(df,testFolder);
+      DwcDataFile dwcaContent = DataFileFactory.prepareDataFile(df, testFolder);
 
       UniquenessEvaluator ue = new UniquenessEvaluator(RowTypeKey.forCore(DwcTerm.Occurrence), false, testFolder);
       List<RecordEvaluationResult> results = new ArrayList<>();
@@ -58,5 +56,4 @@ public class UniquenessEvaluatorTest {
       fail(e.getMessage());
     }
   }
-
 }

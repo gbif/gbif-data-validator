@@ -1,5 +1,6 @@
 package org.gbif.validation.api.model;
 
+import com.google.common.base.MoreObjects;
 import org.gbif.dwc.terms.Term;
 
 import java.io.Serializable;
@@ -61,7 +62,12 @@ public class RecordEvaluationResultDetails implements Serializable {
 
   @Override
   public String toString() {
-    return "evaluationType: " + evaluationType;
+    return MoreObjects.toStringHelper(this)
+      .add("evaluationType", evaluationType)
+      .add("relatedData", relatedData)
+      .add("expected", expected)
+      .add("found", found)
+      .toString();
   }
 
   /**
