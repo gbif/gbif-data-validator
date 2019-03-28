@@ -10,7 +10,7 @@
 
   <groupId>org.gbif.validator</groupId>
   <artifactId>validator-motherpom</artifactId>
-  <version>0.8</version>
+  <version>0.9-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>GBIF Data Validator</name>
@@ -21,7 +21,7 @@
     <connection>scm:git:git@github.com:gbif/gbif-data-validator.git</connection>
     <url>https://github.com/gbif/gbif-data-validator</url>
     <developerConnection>scm:git:git@github.com:gbif/gbif-data-validator.git</developerConnection>
-    <tag>validator-0.8</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
