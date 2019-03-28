@@ -30,7 +30,8 @@ public class ExtensionManagerFactoryTestAdapter {
 
   public static final List<String> EXT_URL_TO_LOAD = Arrays.asList(
           "http://rs.gbif.org/extension/gbif/1.0/description.xml",
-          "http://rs.gbif.org/core/dwc_occurrence_2015-07-02.xml");
+          "http://rs.gbif.org/core/dwc_occurrence_2015-07-02.xml",
+          "http://rs.gbif.org/core/dwc_taxon_2015-04-24.xml");
 
   /**
    * Warning: this test {@link ExtensionManager} ignores vocabularies.

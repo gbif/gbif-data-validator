@@ -1,5 +1,6 @@
 package org.gbif.validation.api;
 
+import com.google.common.base.MoreObjects;
 import org.gbif.dwc.terms.Term;
 
 /**
@@ -35,5 +36,13 @@ public class TermWithinRowType {
 
   public Term getTerm() {
     return term;
+  }
+
+  @Override
+  public String toString() {
+    return MoreObjects.toStringHelper(this)
+            .add("rowType", rowType)
+            .add("issues", term)
+            .toString();
   }
 }

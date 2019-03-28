@@ -21,7 +21,6 @@ import static org.junit.Assert.assertTrue;
 
 /**
  * Basis tests for {@link DwcaResourceStructureEvaluator}.
- *
  */
 public class DwcaResourceStructureEvaluatorTest {
 
@@ -72,4 +71,19 @@ public class DwcaResourceStructureEvaluatorTest {
     assertEquals(EvaluationType.DWCA_META_XML_NOT_FOUND,  getFirstValidationIssue(result.get()).getIssue());
   }
 
+  @Test
+  public void dwcaResourceStructureEvaluatorTestNoOccurrenceId() {
+    Optional<List<ValidationResultElement>> result =
+            DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-occurrence-no-occurrenceid-no-triple", "test"));
+    assertTrue(result.isPresent());
+    assertEquals(EvaluationType.REQUIRED_TERM_MISSING, getFirstValidationIssue(result.get()).getIssue());
+  }
+
+  @Test
+  public void dwcaResourceStructureEvaluatorTestTaxonNoOccurrenceId() {
+    Optional<List<ValidationResultElement>> result =
+      DWCA_RESOURCES_STRUCTURE_EVAL.evaluate(getDwcaDataFile("dwca/dwca-taxon-no-occurrenceid-no-triple", "test"));
+    assertTrue(result.isPresent());
+    assertEquals(EvaluationType.REQUIRED_TERM_MISSING, getFirstValidationIssue(result.get()).getIssue());
+  }
 }

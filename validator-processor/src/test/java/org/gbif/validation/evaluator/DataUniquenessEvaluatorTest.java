@@ -67,7 +67,7 @@ public class DataUniquenessEvaluatorTest {
   public void testUniquenessEvent() throws UnsupportedDataFileException {
     File dwcArchive = FileUtils.getClasspathFile("dwc-data-integrity/dwca-event-duplicate-occurrenceId");
 
-    DataFile df = DataFileFactory.newDataFile(dwcArchive.toPath(), "dwc-event-data-integrity-dwca",
+    DataFile df = DataFileFactory.newDataFile(dwcArchive.toPath(), "dwc-event-data-integrity-duplicate-occurrenceId",
       FileFormat.DWCA, "", "");
 
     try {

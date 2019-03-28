@@ -42,7 +42,7 @@ public class TestUtils {
 
   public static final HttpClient HTTP_CLIENT = HttpUtil.newMultithreadedClient(6000, 2, 1);
 
-  //This ExtensionManager only servers 2 extensions (Description and Occurrence)
+  //This ExtensionManager only serves 3 extensions (Description, Occurrence and Taxon)
   public static final ExtensionManager EXTENSION_MANAGER =
           ExtensionManagerFactoryTestAdapter.getTestExtensionManager(HTTP_CLIENT);
 

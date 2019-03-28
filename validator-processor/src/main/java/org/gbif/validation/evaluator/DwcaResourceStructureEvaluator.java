@@ -3,6 +3,7 @@ package org.gbif.validation.evaluator;
 import org.gbif.dwc.DwcFiles;
 import org.gbif.dwc.extensions.Extension;
 import org.gbif.dwc.extensions.ExtensionManager;
+import org.gbif.dwc.terms.DwcTerm;
 import org.gbif.dwc.terms.Term;
 import org.gbif.dwc.Archive;
 import org.gbif.dwc.ArchiveField;
@@ -111,9 +112,17 @@ class DwcaResourceStructureEvaluator implements ResourceStructureEvaluator {
               .filter(t -> !ext.hasProperty(t))
               .forEach(t -> validationIssues.add(ValidationIssues.withRelatedData(
                       EvaluationType.UNKNOWN_TERM, TermWithinRowType.of(ext.getRowType(), t))));
+
+      //check for appropriate identifiers for Occurrence rows, either an occurrenceId or the triple
+      if (archiveFile.getRowType().equals(DwcTerm.Occurrence)) {
+        if (! (archiveFile.hasTerm(DwcTerm.occurrenceID) || (archiveFile.hasTerm(DwcTerm.institutionCode) && archiveFile.hasTerm(DwcTerm.collectionCode) && archiveFile.hasTerm(DwcTerm.catalogNumber)))) {
+          // No occurrenceId, no or incomplete triple.
+          validationIssues.add(ValidationIssues.withRelatedData(EvaluationType.REQUIRED_TERM_MISSING, TermWithinRowType.of(ext.getRowType(), DwcTerm.occurrenceID)));
+        }
+      }
     } else {
       validationIssues.add(ValidationIssues.withRelatedData(
-              EvaluationType.UNKNOWN_ROWTYPE, TermWithinRowType.ofRowType(archiveFile.getRowType())));
+              EvaluationType.UNKNOWN_ROWTYPE, TermWithinRowType.of(archiveFile.getRowType(), archiveFile.getRowType())));
     }
     return validationIssues.isEmpty() ? Optional.empty() :
             Optional.of(ValidationResultElement.forMetaDescriptor(Archive.META_FN, validationIssues));

@@ -53,15 +53,13 @@ class DataUniquenessEvaluator implements RecordCollectionEvaluator {
         doEvaluate(DwcTerm.occurrenceID, dataFile, resultConsumer);
       }
 
-    } else if (RowTypeKey.forCore(DwcTerm.Event).equals(coreTypeKey)) {
-      // Event core, check occurrence extension occurrenceIDs.
+    } else if (RowTypeKey.forCore(DwcTerm.Event).equals(coreTypeKey) || RowTypeKey.forCore(DwcTerm.Taxon).equals(coreTypeKey)) {
+      // Event or Taxon core, check occurrence extension occurrenceIDs.
       TabularDataFile dataFile = dwcDataFile.getByRowTypeKey(RowTypeKey.forExtension(DwcTerm.Occurrence));
       OptionalInt index = dataFile.getIndexOf(DwcTerm.occurrenceID);
       if (index.isPresent()) {
         doEvaluate(DwcTerm.occurrenceID, dataFile, resultConsumer);
       }
-    } else if (RowTypeKey.forCore(DwcTerm.Taxon).equals(coreTypeKey)) {
-      // Checklist core, could check TypesAndExtensions.
     }
   }
 
