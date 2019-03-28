@@ -11,6 +11,7 @@ import org.gbif.validation.ws.conf.ValidationWsConfiguration;
 
 import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,7 +24,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -48,7 +48,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.AgeFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +55,6 @@ import org.slf4j.LoggerFactory;
 import static org.gbif.detect.MediaTypeAndFormatDetector.detectMediaType;
 import static org.gbif.validation.conf.SupportedMediaTypes.ZIP_CONTENT_TYPE;
 import static org.gbif.validation.ws.utils.WebErrorUtils.errorResponse;
-
 
 /**
  * Class responsible to manage files uploaded for validation.
@@ -361,12 +359,14 @@ public class UploadedFileManager implements Cleanable<UUID> {
   public void cleanByKey(UUID key) {
     Objects.requireNonNull(key, "key shall be provided");
     Path targetPath = workingDirectory.resolve(key.toString());
-    LOG.info("Trying to delete " + targetPath);
-    try {
-      FileUtils.deleteDirectory(targetPath.toFile());
-    } catch (IOException ioEx) {
-      LOG.warn("Failed to clean directory " + targetPath, ioEx);
-    }
+    LOG.warn("NOT trying to delete {} (in case we get a bug report)", targetPath);
+    cleanUntil(LocalDateTime.now().minusMonths(2));
+    //LOG.info("Trying to delete {}", targetPath);
+    //try {
+    //  FileUtils.deleteDirectory(targetPath.toFile());
+    //} catch (IOException ioEx) {
+    //  LOG.error("Failed to clean directory " + targetPath, ioEx);
+    //}
   }
 
   @Override
@@ -375,11 +375,21 @@ public class UploadedFileManager implements Cleanable<UUID> {
     Preconditions.checkArgument(dateTimeLimit.isBefore(LocalDateTime.now()),
             "dateTimeLimit can not be in the future");
 
-    Iterator<File> filesToDelete =
-            FileUtils.iterateFiles(workingDirectory.toFile(),
-                    new AgeFileFilter(TemporalAccessorUtils.toDate(dateTimeLimit)), TrueFileFilter.TRUE);
-    //TODO
-    filesToDelete.forEachRemaining( f-> System.out.println(f + " flag for deletion"));
+    LOG.info("Deleting files uploaded before {}", dateTimeLimit);
+
+    FileFilter tooOld = new AgeFileFilter(TemporalAccessorUtils.toDate(dateTimeLimit));
+    for (File target : workingDirectory.toFile().listFiles(tooOld)) {
+      LOG.info("Deleting old upload {}", target);
+      try {
+        if (target.isDirectory()) {
+          FileUtils.deleteDirectory(target);
+        } else {
+          target.delete();
+        }
+      } catch (IOException ioEx) {
+        LOG.error("Failed to delete " + target, ioEx);
+      }
+    }
   }
 
   /**
