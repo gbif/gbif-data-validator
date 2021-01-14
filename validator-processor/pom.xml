@@ -10,7 +10,7 @@
   <artifactId>validator-processor</artifactId>
 
   <properties>
-    <apache-poi.version>3.15</apache-poi.version>
+    <apache-poi.version>4.1.2</apache-poi.version>
     <apache-odftoolkit.version>0.8.2-incubating</apache-odftoolkit.version>
     <super-csv.version>2.4.0</super-csv.version>
     <akka-actor.version>2.3.15</akka-actor.version>
