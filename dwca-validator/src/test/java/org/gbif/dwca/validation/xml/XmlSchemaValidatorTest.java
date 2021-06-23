@@ -1,6 +1,6 @@
 package org.gbif.dwca.validation.xml;
 
-import org.gbif.dwca.validation.XmlValidator;
+import org.gbif.dwca.validation.XmlSchemaValidator;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -19,38 +19,35 @@ import static org.gbif.dwca.validation.xml.TestUtils.testPath;
  * XmlSchemaXmlValidator tests.
  */
 @ExtendWith(MockServerExtension.class)
-public class XmlSchemaXmlValidatorTest {
+public class XmlSchemaValidatorTest {
 
   private ClientAndServer clientAndServer;
 
-  private SchemaCache schemaCache;
+  private SchemaValidatorFactory schemaValidatorFactory;
 
   @SneakyThrows
-  public XmlSchemaXmlValidatorTest(ClientAndServer clientAndServer) {
+  public XmlSchemaValidatorTest(ClientAndServer clientAndServer) {
     this.clientAndServer = clientAndServer;
-    this.schemaCache = new SchemaCache();
+    this.schemaValidatorFactory = new SchemaValidatorFactory();
     //Create the test endpoints for eml.xsd a dependant schemas
     createEmlSchemasExpectation(clientAndServer);
   }
 
-  private XmlSchemaXmlValidator getEmlValidator() {
-    return XmlSchemaXmlValidator.builder()
-            .schemaUrl(testPath(clientAndServer, "/eml.xsd"))
-            .schemaCache(schemaCache)
-            .build();
+  private XmlSchemaValidator getEmlValidator() {
+    return schemaValidatorFactory.newValidator(testPath(clientAndServer, "/eml.xsd"));
   }
 
   @Test
   public void validXmlTest() {
-    XmlSchemaXmlValidator emlValidator = getEmlValidator();
-    XmlValidator.ValidationResult result = emlValidator.validate(readTestFile("/xml/ebird-eml.xml"));
+    XmlSchemaValidator emlValidator = getEmlValidator();
+    XmlSchemaValidator.ValidationResult result = emlValidator.validate(readTestFile("/xml/ebird-eml.xml"));
     assertTrue(result.isValid());
   }
 
   @Test
   public void invalidXmlTest() {
-    XmlSchemaXmlValidator emlValidator = getEmlValidator();
-    XmlValidator.ValidationResult result = emlValidator.validate(readTestFile("/xml/invalid-ebird-eml.xml"));
+    XmlSchemaValidator emlValidator = getEmlValidator();
+    XmlSchemaValidator.ValidationResult result = emlValidator.validate(readTestFile("/xml/invalid-ebird-eml.xml"));
     assertFalse(result.isValid());
     assertTrue(result.getErrors().size() > 0);
   }

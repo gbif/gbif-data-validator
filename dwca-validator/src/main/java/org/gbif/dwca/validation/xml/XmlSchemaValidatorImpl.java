@@ -7,7 +7,7 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.Validator;
 
-import org.gbif.dwca.validation.XmlValidator;
+import org.gbif.dwca.validation.XmlSchemaValidator;
 
 import lombok.Builder;
 import lombok.Data;
@@ -21,13 +21,11 @@ import org.xml.sax.SAXParseException;
 
 @Data
 @Builder
-public class XmlSchemaXmlValidator implements XmlValidator {
+public class XmlSchemaValidatorImpl implements XmlSchemaValidator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(XmlSchemaXmlValidator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(XmlSchemaValidatorImpl.class);
 
-  private final SchemaCache schemaCache;
-
-  private final String schemaUrl;
+  private final Schema schema;
 
   private Validator newValidator(Schema schema) {
     Validator validator = schema.newValidator();
@@ -38,7 +36,7 @@ public class XmlSchemaXmlValidator implements XmlValidator {
   @SneakyThrows
   @Override
   public ValidationResult validate(String document) {
-    Validator validator = newValidator(schemaCache.get(schemaUrl));
+    Validator validator = newValidator(schema);
     validator.validate(new StreamSource(new StringReader(document)));
     return ValidationResult.builder()
             .errors(((CollectorErrorHandler)validator.getErrorHandler()).getErrors())

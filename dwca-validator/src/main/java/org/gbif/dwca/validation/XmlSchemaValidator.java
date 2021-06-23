@@ -2,11 +2,12 @@ package org.gbif.dwca.validation;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
 import lombok.Builder;
 import lombok.Data;
 import org.xml.sax.SAXParseException;
 
-public interface XmlValidator {
+public interface XmlSchemaValidator {
 
   @Data
   @Builder
@@ -16,8 +17,9 @@ public interface XmlValidator {
       WARNING, ERROR, FATAL
     }
 
-    private final XmlValidator.ValidationError.Level level;
+    private final XmlSchemaValidator.ValidationError.Level level;
 
+    @JsonFilter("stackTrace")
     private final SAXParseException error;
 
   }
@@ -26,7 +28,7 @@ public interface XmlValidator {
   @Builder
   public static class ValidationResult {
 
-    private final List<XmlValidator.ValidationError> errors;
+    private final List<XmlSchemaValidator.ValidationError> errors;
 
     public boolean isValid() {
       return errors.isEmpty();

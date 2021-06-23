@@ -1,30 +1,29 @@
 package org.gbif.dwca.validation.xml;
 
-import javax.xml.validation.Schema;
+import org.gbif.dwca.validation.XmlSchemaValidator;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockserver.integration.ClientAndServer;
 import org.mockserver.junit.jupiter.MockServerExtension;
-import org.xml.sax.SAXParseException;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.gbif.dwca.validation.xml.TestUtils.createEmlSchemasExpectation;
 import static org.gbif.dwca.validation.xml.TestUtils.testPath;
 
 @ExtendWith(MockServerExtension.class)
-public class SchemaCacheTest {
+public class SchemaValidatorFactoryTest {
 
   private ClientAndServer clientAndServer;
 
-  private SchemaCache schemaCache;
+  private SchemaValidatorFactory schemaValidatorFactory;
 
   @SneakyThrows
-  public SchemaCacheTest(ClientAndServer clientAndServer) {
+  public SchemaValidatorFactoryTest(ClientAndServer clientAndServer) {
     this.clientAndServer = clientAndServer;
-    this.schemaCache = new SchemaCache();
+    this.schemaValidatorFactory = new SchemaValidatorFactory(testPath(clientAndServer, "/eml.xsd"));
   }
 
   @Test
@@ -33,14 +32,18 @@ public class SchemaCacheTest {
     createEmlSchemasExpectation(clientAndServer);
 
     //Gets the test schema
-    Schema emlSchema = schemaCache.get(testPath(clientAndServer, "/eml.xsd"));
+    XmlSchemaValidator emlSchemaValidator = schemaValidatorFactory.newValidator(testPath(clientAndServer, "/eml.xsd"));
 
     //The schema loads successfully
-    assertNotNull(emlSchema);
+    assertNotNull(emlSchemaValidator);
   }
 
   @Test
   public void testNotExistingSchema() {
-    assertThrows(SAXParseException.class, () -> schemaCache.get(testPath(clientAndServer, "/notExist.xsd")));
+    //Gets the test schema
+    XmlSchemaValidator emlSchemaValidator = schemaValidatorFactory.newValidator(testPath(clientAndServer, "/notExist.xsd"));
+
+    //The schema loads successfully
+    assertNull(emlSchemaValidator);
   }
 }
