@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.gbif</groupId>
     <artifactId>motherpom</artifactId>
-    <version>53</version>
+    <version>54</version>
   </parent>
 
   <groupId>org.gbif.validator</groupId>
@@ -15,32 +15,31 @@
 
   <name>GBIF Data Validator</name>
   <description>Umbrella to hold all data validation related work</description>
-  <url>https://github.org/gbif/gbif-data-xmlValidator</url>
+  <url>https://github.org/gbif/gbif-data-validator</url>
 
   <scm>
-    <connection>scm:git:git@github.com:gbif/gbif-data-xmlValidator.git</connection>
-    <url>https://github.com/gbif/gbif-data-xmlValidator</url>
-    <developerConnection>scm:git:git@github.com:gbif/gbif-data-xmlValidator.git</developerConnection>
+    <connection>scm:git:git@github.com:gbif/gbif-data-validator.git</connection>
+    <url>https://github.com/gbif/gbif-data-validator</url>
+    <developerConnection>scm:git:git@github.com:gbif/gbif-data-validator.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
     <site>
       <id>gh-pages</id>
-      <url>https://gbif.github.io/gbif-data-xmlValidator/</url>
+      <url>https://gbif.github.io/gbif-data-validator/</url>
     </site>
   </distributionManagement>
 
   <modules>
     <module>validator-ws</module>
     <module>validator-processor</module>
-    <module>dwca-validator</module>
-    <module>pipelines-validator-ws</module>
+    <module>pipelines-validator-it-test</module>
   </modules>
 
   <properties>
     <jdkLevel>1.8</jdkLevel>
-    <release.tagNameBase>xmlValidator</release.tagNameBase>
+    <release.tagNameBase>validator</release.tagNameBase>
 
     <!-- VERSIONS -->
 
@@ -61,26 +60,9 @@
     <gbif-parsers.version>0.39</gbif-parsers.version>
     <gbif-httputils.version>0.10</gbif-httputils.version>
 
-    <!-- Spring -->
-    <gbif-common-spring-ws.version>1.16-SNAPSHOT</gbif-common-spring-ws.version>
-    <spring-boot.version>2.3.7.RELEASE</spring-boot.version>
-    <spring-boot-admin.version>2.2.4</spring-boot-admin.version>
-    <spring-cloud-openfeign.version>2.2.6.RELEASE</spring-cloud-openfeign.version>
-    <spring-cloud-zookeeper.version>2.2.4.RELEASE</spring-cloud-zookeeper.version>
-    <mybatis-spring-boot-starter.version>2.0.1</mybatis-spring-boot-starter.version>
-    <springdoc-openapi-ui.version>1.5.8</springdoc-openapi-ui.version>
-    <spring-cloud-sleuth.version>2.2.8.RELEASE</spring-cloud-sleuth.version>
-    <spring-boot-maven-plugin.version>${spring-boot.version}</spring-boot-maven-plugin.version>
-
-
-    <apache-poi.version>5.0.0</apache-poi.version>
-    <apache-odftoolkit.version>0.8.2-incubating</apache-odftoolkit.version>
-
     <!-- lucene version required by neo4j -->
     <lucene-neo4j.version>5.5.0</lucene-neo4j.version>
     <neo4j.version>3.3.5</neo4j.version>
-
-    <lombok.version>1.18.12</lombok.version>
 
     <jersey.version>1.19.4</jersey.version>
     <jackson.version>1.9.12</jackson.version>
@@ -108,131 +90,14 @@
       <url>http://repository.gbif.org/content/groups/gbif</url>
     </repository>
     <repository>
-      <id>gbif-thirdparty</id>
-      <url>http://repository.gbif.org/content/repositories/thirdparty/</url>
-    </repository>
-    <repository>
-      <id>cloudera-release</id>
-      <url>http://repository.cloudera.com/artifactory/cloudera-repos/</url>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
+      <id>osgeo</id>
+      <name>OSGeo Release Repository</name>
+      <url>https://repo.osgeo.org/repository/release/</url>
     </repository>
   </repositories>
 
-  <build>
-    <pluginManagement>
-      <plugins>
-        <plugin>
-          <groupId>org.springframework.boot</groupId>
-          <artifactId>spring-boot-maven-plugin</artifactId>
-          <version>${spring-boot-maven-plugin.version}</version>
-        </plugin>
-      </plugins>
-    </pluginManagement>
-  </build>
   <dependencyManagement>
     <dependencies>
-      <dependency>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-        <version>${lombok.version}</version>
-        <scope>provided</scope>
-      </dependency>
-
-      <!-- Special media type handling -->
-      <dependency>
-        <groupId>org.apache.poi</groupId>
-        <artifactId>poi</artifactId>
-        <version>${apache-poi.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.poi</groupId>
-        <artifactId>poi-ooxml</artifactId>
-        <version>${apache-poi.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.apache.odftoolkit</groupId>
-        <artifactId>simple-odf</artifactId>
-        <version>${apache-odftoolkit.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-
-      <!-- Spring dependencies -->
-      <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-dependencies</artifactId>
-        <version>${spring-boot.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-      <dependency>
-        <groupId>org.mybatis.spring.boot</groupId>
-        <artifactId>mybatis-spring-boot-starter</artifactId>
-        <version>${mybatis-spring-boot-starter.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-zookeeper-discovery</artifactId>
-        <version>${spring-cloud-zookeeper.version}</version>
-        <exclusions>
-          <exclusion>
-            <groupId>org.apache.zookeeper</groupId>
-            <artifactId>zookeeper</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-archaius</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-netflix-core</artifactId>
-          </exclusion>
-          <exclusion>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
-          </exclusion>
-        </exclusions>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-zookeeper-config</artifactId>
-        <version>${spring-cloud-zookeeper.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-openfeign</artifactId>
-        <version>${spring-cloud-openfeign.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>de.codecentric</groupId>
-        <artifactId>spring-boot-admin-starter-client</artifactId>
-        <version>${spring-boot-admin.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-sleuth</artifactId>
-        <version>${spring-cloud-sleuth.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>org.springdoc</groupId>
-        <artifactId>springdoc-openapi-ui</artifactId>
-        <version>${springdoc-openapi-ui.version}</version>
-      </dependency>
-
       <!-- GBIF -->
       <dependency>
         <groupId>org.gbif</groupId>
@@ -523,6 +388,7 @@
         <version>${mockito.version}</version>
         <scope>test</scope>
       </dependency>
+
     </dependencies>
   </dependencyManagement>
 </project>
