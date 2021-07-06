@@ -1,4 +1,4 @@
-package org.gbif.validator.ws.config;
+package org.gbif.validator.ws.security;
 
 import org.gbif.mybatis.type.UriTypeHandler;
 import org.gbif.mybatis.type.UuidTypeHandler;

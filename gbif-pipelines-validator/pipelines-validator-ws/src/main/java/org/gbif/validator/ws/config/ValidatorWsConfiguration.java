@@ -64,7 +64,7 @@ public class ValidatorWsConfiguration {
     return new UploadFileManager(uploadWorkingDirectory, storePath, downloadFileManager);
   }
 
-  @Bean
+  @Bean("multipartResolver")
   public CommonsMultipartResolver multipartResolver(@Value("${upload.maxUploadSize}") Long maxUploadSize) {
     CommonsMultipartResolver multipart = new CommonsMultipartResolver();
     multipart.setMaxUploadSize(maxUploadSize);
@@ -74,14 +74,16 @@ public class ValidatorWsConfiguration {
   @Bean
   @Order(0)
   public MultipartFilter multipartFilter() {
-    return new MultipartFilter();
+    MultipartFilter multipartFilter = new MultipartFilter();
+    multipartFilter.setMultipartResolverBeanName("multipartResolver");
+    return multipartFilter;
   }
 
   /**
    * Configure the Jackson ObjectMapper adding a custom JsonFilter for errors.
    */
   @Configuration
-  public class FilterConfiguration {
+  public static class FilterConfiguration {
 
     public FilterConfiguration(ObjectMapper objectMapper) {
       //This filter only keeps a minimum of fields in a SaxParserException
