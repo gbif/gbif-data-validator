@@ -146,7 +146,7 @@ public class ValidationResourceIT {
 
       TestPropertyValues.of(
         Stream.of(dbTestPropertyPairs(database)).toArray(String[]::new))
-        .applyTo(configurableApplicationContext.getEnvironment());
+        .applyTo(configurableApplicationContext);
 
     }
 
@@ -158,9 +158,9 @@ public class ValidationResourceIT {
         + "/"
         + database.getConnectionInfo().getDbName(),
         "validation.datasource.username=" + database.getConnectionInfo().getUser(),
-        "validation.datasource.password=" +
-        "upload.workingDirectory=" + workingDirectory.toString() +
-        "upload.maxUploadSize=3145728" +
+        "validation.datasource.password=",
+        "upload.workingDirectory=" + workingDirectory.toString(),
+        "upload.maxUploadSize=3145728",
         "storePath=" + storeDirectory.toString()
       };
     }

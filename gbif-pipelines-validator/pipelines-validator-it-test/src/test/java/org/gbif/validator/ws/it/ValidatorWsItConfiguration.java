@@ -17,7 +17,6 @@ import org.gbif.validator.ws.security.RegistrySecurityConfiguration;
 import org.gbif.validator.ws.config.ValidatorWsConfiguration;
 import org.gbif.validator.ws.config.WebMvcConfiguration;
 import org.gbif.validator.ws.file.DownloadFileManager;
-import org.gbif.ws.security.FileSystemKeyStore;
 import org.gbif.ws.security.NoAuthWebSecurityConfigurer;
 
 import java.util.Collections;
